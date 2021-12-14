@@ -1,16 +1,20 @@
 # go-btfs
 
-## What is BTFS?
+## What is BTFS 2.0?
 
-BitTorrent File System (BTFS) is a protocol forked from 
-IPFS that utilizes the TRON network and the BitTorrent Ecosystem for integration with DApps and smart 
-contracts. 
+BitTorrent File System (BTFS) is a next-generation file sharing protocol in the BitTorrent ecosystem. Current mainstream public blockchains mostly focus on computational tasks but lack cost-effective, scalable, and high-performing file storage and sharing solutions.
 
-* The <a href="https://docs.btfs.io/" target="_blank">API documentation</a> walks developers through BTFS setup, usage, and API references. 
-* Please join the BTFS community at https://discord.gg/PQWfzWS.   
+These are exactly what BTFS aims to clear up. Besides, underpinned by BTTC, BTFS enables cross-chain connectivity and multi-channel payments, making itself a more convenient choice. The intgration of BTFS, BitTorrent, and the BTTC network will boost DApp developers' efficiency in serving a wider market.
+
+* The [documentation](https://docs.btfs.io/v2.0) walks developers through BTFS 2.0 setup, usage, and API references.
+* Please join the BTFS community at [discord](https://discord.gg/PQWfzWS).
+
+## BTFS 2.0 Architecture Diagram
+
+![Architecture Diagram](https://files.readme.io/75d54f0--min.png)
 
 ## Table of Contents
-
+- [Faucet](#Faucet)
 - [Install](#install)
   - [System Requirements](#system-requirements)
 - [Build from Source](#build-from-source)
@@ -25,49 +29,112 @@ contracts.
   - [BTFS Gateway](#btfs-gateway)
 - [License](#license)
 
+## Faucet
 
-## Install
+In order to ensure the normal use of btfs 2.0 testnet, you need to apply for BTT at BTTC testnet, which is obtained [**here**](https://testfaucet.bt.io/#/).
 
-The download and install instructions for BTFS are over at: https://docs.btfs.io/docs/btfs-demo. 
+## Install BTFS
+
+The download and install instructions for BTFS are over at: https://docs.btfs.io/v2.0/docs/install-run-btfs20-node.
 
 ### System Requirements
 
-BTFS can run on most Linux, macOS, and Windows systems. We recommend 
-running it on a machine with at least 2 GB of RAM (it’ll do fine with 
-only one CPU core), but it should run fine with as little as 1 GB of 
+BTFS can run on most Linux, macOS, and Windows systems. We recommend
+running it on a machine with at least 2 GB of RAM (it’ll do fine with
+only one CPU core), but it should run fine with as little as 1 GB of
 RAM. On systems with less memory, it may not be completely stable.
 Only support compiling from source for mac and unix-based system.
 
 ### Install Pre-Built Packages
 
-We host pre-built binaries at https://github.com/TRON-US/btfs-binary-releases. 
+We host pre-built binaries at https://github.com/bittorrent/go-btfs/releases/latest
 
 #### Initialize a BTFS Daemon
-
+**On testnet**
 ```
-$ btfs init
+$ btfs init -p storage-host-testnet
+Generating TRON key with BIP39 seed phrase...
+Master public key:  xpub661MyMwAqRbcGgHpeMqFkS5hnwoGeAcHG5KkDQwke7wFxtKqfsXTCTjWsoU2dYVXVGvV7EuGcviEzEJ143TezxxXvs2zZ9FYTtCei8iRQ66
 initializing BTFS node at /home/ubuntu/.btfs
-generating 2048-bit keypair...done
-peer identity: 16Uiu2HAmHmW9mHcE9c5UfUomy8caBuEgJVP99MDb4wFtzF8URgzE
+generating btfs node keypair with TRON key...done
+peer identity: 16Uiu2HAmKFQPM72SssFRrqcH1qwUsPwcp7vXSg3SEzfdYua1J5qc
 to get started, enter:
 
-        btfs cat /btfs/QmPbWqakofrBdDSm4mLUS5RE5QiPQi8JbnK73LgWwQNdbi/readme
+    btfs cat /btfs/QmZjrLVdUpqVU6Pnc8pBnyQxVdpn9J8tfcsycP84W6N93C/readme
 ```
 
 #### Start the Daemon
 
 Start the BTFS Daemon
 ```
-$ btfs daemon
+$ btfs daemon --chainid <chainid>
 ```
 
-## Build from Source
+Specify the chain for btfs to run by `--chainid`, the chainid of the test network is `1029`, and the start command becomes: `btfs daemon --chainid 1029`
+```
+$ btfs daemon --chain-id 1029
+Initializing daemon...
+go-btfs version: 2.0
+Repo version: 10
+System version: amd64/darwin
+Golang version: go1.16.5
+Repo location: /Users/yangsai/.btfs
+Peer identity: 16Uiu2HAmKFQPM72SssFRrqcH1qwUsPwcp7vXSg3SEzfdYua1J5qc
+the private key of wallet import format is:  396128d47810c5b60f448043c686112****63d893176fbb0b4fb85069bfc77b8
+the address of Bttc format is:  0x7Cf4B71017F0312037D53fe966CE625BF98FFff6
+the address of Tron format is:  TMMuwwxsuQGrDrN3aanc5y5r4FbibgLYDa
+cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on 0x7cf4b71017f0312037d53fe966ce625bf98ffff6
+```
 
-### MacOS
+**Run the Daemon**
+
+When starting the BTFS daemon for the first time, the system will create a node account and at the same time print a string of messages: cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on After seeing such a message, it is necessary to recharge the node account with BTT through an external account, and the system suggests a minimum of 100 BTT, which is used as gas to deploy a node vault contract by the node account.
+After the recharge, the BTFS node will create the vault contract.
+
+Get BTT on BTTC testnet reference [Faucet](#Faucet)
+```
+cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on 0x7cf4b71017f0312037d53fe966ce625bf98ffff6 
+self vault: 0x1f8b3e7e691d733f5eb17e5570c49de3e5aecef9 
+Swarm listening on /ip4/127.0.0.1/tcp/4001
+Swarm listening on /ip4/192.168.21.149/tcp/4001
+Swarm listening on /ip6/::1/tcp/4001
+Swarm listening on /p2p-circuit
+Swarm announcing /ip4/127.0.0.1/tcp/4001
+Swarm announcing /ip4/192.168.21.149/tcp/4001
+Swarm announcing /ip6/::1/tcp/4001
+API server listening on /ip4/127.0.0.1/tcp/5001
+WebUI: http://127.0.0.1:5001/webui
+HostUI: http://127.0.0.1:5001/hostui
+Gateway (readonly) server listening on /ip4/127.0.0.1/tcp/8080
+Remote API server listening on /ip4/127.0.0.1/tcp/5101
+Daemon is ready
+```
+At this point, the BTFS node is up and running
+
+
+### Build from Source
+
+#### Requires
+* GO
+* GNU make
+* Git
+* GCC (or some other go compatible C Compiler) (optional)
+
+#### Install Go
+If you need to update: [Download latest version of Go](https://golang.org/dl/).
+
+You'll need to add Go's bin directories to your `$PATH` environment variable e.g., by adding these lines to your `/etc/profile` (for a system-wide installation) or `$HOME/.profile`:
+
+```
+export PATH=$PATH:/usr/local/go/bin
+export PATH=$PATH:$GOPATH/bin
+```
+
+(If you run into trouble, see the [Go install instructions](https://golang.org/doc/install)).
 
 Clone the go-btfs repository
 ```
-$ git clone https://github.com/TRON-US/go-btfs
+$ git clone https://github.com/bittorrent/go-btfs
 ```
 
 Navigate to the go-btfs directory and run `make install`.
@@ -84,51 +151,9 @@ go: extracting github.com/tron-us/go-btfs-common v0.2.28
 go: finding github.com/tron-us/go-btfs-common v0.2.28
 go version go1.14.1 darwin/amd64
 bin/check_go_version 1.14
-go install  "-asmflags=all='-trimpath='" "-gcflags=all='-trimpath='" -ldflags="-X "github.com/TRON-US/go-btfs".CurrentCommit=e4848946d" ./cmd/btfs
+go install  "-asmflags=all='-trimpath='" "-gcflags=all='-trimpath='" -ldflags="-X "github.com/bittorrent/go-btfs".CurrentCommit=e4848946d" ./cmd/btfs
 ```
-
-Afterwards, run `btfs init` and `btfs daemon` to initialize and start the daemon. 
-
-### Linux VM
-
-Developers wishing to run a BTFS daemon on a Linux VM should first set up the environment. On an AWS EC2 Linux machine for example, it would be helpful to first install the following tools and dependencies:
-```
-$ sudo yum update          // Installs general updates for Linux
-$ sudo yum install git     // Lets you git clone the go-btfs repository
-$ sudo yum install patch   // Required for building from source
-$ sudo yum install gcc     // Required for building from source
-```
-
-Building BTFS from source requires Go 1.14 or higher. To install from the terminal:
-```
-$ cd /tmp
-$ GO_PACKAGE=go1.14.linux-amd64.tar.gz
-$ wget https://golang.org/dl/$GO_PACKAGE
-$ sudo tar -xvf $GO_PACKAGE
-$ sudo mv go /usr/local
-$ sudo rm $GO_PACKAGE
-```
-
-Navigate back to root directory and set the Go Path in the environment variables: 
-```
-$ export GOPATH=${HOME}/go
-$ export PATH=$PATH:/usr/local/go/bin
-$ export PATH=$PATH:$GOPATH/bin
-$ export GO111MODULE=on
-```
-
-Verify the Go version is 1.14 or higher:
-```
-$ go version
-```
-
-Navigate to the go-btfs directory and run `make install`.
-```
-$ cd go-btfs
-$ make install
-```
-
-Afterwards, run `btfs init` and `btfs daemon` to initialize and start the daemon. To re-initialize a new pair of keys, you can shut down the daemon first via `btfs shutdown`. Then run `rm -r .btfs` and `btfs init` again. 
+Afterwards, run `btfs init` and `btfs daemon` to initialize and start the daemon. To re-initialize a new pair of keys, you can shut down the daemon first via `btfs shutdown`. Then run `rm -r .btfs` and `btfs init` again.
 
 ### Docker
 
@@ -143,7 +168,7 @@ A successful build should have an output like:
 Sending build context to Docker daemon  2.789MB
 Step 1/37 : FROM golang:1.15
  ---> 4fe257ac564c
-Step 2/37 : MAINTAINER TRON-US <support@tron.network>
+Step 2/37 : MAINTAINER bittorrent <support@tron.network>
  ---> Using cache
  ---> 02409001f528
 
@@ -159,12 +184,12 @@ Successfully tagged btfs_docker:latest
 
 Start the container based on the new image. Starting the container also initializes and starts the BTFS daemon.
 ```
-$ docker container run --publish 8080:5001 --detach --name btfs1 btfs_docker
+$ docker container run --publish 5001:5001 --detach --name btfs1 btfs_docker
 ```
 
 The CLI flags are as such:
 
-* `--publish` asks Docker to forward traffic incoming on the host’s port 8080, to the container’s port 5001. 
+* `--publish` asks Docker to forward traffic incoming on the host’s port 8080, to the container’s port 5001.
 * `--detach` asks Docker to run this container in the background.
 * `--name` specifies a name with which you can refer to your container in subsequent commands, in this case btfs1.
 
@@ -183,7 +208,7 @@ Then configure cross-origin(CORS) with btfs
 
 E.g:
 ```
-(container) btfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["http://localhost:8080"]'
+(container) btfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["http://localhost:5001"]'
 (container) btfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT", "GET", "POST"]'
 ```
 
@@ -193,11 +218,11 @@ Exit the container and restart the container
 (host) docker restart btfs1
 ```
 
-You can access the container from the host with http://localhost:8080/hostui .
+You can access the container from the host with http://localhost:5001/webui.
 
 Execute commands within the docker container:
 ```
-docker exec CONTAINER btfs add --chunker=reed-solomon FILE
+docker exec CONTAINER btfs add FILE
 ```
 
 ## Getting Started
@@ -207,7 +232,7 @@ docker exec CONTAINER btfs add --chunker=reed-solomon FILE
 Basic proof of 'btfs working' locally:
 
     echo "hello world" > hello
-    btfs add --chunker=reed-solomon hello
+    btfs add hello
     # This should output a hash string that looks something like:
     # QmaN4MmXMduZe7Y7XoMKFPuDFunvEZU6DWtBPg3L8kkAuS
     btfs cat <that hash>
@@ -280,8 +305,8 @@ SUBCOMMANDS
 
 Some places to get you started on the codebase:
 
-- Main file: [./cmd/btfs/main.go](https://github.com/TRON-US/go-btfs/blob/master/cmd/btfs/main.go)
-- CLI Commands: [./core/commands/](https://github.com/TRON-US/go-btfs/tree/master/core/commands)
+- Main file: [./cmd/btfs/main.go](https://github.com/bittorrent/go-btfs/blob/master/cmd/btfs/main.go)
+- CLI Commands: [./core/commands/](https://github.com/bittorrent/go-btfs/tree/master/core/commands)
 - libp2p
   - libp2p: [libp2p](https://github.com/libp2p/go-libp2p)
   - DHT: [DHT](https://github.com/libp2p/go-libp2p-kad-dht)
@@ -295,8 +320,9 @@ If you make changes to the protocol buffers, you will need to install the [proto
 
 BTFS Gateway is a free service that allows you to retrieve files from the BTFS network in your browser directly.
 
-[How to use BTFS Gateway](https://docs.btfs.io/docs/btfs-gateway-user-guide)
+[How to use BTFS Gateway](https://docs.btfs.io/v2.0/docs/btfs-gateway-user-guide)
 
 ## License
 
 [MIT](./LICENSE)
+
