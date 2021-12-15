@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
+	iface "github.com/TRON-US/interface-go-btfs-core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/e"
 	"github.com/bittorrent/go-btfs/core/coredag"
-	iface "github.com/TRON-US/interface-go-btfs-core"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	files "github.com/TRON-US/go-btfs-files"

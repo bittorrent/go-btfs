@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io"
 
+	nsopts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
 	ncmd "github.com/bittorrent/go-btfs/core/commands/name"
 	namesys "github.com/bittorrent/go-btfs/namesys"
-	nsopts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 )
