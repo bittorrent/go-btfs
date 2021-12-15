@@ -1,4 +1,4 @@
-github.com/TRON-US/go-btfs
+github.com/bittorrent/go-btfs
 github.com/bittorrent/go-btfs/assets
 github.com/bittorrent/go-btfs/cmd/btfs
 github.com/bittorrent/go-btfs/cmd/btfs/util
