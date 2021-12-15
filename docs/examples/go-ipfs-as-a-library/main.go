@@ -17,9 +17,9 @@ import (
 
 	config "github.com/TRON-US/go-btfs-config"
 	files "github.com/TRON-US/go-btfs-files"
-	libp2p "github.com/bittorrent/go-btfs/core/node/libp2p"
 	icore "github.com/TRON-US/interface-go-btfs-core"
 	icorepath "github.com/TRON-US/interface-go-btfs-core/path"
+	libp2p "github.com/bittorrent/go-btfs/core/node/libp2p"
 	"github.com/libp2p/go-libp2p-core/peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	ma "github.com/multiformats/go-multiaddr"
