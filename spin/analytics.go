@@ -239,7 +239,7 @@ func (dc *dcWrap) sendData(node *core.IpfsNode, config *config.Config) {
 	backoff.Retry(func() error {
 		err := dc.doSendData(node.Context(), config, sm)
 		if err != nil {
-			log.Error("failed to send data to status server: ", err)
+			log.Infof("failed to send data to status server: ", err)
 		} else {
 			log.Debug("sent analytics to status server")
 		}

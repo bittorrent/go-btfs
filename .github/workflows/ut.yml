@@ -12,7 +12,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
       - name: Build UT docker image
         run: docker build -f Dockerfile.unit_testing -t "btfs:make_unit" .
+        
       - name: Run UT
         run: docker container run -v ${{ github.workspace }}:/btfs_data --privileged --stop-timeout=300 -i btfs:make_unit
