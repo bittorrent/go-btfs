@@ -3,7 +3,7 @@ package wallet
 import (
 	"testing"
 
-	coremock "github.com/TRON-US/go-btfs/core/mock"
+	coremock "github.com/bittorrent/go-btfs/core/mock"
 
 	"github.com/stretchr/testify/assert"
 )

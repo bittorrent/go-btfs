@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
-	"github.com/TRON-US/go-btfs/core/corehttp/remote"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 
 	iface "github.com/TRON-US/interface-go-btfs-core"
 	hubpb "github.com/tron-us/go-btfs-common/protos/hub"

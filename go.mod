@@ -1,4 +1,4 @@
-module github.com/TRON-US/go-btfs
+module github.com/bittorrent/go-btfs
 
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc

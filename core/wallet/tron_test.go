@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	coremock "github.com/TRON-US/go-btfs/core/mock"
+	coremock "github.com/bittorrent/go-btfs/core/mock"
 
 	"github.com/tron-us/go-btfs-common/crypto"
 

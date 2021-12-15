@@ -6,9 +6,9 @@ import (
 	"io"
 	"sort"
 
-	cmdenv "github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	repo "github.com/TRON-US/go-btfs/repo"
-	fsrepo "github.com/TRON-US/go-btfs/repo/fsrepo"
+	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	repo "github.com/bittorrent/go-btfs/repo"
+	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"

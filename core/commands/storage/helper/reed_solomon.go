@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/TRON-US/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core"
 
 	chunker "github.com/TRON-US/go-btfs-chunker"
 	"github.com/TRON-US/go-unixfs"

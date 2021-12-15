@@ -7,8 +7,8 @@ import (
 	"time"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
-	"github.com/TRON-US/go-btfs/chain"
-	"github.com/TRON-US/go-btfs/settlement/swap/vault"
+	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 	"golang.org/x/net/context"
 )
 

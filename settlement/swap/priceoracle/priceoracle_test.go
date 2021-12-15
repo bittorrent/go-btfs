@@ -5,10 +5,10 @@ import (
 	"math/big"
 	"testing"
 
-	conabi "github.com/TRON-US/go-btfs/chain/abi"
-	"github.com/TRON-US/go-btfs/settlement/swap/priceoracle"
-	"github.com/TRON-US/go-btfs/transaction"
-	transactionmock "github.com/TRON-US/go-btfs/transaction/mock"
+	conabi "github.com/bittorrent/go-btfs/chain/abi"
+	"github.com/bittorrent/go-btfs/settlement/swap/priceoracle"
+	"github.com/bittorrent/go-btfs/transaction"
+	transactionmock "github.com/bittorrent/go-btfs/transaction/mock"
 	"github.com/ethereum/go-ethereum/common"
 )
 

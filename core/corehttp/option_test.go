@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	version "github.com/TRON-US/go-btfs"
+	version "github.com/bittorrent/go-btfs"
 )
 
 type testcasecheckversion struct {

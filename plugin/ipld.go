@@ -1,7 +1,7 @@
 package plugin
 
 import (
-	"github.com/TRON-US/go-btfs/core/coredag"
+	"github.com/bittorrent/go-btfs/core/coredag"
 
 	ipld "github.com/ipfs/go-ipld-format"
 )

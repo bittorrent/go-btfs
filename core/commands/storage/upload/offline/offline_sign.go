@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
-	uh "github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/sessions"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
-	renterpb "github.com/TRON-US/go-btfs/protos/renter"
+	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
 	cmap "github.com/orcaman/concurrent-map"
 )

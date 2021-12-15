@@ -8,11 +8,11 @@ import (
 	"runtime"
 	"strings"
 
-	core "github.com/TRON-US/go-btfs/core"
-	coreapi "github.com/TRON-US/go-btfs/core/coreapi"
-	coredag "github.com/TRON-US/go-btfs/core/coredag"
-	plugin "github.com/TRON-US/go-btfs/plugin"
-	fsrepo "github.com/TRON-US/go-btfs/repo/fsrepo"
+	core "github.com/bittorrent/go-btfs/core"
+	coreapi "github.com/bittorrent/go-btfs/core/coreapi"
+	coredag "github.com/bittorrent/go-btfs/core/coredag"
+	plugin "github.com/bittorrent/go-btfs/plugin"
+	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 
 	config "github.com/TRON-US/go-btfs-config"
 	cserialize "github.com/TRON-US/go-btfs-config/serialize"

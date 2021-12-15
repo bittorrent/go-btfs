@@ -5,8 +5,8 @@ import (
 	"errors"
 	"math/big"
 
-	conabi "github.com/TRON-US/go-btfs/chain/abi"
-	"github.com/TRON-US/go-btfs/transaction"
+	conabi "github.com/bittorrent/go-btfs/chain/abi"
+	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 )

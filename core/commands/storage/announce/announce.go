@@ -3,8 +3,8 @@ package announce
 import (
 	"fmt"
 
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 

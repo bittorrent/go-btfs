@@ -1,7 +1,7 @@
 package node
 
 import (
-	"github.com/TRON-US/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core"
 )
 
 func Mount(node *core.IpfsNode, fsdir, nsdir string) error {

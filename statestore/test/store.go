@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/TRON-US/go-btfs/transaction/storage"
+	"github.com/bittorrent/go-btfs/transaction/storage"
 )
 
 const (

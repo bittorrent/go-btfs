@@ -11,7 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/TRON-US/go-btfs/core/coreunix"
+	"github.com/bittorrent/go-btfs/core/coreunix"
 
 	"github.com/TRON-US/go-btfs-pinner"
 	ft "github.com/TRON-US/go-unixfs"

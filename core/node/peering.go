@@ -3,7 +3,7 @@ package node
 import (
 	"context"
 
-	"github.com/TRON-US/go-btfs/peering"
+	"github.com/bittorrent/go-btfs/peering"
 
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"

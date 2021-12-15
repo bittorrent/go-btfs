@@ -6,9 +6,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/TRON-US/go-btfs/settlement/swap"
-	"github.com/TRON-US/go-btfs/settlement/swap/swapprotocol"
-	"github.com/TRON-US/go-btfs/settlement/swap/vault"
+	"github.com/bittorrent/go-btfs/settlement/swap"
+	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 )
 
 type Service struct {

@@ -4,7 +4,7 @@ import (
 	"net"
 	"net/http"
 
-	core "github.com/TRON-US/go-btfs/core"
+	core "github.com/bittorrent/go-btfs/core"
 )
 
 func RedirectOption(path string, redirect string) ServeOption {

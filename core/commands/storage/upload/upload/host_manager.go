@@ -1,7 +1,7 @@
 package upload
 
 import (
-	"github.com/TRON-US/go-btfs/core/commands/storage/contracts"
+	"github.com/bittorrent/go-btfs/core/commands/storage/contracts"
 
 	config "github.com/TRON-US/go-btfs-config"
 	guardpb "github.com/tron-us/go-btfs-common/protos/guard"

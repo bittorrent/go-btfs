@@ -4,7 +4,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/TRON-US/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core"
 
 	"github.com/markbates/pkger"
 )

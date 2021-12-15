@@ -3,7 +3,7 @@ package escrow
 import (
 	"fmt"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 
 	config "github.com/TRON-US/go-btfs-config"
 	"github.com/tron-us/go-btfs-common/crypto"

@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	unixtest "github.com/TRON-US/go-btfs/core/coreunix/test"
+	unixtest "github.com/bittorrent/go-btfs/core/coreunix/test"
 
 	nodepb "github.com/tron-us/go-btfs-common/protos/node"
 

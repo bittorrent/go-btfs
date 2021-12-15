@@ -6,7 +6,7 @@ package loader
 import (
 	"errors"
 
-	iplugin "github.com/TRON-US/go-btfs/plugin"
+	iplugin "github.com/bittorrent/go-btfs/plugin"
 )
 
 func init() {

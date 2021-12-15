@@ -1,9 +1,9 @@
 package spin
 
 import (
-	uh "github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/sessions"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/upload"
+	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/upload"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 

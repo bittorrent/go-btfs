@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/TRON-US/go-btfs/cmd/btfs/util"
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	"github.com/TRON-US/go-btfs/core/commands/storage/path"
-	"github.com/TRON-US/go-btfs/core/wallet"
-	walletpb "github.com/TRON-US/go-btfs/protos/wallet"
+	"github.com/bittorrent/go-btfs/cmd/btfs/util"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core/commands/storage/path"
+	"github.com/bittorrent/go-btfs/core/wallet"
+	walletpb "github.com/bittorrent/go-btfs/protos/wallet"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	"github.com/TRON-US/go-btfs-cmds/http"

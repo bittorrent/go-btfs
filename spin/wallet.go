@@ -5,8 +5,8 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	"github.com/TRON-US/go-btfs/core/wallet"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/wallet"
 )
 
 const (

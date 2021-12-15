@@ -4,8 +4,8 @@
 package readonly
 
 import (
-	core "github.com/TRON-US/go-btfs/core"
-	mount "github.com/TRON-US/go-btfs/fuse/mount"
+	core "github.com/bittorrent/go-btfs/core"
+	mount "github.com/bittorrent/go-btfs/fuse/mount"
 )
 
 // Mount mounts IPFS at a given location, and returns a mount.Mount instance.

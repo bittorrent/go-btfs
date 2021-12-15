@@ -7,9 +7,9 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/TRON-US/go-btfs/settlement/swap/erc20"
-	"github.com/TRON-US/go-btfs/transaction"
-	"github.com/TRON-US/go-btfs/transaction/storage"
+	"github.com/bittorrent/go-btfs/settlement/swap/erc20"
+	"github.com/bittorrent/go-btfs/transaction"
+	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/ethereum/go-ethereum/common"
 	logging "github.com/ipfs/go-log"
 )

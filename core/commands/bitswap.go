@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	cmdenv "github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	e "github.com/TRON-US/go-btfs/core/commands/e"
+	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	e "github.com/bittorrent/go-btfs/core/commands/e"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	humanize "github.com/dustin/go-humanize"

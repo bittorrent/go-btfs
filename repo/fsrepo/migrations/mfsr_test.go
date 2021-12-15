@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/TRON-US/go-btfs/thirdparty/assert"
+	"github.com/bittorrent/go-btfs/thirdparty/assert"
 )
 
 func testVersionFile(v string, t *testing.T) (rp RepoPath) {

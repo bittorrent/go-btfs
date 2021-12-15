@@ -7,11 +7,11 @@ import (
 	"math/big"
 	"testing"
 
-	erc20mock "github.com/TRON-US/go-btfs/settlement/swap/erc20/mock"
-	"github.com/TRON-US/go-btfs/settlement/swap/vault"
-	storemock "github.com/TRON-US/go-btfs/statestore/mock"
-	"github.com/TRON-US/go-btfs/transaction"
-	transactionmock "github.com/TRON-US/go-btfs/transaction/mock"
+	erc20mock "github.com/bittorrent/go-btfs/settlement/swap/erc20/mock"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault"
+	storemock "github.com/bittorrent/go-btfs/statestore/mock"
+	"github.com/bittorrent/go-btfs/transaction"
+	transactionmock "github.com/bittorrent/go-btfs/transaction/mock"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )

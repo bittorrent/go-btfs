@@ -11,11 +11,11 @@ import (
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	"github.com/TRON-US/go-btfs/core/corehttp/remote"
-	"github.com/TRON-US/go-btfs/settlement/swap/priceoracle"
-	"github.com/TRON-US/go-btfs/settlement/swap/swapprotocol/pb"
-	"github.com/TRON-US/go-btfs/settlement/swap/vault"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/corehttp/remote"
+	"github.com/bittorrent/go-btfs/settlement/swap/priceoracle"
+	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol/pb"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 
 	"github.com/ethereum/go-ethereum/common"
 	logging "github.com/ipfs/go-log"

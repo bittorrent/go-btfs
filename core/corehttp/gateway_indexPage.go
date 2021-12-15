@@ -6,7 +6,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/TRON-US/go-btfs/assets"
+	"github.com/bittorrent/go-btfs/assets"
 
 	ipfspath "github.com/ipfs/go-path"
 )

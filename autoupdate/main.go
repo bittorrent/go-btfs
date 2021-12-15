@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/TRON-US/go-btfs/logger"
+	"github.com/bittorrent/go-btfs/logger"
 
 	"github.com/TRON-US/go-btfs-api"
 )

@@ -18,10 +18,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/node"
-	"github.com/TRON-US/go-btfs/namesys"
-	"github.com/TRON-US/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/node"
+	"github.com/bittorrent/go-btfs/namesys"
+	"github.com/bittorrent/go-btfs/repo"
 
 	"github.com/TRON-US/go-btfs-pinner"
 	coreiface "github.com/TRON-US/interface-go-btfs-core"

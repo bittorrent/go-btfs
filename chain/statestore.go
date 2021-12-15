@@ -3,9 +3,9 @@ package chain
 import (
 	"path/filepath"
 
-	"github.com/TRON-US/go-btfs/statestore/leveldb"
-	"github.com/TRON-US/go-btfs/statestore/mock"
-	"github.com/TRON-US/go-btfs/transaction/storage"
+	"github.com/bittorrent/go-btfs/statestore/leveldb"
+	"github.com/bittorrent/go-btfs/statestore/mock"
+	"github.com/bittorrent/go-btfs/transaction/storage"
 )
 
 func InitStateStore(dataDir string) (ret storage.StateStorer, err error) {

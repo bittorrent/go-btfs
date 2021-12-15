@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/TRON-US/go-btfs/commands"
-	"github.com/TRON-US/go-btfs/core"
+	"github.com/bittorrent/go-btfs/commands"
+	"github.com/bittorrent/go-btfs/core"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"

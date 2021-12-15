@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/TRON-US/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/repo"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/mount"

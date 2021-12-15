@@ -5,8 +5,8 @@ import (
 	"path"
 	"runtime"
 
-	version "github.com/TRON-US/go-btfs"
-	cmdenv "github.com/TRON-US/go-btfs/core/commands/cmdenv"
+	version "github.com/bittorrent/go-btfs"
+	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 

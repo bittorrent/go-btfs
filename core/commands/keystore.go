@@ -5,8 +5,8 @@ import (
 	"io"
 	"text/tabwriter"
 
-	cmdenv "github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	ke "github.com/TRON-US/go-btfs/core/commands/keyencode"
+	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	ke "github.com/bittorrent/go-btfs/core/commands/keyencode"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	options "github.com/TRON-US/interface-go-btfs-core/options"

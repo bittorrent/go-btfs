@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	unixtest "github.com/TRON-US/go-btfs/core/coreunix/test"
+	unixtest "github.com/bittorrent/go-btfs/core/coreunix/test"
 
 	uio "github.com/TRON-US/go-unixfs/io"
 	"github.com/TRON-US/interface-go-btfs-core/path"

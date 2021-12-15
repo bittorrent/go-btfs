@@ -3,7 +3,7 @@ package commands
 import (
 	"testing"
 
-	"github.com/TRON-US/go-btfs/namesys"
+	"github.com/bittorrent/go-btfs/namesys"
 
 	ipns "github.com/TRON-US/go-btns"
 	"github.com/libp2p/go-libp2p-core/test"

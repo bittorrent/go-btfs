@@ -10,11 +10,11 @@ import (
 	"strings"
 	"sync"
 
-	keystore "github.com/TRON-US/go-btfs/keystore"
-	repo "github.com/TRON-US/go-btfs/repo"
-	"github.com/TRON-US/go-btfs/repo/common"
-	mfsr "github.com/TRON-US/go-btfs/repo/fsrepo/migrations"
-	dir "github.com/TRON-US/go-btfs/thirdparty/dir"
+	keystore "github.com/bittorrent/go-btfs/keystore"
+	repo "github.com/bittorrent/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/repo/common"
+	mfsr "github.com/bittorrent/go-btfs/repo/fsrepo/migrations"
+	dir "github.com/bittorrent/go-btfs/thirdparty/dir"
 
 	config "github.com/TRON-US/go-btfs-config"
 	serialize "github.com/TRON-US/go-btfs-config/serialize"
@@ -419,7 +419,7 @@ func (r *FSRepo) openDatastore() error {
 		return fmt.Errorf("required Datastore.Spec entry missing from config file")
 	}
 	if r.config.Datastore.NoSync {
-		log.Warn("NoSync is now deprecated in favor of datastore specific settings. If you want to disable fsync on flatfs set 'sync' to false. See https://github.com/TRON-US/go-btfs/blob/master/docs/datastores.md#flatfs.")
+		log.Warn("NoSync is now deprecated in favor of datastore specific settings. If you want to disable fsync on flatfs set 'sync' to false. See https://github.com/bittorrent/go-btfs/blob/master/docs/datastores.md#flatfs.")
 	}
 
 	dsc, err := AnyDatastoreConfig(r.config.Datastore.Spec)

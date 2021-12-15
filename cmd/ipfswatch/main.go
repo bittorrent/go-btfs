@@ -9,11 +9,11 @@ import (
 	"path/filepath"
 	"syscall"
 
-	commands "github.com/TRON-US/go-btfs/commands"
-	core "github.com/TRON-US/go-btfs/core"
-	coreapi "github.com/TRON-US/go-btfs/core/coreapi"
-	corehttp "github.com/TRON-US/go-btfs/core/corehttp"
-	fsrepo "github.com/TRON-US/go-btfs/repo/fsrepo"
+	commands "github.com/bittorrent/go-btfs/commands"
+	core "github.com/bittorrent/go-btfs/core"
+	coreapi "github.com/bittorrent/go-btfs/core/coreapi"
+	corehttp "github.com/bittorrent/go-btfs/core/corehttp"
+	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 
 	config "github.com/TRON-US/go-btfs-config"
 	files "github.com/TRON-US/go-btfs-files"

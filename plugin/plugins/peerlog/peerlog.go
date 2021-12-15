@@ -5,8 +5,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	core "github.com/TRON-US/go-btfs/core"
-	plugin "github.com/TRON-US/go-btfs/plugin"
+	core "github.com/bittorrent/go-btfs/core"
+	plugin "github.com/bittorrent/go-btfs/plugin"
 	logging "github.com/ipfs/go-log"
 	event "github.com/libp2p/go-libp2p-core/event"
 	network "github.com/libp2p/go-libp2p-core/network"

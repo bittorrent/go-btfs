@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	unixtest "github.com/TRON-US/go-btfs/core/coreunix/test"
+	unixtest "github.com/bittorrent/go-btfs/core/coreunix/test"
 
 	unixfs "github.com/TRON-US/go-unixfs"
 	path "github.com/TRON-US/interface-go-btfs-core/path"

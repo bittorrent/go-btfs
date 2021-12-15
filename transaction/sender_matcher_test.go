@@ -6,10 +6,10 @@ import (
 	"math/big"
 	"testing"
 
-	statestore "github.com/TRON-US/go-btfs/statestore/mock"
-	"github.com/TRON-US/go-btfs/transaction"
-	"github.com/TRON-US/go-btfs/transaction/backendmock"
-	"github.com/TRON-US/go-btfs/transaction/crypto"
+	statestore "github.com/bittorrent/go-btfs/statestore/mock"
+	"github.com/bittorrent/go-btfs/transaction"
+	"github.com/bittorrent/go-btfs/transaction/backendmock"
+	"github.com/bittorrent/go-btfs/transaction/crypto"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )

@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/sessions"
-	walletpb "github.com/TRON-US/go-btfs/protos/wallet"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
+	walletpb "github.com/bittorrent/go-btfs/protos/wallet"
 
 	config "github.com/TRON-US/go-btfs-config"
 	escrowPb "github.com/tron-us/go-btfs-common/protos/escrow"

@@ -7,7 +7,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	oldcmds "github.com/TRON-US/go-btfs/commands"
+	oldcmds "github.com/bittorrent/go-btfs/commands"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 )

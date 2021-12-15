@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/TRON-US/go-btfs/cmd/btfs/util"
-	"github.com/TRON-US/go-btfs/core"
+	"github.com/bittorrent/go-btfs/cmd/btfs/util"
+	"github.com/bittorrent/go-btfs/core"
 
 	config "github.com/TRON-US/go-btfs-config"
 )

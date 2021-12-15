@@ -5,8 +5,8 @@ import (
 	"io"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
-	"github.com/TRON-US/go-btfs/chain"
-	oldcmds "github.com/TRON-US/go-btfs/commands"
+	"github.com/bittorrent/go-btfs/chain"
+	oldcmds "github.com/bittorrent/go-btfs/commands"
 	"github.com/tron-us/go-btfs-common/crypto"
 )
 

@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/TRON-US/go-btfs-cmds"
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	ke "github.com/TRON-US/go-btfs/core/commands/keyencode"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	ke "github.com/bittorrent/go-btfs/core/commands/keyencode"
 
 	"github.com/libp2p/go-libp2p-core/peer"
 	record "github.com/libp2p/go-libp2p-record"

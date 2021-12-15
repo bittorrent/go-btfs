@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	core "github.com/TRON-US/go-btfs/core"
-	coreapi "github.com/TRON-US/go-btfs/core/coreapi"
-	loader "github.com/TRON-US/go-btfs/plugin/loader"
+	core "github.com/bittorrent/go-btfs/core"
+	coreapi "github.com/bittorrent/go-btfs/core/coreapi"
+	loader "github.com/bittorrent/go-btfs/plugin/loader"
 
 	"github.com/TRON-US/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"

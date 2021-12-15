@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	utilmain "github.com/TRON-US/go-btfs/cmd/btfs/util"
+	utilmain "github.com/bittorrent/go-btfs/cmd/btfs/util"
 )
 
 const privateKey = "db6bf5da1c2225d76356df2f59ebd3207b91228bcf429f0c791f94e9095a1f8e"

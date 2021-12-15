@@ -4,9 +4,9 @@
 package ipns
 
 import (
-	core "github.com/TRON-US/go-btfs/core"
-	coreapi "github.com/TRON-US/go-btfs/core/coreapi"
-	mount "github.com/TRON-US/go-btfs/fuse/mount"
+	core "github.com/bittorrent/go-btfs/core"
+	coreapi "github.com/bittorrent/go-btfs/core/coreapi"
+	mount "github.com/bittorrent/go-btfs/fuse/mount"
 )
 
 // Mount mounts ipns at a given location, and returns a mount.Mount instance.

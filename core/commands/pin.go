@@ -8,9 +8,9 @@ import (
 	"os"
 	"time"
 
-	core "github.com/TRON-US/go-btfs/core"
-	cmdenv "github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	e "github.com/TRON-US/go-btfs/core/commands/e"
+	core "github.com/bittorrent/go-btfs/core"
+	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	e "github.com/bittorrent/go-btfs/core/commands/e"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	pin "github.com/TRON-US/go-btfs-pinner"

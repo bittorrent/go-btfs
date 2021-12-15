@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
-	uh "github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	shardpb "github.com/TRON-US/go-btfs/protos/shard"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	shardpb "github.com/bittorrent/go-btfs/protos/shard"
 
 	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
 	"github.com/tron-us/protobuf/proto"

@@ -5,9 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/TRON-US/go-btfs/statestore/leveldb"
-	"github.com/TRON-US/go-btfs/statestore/test"
-	"github.com/TRON-US/go-btfs/transaction/storage"
+	"github.com/bittorrent/go-btfs/statestore/leveldb"
+	"github.com/bittorrent/go-btfs/statestore/test"
+	"github.com/bittorrent/go-btfs/transaction/storage"
 )
 
 func TestPersistentStateStore(t *testing.T) {

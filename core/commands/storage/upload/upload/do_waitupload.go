@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/contracts"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/sessions"
-	renterpb "github.com/TRON-US/go-btfs/protos/renter"
+	"github.com/bittorrent/go-btfs/core/commands/storage/contracts"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
+	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
 	"github.com/tron-us/go-btfs-common/crypto"
 	guardpb "github.com/tron-us/go-btfs-common/protos/guard"

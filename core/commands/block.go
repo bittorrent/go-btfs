@@ -6,8 +6,8 @@ import (
 	"io"
 	"os"
 
-	util "github.com/TRON-US/go-btfs/blocks/blockstoreutil"
-	cmdenv "github.com/TRON-US/go-btfs/core/commands/cmdenv"
+	util "github.com/bittorrent/go-btfs/blocks/blockstoreutil"
+	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	files "github.com/TRON-US/go-btfs-files"

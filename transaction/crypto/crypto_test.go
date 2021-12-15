@@ -6,7 +6,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/TRON-US/go-btfs/transaction/crypto"
+	"github.com/bittorrent/go-btfs/transaction/crypto"
 	"github.com/ethereum/go-ethereum/common"
 )
 
