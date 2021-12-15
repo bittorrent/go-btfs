@@ -11,11 +11,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/TRON-US/go-btfs/bindata"
-	commands "github.com/TRON-US/go-btfs/commands"
-	cmdenv "github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	repo "github.com/TRON-US/go-btfs/repo"
-	fsrepo "github.com/TRON-US/go-btfs/repo/fsrepo"
+	"github.com/bittorrent/go-btfs/bindata"
+	commands "github.com/bittorrent/go-btfs/commands"
+	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	repo "github.com/bittorrent/go-btfs/repo"
+	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"

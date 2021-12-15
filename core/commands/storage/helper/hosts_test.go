@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	unixtest "github.com/TRON-US/go-btfs/core/coreunix/test"
-	"github.com/TRON-US/go-btfs/repo"
+	unixtest "github.com/bittorrent/go-btfs/core/coreunix/test"
+	"github.com/bittorrent/go-btfs/repo"
 
 	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
 	nodepb "github.com/tron-us/go-btfs-common/protos/node"

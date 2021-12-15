@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/node/helpers"
-	"github.com/TRON-US/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/core/node/helpers"
+	"github.com/bittorrent/go-btfs/repo"
 
 	"github.com/TRON-US/go-btfs-pinner"
 	"github.com/ipfs/go-ipfs-provider"

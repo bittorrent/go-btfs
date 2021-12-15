@@ -13,9 +13,9 @@ import (
 
 	"context"
 
-	core "github.com/TRON-US/go-btfs/core"
-	ipns "github.com/TRON-US/go-btfs/fuse/ipns"
-	mount "github.com/TRON-US/go-btfs/fuse/mount"
+	core "github.com/bittorrent/go-btfs/core"
+	ipns "github.com/bittorrent/go-btfs/fuse/ipns"
+	mount "github.com/bittorrent/go-btfs/fuse/mount"
 
 	ci "github.com/libp2p/go-libp2p-testing/ci"
 )

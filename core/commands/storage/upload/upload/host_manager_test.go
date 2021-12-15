@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	coremock "github.com/TRON-US/go-btfs/core/mock"
+	coremock "github.com/bittorrent/go-btfs/core/mock"
 
 	config "github.com/TRON-US/go-btfs-config"
 	guardpb "github.com/tron-us/go-btfs-common/protos/guard"

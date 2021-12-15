@@ -3,7 +3,7 @@
 #
 # name             go-path                  number of the sub-plugin or *
 
-ipldgit github.com/TRON-US/go-btfs/plugin/plugins/git *
-badgerds github.com/TRON-US/go-btfs/plugin/plugins/badgerds *
-flatfs github.com/TRON-US/go-btfs/plugin/plugins/flatfs *
-levelds github.com/TRON-US/go-btfs/plugin/plugins/levelds *
+ipldgit github.com/bittorrent/go-btfs/plugin/plugins/git *
+badgerds github.com/bittorrent/go-btfs/plugin/plugins/badgerds *
+flatfs github.com/bittorrent/go-btfs/plugin/plugins/flatfs *
+levelds github.com/bittorrent/go-btfs/plugin/plugins/levelds *

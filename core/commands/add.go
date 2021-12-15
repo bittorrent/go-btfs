@@ -8,7 +8,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	files "github.com/TRON-US/go-btfs-files"

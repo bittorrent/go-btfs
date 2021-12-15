@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/node/helpers"
+	"github.com/bittorrent/go-btfs/core/node/helpers"
 
 	host "github.com/libp2p/go-libp2p-core/host"
 	routing "github.com/libp2p/go-libp2p-core/routing"

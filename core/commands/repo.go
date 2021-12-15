@@ -11,9 +11,9 @@ import (
 	"sync"
 	"text/tabwriter"
 
-	cmdenv "github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	corerepo "github.com/TRON-US/go-btfs/core/corerepo"
-	fsrepo "github.com/TRON-US/go-btfs/repo/fsrepo"
+	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	corerepo "github.com/bittorrent/go-btfs/core/corerepo"
+	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 	humanize "github.com/dustin/go-humanize"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"

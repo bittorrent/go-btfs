@@ -1,7 +1,7 @@
 package integrationtest
 
 import (
-	"github.com/TRON-US/go-btfs/thirdparty/unit"
+	"github.com/bittorrent/go-btfs/thirdparty/unit"
 
 	files "github.com/TRON-US/go-btfs-files"
 

@@ -1,10 +1,10 @@
 package node
 
 import (
-	"github.com/TRON-US/go-btfs/core/node/helpers"
-	"github.com/TRON-US/go-btfs/repo"
-	"github.com/TRON-US/go-btfs/thirdparty/cidv0v1"
-	"github.com/TRON-US/go-btfs/thirdparty/verifbs"
+	"github.com/bittorrent/go-btfs/core/node/helpers"
+	"github.com/bittorrent/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/thirdparty/cidv0v1"
+	"github.com/bittorrent/go-btfs/thirdparty/verifbs"
 
 	config "github.com/TRON-US/go-btfs-config"
 	"github.com/ipfs/go-datastore"

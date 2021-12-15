@@ -7,9 +7,9 @@ import (
 	"time"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/gc"
-	"github.com/TRON-US/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/gc"
+	"github.com/bittorrent/go-btfs/repo"
 
 	mfs "github.com/TRON-US/go-mfs"
 	humanize "github.com/dustin/go-humanize"

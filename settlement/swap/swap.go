@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/TRON-US/go-btfs/settlement"
-	"github.com/TRON-US/go-btfs/settlement/swap/swapprotocol"
-	"github.com/TRON-US/go-btfs/settlement/swap/vault"
-	"github.com/TRON-US/go-btfs/transaction/storage"
+	"github.com/bittorrent/go-btfs/settlement"
+	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault"
+	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/ethereum/go-ethereum/common"
 	logging "github.com/ipfs/go-log"
 )

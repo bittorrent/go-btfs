@@ -5,10 +5,10 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/TRON-US/go-btfs/settlement/swap/erc20"
-	"github.com/TRON-US/go-btfs/transaction"
-	backendmock "github.com/TRON-US/go-btfs/transaction/backendmock"
-	transactionmock "github.com/TRON-US/go-btfs/transaction/mock"
+	"github.com/bittorrent/go-btfs/settlement/swap/erc20"
+	"github.com/bittorrent/go-btfs/transaction"
+	backendmock "github.com/bittorrent/go-btfs/transaction/backendmock"
+	transactionmock "github.com/bittorrent/go-btfs/transaction/mock"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"

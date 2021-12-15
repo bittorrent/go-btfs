@@ -9,9 +9,9 @@ import (
 	"regexp"
 	"strings"
 
-	core "github.com/TRON-US/go-btfs/core"
-	coreapi "github.com/TRON-US/go-btfs/core/coreapi"
-	namesys "github.com/TRON-US/go-btfs/namesys"
+	core "github.com/bittorrent/go-btfs/core"
+	coreapi "github.com/bittorrent/go-btfs/core/coreapi"
+	namesys "github.com/bittorrent/go-btfs/namesys"
 
 	config "github.com/TRON-US/go-btfs-config"
 	iface "github.com/TRON-US/interface-go-btfs-core"

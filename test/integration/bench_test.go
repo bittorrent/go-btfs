@@ -3,7 +3,7 @@ package integrationtest
 import (
 	"testing"
 
-	"github.com/TRON-US/go-btfs/thirdparty/unit"
+	"github.com/bittorrent/go-btfs/thirdparty/unit"
 
 	testutil "github.com/libp2p/go-libp2p-testing/net"
 )

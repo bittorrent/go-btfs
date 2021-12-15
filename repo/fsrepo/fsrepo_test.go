@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/TRON-US/go-btfs/thirdparty/assert"
+	"github.com/bittorrent/go-btfs/thirdparty/assert"
 
 	config "github.com/TRON-US/go-btfs-config"
 	datastore "github.com/ipfs/go-datastore"

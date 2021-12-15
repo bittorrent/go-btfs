@@ -5,7 +5,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/TRON-US/go-btfs/settlement/swap/erc20"
+	"github.com/bittorrent/go-btfs/settlement/swap/erc20"
 	"github.com/ethereum/go-ethereum/common"
 )
 

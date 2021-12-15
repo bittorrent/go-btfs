@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	"github.com/TRON-US/go-btfs/core/commands/e"
-	"github.com/TRON-US/go-btfs/core/coredag"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core/commands/e"
+	"github.com/bittorrent/go-btfs/core/coredag"
 	iface "github.com/TRON-US/interface-go-btfs-core"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"

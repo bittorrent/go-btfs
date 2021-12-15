@@ -4,7 +4,7 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/TRON-US/go-btfs/settlement/swap/vault"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 	"github.com/ethereum/go-ethereum/common"
 )
 

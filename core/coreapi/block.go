@@ -7,7 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	util "github.com/TRON-US/go-btfs/blocks/blockstoreutil"
+	util "github.com/bittorrent/go-btfs/blocks/blockstoreutil"
 
 	pin "github.com/TRON-US/go-btfs-pinner"
 	coreiface "github.com/TRON-US/interface-go-btfs-core"

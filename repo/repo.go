@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 
-	keystore "github.com/TRON-US/go-btfs/keystore"
+	keystore "github.com/bittorrent/go-btfs/keystore"
 
 	config "github.com/TRON-US/go-btfs-config"
 	ds "github.com/ipfs/go-datastore"

@@ -3,8 +3,8 @@ package ipns
 import (
 	"context"
 
-	"github.com/TRON-US/go-btfs/core"
-	nsys "github.com/TRON-US/go-btfs/namesys"
+	"github.com/bittorrent/go-btfs/core"
+	nsys "github.com/bittorrent/go-btfs/namesys"
 
 	ft "github.com/TRON-US/go-unixfs"
 	path "github.com/ipfs/go-path"

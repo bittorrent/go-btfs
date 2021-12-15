@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"strings"
 
-	core "github.com/TRON-US/go-btfs/core"
+	core "github.com/bittorrent/go-btfs/core"
 
 	"github.com/blang/semver"
 	unix "golang.org/x/sys/unix"
@@ -122,7 +122,7 @@ You may be able to get this error to go away by setting it again:
 
 	btfs config --bool %s true
 
-Either way, please tell us at: http://github.com/TRON-US/go-btfs/issues
+Either way, please tell us at: http://github.com/bittorrent/go-btfs/issues
 `
 
 func darwinFuseCheckVersion(node *core.IpfsNode) error {

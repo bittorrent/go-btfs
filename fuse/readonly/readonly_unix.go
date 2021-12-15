@@ -10,7 +10,7 @@ import (
 	"os"
 	"syscall"
 
-	core "github.com/TRON-US/go-btfs/core"
+	core "github.com/bittorrent/go-btfs/core"
 	ft "github.com/TRON-US/go-unixfs"
 	uio "github.com/TRON-US/go-unixfs/io"
 	mdag "github.com/ipfs/go-merkledag"

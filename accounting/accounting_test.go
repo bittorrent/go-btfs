@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/TRON-US/go-btfs/accounting"
-	"github.com/TRON-US/go-btfs/statestore/mock"
+	"github.com/bittorrent/go-btfs/accounting"
+	"github.com/bittorrent/go-btfs/statestore/mock"
 
 	peer "github.com/libp2p/go-libp2p-core/peer"
 )

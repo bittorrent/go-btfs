@@ -3,9 +3,9 @@ package mock_test
 import (
 	"testing"
 
-	"github.com/TRON-US/go-btfs/statestore/mock"
-	"github.com/TRON-US/go-btfs/statestore/test"
-	"github.com/TRON-US/go-btfs/transaction/storage"
+	"github.com/bittorrent/go-btfs/statestore/mock"
+	"github.com/bittorrent/go-btfs/statestore/test"
+	"github.com/bittorrent/go-btfs/transaction/storage"
 )
 
 func TestMockStateStore(t *testing.T) {

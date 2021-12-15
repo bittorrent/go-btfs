@@ -13,8 +13,8 @@ import (
 	"sync"
 	"testing"
 
-	core "github.com/TRON-US/go-btfs/core"
-	coreapi "github.com/TRON-US/go-btfs/core/coreapi"
+	core "github.com/bittorrent/go-btfs/core"
+	coreapi "github.com/bittorrent/go-btfs/core/coreapi"
 
 	"bazil.org/fuse"
 	fstest "bazil.org/fuse/fs/fstestutil"

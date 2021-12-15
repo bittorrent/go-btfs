@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/TRON-US/go-btfs/commands"
-	"github.com/TRON-US/go-btfs/core"
-	libp2p2 "github.com/TRON-US/go-btfs/core/node/libp2p"
-	"github.com/TRON-US/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/commands"
+	"github.com/bittorrent/go-btfs/core"
+	libp2p2 "github.com/bittorrent/go-btfs/core/node/libp2p"
+	"github.com/bittorrent/go-btfs/repo"
 
 	config "github.com/TRON-US/go-btfs-config"
 	"github.com/ipfs/go-datastore"

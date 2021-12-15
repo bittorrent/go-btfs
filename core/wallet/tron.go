@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core"
-	walletpb "github.com/TRON-US/go-btfs/protos/wallet"
+	"github.com/bittorrent/go-btfs/core"
+	walletpb "github.com/bittorrent/go-btfs/protos/wallet"
 
 	config "github.com/TRON-US/go-btfs-config"
 	"github.com/tron-us/go-btfs-common/crypto"

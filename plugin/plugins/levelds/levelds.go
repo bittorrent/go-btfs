@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/TRON-US/go-btfs/plugin"
-	"github.com/TRON-US/go-btfs/repo"
-	"github.com/TRON-US/go-btfs/repo/fsrepo"
+	"github.com/bittorrent/go-btfs/plugin"
+	"github.com/bittorrent/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/repo/fsrepo"
 
 	levelds "github.com/ipfs/go-ds-leveldb"
 	ldbopts "github.com/syndtr/goleveldb/leveldb/opt"

@@ -10,8 +10,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
 	"github.com/TRON-US/go-btfs-cmds"
 	"github.com/TRON-US/go-mfs"

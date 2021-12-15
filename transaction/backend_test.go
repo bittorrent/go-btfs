@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/TRON-US/go-btfs/transaction"
-	"github.com/TRON-US/go-btfs/transaction/backendmock"
+	"github.com/bittorrent/go-btfs/transaction"
+	"github.com/bittorrent/go-btfs/transaction/backendmock"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 

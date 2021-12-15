@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	"github.com/TRON-US/go-btfs/core/wallet"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core/wallet"
 	"github.com/gogo/protobuf/proto"
 )
 

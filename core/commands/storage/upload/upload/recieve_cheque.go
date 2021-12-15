@@ -7,9 +7,9 @@ import (
 	"time"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
-	uh "github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	"github.com/TRON-US/go-btfs/core/corehttp/remote"
-	"github.com/TRON-US/go-btfs/settlement/swap/swapprotocol"
+	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/corehttp/remote"
+	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
 )
 
 var StorageUploadChequeCmd = &cmds.Command{

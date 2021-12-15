@@ -3,7 +3,7 @@ package remote
 import (
 	"context"
 
-	"github.com/TRON-US/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	cmdsHttp "github.com/TRON-US/go-btfs-cmds/http"

@@ -6,9 +6,9 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/TRON-US/go-btfs/settlement/swap/vault"
-	storemock "github.com/TRON-US/go-btfs/statestore/mock"
-	transactionmock "github.com/TRON-US/go-btfs/transaction/mock"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault"
+	storemock "github.com/bittorrent/go-btfs/statestore/mock"
+	transactionmock "github.com/bittorrent/go-btfs/transaction/mock"
 	"github.com/ethereum/go-ethereum/common"
 )
 

@@ -5,9 +5,9 @@ import (
 	"io"
 	"os"
 
-	core "github.com/TRON-US/go-btfs/core"
-	cmdenv "github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	e "github.com/TRON-US/go-btfs/core/commands/e"
+	core "github.com/bittorrent/go-btfs/core"
+	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	e "github.com/bittorrent/go-btfs/core/commands/e"
 	filestore "github.com/ipfs/go-filestore"
 
 	"github.com/TRON-US/go-btfs-cmds"

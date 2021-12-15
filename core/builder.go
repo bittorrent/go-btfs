@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/bootstrap"
-	"github.com/TRON-US/go-btfs/core/node"
+	"github.com/bittorrent/go-btfs/core/bootstrap"
+	"github.com/bittorrent/go-btfs/core/node"
 
 	"github.com/ipfs/go-metrics-interface"
 	"go.uber.org/fx"

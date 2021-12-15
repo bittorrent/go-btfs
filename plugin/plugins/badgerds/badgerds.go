@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/TRON-US/go-btfs/plugin"
-	"github.com/TRON-US/go-btfs/repo"
-	"github.com/TRON-US/go-btfs/repo/fsrepo"
+	"github.com/bittorrent/go-btfs/plugin"
+	"github.com/bittorrent/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/repo/fsrepo"
 
 	humanize "github.com/dustin/go-humanize"
 	badgerds "github.com/ipfs/go-ds-badger"

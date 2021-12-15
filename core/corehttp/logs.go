@@ -5,7 +5,7 @@ import (
 	"net"
 	"net/http"
 
-	core "github.com/TRON-US/go-btfs/core"
+	core "github.com/bittorrent/go-btfs/core"
 	lwriter "github.com/ipfs/go-log/writer"
 )
 

@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	bootstrap2 "github.com/TRON-US/go-btfs/core/bootstrap"
-	"github.com/TRON-US/go-btfs/core/coreapi"
-	mock "github.com/TRON-US/go-btfs/core/mock"
-	"github.com/TRON-US/go-btfs/thirdparty/unit"
+	bootstrap2 "github.com/bittorrent/go-btfs/core/bootstrap"
+	"github.com/bittorrent/go-btfs/core/coreapi"
+	mock "github.com/bittorrent/go-btfs/core/mock"
+	"github.com/bittorrent/go-btfs/thirdparty/unit"
 
 	files "github.com/TRON-US/go-btfs-files"
 	peer "github.com/libp2p/go-libp2p-core/peer"

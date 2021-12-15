@@ -5,8 +5,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/TRON-US/go-btfs/chain"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/sessions"
+	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 )
 
 func payInCheque(rss *sessions.RenterSession) error {

@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/TRON-US/go-btfs/plugin/loader"
-	"github.com/TRON-US/go-btfs/repo/fsrepo"
+	"github.com/bittorrent/go-btfs/plugin/loader"
+	"github.com/bittorrent/go-btfs/repo/fsrepo"
 
 	"github.com/TRON-US/go-btfs-config"
 )

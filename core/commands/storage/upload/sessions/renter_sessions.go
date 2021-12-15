@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
-	uh "github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	renterpb "github.com/TRON-US/go-btfs/protos/renter"
-	sessionpb "github.com/TRON-US/go-btfs/protos/session"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	renterpb "github.com/bittorrent/go-btfs/protos/renter"
+	sessionpb "github.com/bittorrent/go-btfs/protos/session"
 
 	"github.com/tron-us/protobuf/proto"
 

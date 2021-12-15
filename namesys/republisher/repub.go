@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	keystore "github.com/TRON-US/go-btfs/keystore"
-	namesys "github.com/TRON-US/go-btfs/namesys"
+	keystore "github.com/bittorrent/go-btfs/keystore"
+	namesys "github.com/bittorrent/go-btfs/namesys"
 
 	btns "github.com/TRON-US/go-btns"
 	pb "github.com/TRON-US/go-btns/pb"

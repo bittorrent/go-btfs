@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	tar "github.com/TRON-US/go-btfs/tar"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	tar "github.com/bittorrent/go-btfs/tar"
 
 	"github.com/TRON-US/go-btfs-cmds"
 	path "github.com/TRON-US/interface-go-btfs-core/path"

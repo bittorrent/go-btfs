@@ -42,10 +42,10 @@ TEST_GO :=
 TEST_GO_BUILD :=
 CHECK_GO :=
 
-go-pkg-name=$(shell $(GOCC) list $(go-tags) github.com/TRON-US/go-btfs/$(1))
+go-pkg-name=$(shell $(GOCC) list $(go-tags) github.com/bittorrent/go-btfs/$(1))
 go-main-name=$(notdir $(call go-pkg-name,$(1)))$(?exe)
 go-curr-pkg-tgt=$(d)/$(call go-main-name,$(d))
-go-pkgs=$(shell $(GOCC) list github.com/TRON-US/go-btfs/...)
+go-pkgs=$(shell $(GOCC) list github.com/bittorrent/go-btfs/...)
 
 go-tags=$(if $(GOTAGS), -tags="$(call join-with,$(space),$(GOTAGS))")
 go-flags-with-tags=$(GOFLAGS)$(go-tags)

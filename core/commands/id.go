@@ -11,10 +11,10 @@ import (
 	"sort"
 	"strings"
 
-	version "github.com/TRON-US/go-btfs"
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	ke "github.com/TRON-US/go-btfs/core/commands/keyencode"
+	version "github.com/bittorrent/go-btfs"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	ke "github.com/bittorrent/go-btfs/core/commands/keyencode"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	ic "github.com/libp2p/go-libp2p-core/crypto"

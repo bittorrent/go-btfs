@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	"github.com/TRON-US/go-btfs/core/corehttp/remote"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	"github.com/tron-us/go-common/v2/json"

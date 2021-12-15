@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/TRON-US/go-btfs/transaction/storage"
+	"github.com/bittorrent/go-btfs/transaction/storage"
 	logging "github.com/ipfs/go-log"
 )
 

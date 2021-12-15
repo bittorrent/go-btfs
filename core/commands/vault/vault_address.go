@@ -6,7 +6,7 @@ import (
 	"time"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
-	"github.com/TRON-US/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/chain"
 )
 
 type VaultAddrCmdRet struct {

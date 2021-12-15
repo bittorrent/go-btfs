@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	version "github.com/TRON-US/go-btfs"
-	core "github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/coreapi"
-	namesys "github.com/TRON-US/go-btfs/namesys"
-	repo "github.com/TRON-US/go-btfs/repo"
+	version "github.com/bittorrent/go-btfs"
+	core "github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/coreapi"
+	namesys "github.com/bittorrent/go-btfs/namesys"
+	repo "github.com/bittorrent/go-btfs/repo"
 
 	config "github.com/TRON-US/go-btfs-config"
 	files "github.com/TRON-US/go-btfs-files"

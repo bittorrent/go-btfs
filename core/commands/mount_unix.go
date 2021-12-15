@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	cmdenv "github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	nodeMount "github.com/TRON-US/go-btfs/fuse/node"
+	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	nodeMount "github.com/bittorrent/go-btfs/fuse/node"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"

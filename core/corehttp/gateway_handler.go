@@ -16,7 +16,7 @@ import (
 	"time"
 
 	files "github.com/TRON-US/go-btfs-files"
-	"github.com/TRON-US/go-btfs/assets"
+	"github.com/bittorrent/go-btfs/assets"
 	mfs "github.com/TRON-US/go-mfs"
 	coreiface "github.com/TRON-US/interface-go-btfs-core"
 	ipath "github.com/TRON-US/interface-go-btfs-core/path"

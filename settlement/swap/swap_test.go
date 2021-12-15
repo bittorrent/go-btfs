@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/TRON-US/go-btfs/settlement/swap"
-	mockchequestore "github.com/TRON-US/go-btfs/settlement/swap/chequestore/mock"
-	"github.com/TRON-US/go-btfs/settlement/swap/swapprotocol"
-	"github.com/TRON-US/go-btfs/settlement/swap/vault"
-	mockvault "github.com/TRON-US/go-btfs/settlement/swap/vault/mock"
-	mockstore "github.com/TRON-US/go-btfs/statestore/mock"
+	"github.com/bittorrent/go-btfs/settlement/swap"
+	mockchequestore "github.com/bittorrent/go-btfs/settlement/swap/chequestore/mock"
+	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault"
+	mockvault "github.com/bittorrent/go-btfs/settlement/swap/vault/mock"
+	mockstore "github.com/bittorrent/go-btfs/statestore/mock"
 	"github.com/ethereum/go-ethereum/common"
 
 	peerInfo "github.com/libp2p/go-libp2p-core/peer"

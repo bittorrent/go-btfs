@@ -4,7 +4,7 @@ import (
 	"sort"
 	"time"
 
-	version "github.com/TRON-US/go-btfs"
+	version "github.com/bittorrent/go-btfs"
 
 	config "github.com/TRON-US/go-btfs-config"
 

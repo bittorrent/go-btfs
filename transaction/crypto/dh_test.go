@@ -8,7 +8,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/TRON-US/go-btfs/transaction/crypto"
+	"github.com/bittorrent/go-btfs/transaction/crypto"
 	"github.com/btcsuite/btcd/btcec"
 )
 

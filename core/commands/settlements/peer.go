@@ -7,8 +7,8 @@ import (
 	"time"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
-	"github.com/TRON-US/go-btfs/chain"
-	"github.com/TRON-US/go-btfs/settlement"
+	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/settlement"
 )
 
 var PeerSettlementCmd = &cmds.Command{

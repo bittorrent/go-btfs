@@ -3,13 +3,13 @@ package sessions
 import (
 	"context"
 	"fmt"
-	renterpb "github.com/TRON-US/go-btfs/protos/renter"
+	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 	"strings"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
-	uh "github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	shardpb "github.com/TRON-US/go-btfs/protos/shard"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	shardpb "github.com/bittorrent/go-btfs/protos/shard"
 
 	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
 	nodepb "github.com/tron-us/go-btfs-common/protos/node"

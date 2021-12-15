@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	btfs_version "github.com/TRON-US/go-btfs"
+	btfs_version "github.com/bittorrent/go-btfs"
 	"github.com/TRON-US/go-btfs-api"
 	"github.com/mholt/archiver/v3"
 	"github.com/pkg/errors"

@@ -7,10 +7,10 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/TRON-US/go-btfs/settlement/swap/vault"
-	"github.com/TRON-US/go-btfs/transaction/crypto"
-	"github.com/TRON-US/go-btfs/transaction/crypto/eip712"
-	signermock "github.com/TRON-US/go-btfs/transaction/crypto/mock"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault"
+	"github.com/bittorrent/go-btfs/transaction/crypto"
+	"github.com/bittorrent/go-btfs/transaction/crypto/eip712"
+	signermock "github.com/bittorrent/go-btfs/transaction/crypto/mock"
 	"github.com/ethereum/go-ethereum/common"
 )
 

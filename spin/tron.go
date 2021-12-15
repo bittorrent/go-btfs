@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/wallet"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/wallet"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 )

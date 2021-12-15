@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
-	"github.com/TRON-US/go-btfs/core/commands/storage/hosts"
-	"github.com/TRON-US/go-btfs/core/commands/storage/stats"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/hosts"
+	"github.com/bittorrent/go-btfs/core/commands/storage/stats"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
-	"github.com/TRON-US/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core"
 )
 
 const (

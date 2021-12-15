@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
-	"github.com/TRON-US/go-btfs/core/hub"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	"github.com/bittorrent/go-btfs/core/hub"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	hubpb "github.com/tron-us/go-btfs-common/protos/hub"

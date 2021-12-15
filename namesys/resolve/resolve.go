@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/TRON-US/go-btfs/namesys"
+	"github.com/bittorrent/go-btfs/namesys"
 
 	"github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log"
