@@ -390,15 +390,12 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	fmt.Println("the address of Bttc format is: ", address0x)
 	fmt.Println("the address of Tron format is: ", keys.Base58Address)
 
-	fmt.Printf("init statestore\n")
 	//chain init
 	statestore, err := chain.InitStateStore(cctx.ConfigRoot)
 	if err != nil {
 		fmt.Println("init statestore err: ", err)
 		return err
 	}
-
-	fmt.Printf("init chain\n")
 
 	chainid := cc.DefaultChain
 
@@ -410,14 +407,18 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		}
 	}
 
-	//endpoint 先hardcode
+	if cc.DefaultChain != chainid {
+		fmt.Println("invalid chainid")
+		return fmt.Errorf("invalid chainid")
+	}
+
+	//endpoint
 	chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000), chainid)
 	if err != nil {
 		fmt.Println("init chain err: ", err)
 		return err
 	}
 
-	fmt.Println("sync chain")
 	// Sync the with the given Ethereum backend:
 	isSynced, _, err := transaction.IsSynced(context.Background(), chainInfo.Backend, chain.MaxDelay)
 	if err != nil {
@@ -438,7 +439,6 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		deployGasPrice = chainInfo.Chainconfig.DeploymentGas
 	}
 
-	fmt.Println("init settle")
 	/*settleinfo*/
 	_, err = chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
 	if err != nil {

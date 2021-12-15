@@ -9,7 +9,7 @@ var (
 	ethChainID      = int64(5)
 	tronChainID     = int64(100)
 	bttcChainID     = int64(199)
-	bttcTestChainID = int64(1028)
+	bttcTestChainID = int64(1029)
 	testChainID     = int64(1337)
 	// start block
 	ethStartBlock = uint64(10000)
@@ -25,8 +25,8 @@ var (
 	tronOracleAddress  = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	tronBatchAddress   = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 
-	bttcTestFactoryAddress = common.HexToAddress("0x70C82365596e9462B840A385f26BF5AB3264A59C")
-	bttcTestOracleAddress  = common.HexToAddress("0xFbd26e2ebBEd23420238059B106dCbAB9F0e8537")
+	bttcTestFactoryAddress = common.HexToAddress("0x953bb0d5bF1DF0050b43BAff7Ae756102F5550E4")
+	bttcTestOracleAddress  = common.HexToAddress("0xF6515C49F97ebF6355214A6D6132fAD4b40D2f84")
 	bttcTestBatchAddress   = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 
 	bttcFactoryAddress = common.HexToAddress("0x107742EB846b86CEaAF7528D5C85cddcad3e409A")
@@ -44,7 +44,7 @@ var (
 	ethEndpoint      = ""
 	tronEndpoint     = ""
 	bttcEndpoint     = "https://rpc.bittorrentchain.io/"
-	bttcTestEndpoint = "https://test-rpc.bittorrentchain.io/"
+	bttcTestEndpoint = "https://pre-rpc.bt.io/"
 	testEndpoint     = "http://18.144.29.246:8110"
 
 	DefaultChain = bttcTestChainID
@@ -104,6 +104,12 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		return &cfg, true
 
 	default:
-		return &cfg, false
+		cfg.StartBlock = bttcStartBlock
+		cfg.CurrentFactory = bttcTestFactoryAddress
+		cfg.PriceOracleAddress = bttcTestOracleAddress
+		cfg.DeploymentGas = bttcTestDeploymentGas
+		cfg.Endpoint = bttcTestEndpoint
+		cfg.BatchAddress = bttcTestBatchAddress
+		return &cfg, true
 	}
 }
