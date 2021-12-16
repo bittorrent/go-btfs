@@ -67,10 +67,10 @@ to get started, enter:
 
 Start the BTFS Daemon
 ```
-$ btfs daemon --chainid <chainid>
+$ btfs daemon --chain-id <chainid>
 ```
 
-Specify the chain for btfs to run by `--chainid`, the chainid of the test network is `1029`, and the start command becomes: `btfs daemon --chainid 1029`
+Specify the chain for btfs to run by `--chain-id`, the chainid of the test network is `1029`, and the start command becomes: `btfs daemon --chain-id 1029`
 ```
 $ btfs daemon --chain-id 1029
 Initializing daemon...
