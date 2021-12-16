@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"runtime/debug"
 
-	version "github.com/TRON-US/go-btfs"
-	fsrepo "github.com/TRON-US/go-btfs/repo/fsrepo"
+	version "github.com/bittorrent/go-btfs"
+	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 )

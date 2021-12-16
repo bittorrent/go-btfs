@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/TRON-US/go-btfs/namesys"
-	"github.com/TRON-US/go-btfs/namesys/republisher"
-	"github.com/TRON-US/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/namesys"
+	"github.com/bittorrent/go-btfs/namesys/republisher"
+	"github.com/bittorrent/go-btfs/repo"
 
 	"github.com/TRON-US/go-btns"
 	"github.com/ipfs/go-ipfs-util"

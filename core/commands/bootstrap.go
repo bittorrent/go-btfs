@@ -6,9 +6,9 @@ import (
 	"io"
 	"sort"
 
-	cmdenv "github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	repo "github.com/TRON-US/go-btfs/repo"
-	fsrepo "github.com/TRON-US/go-btfs/repo/fsrepo"
+	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	repo "github.com/bittorrent/go-btfs/repo"
+	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"
@@ -272,6 +272,11 @@ var bootstrapListCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
+
+		//peerId := "16Uiu2HAm9FuG2UfhH5ihKUP5PehzkoTRbHNSUsNofqufJ8QUvdSW"
+		//chain.SettleObject.SwapService.Settle(peerId, big.NewInt(1), "")
+
+		//return errors.New(fmt.Sprintf("hello world, error!"))
 
 		return cmds.EmitOnce(res, &BootstrapOutput{config.BootstrapPeerStrings(peers)})
 	},

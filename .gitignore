@@ -44,3 +44,6 @@ cmd/btfs/config_darwin_amd64.yaml
 cmd/btfs/fs-repo-migrations
 cmd/btfs/fs-repo-migrations.bk
 cmd/btfs/update-darwin-amd64
+
+cmd/.DS_Store
+cmd/btfs/s

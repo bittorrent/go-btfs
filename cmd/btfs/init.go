@@ -11,13 +11,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/TRON-US/go-btfs/assets"
-	"github.com/TRON-US/go-btfs/cmd/btfs/util"
-	oldcmds "github.com/TRON-US/go-btfs/commands"
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/commands"
-	"github.com/TRON-US/go-btfs/namesys"
-	fsrepo "github.com/TRON-US/go-btfs/repo/fsrepo"
+	"github.com/bittorrent/go-btfs/assets"
+	"github.com/bittorrent/go-btfs/cmd/btfs/util"
+	oldcmds "github.com/bittorrent/go-btfs/commands"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/commands"
+	"github.com/bittorrent/go-btfs/namesys"
+	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"
@@ -30,9 +30,13 @@ const (
 	profileOptionName   = "profile"
 	keyTypeDefault      = "BIP39"
 	keyTypeOptionName   = "key"
-	importKeyOptionName = "import"
+	//importKeyOptionName    = "import"
 	rmOnUnpinOptionName = "rm-on-unpin"
 	seedOptionName      = "seed"
+	/*
+		passWordOptionName     = "password"
+		passwordFileoptionName = "password-file"
+	*/
 )
 
 var initCmd = &cmds.Command{
@@ -60,10 +64,14 @@ environment variable:
 		cmds.IntOption(bitsOptionName, "b", "Number of bits to use in the generated RSA private key.").WithDefault(util.NBitsForKeypairDefault),
 		cmds.BoolOption(emptyRepoOptionName, "e", "Don't add and pin help files to the local storage."),
 		cmds.StringOption(profileOptionName, "p", "Apply profile settings to config. Multiple profiles can be separated by ','"),
-		cmds.StringOption(keyTypeOptionName, "k", "Key generation algorithm, e.g. RSA, Ed25519, Secp256k1, ECDSA, BIP39. By default is Secp256k1"),
-		cmds.StringOption(importKeyOptionName, "i", "Import TRON private key to generate btfs PeerID."),
+		cmds.StringOption(keyTypeOptionName, "k", "Key generation algorithm, e.g. RSA, Ed25519, Secp256k1, ECDSA, BIP39. By default is BIP39"),
+		//cmds.StringOption(importKeyOptionName, "i", "Import TRON private key to generate btfs PeerID."),
 		cmds.BoolOption(rmOnUnpinOptionName, "r", "Remove unpinned files.").WithDefault(false),
 		cmds.StringOption(seedOptionName, "s", "Import seed phrase"),
+		/*
+			cmds.StringOption(passWordOptionName, "", "password for decrypting keys."),
+			cmds.StringOption(passwordFileoptionName, "", "path to a file that contains password for decrypting keys"),
+		*/
 
 		// TODO need to decide whether to expose the override as a file or a
 		// directory. That is: should we allow the user to also specify the
@@ -117,11 +125,15 @@ environment variable:
 		}
 
 		profile, _ := req.Options[profileOptionName].(string)
-		importKey, _ := req.Options[importKeyOptionName].(string)
+		//importKey, _ := req.Options[importKeyOptionName].(string)
 		keyType, _ := req.Options[keyTypeOptionName].(string)
 		seedPhrase, _ := req.Options[seedOptionName].(string)
+		/*
+			password, _ := req.Options[passWordOptionName].(string)
+			passwordFile, _ := req.Options[passwordFileoptionName].(string)
+		*/
 
-		return doInit(os.Stdout, cctx.ConfigRoot, empty, nBitsForKeypair, profile, conf, keyType, importKey, seedPhrase, rmOnUnpin)
+		return doInit(os.Stdout, cctx.ConfigRoot, empty, nBitsForKeypair, profile, conf, keyType, "", seedPhrase, rmOnUnpin)
 	},
 }
 

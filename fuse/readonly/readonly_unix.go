@@ -10,9 +10,9 @@ import (
 	"os"
 	"syscall"
 
-	core "github.com/TRON-US/go-btfs/core"
 	ft "github.com/TRON-US/go-unixfs"
 	uio "github.com/TRON-US/go-unixfs/io"
+	core "github.com/bittorrent/go-btfs/core"
 	mdag "github.com/ipfs/go-merkledag"
 	path "github.com/ipfs/go-path"
 

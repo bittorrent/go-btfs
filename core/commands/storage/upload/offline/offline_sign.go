@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
-	uh "github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/sessions"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
-	renterpb "github.com/TRON-US/go-btfs/protos/renter"
+	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
 	cmap "github.com/orcaman/concurrent-map"
 )
@@ -58,16 +58,16 @@ to the upload session.`,
 		switch req.Arguments[4] {
 		case sessions.RssSubmitStatus:
 			cm = uh.BalanceChanMaps
-		case sessions.RssSubmitBalanceReqSignedStatus:
-			cm = uh.SignedChannelCommitChanMaps
-		case sessions.RssPayStatus:
-			cm = uh.PayinReqChanMaps
+		//case sessions.RssSubmitBalanceReqSignedStatus:
+		//	cm = uh.SignedChannelCommitChanMaps
 		case sessions.RssGuardStatus:
 			cm = uh.FileMetaChanMaps
 		case sessions.RssGuardFileMetaSignedStatus:
 			cm = uh.QuestionsChanMaps
 		case sessions.RssWaitUploadStatus:
 			cm = uh.WaitUploadChanMap
+		//case sessions.RssPayStatus:
+		//cm = uh.PayinReqChanMaps
 		default:
 			return errors.New("wrong status:" + req.Arguments[4])
 		}

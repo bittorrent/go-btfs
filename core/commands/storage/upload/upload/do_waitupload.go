@@ -4,13 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
+	"sync"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/contracts"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/sessions"
-	renterpb "github.com/TRON-US/go-btfs/protos/renter"
+	"github.com/bittorrent/go-btfs/core/commands/storage/contracts"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
+	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
 	"github.com/tron-us/go-btfs-common/crypto"
 	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
@@ -134,6 +136,26 @@ func waitUpload(rss *sessions.RenterSession, offlineSigning bool, fsStatus *guar
 	if err != nil {
 		return err
 	}
+
+	// pay in cheque
+	var wg sync.WaitGroup
+	wg.Add(1)
+	if err := rss.To(sessions.RssToPayEvent); err != nil {
+		return err
+	}
+	go func() {
+		err = func() error {
+			return payInCheque(rss)
+		}()
+		if err != nil {
+			fmt.Println("payInCheque error:", err)
+		}
+		fmt.Println("payInCheque done")
+		wg.Done()
+	}()
+	wg.Wait()
+
+	// Complete
 	if err := rss.To(sessions.RssToCompleteEvent); err != nil {
 		return err
 	} else {

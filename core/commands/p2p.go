@@ -5,14 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/big"
 	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
 
-	core "github.com/TRON-US/go-btfs/core"
-	cmdenv "github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	p2p "github.com/TRON-US/go-btfs/p2p"
+	"github.com/bittorrent/go-btfs/chain"
+	core "github.com/bittorrent/go-btfs/core"
+	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/corehttp/remote"
+	p2p "github.com/bittorrent/go-btfs/p2p"
+	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol/pb"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	peer "github.com/libp2p/go-libp2p-core/peer"
@@ -50,6 +55,10 @@ type P2PStreamsOutput struct {
 	Streams []P2PStreamInfoOutput
 }
 
+type P2PHandshakeOutput struct {
+	Beneficiary string
+}
+
 const (
 	allowCustomProtocolOptionName = "allow-custom-protocol"
 	reportPeerIDOptionName        = "report-peer-id"
@@ -69,11 +78,12 @@ are refined`,
 	},
 
 	Subcommands: map[string]*cmds.Command{
-		"stream":  p2pStreamCmd,
-		"forward": p2pForwardCmd,
-		"listen":  p2pListenCmd,
-		"close":   p2pCloseCmd,
-		"ls":      p2pLsCmd,
+		"stream":    p2pStreamCmd,
+		"forward":   p2pForwardCmd,
+		"listen":    p2pListenCmd,
+		"close":     p2pCloseCmd,
+		"ls":        p2pLsCmd,
+		"handshake": P2phandshakeCmd,
 	},
 }
 
@@ -557,4 +567,45 @@ func p2pGetNode(env cmds.Environment) (*core.IpfsNode, error) {
 	}
 
 	return nd, nil
+}
+
+var P2phandshakeCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "P2p handshake.",
+	},
+	Arguments: []cmds.Argument{
+		cmds.StringArg("chain-id", true, false, "the specified chain."),
+		cmds.StringArg("peer-id", true, false, "the id of peer who send handshake data."),
+	},
+	RunTimeout: 1 * time.Minute,
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		ctxParams, err := uh.ExtractContextParams(req, env)
+		if err != nil {
+			return err
+		}
+
+		requestPid, ok := remote.GetStreamRequestRemotePeerID(req, ctxParams.N)
+		if !ok {
+			return fmt.Errorf("fail to get peer ID from request")
+		}
+
+		chain_id, ok := new(big.Int).SetString(req.Arguments[0], 10)
+		if !ok {
+			return fmt.Errorf("chainid:%s cannot be parsed", req.Arguments[1])
+		}
+
+		peer_id := req.Arguments[1]
+
+		if peer_id != requestPid.String() {
+			return fmt.Errorf("the wrong peer ID: want[%s], get[%s]", requestPid.String(), peer_id)
+		}
+
+		fmt.Printf("receive handshake from peer peer_id:%v, chain_id:%v \n", peer_id, chain_id)
+
+		output := &pb.Handshake{}
+		output.Beneficiary = chain.ChainObject.OverlayAddress.Bytes()
+
+		return cmds.EmitOnce(res, output)
+	},
+	Type: pb.Handshake{},
 }

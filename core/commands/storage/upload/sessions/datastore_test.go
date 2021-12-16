@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	coremock "github.com/TRON-US/go-btfs/core/mock"
-	sessionpb "github.com/TRON-US/go-btfs/protos/session"
+	coremock "github.com/bittorrent/go-btfs/core/mock"
+	sessionpb "github.com/bittorrent/go-btfs/protos/session"
 
 	"github.com/stretchr/testify/assert"
 )

@@ -8,9 +8,9 @@ import (
 
 	"go.uber.org/fx"
 
-	"github.com/TRON-US/go-btfs/core/node/helpers"
-	"github.com/TRON-US/go-btfs/core/node/libp2p"
-	"github.com/TRON-US/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/core/node/helpers"
+	"github.com/bittorrent/go-btfs/core/node/libp2p"
+	"github.com/bittorrent/go-btfs/repo"
 
 	cfg "github.com/TRON-US/go-btfs-config"
 	ds "github.com/ipfs/go-datastore"

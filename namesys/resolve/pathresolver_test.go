@@ -3,8 +3,8 @@ package resolve_test
 import (
 	"testing"
 
-	coremock "github.com/TRON-US/go-btfs/core/mock"
-	"github.com/TRON-US/go-btfs/namesys/resolve"
+	coremock "github.com/bittorrent/go-btfs/core/mock"
+	"github.com/bittorrent/go-btfs/namesys/resolve"
 
 	path "github.com/ipfs/go-path"
 )

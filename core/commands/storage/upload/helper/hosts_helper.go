@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
-	"github.com/TRON-US/go-btfs/core/corehttp/remote"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 
 	iface "github.com/TRON-US/interface-go-btfs-core"
 	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
@@ -24,7 +24,7 @@ const (
 )
 
 type IHostsProvider interface {
-	NextValidHost(price int64) (string, error)
+	NextValidHost() (string, error)
 }
 
 type CustomizedHostsProvider struct {
@@ -34,7 +34,7 @@ type CustomizedHostsProvider struct {
 	sync.Mutex
 }
 
-func (p *CustomizedHostsProvider) NextValidHost(price int64) (string, error) {
+func (p *CustomizedHostsProvider) NextValidHost() (string, error) {
 	for true {
 		if index, err := p.AddIndex(); err == nil {
 			id, err := peer.IDB58Decode(p.hosts[index])
@@ -205,7 +205,7 @@ func (p *HostsProvider) PickFromBackupHosts() (string, error) {
 	return "", errors.New("shouldn't reach here")
 }
 
-func (p *HostsProvider) NextValidHost(price int64) (string, error) {
+func (p *HostsProvider) NextValidHost() (string, error) {
 	endOfBackup := false
 LOOP:
 	for true {
@@ -226,8 +226,11 @@ LOOP:
 				}
 			}
 			id, err := peer.IDB58Decode(host.NodeId)
-			if err != nil || int64(host.StoragePriceAsk) > price {
-				p.needHigherPrice = true
+			//if err != nil || int64(host.StoragePriceAsk) > price {
+			//	p.needHigherPrice = true
+			//	continue
+			//}
+			if err != nil {
 				continue
 			}
 			ctx, _ := context.WithTimeout(p.ctx, 3*time.Second)

@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/coreapi"
-	"github.com/TRON-US/go-btfs/core/coreunix"
-	"github.com/TRON-US/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/coreapi"
+	"github.com/bittorrent/go-btfs/core/coreunix"
+	"github.com/bittorrent/go-btfs/repo"
 
 	chunker "github.com/TRON-US/go-btfs-chunker"
 	config "github.com/TRON-US/go-btfs-config"

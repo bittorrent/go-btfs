@@ -6,8 +6,8 @@ import (
 
 	context "context"
 
-	"github.com/TRON-US/go-btfs/core"
-	fsrepo "github.com/TRON-US/go-btfs/repo/fsrepo"
+	"github.com/bittorrent/go-btfs/core"
+	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 
 	humanize "github.com/dustin/go-humanize"
 )

@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/coreapi"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/coreapi"
 
 	files "github.com/TRON-US/go-btfs-files"
 	options "github.com/TRON-US/interface-go-btfs-core/options"

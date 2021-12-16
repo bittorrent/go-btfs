@@ -1,7 +1,7 @@
 package plugin
 
 import (
-	"github.com/TRON-US/go-btfs/repo/fsrepo"
+	"github.com/bittorrent/go-btfs/repo/fsrepo"
 )
 
 // PluginDatastore is an interface that can be implemented to add handlers for

@@ -10,10 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	version "github.com/TRON-US/go-btfs"
-	oldcmds "github.com/TRON-US/go-btfs/commands"
-	"github.com/TRON-US/go-btfs/core"
-	corecommands "github.com/TRON-US/go-btfs/core/commands"
+	version "github.com/bittorrent/go-btfs"
+	oldcmds "github.com/bittorrent/go-btfs/commands"
+	"github.com/bittorrent/go-btfs/core"
+	corecommands "github.com/bittorrent/go-btfs/core/commands"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	cmdsHttp "github.com/TRON-US/go-btfs-cmds/http"

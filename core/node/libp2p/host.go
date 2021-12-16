@@ -3,8 +3,8 @@ package libp2p
 import (
 	"context"
 
-	"github.com/TRON-US/go-btfs/core/node/helpers"
-	"github.com/TRON-US/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/core/node/helpers"
+	"github.com/bittorrent/go-btfs/repo"
 
 	"github.com/libp2p/go-libp2p"
 	host "github.com/libp2p/go-libp2p-core/host"

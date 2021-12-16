@@ -11,8 +11,8 @@ import (
 
 	logging "github.com/ipfs/go-log"
 	"github.com/jbenet/goprocess"
-	"github.com/jbenet/goprocess/context"
-	"github.com/jbenet/goprocess/periodic"
+	goprocessctx "github.com/jbenet/goprocess/context"
+	periodicproc "github.com/jbenet/goprocess/periodic"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -72,13 +72,13 @@ func BootstrapConfigWithPeers(pis []peer.AddrInfo) BootstrapConfig {
 // connections to well-known bootstrap peers. It also kicks off subsystem
 // bootstrapping (i.e. routing).
 func Bootstrap(id peer.ID, host host.Host, rt routing.Routing, cfg BootstrapConfig) (io.Closer, error) {
-
 	// make a signal to wait for one bootstrap round to complete.
 	doneWithRound := make(chan struct{})
 
 	if len(cfg.BootstrapPeers()) == 0 {
 		// We *need* to bootstrap but we have no bootstrap peers
 		// configured *at all*, inform the user.
+		fmt.Println("Bootstrap: no bootstrap nodes configured")
 		log.Warn("no bootstrap nodes configured: go-btfs may have difficulty connecting to the network")
 	}
 
@@ -167,8 +167,8 @@ func bootstrapConnect(ctx context.Context, ph host.Host, peers []peer.AddrInfo) 
 		go func(p peer.AddrInfo) {
 			defer wg.Done()
 			log.Debugf("%s bootstrapping to %s", ph.ID(), p.ID)
-
 			ph.Peerstore().AddAddrs(p.ID, p.Addrs, peerstore.PermanentAddrTTL)
+
 			if err := ph.Connect(ctx, p); err != nil {
 				log.Debugf("failed to bootstrap with %v: %s", p.ID, err)
 				errs <- err

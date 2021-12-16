@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TRON-US/go-btfs/keystore"
-	"github.com/TRON-US/go-btfs/namesys"
+	"github.com/bittorrent/go-btfs/keystore"
+	"github.com/bittorrent/go-btfs/namesys"
 
 	coreiface "github.com/TRON-US/interface-go-btfs-core"
 	caopts "github.com/TRON-US/interface-go-btfs-core/options"

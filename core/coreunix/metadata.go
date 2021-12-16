@@ -8,7 +8,7 @@ import (
 	"fmt"
 	gopath "path"
 
-	core "github.com/TRON-US/go-btfs/core"
+	core "github.com/bittorrent/go-btfs/core"
 
 	chunker "github.com/TRON-US/go-btfs-chunker"
 	"github.com/TRON-US/go-btfs-pinner"

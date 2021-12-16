@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core"
-	mock "github.com/TRON-US/go-btfs/core/mock"
-	libp2p2 "github.com/TRON-US/go-btfs/core/node/libp2p"
+	"github.com/bittorrent/go-btfs/core"
+	mock "github.com/bittorrent/go-btfs/core/mock"
+	libp2p2 "github.com/bittorrent/go-btfs/core/node/libp2p"
 	"github.com/ipfs/go-cid"
 
 	corenet "github.com/libp2p/go-libp2p-core/network"

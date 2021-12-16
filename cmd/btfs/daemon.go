@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"encoding/base64"
 	"errors"
 	_ "expvar"
 	"fmt"
@@ -15,27 +17,32 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-
-	version "github.com/TRON-US/go-btfs"
-	utilmain "github.com/TRON-US/go-btfs/cmd/btfs/util"
-	oldcmds "github.com/TRON-US/go-btfs/commands"
-	"github.com/TRON-US/go-btfs/core"
-	commands "github.com/TRON-US/go-btfs/core/commands"
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	"github.com/TRON-US/go-btfs/core/commands/storage/path"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	corehttp "github.com/TRON-US/go-btfs/core/corehttp"
-	httpremote "github.com/TRON-US/go-btfs/core/corehttp/remote"
-	corerepo "github.com/TRON-US/go-btfs/core/corerepo"
-	libp2p "github.com/TRON-US/go-btfs/core/node/libp2p"
-	nodeMount "github.com/TRON-US/go-btfs/fuse/node"
-	fsrepo "github.com/TRON-US/go-btfs/repo/fsrepo"
-	migrate "github.com/TRON-US/go-btfs/repo/fsrepo/migrations"
-	"github.com/TRON-US/go-btfs/spin"
+	"time"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"
 	cserial "github.com/TRON-US/go-btfs-config/serialize"
+	version "github.com/bittorrent/go-btfs"
+	"github.com/bittorrent/go-btfs/bindata"
+	"github.com/bittorrent/go-btfs/chain"
+	cc "github.com/bittorrent/go-btfs/chain/config"
+	utilmain "github.com/bittorrent/go-btfs/cmd/btfs/util"
+	oldcmds "github.com/bittorrent/go-btfs/commands"
+	"github.com/bittorrent/go-btfs/core"
+	commands "github.com/bittorrent/go-btfs/core/commands"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core/commands/storage/path"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	corehttp "github.com/bittorrent/go-btfs/core/corehttp"
+	httpremote "github.com/bittorrent/go-btfs/core/corehttp/remote"
+	corerepo "github.com/bittorrent/go-btfs/core/corerepo"
+	libp2p "github.com/bittorrent/go-btfs/core/node/libp2p"
+	nodeMount "github.com/bittorrent/go-btfs/fuse/node"
+	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
+	migrate "github.com/bittorrent/go-btfs/repo/fsrepo/migrations"
+	"github.com/bittorrent/go-btfs/spin"
+	"github.com/bittorrent/go-btfs/transaction"
+	"github.com/bittorrent/go-btfs/transaction/crypto"
 
 	multierror "github.com/hashicorp/go-multierror"
 	util "github.com/ipfs/go-ipfs-util"
@@ -46,6 +53,7 @@ import (
 	manet "github.com/multiformats/go-multiaddr/net"
 	prometheus "github.com/prometheus/client_golang/prometheus"
 	promauto "github.com/prometheus/client_golang/prometheus/promauto"
+	cp "github.com/tron-us/go-btfs-common/crypto"
 	nodepb "github.com/tron-us/go-btfs-common/protos/node"
 )
 
@@ -77,6 +85,8 @@ const (
 	enableDataCollection      = "dc"
 	enableStartupTest         = "enable-startup-test"
 	swarmPortKwd              = "swarm-port"
+	deploymentGasPrice        = "deployment-gasPrice"
+	chainID                   = "chain-id"
 	// apiAddrKwd    = "address-api"
 	// swarmAddrKwd  = "address-swarm"
 )
@@ -201,7 +211,8 @@ Headers.
 		cmds.BoolOption(enableDataCollection, "Allow BTFS to collect and send out node statistics."),
 		cmds.BoolOption(enableStartupTest, "Allow BTFS to perform start up test.").WithDefault(false),
 		cmds.StringOption(swarmPortKwd, "Override existing announced swarm address with external port in the format of [WAN:LAN]."),
-
+		cmds.StringOption(deploymentGasPrice, "gas price in unit to use for deployment and funding."),
+		cmds.StringOption(chainID, "The ID of blockchain to deploy."),
 		// TODO: add way to override addresses. tricky part: updating the config if also --init.
 		// cmds.StringOption(apiAddrKwd, "Address for the daemon rpc API (overrides config)"),
 		// cmds.StringOption(swarmAddrKwd, "Address for the swarm socket (overrides config)"),
@@ -224,6 +235,8 @@ func defaultMux(path string) corehttp.ServeOption {
 }
 
 func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) (_err error) {
+	//swapprotocol.Req = req
+	//swapprotocol.Env = env
 
 	cctx := env.(*oldcmds.Context)
 	_, b := os.LookupEnv(path.BtfsPathKey)
@@ -351,6 +364,94 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	// Print self information for logging and debugging purposes
 	fmt.Printf("Repo location: %s\n", cctx.ConfigRoot)
 	fmt.Printf("Peer identity: %s\n", cfg.Identity.PeerID)
+
+	privKey, err := cp.ToPrivKey(cfg.Identity.PrivKey)
+	if err != nil {
+		return err
+	}
+
+	keys, err := cp.FromIcPrivateKey(privKey)
+	if err != nil {
+		return err
+	}
+
+	// decode from string
+	pkbytesOri, err := base64.StdEncoding.DecodeString(cfg.Identity.PrivKey)
+	if err != nil {
+		return err
+	}
+	//new singer
+	pk := crypto.Secp256k1PrivateKeyFromBytes(pkbytesOri[4:])
+	singer := crypto.NewDefaultSigner(pk)
+
+	address0x, _ := singer.EthereumAddress()
+
+	fmt.Println("the private key of wallet import format is: ", keys.HexPrivateKey)
+	fmt.Println("the address of Bttc format is: ", address0x)
+	fmt.Println("the address of Tron format is: ", keys.Base58Address)
+
+	//chain init
+	statestore, err := chain.InitStateStore(cctx.ConfigRoot)
+	if err != nil {
+		fmt.Println("init statestore err: ", err)
+		return err
+	}
+
+	chainid := cc.DefaultChain
+
+	chainidstr, found := req.Options[chainID].(string)
+	if found {
+		chainid, err = strconv.ParseInt(chainidstr, 10, 64)
+		if err != nil {
+			return err
+		}
+	}
+
+	if cc.DefaultChain != chainid {
+		fmt.Println("invalid chainid")
+		return fmt.Errorf("invalid chainid")
+	}
+
+	//endpoint
+	chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000), chainid)
+	if err != nil {
+		fmt.Println("init chain err: ", err)
+		return err
+	}
+
+	// Sync the with the given Ethereum backend:
+	isSynced, _, err := transaction.IsSynced(context.Background(), chainInfo.Backend, chain.MaxDelay)
+	if err != nil {
+		return fmt.Errorf("is synced: %w", err)
+	}
+
+	if !isSynced {
+		log.Infof("waiting to sync with the Ethereum backend")
+
+		err := transaction.WaitSynced(context.Background(), chainInfo.Backend, chain.MaxDelay)
+		if err != nil {
+			return fmt.Errorf("waiting backend sync: %w", err)
+		}
+	}
+
+	deployGasPrice, found := req.Options[deploymentGasPrice].(string)
+	if !found {
+		deployGasPrice = chainInfo.Chainconfig.DeploymentGas
+	}
+
+	/*settleinfo*/
+	_, err = chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
+	if err != nil {
+		fmt.Println("init settlement err: ", err)
+		return err
+	}
+
+	// init ip2location db
+	if err := bindata.Init(); err != nil {
+		// log init ip2location err
+		fmt.Println("init ip2location err: ", err)
+		log.Errorf("init ip2location err:%+v", err)
+	}
 
 	hValue, hasHval := req.Options[hValueKwd].(string)
 

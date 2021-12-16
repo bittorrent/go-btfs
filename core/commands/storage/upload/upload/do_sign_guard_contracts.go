@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
-	uh "github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/sessions"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 
 	config "github.com/TRON-US/go-btfs-config"
 	"github.com/tron-us/go-btfs-common/crypto"

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/TRON-US/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/repo"
 
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"

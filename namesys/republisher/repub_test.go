@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/bootstrap"
-	mock "github.com/TRON-US/go-btfs/core/mock"
-	"github.com/TRON-US/go-btfs/namesys"
-	. "github.com/TRON-US/go-btfs/namesys/republisher"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/bootstrap"
+	mock "github.com/bittorrent/go-btfs/core/mock"
+	"github.com/bittorrent/go-btfs/namesys"
+	. "github.com/bittorrent/go-btfs/namesys/republisher"
 
 	"github.com/TRON-US/go-btns"
 	pb "github.com/TRON-US/go-btns/pb"

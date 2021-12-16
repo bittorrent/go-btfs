@@ -18,9 +18,9 @@ import (
 
 	"bazil.org/fuse"
 
-	core "github.com/TRON-US/go-btfs/core"
-	coreapi "github.com/TRON-US/go-btfs/core/coreapi"
-	coremock "github.com/TRON-US/go-btfs/core/mock"
+	core "github.com/bittorrent/go-btfs/core"
+	coreapi "github.com/bittorrent/go-btfs/core/coreapi"
+	coremock "github.com/bittorrent/go-btfs/core/mock"
 
 	fstest "bazil.org/fuse/fs/fstestutil"
 	chunker "github.com/TRON-US/go-btfs-chunker"

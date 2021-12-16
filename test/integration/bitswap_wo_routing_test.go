@@ -5,9 +5,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/mock"
-	"github.com/TRON-US/go-btfs/core/node/libp2p"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/mock"
+	"github.com/bittorrent/go-btfs/core/node/libp2p"
 
 	"github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"

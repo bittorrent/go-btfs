@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/TRON-US/go-btfs/thirdparty/assert"
+	"github.com/bittorrent/go-btfs/thirdparty/assert"
 
 	protocol "github.com/libp2p/go-libp2p-core/protocol"
 )

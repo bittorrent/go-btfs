@@ -4,15 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/TRON-US/go-btfs/core/commands/storage/hosts"
+	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/offline"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/sessions"
-	renterpb "github.com/TRON-US/go-btfs/protos/renter"
+	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/core/commands/storage/hosts"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/offline"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
+	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 
@@ -76,6 +78,7 @@ Use status command to check for completion:
 	},
 	Subcommands: map[string]*cmds.Command{
 		"init":              StorageUploadInitCmd,
+		"cheque":            StorageUploadChequeCmd,
 		"recvcontract":      StorageUploadRecvContractCmd,
 		"status":            StorageUploadStatusCmd,
 		"repair":            StorageUploadRepairCmd,
@@ -103,6 +106,9 @@ Use status command to check for completion:
 	},
 	RunTimeout: 15 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		swapprotocol.Req = req
+		swapprotocol.Env = env
+
 		ssId := uuid.New().String()
 		ctxParams, err := helper.ExtractContextParams(req, env)
 		if err != nil {
@@ -136,9 +142,6 @@ Use status command to check for completion:
 
 		fileHash := req.Arguments[0]
 		shardHashes, fileSize, shardSize, err = helper.GetShardHashes(ctxParams, fileHash)
-		fmt.Printf("rs get, shardHashes:%v fileSize:%v, shardSize:%v, err:%v \n",
-			shardHashes, fileSize, shardSize, err)
-
 		if len(shardHashes) == 0 && fileSize == -1 && shardSize == -1 &&
 			strings.HasPrefix(err.Error(), "invalid hash: file must be reed-solomon encoded") {
 			if copyNum, ok := req.Options[copyName].(int); ok {
@@ -150,10 +153,17 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
-		price, storageLength, err := helper.GetPriceAndMinStorageLength(ctxParams)
+
+		_, storageLength, err := helper.GetPriceAndMinStorageLength(ctxParams)
 		if err != nil {
 			return err
 		}
+		priceObj, err := chain.SettleObject.OracleService.CurrentRates()
+		if err != nil {
+			return err
+		}
+		price := priceObj.Int64()
+
 		if !ctxParams.Cfg.Experimental.HostsSyncEnabled {
 			_ = SyncHosts(ctxParams)
 		}

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/guard"
-	uh "github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/sessions"
-	renterpb "github.com/TRON-US/go-btfs/protos/renter"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/guard"
+	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
+	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
 	config "github.com/TRON-US/go-btfs-config"
 	"github.com/tron-us/go-btfs-common/crypto"
@@ -20,7 +20,7 @@ import (
 	cidlib "github.com/ipfs/go-cid"
 )
 
-func doGuard(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult, fileSize int64, offlineSigning bool) error {
+func doGuardAndPay(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult, fileSize int64, offlineSigning bool) error {
 	if err := rss.To(sessions.RssToGuardEvent); err != nil {
 		return err
 	}
@@ -35,8 +35,8 @@ func doGuard(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult, fileS
 		if err != nil {
 			return err
 		}
-		contracts.SignedGuardContract.EscrowSignature = res.EscrowSignature
-		contracts.SignedGuardContract.EscrowSignedTime = res.Result.EscrowSignedTime
+		//contracts.SignedGuardContract.EscrowSignature = res.EscrowSignature
+		//contracts.SignedGuardContract.EscrowSignedTime = res.Result.EscrowSignedTime
 		contracts.SignedGuardContract.LastModifyTime = time.Now()
 		cts = append(cts, contracts.SignedGuardContract)
 		selectedHosts = append(selectedHosts, contracts.SignedGuardContract.HostPid)

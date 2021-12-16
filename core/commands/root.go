@@ -3,14 +3,17 @@ package commands
 import (
 	"errors"
 
-	cmdenv "github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	dag "github.com/TRON-US/go-btfs/core/commands/dag"
-	name "github.com/TRON-US/go-btfs/core/commands/name"
-	ocmd "github.com/TRON-US/go-btfs/core/commands/object"
-	"github.com/TRON-US/go-btfs/core/commands/storage"
-	"github.com/TRON-US/go-btfs/core/commands/storage/challenge"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/upload"
-	unixfs "github.com/TRON-US/go-btfs/core/commands/unixfs"
+	"github.com/bittorrent/go-btfs/core/commands/cheque"
+	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	dag "github.com/bittorrent/go-btfs/core/commands/dag"
+	name "github.com/bittorrent/go-btfs/core/commands/name"
+	ocmd "github.com/bittorrent/go-btfs/core/commands/object"
+	settlement "github.com/bittorrent/go-btfs/core/commands/settlements"
+	"github.com/bittorrent/go-btfs/core/commands/storage"
+	"github.com/bittorrent/go-btfs/core/commands/storage/challenge"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/upload"
+	unixfs "github.com/bittorrent/go-btfs/core/commands/unixfs"
+	"github.com/bittorrent/go-btfs/core/commands/vault"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	logging "github.com/ipfs/go-log"
@@ -51,6 +54,25 @@ DATA STRUCTURE COMMANDS
   files         Interact with objects as if they were a unix filesystem
   dag           Interact with IPLD documents (experimental)
   metadata      Interact with metadata for BTFS files
+
+CHEQUE COMMANDS
+  cheque bttbalance <addr>              Get btt balance by addr.
+  cheque cash <peer-id>                 Cash a cheque by peerID.
+  cheque cashstatus <peer-id>           Get cash status by peerID.
+  cheque chaininfo                      Show current chain info.
+  cheque price                          Get btfs store price.
+  cheque receive <peer-id>              List cheque(s) received from peers.
+  cheque receive-history-list           Display the received cheques from peer.
+  cheque receive-history-peer <peer-id> Display the received cheques from peer.
+  cheque receive-total-count            send cheque(s) count
+  cheque receivelist <offset> <limit>   List cheque(s) received from peers.
+  cheque send <peer-id>                 List cheque send to peers.
+  cheque send-history-list              Display the send cheques from peer.
+  cheque send-history-peer <peer-id>    Display the send cheques from peer.
+  cheque send-total-count               send cheque(s) count
+  cheque sendlist                       List cheque(s) send to peers.
+  vault                                 Interact with vault services on BTFS
+  settlement                            Show cheque settlement info
 
 ADVANCED COMMANDS
   daemon        Start a long-running daemon process
@@ -119,49 +141,53 @@ The CLI will exit with one of the following values:
 var CommandsDaemonCmd = CommandsCmd(Root)
 
 var rootSubcommands = map[string]*cmds.Command{
-	"add":       AddCmd,
-	"bitswap":   BitswapCmd,
-	"block":     BlockCmd,
-	"cat":       CatCmd,
-	"commands":  CommandsDaemonCmd,
-	"files":     FilesCmd,
-	"filestore": FileStoreCmd,
-	"get":       GetCmd,
-	"pubsub":    PubsubCmd,
-	"repo":      RepoCmd,
-	"stats":     StatsCmd,
-	"bootstrap": BootstrapCmd,
-	"config":    ConfigCmd,
-	"dag":       dag.DagCmd,
-	"dht":       DhtCmd,
-	"diag":      DiagCmd,
-	"dns":       DNSCmd,
-	"id":        IDCmd,
-	"key":       KeyCmd,
-	"log":       LogCmd,
-	"ls":        LsCmd,
-	"mount":     MountCmd,
-	"name":      name.NameCmd,
-	"object":    ocmd.ObjectCmd,
-	"pin":       PinCmd,
-	"ping":      PingCmd,
-	"p2p":       P2PCmd,
-	"refs":      RefsCmd,
-	"resolve":   ResolveCmd,
-	"swarm":     SwarmCmd,
-	"tar":       TarCmd,
-	"file":      unixfs.UnixFSCmd,
-	"urlstore":  urlStoreCmd,
-	"version":   VersionCmd,
-	"shutdown":  daemonShutdownCmd,
-	"restart":   restartCmd,
-	"cid":       CidCmd,
-	"rm":        RmCmd,
-	"storage":   storage.StorageCmd,
-	"metadata":  MetadataCmd,
-	"guard":     GuardCmd,
-	"wallet":    WalletCmd,
-	"tron":      TronCmd,
+	"add":        AddCmd,
+	"bitswap":    BitswapCmd,
+	"block":      BlockCmd,
+	"cat":        CatCmd,
+	"commands":   CommandsDaemonCmd,
+	"files":      FilesCmd,
+	"filestore":  FileStoreCmd,
+	"get":        GetCmd,
+	"pubsub":     PubsubCmd,
+	"repo":       RepoCmd,
+	"stats":      StatsCmd,
+	"bootstrap":  BootstrapCmd,
+	"test":       TestCmd,
+	"config":     ConfigCmd,
+	"dag":        dag.DagCmd,
+	"dht":        DhtCmd,
+	"diag":       DiagCmd,
+	"dns":        DNSCmd,
+	"id":         IDCmd,
+	"key":        KeyCmd,
+	"log":        LogCmd,
+	"ls":         LsCmd,
+	"mount":      MountCmd,
+	"name":       name.NameCmd,
+	"object":     ocmd.ObjectCmd,
+	"pin":        PinCmd,
+	"ping":       PingCmd,
+	"p2p":        P2PCmd,
+	"refs":       RefsCmd,
+	"resolve":    ResolveCmd,
+	"swarm":      SwarmCmd,
+	"tar":        TarCmd,
+	"file":       unixfs.UnixFSCmd,
+	"urlstore":   urlStoreCmd,
+	"version":    VersionCmd,
+	"shutdown":   daemonShutdownCmd,
+	"restart":    restartCmd,
+	"cid":        CidCmd,
+	"rm":         RmCmd,
+	"storage":    storage.StorageCmd,
+	"metadata":   MetadataCmd,
+	"guard":      GuardCmd,
+	"wallet":     WalletCmd,
+	"tron":       TronCmd,
+	"cheque":     cheque.ChequeCmd,
+	"vault":      vault.VaultCmd,
+	"settlement": settlement.SettlementCmd,
 	//"update":    ExternalBinary(),
 }
 
@@ -226,6 +252,7 @@ var rootRemoteSubcommands = map[string]*cmds.Command{
 				Subcommands: map[string]*cmds.Command{
 					"init":         upload.StorageUploadInitCmd,
 					"recvcontract": upload.StorageUploadRecvContractCmd,
+					"cheque":       upload.StorageUploadChequeCmd,
 				},
 			},
 			"dcrepair": &cmds.Command{
@@ -233,6 +260,11 @@ var rootRemoteSubcommands = map[string]*cmds.Command{
 					"response": upload.HostRepairResponseCmd,
 				},
 			},
+		},
+	},
+	"p2p": &cmds.Command{
+		Subcommands: map[string]*cmds.Command{
+			"handshake": P2phandshakeCmd,
 		},
 	},
 }

@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/guard"
-	uh "github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/sessions"
-	"github.com/TRON-US/go-btfs/core/hub"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/guard"
+	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
+	"github.com/bittorrent/go-btfs/core/hub"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	cconfig "github.com/tron-us/go-btfs-common/config"

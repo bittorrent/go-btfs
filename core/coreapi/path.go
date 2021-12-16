@@ -5,7 +5,7 @@ import (
 	"fmt"
 	gopath "path"
 
-	"github.com/TRON-US/go-btfs/namesys/resolve"
+	"github.com/bittorrent/go-btfs/namesys/resolve"
 
 	uio "github.com/TRON-US/go-unixfs/io"
 	coreiface "github.com/TRON-US/interface-go-btfs-core"

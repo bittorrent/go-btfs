@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/TRON-US/go-btfs/plugin"
+	"github.com/bittorrent/go-btfs/plugin"
 )
 
 var Plugins = []plugin.Plugin{

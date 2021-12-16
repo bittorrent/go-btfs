@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	"github.com/TRON-US/go-btfs/core/commands/rm"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core/commands/rm"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 )

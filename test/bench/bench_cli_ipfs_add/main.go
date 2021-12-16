@@ -10,7 +10,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/TRON-US/go-btfs/thirdparty/unit"
+	"github.com/bittorrent/go-btfs/thirdparty/unit"
 
 	config "github.com/TRON-US/go-btfs-config"
 	random "github.com/jbenet/go-random"

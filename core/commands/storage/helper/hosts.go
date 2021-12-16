@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/hub"
-	"github.com/TRON-US/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/hub"
+	"github.com/bittorrent/go-btfs/repo"
 
 	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
 	nodepb "github.com/tron-us/go-btfs-common/protos/node"

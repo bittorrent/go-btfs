@@ -9,12 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/cmdenv"
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
-	uh "github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	"github.com/TRON-US/go-btfs/core/commands/storage/upload/sessions"
-	"github.com/TRON-US/go-btfs/core/corehttp/remote"
-	"github.com/TRON-US/go-btfs/core/corerepo"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
+	"github.com/bittorrent/go-btfs/core/corehttp/remote"
+	"github.com/bittorrent/go-btfs/core/corerepo"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 
@@ -437,7 +437,7 @@ func downloadAndSignContracts(contract *guardpb.Contract, rss *sessions.RenterSe
 			shardHash := contract.ContractMeta.ShardHash
 			shardIndex := contract.ContractMeta.ShardIndex
 			shardFileSize := contract.ContractMeta.ShardFileSize
-			host, err := hp.NextValidHost(price)
+			host, err := hp.NextValidHost()
 			if err != nil {
 				terr := rss.To(sessions.RssToErrorEvent, err)
 				if terr != nil {

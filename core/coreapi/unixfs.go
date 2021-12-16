@@ -12,8 +12,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/coreunix"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/coreunix"
 
 	chunker "github.com/TRON-US/go-btfs-chunker"
 	files "github.com/TRON-US/go-btfs-files"

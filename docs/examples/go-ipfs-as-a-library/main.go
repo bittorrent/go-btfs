@@ -10,16 +10,16 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/TRON-US/go-btfs/core"
-	"github.com/TRON-US/go-btfs/core/coreapi"
-	"github.com/TRON-US/go-btfs/plugin/loader" // This package is needed so that all the preloaded plugins are loaded automatically
-	"github.com/TRON-US/go-btfs/repo/fsrepo"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/coreapi"
+	"github.com/bittorrent/go-btfs/plugin/loader" // This package is needed so that all the preloaded plugins are loaded automatically
+	"github.com/bittorrent/go-btfs/repo/fsrepo"
 
 	config "github.com/TRON-US/go-btfs-config"
 	files "github.com/TRON-US/go-btfs-files"
-	libp2p "github.com/TRON-US/go-btfs/core/node/libp2p"
 	icore "github.com/TRON-US/interface-go-btfs-core"
 	icorepath "github.com/TRON-US/interface-go-btfs-core/path"
+	libp2p "github.com/bittorrent/go-btfs/core/node/libp2p"
 	"github.com/libp2p/go-libp2p-core/peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	ma "github.com/multiformats/go-multiaddr"

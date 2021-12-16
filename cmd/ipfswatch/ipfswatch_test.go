@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/TRON-US/go-btfs/thirdparty/assert"
+	"github.com/bittorrent/go-btfs/thirdparty/assert"
 )
 
 func TestIsHidden(t *testing.T) {

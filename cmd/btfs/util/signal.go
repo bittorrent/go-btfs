@@ -1,3 +1,4 @@
+//go:build !wasm
 // +build !wasm
 
 package util
@@ -47,7 +48,8 @@ func (ih *IntrHandler) Handle(handler func(count int, ih *IntrHandler), sigs ...
 			select {
 			case <-ih.closing:
 				return
-			case <-notify:
+			case s := <-notify:
+				fmt.Printf("InrHandler receive signal: %+v\n", s)
 				count++
 				handler(count, ih)
 			}
@@ -62,7 +64,7 @@ func SetupInterruptHandler(ctx context.Context) (io.Closer, context.Context) {
 	handlerFunc := func(count int, ih *IntrHandler) {
 		switch count {
 		case 1:
-			fmt.Println() // Prevent un-terminated ^C character in terminal
+			fmt.Println("Start handle signal") // Prevent un-terminated ^C character in terminal
 
 			ih.wg.Add(1)
 			go func() {

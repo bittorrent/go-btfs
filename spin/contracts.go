@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/contracts"
+	"github.com/bittorrent/go-btfs/core/commands/storage/contracts"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
-	"github.com/TRON-US/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core"
 )
 
 const (

@@ -6,7 +6,7 @@ to_preload() {
 	awk 'NF' "$DIR/preload_list" | sed '/^#/d'
     if [[ -n "$IPFS_PLUGINS" ]]; then
         for plugin in $IPFS_PLUGINS; do
-            echo "$plugin github.com/TRON-US/go-btfs/plugin/plugins/$plugin *"
+            echo "$plugin github.com/bittorrent/go-btfs/plugin/plugins/$plugin *"
         done
     fi
 }

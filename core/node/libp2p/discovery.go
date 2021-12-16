@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/node/helpers"
+	"github.com/bittorrent/go-btfs/core/node/helpers"
 
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"

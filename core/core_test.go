@@ -5,7 +5,7 @@ import (
 
 	context "context"
 
-	"github.com/TRON-US/go-btfs/repo"
+	"github.com/bittorrent/go-btfs/repo"
 
 	config "github.com/TRON-US/go-btfs-config"
 	datastore "github.com/ipfs/go-datastore"

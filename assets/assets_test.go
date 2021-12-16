@@ -2,6 +2,7 @@ package assets
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"sync"
 	"testing"
@@ -44,6 +45,8 @@ func testOneFile(f string, t *testing.T) {
 		return
 	}
 
+	fmt.Println("vcsData", string(vcsData))
+	fmt.Println("embdDat", string(embdData))
 	if !bytes.Equal(vcsData, embdData) {
 		t.Errorf("asset %s: vcs and embedded data isnt equal", f)
 		return

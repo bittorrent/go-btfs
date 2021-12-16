@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TRON-US/go-btfs/core/commands/storage/helper"
-	uh "github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
-	renterpb "github.com/TRON-US/go-btfs/protos/renter"
-	sessionpb "github.com/TRON-US/go-btfs/protos/session"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	renterpb "github.com/bittorrent/go-btfs/protos/renter"
+	sessionpb "github.com/bittorrent/go-btfs/protos/session"
 
 	"github.com/tron-us/protobuf/proto"
 
@@ -21,32 +21,26 @@ import (
 )
 
 const (
-	RssInitStatus                            = "init"
-	RssSubmitStatus                          = "submit"
-	RssSubmitBalanceReqSignedStatus          = "submit:check-balance-req-singed"
-	RssSubmitLedgerChannelCommitSignedStatus = "submit:ledger-channel-commit-signed"
-	RssPayStatus                             = "pay"
-	RssPayPayinRequestSignedStatus           = "pay:payin-req-signed"
-	RssGuardStatus                           = "guard"
-	RssGuardFileMetaSignedStatus             = "guard:file-meta-signed"
-	RssGuardQuestionsSignedStatus            = "guard:questions-signed"
-	RssWaitUploadStatus                      = "wait-upload"
-	RssWaitUploadReqSignedStatus             = "wait-upload:req-signed"
-	RssCompleteStatus                        = "complete"
-	RssErrorStatus                           = "error"
+	RssInitStatus                 = "init"
+	RssSubmitStatus               = "submit"
+	RssGuardStatus                = "guard"
+	RssGuardFileMetaSignedStatus  = "guard:file-meta-signed"
+	RssGuardQuestionsSignedStatus = "guard:questions-signed"
+	RssWaitUploadStatus           = "wait-upload"
+	RssWaitUploadReqSignedStatus  = "wait-upload:req-signed"
+	RssPayStatus                  = "pay"
+	RssCompleteStatus             = "complete"
+	RssErrorStatus                = "error"
 
-	RssToSubmitEvent                          = "to-submit-event"
-	RssToSubmitBalanceReqSignedEvent          = "to-submit:balance-req-signed-event"
-	RssToSubmitLedgerChannelCommitSignedEvent = "to-submit:ledger-channel-commit-signed-event"
-	RssToPayEvent                             = "to-pay-event"
-	RssToPayPayinRequestSignedEvent           = "to-pay:payin-req-signed-event"
-	RssToGuardEvent                           = "to-guard-event"
-	RssToGuardFileMetaSignedEvent             = "to-guard:file-meta-signed-event"
-	RssToGuardQuestionsSignedEvent            = "to-guard:questions-signed-event"
-	RssToWaitUploadEvent                      = "to-wait-upload-event"
-	RssToWaitUploadReqSignedEvent             = "to-wait-upload-signed-event"
-	RssToCompleteEvent                        = "to-complete-event"
-	RssToErrorEvent                           = "to-error-event"
+	RssToSubmitEvent               = "to-submit-event"
+	RssToGuardEvent                = "to-guard-event"
+	RssToGuardFileMetaSignedEvent  = "to-guard:file-meta-signed-event"
+	RssToGuardQuestionsSignedEvent = "to-guard:questions-signed-event"
+	RssToWaitUploadEvent           = "to-wait-upload-event"
+	RssToWaitUploadReqSignedEvent  = "to-wait-upload-signed-event"
+	RssToPayEvent                  = "to-pay-event"
+	RssToCompleteEvent             = "to-complete-event"
+	RssToErrorEvent                = "to-error-event"
 
 	RenterSessionPrefix            = "/btfs/%s/renter/sessions/"
 	RenterSessionKey               = RenterSessionPrefix + "%s/"
@@ -61,16 +55,13 @@ var (
 	renterSessionsInMem = cmap.New()
 	rssFsmEvents        = fsm.Events{
 		{Name: RssToSubmitEvent, Src: []string{RssInitStatus}, Dst: RssSubmitStatus},
-		{Name: RssToSubmitBalanceReqSignedEvent, Src: []string{RssSubmitStatus}, Dst: RssSubmitBalanceReqSignedStatus},
-		{Name: RssToSubmitLedgerChannelCommitSignedEvent, Src: []string{RssSubmitBalanceReqSignedStatus}, Dst: RssSubmitLedgerChannelCommitSignedStatus},
-		{Name: RssToPayEvent, Src: []string{RssSubmitLedgerChannelCommitSignedStatus}, Dst: RssPayStatus},
-		{Name: RssToPayPayinRequestSignedEvent, Src: []string{RssPayStatus}, Dst: RssPayPayinRequestSignedStatus},
-		{Name: RssToGuardEvent, Src: []string{RssPayPayinRequestSignedStatus}, Dst: RssGuardStatus},
+		{Name: RssToGuardEvent, Src: []string{RssSubmitStatus}, Dst: RssGuardStatus},
 		{Name: RssToGuardFileMetaSignedEvent, Src: []string{RssGuardStatus}, Dst: RssGuardFileMetaSignedStatus},
 		{Name: RssToGuardQuestionsSignedEvent, Src: []string{RssGuardFileMetaSignedStatus}, Dst: RssGuardQuestionsSignedStatus},
 		{Name: RssToWaitUploadEvent, Src: []string{RssGuardQuestionsSignedStatus}, Dst: RssWaitUploadStatus},
 		{Name: RssToWaitUploadReqSignedEvent, Src: []string{RssWaitUploadStatus}, Dst: RssWaitUploadReqSignedStatus},
-		{Name: RssToCompleteEvent, Src: []string{RssWaitUploadReqSignedStatus}, Dst: RssCompleteStatus},
+		{Name: RssToPayEvent, Src: []string{RssWaitUploadReqSignedStatus}, Dst: RssPayStatus},
+		{Name: RssToCompleteEvent, Src: []string{RssPayStatus}, Dst: RssCompleteStatus},
 	}
 )
 
@@ -136,11 +127,11 @@ func GetRenterSession(ctxParams *uh.ContextParams, ssId string, hash string, sha
 
 var helperText = map[string]string{
 	RssInitStatus:       "Searching for recommended hosts…",
-	RssSubmitStatus:     "Hosts found! Checking wallet balance and submitting contracts to escrow.",
-	RssPayStatus:        "Contracts submitted! Confirming the escrow payment.",
-	RssGuardStatus:      "Payment successful! Preparing meta-data and challenge questions.",
-	RssWaitUploadStatus: "Confirming successful file shard storage by hosts.",
-	RssCompleteStatus:   "File storage successful!",
+	RssSubmitStatus:     "Hosts found! Checking chequebook balance, and visiting guard.",
+	RssGuardStatus:      "Preparing meta-data and challenge questions.",
+	RssWaitUploadStatus: "Confirming file shard storage by hosts.",
+	RssPayStatus:        "uploaded, doing the cheque payment.",
+	RssCompleteStatus:   "Payment successful! File storage successful!",
 }
 
 func (rs *RenterSession) enterState(e *fsm.Event) {
