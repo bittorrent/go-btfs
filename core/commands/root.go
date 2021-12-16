@@ -55,6 +55,11 @@ DATA STRUCTURE COMMANDS
   dag           Interact with IPLD documents (experimental)
   metadata      Interact with metadata for BTFS files
 
+CHEQUE COMMANDS
+ cheque         Manage cheque of this node
+ vault          Interact with vault services on BTFS
+ settlement     Show cheque settlement info
+
 ADVANCED COMMANDS
   daemon        Start a long-running daemon process
   mount         Mount an BTFS read-only mount point
