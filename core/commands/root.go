@@ -56,9 +56,23 @@ DATA STRUCTURE COMMANDS
   metadata      Interact with metadata for BTFS files
 
 CHEQUE COMMANDS
- cheque         Manage cheque of this node
- vault          Interact with vault services on BTFS
- settlement     Show cheque settlement info
+  cheque bttbalance <addr>              Get btt balance by addr.
+  cheque cash <peer-id>                 Cash a cheque by peerID.
+  cheque cashstatus <peer-id>           Get cash status by peerID.
+  cheque chaininfo                      Show current chain info.
+  cheque price                          Get btfs store price.
+  cheque receive <peer-id>              List cheque(s) received from peers.
+  cheque receive-history-list           Display the received cheques from peer.
+  cheque receive-history-peer <peer-id> Display the received cheques from peer.
+  cheque receive-total-count            send cheque(s) count
+  cheque receivelist <offset> <limit>   List cheque(s) received from peers.
+  cheque send <peer-id>                 List cheque send to peers.
+  cheque send-history-list              Display the send cheques from peer.
+  cheque send-history-peer <peer-id>    Display the send cheques from peer.
+  cheque send-total-count               send cheque(s) count
+  cheque sendlist                       List cheque(s) send to peers.
+  vault                                 Interact with vault services on BTFS
+  settlement                            Show cheque settlement info
 
 ADVANCED COMMANDS
   daemon        Start a long-running daemon process
