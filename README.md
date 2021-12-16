@@ -320,7 +320,7 @@ If you make changes to the protocol buffers, you will need to install the [proto
 
 BTFS Gateway is a free service that allows you to retrieve files from the BTFS network in your browser directly.
 
-[How to use BTFS Gateway](https://docs.btfs.io/v2.0/docs/btfs-gateway-user-guide)
+[How to use BTFS Gateway](https://docs.btfs.io/v2.0/docs/btfs-gateway-user-guide-1)
 
 ## License
 
