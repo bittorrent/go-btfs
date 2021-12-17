@@ -745,6 +745,7 @@ func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, error
 		corehttp.CheckVersionOption(),
 		corehttp.CommandsOption(*cctx),
 		corehttp.WebUIOption,
+		corehttp.DashboardOption,
 		corehttp.HostUIOption,
 		gatewayOpt,
 		corehttp.VersionOption(),

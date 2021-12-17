@@ -7,4 +7,6 @@ var WebUIPaths = []string{
 	WebUIPath,
 }
 
+var HostUIOption = RedirectOption("hostui", WebUIPath)
 var WebUIOption = RedirectOption("webui", WebUIPath)
+var DashboardOption = RedirectOption("dashboard", WebUIPath)
