@@ -149,3 +149,20 @@ func (c *vaultContract) SetReceiver(ctx context.Context, newReceiver common.Addr
 
 	return hash, nil
 }
+
+func (c *vaultContract) Deposit(ctx context.Context, amount *big.Int) (common.Hash, error) {
+	callData, err := vaultABI.Pack("deposit", amount)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	hash, err := c.transactionService.Send(ctx, &transaction.TxRequest{
+		To:   &c.address,
+		Data: callData,
+	})
+	if err != nil {
+		return hash, err
+	}
+
+	return hash, nil
+}

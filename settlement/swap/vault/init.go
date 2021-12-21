@@ -22,6 +22,8 @@ const (
 
 	balanceCheckBackoffDuration = 20 * time.Second
 	balanceCheckMaxRetries      = 10
+	maxApprove                  = 10000000000000000
+	decimals                    = 100000000000000000
 )
 
 func checkBalance(
@@ -163,5 +165,21 @@ func Init(
 		return nil, err
 	}
 
+	// approve to vaultAddress
+	allowance, err := erc20Service.Allowance(ctx, overlayEthAddress, vaultAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	if allowance.Cmp(big.NewInt(0)) == 0 {
+		var value big.Int
+		value.Mul(big.NewInt(maxApprove), big.NewInt(decimals))
+		hash, err := erc20Service.Approve(ctx, vaultAddress, &value)
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Printf("approve WBTT to vault [0x%x] at tx [0x%x] \n", vaultAddress, hash)
+	}
 	return vaultService, nil
 }
