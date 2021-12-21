@@ -121,7 +121,7 @@ func (s *service) Deposit(ctx context.Context, amount *big.Int) (hash common.Has
 		return common.Hash{}, ErrInsufficientFunds
 	}
 
-	return s.erc20Service.Transfer(ctx, s.address, amount)
+	return s.contract.Deposit(ctx, amount)
 }
 
 // Deposit starts depositing erc20 token into the vault. This returns once the transactions has been broadcast.
