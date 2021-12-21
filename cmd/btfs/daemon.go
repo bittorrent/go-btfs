@@ -725,8 +725,7 @@ func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, error
 		// Browsers require TCP.
 		switch listener.Addr().Network() {
 		case "tcp", "tcp4", "tcp6":
-			fmt.Printf("WebUI: http://%s/webui\n", listener.Addr())
-			fmt.Printf("HostUI: http://%s/hostui\n", listener.Addr())
+			fmt.Printf("Dashboard: http://%s/dashboard\n", listener.Addr())
 		}
 	}
 
