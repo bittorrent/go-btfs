@@ -103,8 +103,7 @@ Swarm announcing /ip4/127.0.0.1/tcp/4001
 Swarm announcing /ip4/192.168.21.149/tcp/4001
 Swarm announcing /ip6/::1/tcp/4001
 API server listening on /ip4/127.0.0.1/tcp/5001
-WebUI: http://127.0.0.1:5001/webui
-HostUI: http://127.0.0.1:5001/hostui
+Dashboard: http://127.0.0.1:5001/dashboard
 Gateway (readonly) server listening on /ip4/127.0.0.1/tcp/8080
 Remote API server listening on /ip4/127.0.0.1/tcp/5101
 Daemon is ready
