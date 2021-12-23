@@ -3,7 +3,6 @@ package bindata
 import (
 	"bytes"
 	"errors"
-	"fmt"
 
 	"github.com/ip2location/ip2location-go/v9"
 	"github.com/multiformats/go-multiaddr"
@@ -58,16 +57,13 @@ func CountryShortCodeByIP(addr string) (string, error) {
 
 func CountryShortCode(addr multiaddr.Multiaddr) (string, error) {
 	ipv4, err := addr.ValueForProtocol(multiaddr.P_IP4)
-	if err != nil {
-		fmt.Printf("get ipv4 err:%+v", err)
-	} else {
+	if err == nil {
 		return CountryShortCodeByIP(ipv4)
 	}
 
 	ipv6, err := addr.ValueForProtocol(multiaddr.P_IP6)
-	if err != nil {
-		fmt.Printf("get ipv6 err:%+v", err)
-		return "", err
+	if err == nil {
+		return CountryShortCodeByIP(ipv6)
 	}
-	return CountryShortCodeByIP(ipv6)
+	return "", err
 }
