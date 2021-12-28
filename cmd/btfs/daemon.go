@@ -32,7 +32,6 @@ import (
 	commands "github.com/bittorrent/go-btfs/core/commands"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/path"
-	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	corehttp "github.com/bittorrent/go-btfs/core/corehttp"
 	httpremote "github.com/bittorrent/go-btfs/core/corehttp/remote"
 	corerepo "github.com/bittorrent/go-btfs/core/corerepo"
@@ -651,10 +650,6 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	spin.Analytics(api, cctx.ConfigRoot, node, version.CurrentVersionNumber, hValue)
 	spin.Hosts(node, env)
 	spin.Contracts(node, req, env, nodepb.ContractStat_HOST.String())
-	if params, err := helper.ExtractContextParams(req, env); err == nil {
-		spin.NewWalletWrap(params).UpdateStatus()
-	}
-	spin.BttTransactions(node, env)
 
 	// Give the user some immediate feedback when they hit C-c
 	go func() {

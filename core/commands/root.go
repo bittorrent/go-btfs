@@ -183,8 +183,6 @@ var rootSubcommands = map[string]*cmds.Command{
 	"storage":    storage.StorageCmd,
 	"metadata":   MetadataCmd,
 	"guard":      GuardCmd,
-	"wallet":     WalletCmd,
-	"tron":       TronCmd,
 	"cheque":     cheque.ChequeCmd,
 	"vault":      vault.VaultCmd,
 	"settlement": settlement.SettlementCmd,
