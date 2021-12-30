@@ -40,7 +40,7 @@ var VaultDepositCmd = &cmds.Command{
 	Type: &VaultDepositCmdRet{},
 	Encoders: cmds.EncoderMap{
 		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *VaultDepositCmdRet) error {
-			_, err := fmt.Fprintf(w, "the hash of transaction: %s", out.Hash)
+			_, err := fmt.Fprintf(w, "the hash of transaction: %s\n", out.Hash)
 			return err
 		}),
 	},
