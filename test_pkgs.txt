@@ -36,7 +36,6 @@ github.com/bittorrent/go-btfs/core/mock
 github.com/bittorrent/go-btfs/core/node
 github.com/bittorrent/go-btfs/core/node/helpers
 github.com/bittorrent/go-btfs/core/node/libp2p
-github.com/bittorrent/go-btfs/core/wallet
 github.com/bittorrent/go-btfs/keystore
 github.com/bittorrent/go-btfs/namesys
 github.com/bittorrent/go-btfs/namesys/republisher
