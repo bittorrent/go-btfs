@@ -308,8 +308,8 @@ func initSwap(
 		currentPriceOracleAddress = common.HexToAddress(priceOracleAddress)
 	}
 
-	priceOracle := priceoracle.New(currentPriceOracleAddress, transactionService, 300)
-	priceOracle.Start()
+	priceOracle := priceoracle.New(currentPriceOracleAddress, transactionService)
+
 	swapProtocol := swapprotocol.New(overlayEthAddress, priceOracle)
 	swapAddressBook := swap.NewAddressbook(stateStore)
 

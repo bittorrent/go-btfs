@@ -181,7 +181,7 @@ func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, 
 			return err
 		}
 
-		exchangeRate, err := s.priceOracle.CurrentRates()
+		price, err := s.priceOracle.GetPrice(ctx)
 		if err != nil {
 			return err
 		}
@@ -209,7 +209,7 @@ func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, 
 					//send cheque
 					_, err = remote.P2PCall(ctx, ctxParams.N, ctxParams.Api, hostPid, "/storage/upload/cheque",
 						encodedCheque,
-						exchangeRate,
+						price,
 						contractId,
 					)
 					if err != nil {

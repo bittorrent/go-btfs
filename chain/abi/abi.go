@@ -617,10 +617,28 @@ const OracleAbi = `[
 				"internalType": "uint256",
 				"name": "_price",
 				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_exchangeRate",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "nonpayable",
 		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "rate",
+				"type": "uint256"
+			}
+		],
+		"name": "ExchangeRateUpdate",
+		"type": "event"
 	},
 	{
 		"anonymous": false,
@@ -653,6 +671,32 @@ const OracleAbi = `[
 		],
 		"name": "PriceUpdate",
 		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "exchangeRate",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getExchangeRate",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
 		"inputs": [],
@@ -709,6 +753,19 @@ const OracleAbi = `[
 			}
 		],
 		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newRate",
+				"type": "uint256"
+			}
+		],
+		"name": "updateExchangeRate",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
