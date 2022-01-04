@@ -159,7 +159,9 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
-		priceObj, err := chain.SettleObject.OracleService.GetPrice(context.Background())
+
+		//this is old price [Compatible with older versions]
+		priceObj, err := chain.SettleObject.OracleService.CurrentPrice()
 		if err != nil {
 			return err
 		}
