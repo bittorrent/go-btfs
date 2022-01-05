@@ -136,9 +136,7 @@ var swarmPeersCmd = &cmds.Command{
 			}
 
 			// fill int short country code by ip address
-			if code, err := bindata.CountryShortCode(c.Address()); err != nil {
-				fmt.Printf("get country short code err:%+v", err)
-			} else {
+			if code, err := bindata.CountryShortCode(c.Address()); err == nil {
 				ci.CountryShort = code
 			}
 

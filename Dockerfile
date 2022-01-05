@@ -1,4 +1,4 @@
-FROM golang:1.15
+FROM golang:1.16
 MAINTAINER TRON-US <support@tron.network>
 
 # Install deps

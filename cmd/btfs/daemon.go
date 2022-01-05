@@ -32,7 +32,6 @@ import (
 	commands "github.com/bittorrent/go-btfs/core/commands"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/path"
-	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	corehttp "github.com/bittorrent/go-btfs/core/corehttp"
 	httpremote "github.com/bittorrent/go-btfs/core/corehttp/remote"
 	corerepo "github.com/bittorrent/go-btfs/core/corerepo"
@@ -651,10 +650,6 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	spin.Analytics(api, cctx.ConfigRoot, node, version.CurrentVersionNumber, hValue)
 	spin.Hosts(node, env)
 	spin.Contracts(node, req, env, nodepb.ContractStat_HOST.String())
-	if params, err := helper.ExtractContextParams(req, env); err == nil {
-		spin.NewWalletWrap(params).UpdateStatus()
-	}
-	spin.BttTransactions(node, env)
 
 	// Give the user some immediate feedback when they hit C-c
 	go func() {
@@ -725,8 +720,7 @@ func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, error
 		// Browsers require TCP.
 		switch listener.Addr().Network() {
 		case "tcp", "tcp4", "tcp6":
-			fmt.Printf("WebUI: http://%s/webui\n", listener.Addr())
-			fmt.Printf("HostUI: http://%s/hostui\n", listener.Addr())
+			fmt.Printf("Dashboard: http://%s/dashboard\n", listener.Addr())
 		}
 	}
 
