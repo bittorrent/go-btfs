@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
 
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/storage/hosts"
@@ -158,7 +159,8 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
-		priceObj, err := chain.SettleObject.OracleService.CurrentRates()
+		//this is old price [Compatible with older versions]
+		priceObj, err := chain.SettleObject.OracleService.CurrentPrice()
 		if err != nil {
 			return err
 		}

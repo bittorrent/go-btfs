@@ -37,7 +37,7 @@ var StorageUploadChequeCmd = &cmds.Command{
 			return fmt.Errorf("fail to get peer ID from request")
 		}
 
-		exchangeRate, ok := new(big.Int).SetString(req.Arguments[1], 10)
+		price, ok := new(big.Int).SetString(req.Arguments[1], 10)
 		if !ok {
 			return fmt.Errorf("exchangeRate:%s cannot be parsed, err:%s", req.Arguments[2], err)
 		}
@@ -49,7 +49,7 @@ var StorageUploadChequeCmd = &cmds.Command{
 
 		go func() {
 			// decode and deal the cheque
-			err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, exchangeRate)
+			err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price)
 			if err != nil {
 				fmt.Println("swapprotocol.SwapProtocol.Handler, error:", err)
 				return
