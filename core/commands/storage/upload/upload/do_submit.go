@@ -1,8 +1,8 @@
 package upload
 
 import (
-	"math/big"
-
+	"context"
+	"fmt"
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 
 	"github.com/bittorrent/go-btfs/chain"
@@ -43,12 +43,28 @@ func doSubmit(rss *sessions.RenterSession) error {
 		return err
 	}
 
-	AvailableBalance, err := chain.SettleObject.VaultService.AvailableBalance(rss.Ctx)
+	err = checkAvailableBalance(rss.Ctx, amount)
 	if err != nil {
 		return err
 	}
 
-	if AvailableBalance.Cmp(big.NewInt(amount)) < 0 {
+	return nil
+}
+
+func checkAvailableBalance(ctx context.Context, amount int64) error {
+	realAmount, err := getRealAmount(amount)
+	if err != nil {
+		return err
+	}
+
+	AvailableBalance, err := chain.SettleObject.VaultService.AvailableBalance(ctx)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("check, AvailableBalance, realAmount = ", AvailableBalance, realAmount)
+	if AvailableBalance.Cmp(realAmount) < 0 {
+		fmt.Println("check, err: ", vault.ErrInsufficientFunds)
 		return vault.ErrInsufficientFunds
 	}
 	return nil

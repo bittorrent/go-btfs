@@ -96,15 +96,21 @@ func (s *Service) ReceiveCheque(ctx context.Context, peer string, cheque *vault.
 		return err
 	}
 
+	fmt.Printf("1 recv cheque, ReceiveCheque, expectedVault=%v, known=%v \n", expectedVault, known)
+
 	if known && expectedVault != cheque.Vault {
 		return ErrWrongVault
 	}
+
+	fmt.Printf("2 recv cheque, ReceiveCheque, expectedVault=%v, known=%v \n", expectedVault, known)
 
 	receivedAmount, err := s.chequeStore.ReceiveCheque(ctx, cheque, price)
 	if err != nil {
 		s.metrics.ChequesRejected.Inc()
 		return fmt.Errorf("rejecting cheque: %w", err)
 	}
+
+	fmt.Printf("3 recv cheque, ReceiveCheque, receivedAmount=%v \n", receivedAmount)
 
 	if !known {
 		err = s.addressbook.PutVault(peer, cheque.Vault)
@@ -288,6 +294,7 @@ func (s *Service) LastReceivedCheque(peer string) (*vault.SignedCheque, error) {
 // LastReceivedCheques returns map[peer]cheque
 func (s *Service) LastReceivedCheques() (map[string]*vault.SignedCheque, error) {
 	lastcheques, err := s.chequeStore.LastReceivedCheques()
+	fmt.Println("lastcheques ", lastcheques)
 	if err != nil {
 		return nil, err
 	}
