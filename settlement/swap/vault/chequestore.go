@@ -183,21 +183,21 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 		return nil, ErrChequeInvalid
 	}
 
-	// basic balance check
-	// could be omitted as it is not particularly useful
-	balance, err := contract.TotalBalance(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	alreadyPaidOut, err := contract.PaidOut(ctx, s.beneficiary)
-	if err != nil {
-		return nil, err
-	}
-
-	if balance.Cmp(big.NewInt(0).Sub(cheque.CumulativePayout, alreadyPaidOut)) < 0 {
-		return nil, ErrBouncingCheque
-	}
+	//// basic balance check
+	//// could be omitted as it is not particularly useful
+	//balance, err := contract.TotalBalance(ctx)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//alreadyPaidOut, err := contract.PaidOut(ctx, s.beneficiary)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//if balance.Cmp(big.NewInt(0).Sub(cheque.CumulativePayout, alreadyPaidOut)) < 0 {
+	//	return nil, ErrBouncingCheque
+	//}
 
 	fmt.Printf("recv cheque, store, cheque.Vault=%v \n", cheque.Vault)
 
