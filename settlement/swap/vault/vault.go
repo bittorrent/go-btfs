@@ -281,6 +281,8 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
+	fmt.Printf("send cheque: cumulativePayout:%v, beneficiary:%v \n", cumulativePayout, beneficiary)
+
 	// store the history issued cheque
 	err = s.chequeStore.StoreSendChequeRecord(s.address, beneficiary, amount)
 	if err != nil {
