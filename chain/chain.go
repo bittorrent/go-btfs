@@ -13,7 +13,9 @@ import (
 	"github.com/bittorrent/go-btfs/chain/config"
 	"github.com/bittorrent/go-btfs/settlement"
 	"github.com/bittorrent/go-btfs/settlement/swap"
+	"github.com/bittorrent/go-btfs/settlement/swap/erc20"
 	"github.com/bittorrent/go-btfs/settlement/swap/priceoracle"
+	"github.com/bittorrent/go-btfs/settlement/swap/stake"
 	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 	"github.com/bittorrent/go-btfs/transaction"
@@ -54,6 +56,7 @@ type SettleInfo struct {
 	CashoutService vault.CashoutService
 	SwapService    *swap.Service
 	OracleService  priceoracle.Service
+	StakeService   stake.Service
 }
 
 // InitChain will initialize the Ethereum backend at the given endpoint and
@@ -134,7 +137,7 @@ func InitSettlement(
 	}
 
 	//InitVaultService
-	vaultService, err := initVaultService(
+	vaultService, erc20Service, err := initVaultService(
 		ctx,
 		stateStore,
 		chaininfo.Signer,
@@ -152,7 +155,7 @@ func InitSettlement(
 	}
 
 	//InitSwap
-	swapService, priceOracleService, err := initSwap(
+	swapService, priceOracleService, stakeService, err := initSwap(
 		stateStore,
 		chaininfo.OverlayAddress,
 		vaultService,
@@ -162,6 +165,7 @@ func InitSettlement(
 		chaininfo.Chainconfig.PriceOracleAddress.String(),
 		chaininfo.ChainID,
 		chaininfo.TransactionService,
+		erc20Service,
 	)
 
 	if err != nil {
@@ -177,6 +181,7 @@ func InitSettlement(
 		CashoutService: cashoutService,
 		SwapService:    swapService,
 		OracleService:  priceOracleService,
+		StakeService:   stakeService,
 	}
 
 	return &SettleObject, nil
@@ -228,18 +233,18 @@ func initVaultService(
 	vaultFactory vault.Factory,
 	deployGasPrice string,
 	chequeStore vault.ChequeStore,
-) (vault.Service, error) {
+) (vault.Service, erc20.Service, error) {
 	chequeSigner := vault.NewChequeSigner(signer, chainID)
 
 	if deployGasPrice != "" {
 		gasPrice, ok := new(big.Int).SetString(deployGasPrice, 10)
 		if !ok {
-			return nil, fmt.Errorf("deploy gas price \"%s\" cannot be parsed", deployGasPrice)
+			return nil, nil, fmt.Errorf("deploy gas price \"%s\" cannot be parsed", deployGasPrice)
 		}
 		ctx = sctx.SetGasPrice(ctx, gasPrice)
 	}
 
-	vaultService, err := vault.Init(
+	vaultService, erc20Service, err := vault.Init(
 		ctx,
 		vaultFactory,
 		stateStore,
@@ -251,10 +256,10 @@ func initVaultService(
 		chequeStore,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("vault init: %w", err)
+		return nil, nil, fmt.Errorf("vault init: %w", err)
 	}
 
-	return vaultService, nil
+	return vaultService, erc20Service, nil
 }
 
 func initChequeStoreCashout(
@@ -295,21 +300,25 @@ func initSwap(
 	priceOracleAddress string,
 	chainID int64,
 	transactionService transaction.Service,
-) (*swap.Service, priceoracle.Service, error) {
+	erc20Service erc20.Service,
+) (*swap.Service, priceoracle.Service, stake.Service, error) {
 
 	var currentPriceOracleAddress common.Address
 	if priceOracleAddress == "" {
 		chainCfg, found := config.GetChainConfig(chainID)
 		currentPriceOracleAddress = chainCfg.PriceOracleAddress
 		if !found {
-			return nil, nil, errors.New("no known price oracle address for this network")
+			return nil, nil, nil, errors.New("no known price oracle address for this network")
 		}
 	} else {
 		currentPriceOracleAddress = common.HexToAddress(priceOracleAddress)
 	}
 
-	priceOracle := priceoracle.New(currentPriceOracleAddress, transactionService, 300)
-	priceOracle.Start()
+	priceOracle := priceoracle.New(currentPriceOracleAddress, transactionService)
+
+	stakeService := stake.New(currentPriceOracleAddress, transactionService, erc20Service, overlayEthAddress, 300)
+	stakeService.Start()
+
 	swapProtocol := swapprotocol.New(overlayEthAddress, priceOracle)
 	swapAddressBook := swap.NewAddressbook(stateStore)
 
@@ -327,7 +336,7 @@ func initSwap(
 	swapProtocol.SetSwap(swapService)
 	swapprotocol.SwapProtocol = swapProtocol
 
-	return swapService, priceOracle, nil
+	return swapService, priceOracle, stakeService, nil
 }
 
 func GetTxHash(stateStore storage.StateStorer) ([]byte, error) {

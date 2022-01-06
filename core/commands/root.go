@@ -9,6 +9,7 @@ import (
 	name "github.com/bittorrent/go-btfs/core/commands/name"
 	ocmd "github.com/bittorrent/go-btfs/core/commands/object"
 	settlement "github.com/bittorrent/go-btfs/core/commands/settlements"
+	"github.com/bittorrent/go-btfs/core/commands/stake"
 	"github.com/bittorrent/go-btfs/core/commands/storage"
 	"github.com/bittorrent/go-btfs/core/commands/storage/challenge"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/upload"
@@ -186,6 +187,7 @@ var rootSubcommands = map[string]*cmds.Command{
 	"cheque":     cheque.ChequeCmd,
 	"vault":      vault.VaultCmd,
 	"settlement": settlement.SettlementCmd,
+	"stake":      stake.StakeCmd,
 	//"update":    ExternalBinary(),
 }
 
