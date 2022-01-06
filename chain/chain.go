@@ -43,6 +43,7 @@ type ChainInfo struct {
 	OverlayAddress     common.Address
 	Signer             crypto.Signer
 	ChainID            int64
+	PeerID             string
 	TransactionMonitor transaction.Monitor
 	TransactionService transaction.Service
 }
@@ -64,6 +65,7 @@ func InitChain(
 	signer crypto.Signer,
 	pollingInterval time.Duration,
 	chainID int64,
+	peerid string,
 ) (*ChainInfo, error) {
 
 	chainconfig, _ := config.GetChainConfig(chainID)
@@ -94,6 +96,7 @@ func InitChain(
 		Backend:            backend,
 		OverlayAddress:     overlayEthAddress,
 		ChainID:            chainID,
+		PeerID:             peerid,
 		Signer:             signer,
 		TransactionMonitor: transactionMonitor,
 		TransactionService: transactionService,
@@ -139,6 +142,7 @@ func InitSettlement(
 		stateStore,
 		chaininfo.Signer,
 		chaininfo.ChainID,
+		chaininfo.PeerID,
 		chaininfo.Backend,
 		chaininfo.OverlayAddress,
 		chaininfo.TransactionService,
@@ -222,6 +226,7 @@ func initVaultService(
 	stateStore storage.StateStorer,
 	signer crypto.Signer,
 	chainID int64,
+	peerId string,
 	backend transaction.Backend,
 	overlayEthAddress common.Address,
 	transactionService transaction.Service,
@@ -246,6 +251,7 @@ func initVaultService(
 		transactionService,
 		backend,
 		chainID,
+		peerId,
 		overlayEthAddress,
 		chequeSigner,
 		chequeStore,
