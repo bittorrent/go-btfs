@@ -196,7 +196,7 @@ func TestFactoryVerifyVault(t *testing.T) {
 func TestFactoryDeploy(t *testing.T) {
 	factoryAddress := common.HexToAddress("0xabcd")
 	issuerAddress := common.HexToAddress("0xefff")
-	defaultTimeout := big.NewInt(1)
+	peerId := common.HexToAddress("0xabcd")
 	deployTransactionHash := common.HexToHash("0xffff")
 	deployAddress := common.HexToAddress("0xdddd")
 	nonce := common.HexToHash("eeff")
@@ -232,7 +232,7 @@ func TestFactoryDeploy(t *testing.T) {
 		//nil,
 	)
 
-	txHash, err := factory.Deploy(context.Background(), issuerAddress, defaultTimeout, nonce)
+	txHash, err := factory.Deploy(context.Background(), issuerAddress, nonce, peerId)
 	if err != nil {
 		t.Fatal(err)
 	}
