@@ -75,57 +75,57 @@ func Init(
 	overlayEthAddress common.Address,
 	chequeSigner ChequeSigner,
 	chequeStore ChequeStore,
-) (vaultService Service, err error) {
+) (vaultService Service, erc20Service erc20.Service, err error) {
 	// verify that the supplied factory is valid
 	err = vaultFactory.VerifyBytecode(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	erc20Address, err := vaultFactory.ERC20Address(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	erc20Service := erc20.New(swapBackend, transactionService, erc20Address)
+	erc20Service = erc20.New(swapBackend, transactionService, erc20Address)
 
 	var vaultAddress common.Address
 	err = stateStore.Get(vaultKey, &vaultAddress)
 	if err != nil {
 		if err != storage.ErrNotFound {
-			return nil, err
+			return nil, nil, err
 		}
 
 		var txHash common.Hash
 		err = stateStore.Get(VaultDeploymentKey, &txHash)
 		if err != nil && err != storage.ErrNotFound {
-			return nil, err
+			return nil, nil, err
 		}
 
 		if err == storage.ErrNotFound {
 			log.Infof("no vault found, deploying new one.")
 			err = checkBalance(ctx, swapBackend, chainId, overlayEthAddress, erc20Service)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			nonce := make([]byte, 32)
 			_, err = rand.Read(nonce)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			// if we don't yet have a vault, deploy a new one
 			txHash, err = vaultFactory.Deploy(ctx, overlayEthAddress, big.NewInt(0), common.BytesToHash(nonce))
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			log.Infof("deploying new vault in transaction %x", txHash)
 
 			err = stateStore.Put(VaultDeploymentKey, txHash)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		} else {
 			log.Infof("waiting for vault deployment in transaction %x", txHash)
@@ -133,7 +133,7 @@ func Init(
 
 		vaultAddress, err = vaultFactory.WaitDeployed(ctx, txHash)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		log.Infof("deployed vault at address 0x%x", vaultAddress)
@@ -141,17 +141,17 @@ func Init(
 		// save the address for later use
 		err = stateStore.Put(vaultKey, vaultAddress)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		vaultService, err = New(transactionService, vaultAddress, overlayEthAddress, stateStore, chequeSigner, erc20Service, chequeStore)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	} else {
 		vaultService, err = New(transactionService, vaultAddress, overlayEthAddress, stateStore, chequeSigner, erc20Service, chequeStore)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		log.Infof("using existing vault 0x%x", vaultAddress)
@@ -162,13 +162,13 @@ func Init(
 	// regardless of how the vault service was initialised make sure that the vault is valid
 	err = vaultFactory.VerifyVault(ctx, vaultService.Address())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// approve to vaultAddress
 	allowance, err := erc20Service.Allowance(ctx, overlayEthAddress, vaultAddress)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if allowance.Cmp(big.NewInt(0)) == 0 {
@@ -176,10 +176,10 @@ func Init(
 		value.Mul(big.NewInt(maxApprove), big.NewInt(decimals))
 		hash, err := erc20Service.Approve(ctx, vaultAddress, &value)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		fmt.Printf("approve WBTT to vault [0x%x] at tx [0x%x] \n", vaultAddress, hash)
 	}
-	return vaultService, nil
+	return vaultService, erc20Service, nil
 }
