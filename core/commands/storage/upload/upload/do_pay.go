@@ -33,7 +33,7 @@ func payInCheque(rss *sessions.RenterSession) error {
 		if err != nil {
 			return err
 		}
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(1500 * time.Millisecond)
 	}
 
 	return nil
