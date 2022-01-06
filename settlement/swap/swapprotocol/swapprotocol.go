@@ -56,7 +56,7 @@ type Interface interface {
 // Swap is the interface the settlement layer should implement to receive cheques.
 type Swap interface {
 	// ReceiveCheque is called by the swap protocol if a cheque is received.
-	ReceiveCheque(ctx context.Context, peer string, cheque *vault.SignedCheque, exchangeRate *big.Int) error
+	ReceiveCheque(ctx context.Context, peer string, cheque *vault.SignedCheque, price *big.Int) error
 	GetChainid() int64
 	PutBeneficiary(peer string, beneficiary common.Address) (common.Address, error)
 	Beneficiary(peer string) (beneficiary common.Address, known bool, err error)
@@ -86,7 +86,7 @@ func (s *Service) SetSwap(swap Swap) {
 	s.swap = swap
 }
 
-func (s *Service) Handler(ctx context.Context, requestPid string, encodedCheque string, exchangeRate *big.Int) (err error) {
+func (s *Service) Handler(ctx context.Context, requestPid string, encodedCheque string, price *big.Int) (err error) {
 	var signedCheque *vault.SignedCheque
 	err = json.Unmarshal([]byte(encodedCheque), &signedCheque)
 	if err != nil {
@@ -94,7 +94,7 @@ func (s *Service) Handler(ctx context.Context, requestPid string, encodedCheque 
 	}
 
 	// signature validation
-	return s.swap.ReceiveCheque(ctx, requestPid, signedCheque, exchangeRate)
+	return s.swap.ReceiveCheque(ctx, requestPid, signedCheque, price)
 }
 
 // InitiateCheque attempts to send a cheque to a peer.

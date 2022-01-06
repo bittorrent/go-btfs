@@ -89,7 +89,7 @@ func (s *Service) GetProtocols() swapprotocol.Interface {
 }
 
 // ReceiveCheque is called by the swap protocol if a cheque is received.
-func (s *Service) ReceiveCheque(ctx context.Context, peer string, cheque *vault.SignedCheque, exchangeRate *big.Int) (err error) {
+func (s *Service) ReceiveCheque(ctx context.Context, peer string, cheque *vault.SignedCheque, price *big.Int) (err error) {
 	// check this is the same vault for this peer as previously
 	expectedVault, known, err := s.addressbook.Vault(peer)
 	if err != nil {
@@ -100,14 +100,11 @@ func (s *Service) ReceiveCheque(ctx context.Context, peer string, cheque *vault.
 		return ErrWrongVault
 	}
 
-	receivedAmount, err := s.chequeStore.ReceiveCheque(ctx, cheque, exchangeRate)
+	receivedAmount, err := s.chequeStore.ReceiveCheque(ctx, cheque, price)
 	if err != nil {
 		s.metrics.ChequesRejected.Inc()
 		return fmt.Errorf("rejecting cheque: %w", err)
 	}
-
-	decreasedAmount := receivedAmount
-	amount := new(big.Int).Div(decreasedAmount, exchangeRate)
 
 	if !known {
 		err = s.addressbook.PutVault(peer, cheque.Vault)
@@ -120,7 +117,7 @@ func (s *Service) ReceiveCheque(ctx context.Context, peer string, cheque *vault.
 	s.metrics.TotalReceived.Add(tot)
 	s.metrics.ChequesReceived.Inc()
 
-	return s.accounting.NotifyPaymentReceived(peer, amount)
+	return s.accounting.NotifyPaymentReceived(peer, receivedAmount)
 }
 
 // Pay initiates a payment to the given peer

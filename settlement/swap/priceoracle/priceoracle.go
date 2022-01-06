@@ -9,10 +9,7 @@ import (
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	logging "github.com/ipfs/go-log"
 )
-
-var log = logging.Logger("priceoracle")
 
 var (
 	errDecodeABI = errors.New("could not decode abi data")
