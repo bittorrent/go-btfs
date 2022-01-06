@@ -72,6 +72,7 @@ func Init(
 	transactionService transaction.Service,
 	swapBackend transaction.Backend,
 	chainId int64,
+	peerId string,
 	overlayEthAddress common.Address,
 	chequeSigner ChequeSigner,
 	chequeStore ChequeStore,
@@ -116,7 +117,7 @@ func Init(
 			}
 
 			// if we don't yet have a vault, deploy a new one
-			txHash, err = vaultFactory.Deploy(ctx, overlayEthAddress, big.NewInt(0), common.BytesToHash(nonce))
+			txHash, err = vaultFactory.Deploy(ctx, overlayEthAddress, common.BytesToHash(nonce), peerId)
 			if err != nil {
 				return nil, err
 			}
