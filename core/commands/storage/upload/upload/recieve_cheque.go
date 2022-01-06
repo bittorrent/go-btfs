@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"sync"
 	"time"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
@@ -24,33 +25,35 @@ var StorageUploadChequeCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		ctxParams, err := uh.ExtractContextParams(req, env)
+		if err != nil {
+			return err
+		}
+		if !ctxParams.Cfg.Experimental.StorageHostEnabled {
+			return fmt.Errorf("storage host api not enabled")
+		}
+
+		requestPid, ok := remote.GetStreamRequestRemotePeerID(req, ctxParams.N)
+		if !ok {
+			return fmt.Errorf("fail to get peer ID from request")
+		}
+
+		price, ok := new(big.Int).SetString(req.Arguments[1], 10)
+		if !ok {
+			return fmt.Errorf("exchangeRate:%s cannot be parsed, err:%s", req.Arguments[2], err)
+		}
+
+		encodedCheque := req.Arguments[0]
+		contractId := req.Arguments[2]
+		fmt.Printf("receive cheque, requestPid:%s contractId:%+v \n", requestPid.String(), contractId)
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+
 		go func() {
-			tmpErr := func() error {
-				ctxParams, err := uh.ExtractContextParams(req, env)
-				if err != nil {
-					return err
-				}
-				if !ctxParams.Cfg.Experimental.StorageHostEnabled {
-					return fmt.Errorf("storage host api not enabled")
-				}
-
-				requestPid, ok := remote.GetStreamRequestRemotePeerID(req, ctxParams.N)
-				if !ok {
-					return fmt.Errorf("fail to get peer ID from request")
-				}
-
-				price, ok := new(big.Int).SetString(req.Arguments[1], 10)
-				if !ok {
-					return fmt.Errorf("exchangeRate:%s cannot be parsed, err:%s", req.Arguments[2], err)
-				}
-
-				encodedCheque := req.Arguments[0]
-				contractId := req.Arguments[2]
-
-				fmt.Printf("receive cheque, requestPid:%s contractId:%+v \n", requestPid.String(), contractId)
-
+			err = func() error {
 				// decode and deal the cheque
-				err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price)
+				err := swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price)
 				if err != nil {
 					fmt.Println("swapprotocol.SwapProtocol.Handler, error:", err)
 					return err
@@ -68,11 +71,14 @@ var StorageUploadChequeCmd = &cmds.Command{
 				return nil
 			}()
 
-			if tmpErr != nil {
-				fmt.Println("receive cheque, err:", tmpErr)
-			}
-
+			wg.Done()
 		}()
+		wg.Wait()
+
+		if err != nil {
+			fmt.Println("receive cheque, err:", err)
+			return err
+		}
 
 		return nil
 	},
