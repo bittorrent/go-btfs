@@ -413,7 +413,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	}
 
 	//endpoint
-	chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000), chainid)
+	chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000), chainid, cfg.Identity.PeerID)
 	if err != nil {
 		fmt.Println("init chain err: ", err)
 		return err

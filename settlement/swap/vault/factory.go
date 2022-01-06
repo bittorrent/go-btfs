@@ -27,7 +27,7 @@ type Factory interface {
 	// ERC20Address returns the token for which this factory deploys vaults.
 	ERC20Address(ctx context.Context) (common.Address, error)
 	// Deploy deploys a new vault and returns once the transaction has been submitted.
-	Deploy(ctx context.Context, issuer common.Address, defaultHardDepositTimeoutDuration *big.Int, nonce common.Hash) (common.Hash, error)
+	Deploy(ctx context.Context, issuer common.Address, nonce common.Hash, peerId string) (common.Hash, error)
 	// WaitDeployed waits for the deployment transaction to confirm and returns the vault address
 	WaitDeployed(ctx context.Context, txHash common.Hash) (common.Address, error)
 	// VerifyBytecode checks that the factory is valid.
@@ -45,6 +45,7 @@ type factory struct {
 type vaultDeployedEvent struct {
 	Issuer          common.Address
 	ContractAddress common.Address
+	Id              string
 }
 
 // the bytecode of factories which can be used for deployment
@@ -60,8 +61,13 @@ func NewFactory(backend transaction.Backend, transactionService transaction.Serv
 }
 
 // Deploy deploys a new vault and returns once the transaction has been submitted.
-func (c *factory) Deploy(ctx context.Context, issuer common.Address, defaultHardDepositTimeoutDuration *big.Int, nonce common.Hash) (common.Hash, error) {
-	callData, err := factoryABI.Pack("deployVault", issuer, nonce)
+func (c *factory) Deploy(
+	ctx context.Context,
+	issuer common.Address,
+	nonce common.Hash,
+	peerId string,
+) (common.Hash, error) {
+	callData, err := factoryABI.Pack("deployVault", issuer, nonce, peerId)
 	if err != nil {
 		return common.Hash{}, err
 	}
