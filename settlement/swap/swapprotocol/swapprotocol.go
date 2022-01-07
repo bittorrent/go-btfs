@@ -93,7 +93,6 @@ func (s *Service) Handler(ctx context.Context, requestPid string, encodedCheque 
 		return err
 	}
 
-	fmt.Printf("recv cheque, Handler, signedCheque=%v \n", signedCheque)
 	// signature validation
 	return s.swap.ReceiveCheque(ctx, requestPid, signedCheque, price)
 }

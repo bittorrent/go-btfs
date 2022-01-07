@@ -276,8 +276,6 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 		return nil, err
 	}
 
-	fmt.Printf("send cheque: cumulativePayout:%v, beneficiary:%v \n", cumulativePayout, beneficiary)
-
 	// store the history issued cheque
 	err = s.chequeStore.StoreSendChequeRecord(s.address, beneficiary, amount)
 	if err != nil {

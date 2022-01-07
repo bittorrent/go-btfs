@@ -62,7 +62,7 @@ func checkAvailableBalance(ctx context.Context, amount int64) error {
 		return err
 	}
 
-	fmt.Println("check, AvailableBalance, realAmount = ", AvailableBalance, realAmount)
+	fmt.Printf("check,  balance=%v, realAmount=%v \n", AvailableBalance, realAmount)
 	if AvailableBalance.Cmp(realAmount) < 0 {
 		fmt.Println("check, err: ", vault.ErrInsufficientFunds)
 		return vault.ErrInsufficientFunds

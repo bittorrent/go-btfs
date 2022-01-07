@@ -154,16 +154,12 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 		lastCumulativePayout = lastReceivedCheque.CumulativePayout
 	}
 
-	fmt.Printf("recv cheque, store, lastCumulativePayout=%v \n", lastCumulativePayout)
-
 	// check this cheque is actually increasing in value
 	amount := big.NewInt(0).Sub(cheque.CumulativePayout, lastCumulativePayout)
 
 	if amount.Cmp(big.NewInt(0)) <= 0 {
 		return nil, ErrChequeNotIncreasing
 	}
-
-	fmt.Printf("recv cheque, store, amount=%v \n", amount)
 
 	// blockchain calls below
 	contract := newVaultContract(cheque.Vault, s.transactionService)
@@ -199,15 +195,12 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 		return nil, ErrBouncingCheque
 	}
 
-	fmt.Printf("recv cheque, store, cheque.Vault=%v \n", cheque.Vault)
-
 	// store the accepted cheque
 	err = s.store.Put(lastReceivedChequeKey(cheque.Vault), cheque)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf("recv cheque, store, history cheque.Vault=%v \n", cheque.Vault)
 	// store the history cheque
 	err = s.storeChequeRecord(cheque.Vault, amount)
 	if err != nil {
