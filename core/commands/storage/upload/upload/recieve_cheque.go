@@ -44,26 +44,23 @@ var StorageUploadChequeCmd = &cmds.Command{
 
 		encodedCheque := req.Arguments[0]
 		contractId := req.Arguments[2]
-
 		fmt.Printf("receive cheque, requestPid:%s contractId:%+v \n", requestPid.String(), contractId)
 
-		go func() {
-			// decode and deal the cheque
-			err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price)
-			if err != nil {
-				fmt.Println("swapprotocol.SwapProtocol.Handler, error:", err)
-				return
-			}
+		// decode and deal the cheque
+		err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price)
+		if err != nil {
+			fmt.Println("receive cheque, swapprotocol.SwapProtocol.Handler, error:", err)
+			return err
+		}
 
-			// if receive cheque of contractId, set shard paid status.
-			if len(contractId) > 0 {
-				err := setPaidStatus(ctxParams, contractId)
-				if err != nil {
-					fmt.Println("setPaidStatus: contractId error:", contractId, err)
-					return
-				}
+		// if receive cheque of contractId, set shard paid status.
+		if len(contractId) > 0 {
+			err := setPaidStatus(ctxParams, contractId)
+			if err != nil {
+				fmt.Println("receive cheque, setPaidStatus: contractId error:", contractId, err)
+				return err
 			}
-		}()
+		}
 
 		return nil
 	},

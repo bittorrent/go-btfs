@@ -201,9 +201,6 @@ func lastIssuedChequeKey(beneficiary common.Address) string {
 }
 
 func (s *service) reserveTotalIssued(ctx context.Context, amount *big.Int) (*big.Int, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
 	availableBalance, err := s.AvailableBalance(ctx)
 	if err != nil {
 		return nil, err
@@ -218,8 +215,6 @@ func (s *service) reserveTotalIssued(ctx context.Context, amount *big.Int) (*big
 }
 
 func (s *service) unreserveTotalIssued(amount *big.Int) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
 	s.totalIssuedReserved = s.totalIssuedReserved.Sub(s.totalIssuedReserved, amount)
 }
 
@@ -228,6 +223,9 @@ func (s *service) unreserveTotalIssued(amount *big.Int) {
 // The available balance which is available after sending the cheque is passed
 // to the caller for it to be communicated over metrics.
 func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount *big.Int, sendChequeFunc SendChequeFunc) (*big.Int, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	availableBalance, err := s.reserveTotalIssued(ctx, amount)
 	if err != nil {
 		return nil, err
@@ -277,9 +275,6 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 	if err != nil {
 		return nil, err
 	}
-
-	s.lock.Lock()
-	defer s.lock.Unlock()
 
 	// store the history issued cheque
 	err = s.chequeStore.StoreSendChequeRecord(s.address, beneficiary, amount)

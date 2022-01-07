@@ -20,13 +20,10 @@ func payInCheque(rss *sessions.RenterSession) error {
 			return err
 		}
 
-		//this is old price's rate [Compatible with older versions]
-		rateObj, err := chain.SettleObject.OracleService.CurrentRate()
+		realAmount, err := getRealAmount(c.SignedGuardContract.Amount)
 		if err != nil {
 			return err
 		}
-		amount := c.SignedGuardContract.Amount
-		realAmount := big.NewInt(0).Mul(big.NewInt(amount), rateObj)
 
 		host := c.SignedGuardContract.HostPid
 		contractId := c.SignedGuardContract.ContractId
@@ -40,4 +37,15 @@ func payInCheque(rss *sessions.RenterSession) error {
 	}
 
 	return nil
+}
+
+func getRealAmount(amount int64) (*big.Int, error) {
+	//this is old price's rate [Compatible with older versions]
+	rateObj, err := chain.SettleObject.OracleService.CurrentRate()
+	if err != nil {
+		return nil, err
+	}
+
+	realAmount := big.NewInt(0).Mul(big.NewInt(amount), rateObj)
+	return realAmount, nil
 }

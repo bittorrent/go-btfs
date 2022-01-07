@@ -15,7 +15,14 @@ import (
 
 func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price int64, shardSize int64,
 	storageLength int,
-	offlineSigning bool, renterId peer.ID, fileSize int64, shardIndexes []int, rp *RepairParams) {
+	offlineSigning bool, renterId peer.ID, fileSize int64, shardIndexes []int, rp *RepairParams) error {
+
+	expectTotalPay := helper.TotalPay(shardSize, price, storageLength) * int64(len(rss.ShardHashes))
+	err := checkAvailableBalance(rss.Ctx, expectTotalPay)
+	if err != nil {
+		return err
+	}
+
 	for index, shardHash := range rss.ShardHashes {
 		go func(i int, h string) {
 			err := backoff.Retry(func() error {
@@ -144,4 +151,6 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 			}
 		}
 	}(rss, len(rss.ShardHashes))
+
+	return nil
 }
