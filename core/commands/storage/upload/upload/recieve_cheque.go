@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"sync"
 	"time"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
@@ -47,37 +46,20 @@ var StorageUploadChequeCmd = &cmds.Command{
 		contractId := req.Arguments[2]
 		fmt.Printf("receive cheque, requestPid:%s contractId:%+v \n", requestPid.String(), contractId)
 
-		var wg sync.WaitGroup
-		wg.Add(1)
-
-		go func() {
-			err = func() error {
-				// decode and deal the cheque
-				err := swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price)
-				if err != nil {
-					fmt.Println("swapprotocol.SwapProtocol.Handler, error:", err)
-					return err
-				}
-
-				// if receive cheque of contractId, set shard paid status.
-				if len(contractId) > 0 {
-					err := setPaidStatus(ctxParams, contractId)
-					if err != nil {
-						fmt.Println("setPaidStatus: contractId error:", contractId, err)
-						return err
-					}
-				}
-
-				return nil
-			}()
-
-			wg.Done()
-		}()
-		wg.Wait()
-
+		// decode and deal the cheque
+		err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price)
 		if err != nil {
-			fmt.Println("receive cheque, err:", err)
+			fmt.Println("receive cheque, swapprotocol.SwapProtocol.Handler, error:", err)
 			return err
+		}
+
+		// if receive cheque of contractId, set shard paid status.
+		if len(contractId) > 0 {
+			err := setPaidStatus(ctxParams, contractId)
+			if err != nil {
+				fmt.Println("receive cheque, setPaidStatus: contractId error:", contractId, err)
+				return err
+			}
 		}
 
 		return nil
