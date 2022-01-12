@@ -3,6 +3,8 @@ package statestore
 import (
 	"fmt"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -44,4 +46,12 @@ func GetTodayTotalDailySentKey() string {
 
 func GetTotalDailySentKeyByTime(timestamp int64) string {
 	return fmt.Sprintf("%s%d", TotalDailySentKey, timestamp)
+}
+
+func CashoutResultPrefixKey() string {
+	return "swap_cashout_result_"
+}
+
+func CashoutResultKey(vault common.Address) string {
+	return fmt.Sprintf("%s%x_%d", CashoutResultPrefixKey(), vault, time.Now().Unix())
 }

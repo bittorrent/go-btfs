@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/bittorrent/go-btfs/statestore"
 	"github.com/bittorrent/go-btfs/transaction"
@@ -27,6 +28,7 @@ type CashoutService interface {
 	// CashoutStatus gets the status of the latest cashout transaction for the vault
 	CashoutStatus(ctx context.Context, vaultAddress common.Address) (*CashoutStatus, error)
 	HasCashoutAction(ctx context.Context, peer common.Address) (bool, error)
+	CashoutResults() ([]CashOutResult, error)
 }
 
 type cashoutService struct {
@@ -66,6 +68,15 @@ type cashoutAction struct {
 	TxHash common.Hash
 	Cheque SignedCheque // the cheque that was used to cashout which may be different from the latest cheque
 }
+
+type CashOutResult struct {
+	TxHash   common.Hash
+	Vault    common.Address
+	Amount   *big.Int
+	CashTime int64
+	Status   string
+}
+
 type chequeCashedEvent struct {
 	Beneficiary      common.Address
 	Recipient        common.Address
@@ -125,6 +136,22 @@ func (s *cashoutService) paidOut(ctx context.Context, vault, beneficiary common.
 
 	return paidOut, nil
 }
+func (s *cashoutService) CashoutResults() ([]CashOutResult, error) {
+	result := make([]CashOutResult, 0, 0)
+	err := s.store.Iterate(statestore.CashoutResultPrefixKey(), func(key, val []byte) (stop bool, err error) {
+		cashOutResult := CashOutResult{}
+		err = s.store.Get(string(key), &cashOutResult)
+		if err != nil {
+			return false, err
+		}
+		result = append(result, cashOutResult)
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
 
 // CashCheque sends a cashout transaction for the last cheque of the vault
 func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common.Address) (common.Hash, error) {
@@ -157,6 +184,13 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 		return common.Hash{}, err
 	}
 	go func() {
+		cashResult := CashOutResult{
+			TxHash:   txHash,
+			Vault:    vault,
+			Amount:   cheque.CumulativePayout,
+			CashTime: time.Now().Unix(),
+			Status:   "fail",
+		}
 		_, err := s.transactionService.WaitForReceipt(ctx, txHash)
 		if err == nil {
 			cs, err := s.CashoutStatus(ctx, vault)
@@ -168,6 +202,8 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 				if cs.Last != nil && cs.Last.Result != nil && cs.Last.Result.TotalPayout != nil {
 					totalPaidOut = cs.Last.Result.TotalPayout
 				}
+				cashResult.Amount = totalPaidOut
+				cashResult.Status = "success"
 				totalReceivedCashed := big.NewInt(0)
 				if err = s.store.Get(statestore.TotalReceivedCashedKey, &totalReceivedCashed); err == nil || err == storage.ErrNotFound {
 					totalReceivedCashed = totalReceivedCashed.Add(totalReceivedCashed, totalPaidOut)
@@ -201,7 +237,10 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 					}
 				}
 			}
-		} else {
+		}
+		err = s.store.Put(statestore.CashoutResultKey(vault), &cashResult)
+		if err != nil {
+			log.Infof("CashOutStats:put cashoutResultKey err:%+v", err)
 		}
 	}()
 	return txHash, nil

@@ -520,6 +520,10 @@ func (s *Service) Beneficiary(peer string) (beneficiary common.Address, known bo
 	return s.addressbook.Beneficiary(peer)
 }
 
+func (s *Service) VaultPeer(vault common.Address) (peer string, known bool, err error) {
+	return s.addressbook.VaultPeer(vault)
+}
+
 func (s *Service) HasCashoutAction(ctx context.Context, peer string) (bool, error) {
 	vault, known, err := s.addressbook.Vault(peer)
 	if err != nil {
