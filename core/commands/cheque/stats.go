@@ -26,7 +26,13 @@ var ChequeStatsCmd = &cmds.Command{
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		cs := chequeStats{}
+		cs := chequeStats{
+			TotalIssued:                big.NewInt(0),
+			TotalIssuedCashed:          big.NewInt(0),
+			TotalReceived:              big.NewInt(0),
+			TotalReceivedUncashed:      big.NewInt(0),
+			TotalReceivedDailyUncashed: big.NewInt(0),
+		}
 		if issued, err := chain.SettleObject.VaultService.TotalIssued(); err == nil {
 			cs.TotalIssued = issued
 		}
@@ -42,6 +48,9 @@ var ChequeStatsCmd = &cmds.Command{
 		}
 
 		if cashed, err := chain.SettleObject.VaultService.TotalReceivedCashed(); err == nil {
+			if cs.TotalReceived == nil {
+				cs.TotalReceived = big.NewInt(0)
+			}
 			cs.TotalReceivedUncashed.Sub(cs.TotalReceived, cashed)
 		}
 
@@ -58,9 +67,9 @@ var ChequeStatsCmd = &cmds.Command{
 			}
 		}
 
-		return cmds.EmitOnce(res, &chequeStats{})
+		return cmds.EmitOnce(res, &cs)
 	},
-	Type: chequeStats{},
+	Type: &chequeStats{},
 	//Encoders: cmds.EncoderMap{
 	//	cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *chequeStats) error {
 	//		//fmt.Fprintln(w, "cheque status:")
