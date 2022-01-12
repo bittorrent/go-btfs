@@ -20,8 +20,8 @@ type ChequeCashListRet struct {
 	Status   string   `json:"status"`
 }
 type ChequeCashListRsp struct {
-	Records []ChequeCashListRet
-	Total   int
+	Records []ChequeCashListRet `json:"records"`
+	Total   int                 `json:"total"`
 }
 
 var ChequeCashListCmd = &cmds.Command{

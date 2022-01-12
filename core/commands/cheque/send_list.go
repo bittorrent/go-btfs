@@ -12,15 +12,13 @@ var ListSendChequesCmd = &cmds.Command{
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 
-		listRet := ListChequeRet{Cheques: []cheque{}}
-		listRet.Cheques = []cheque{}
-		listRet.Cheques = append(listRet.Cheques, cheque{})
+		listRet := ListChequeRet{}
+		listRet.Cheques = make([]cheque, 0, 0)
 		cheques, err := chain.SettleObject.SwapService.LastSendCheques()
 
 		if err != nil {
 			return err
 		}
-
 		for k, v := range cheques {
 			var record cheque
 			record.PeerID = k
