@@ -21,8 +21,16 @@ func GetTodayTotalDailyReceivedKey() string {
 	return fmt.Sprintf("%s%d", TotalDailyReceivedKey, todayStart.Unix())
 }
 
+func GetTotalDailyReceivedKeyByTime(timestamp int64) string {
+	return fmt.Sprintf("%s%d", TotalDailyReceivedKey, timestamp)
+}
+
 func GetTodayTotalDailyReceivedCashedKey() string {
 	y, m, d := time.Now().Date()
 	todayStart := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 	return fmt.Sprintf("%s%d", TotalDailyReceivedCashedKey, todayStart.Unix())
+}
+
+func GetTotalDailyReceivedCashedKeyByTime(timestamp int64) string {
+	return fmt.Sprintf("%s%d", TotalDailyReceivedCashedKey, timestamp)
 }

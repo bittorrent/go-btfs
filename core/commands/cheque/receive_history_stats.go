@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
+	"github.com/bittorrent/go-btfs/chain"
 )
 
 type chequeReceivedHistoryStats struct {
@@ -18,9 +19,20 @@ var ChequeReceiveHistoryStatsCmd = &cmds.Command{
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		return cmds.EmitOnce(res, &[]chequeReceivedHistoryStats{
-			{},
-		})
+		stats, err := chain.SettleObject.ChequeStore.ReceivedStatsHistory(30)
+		if err != nil {
+			return err
+		}
+
+		ret := make([]chequeReceivedHistoryStats, 0, len(stats))
+		for _, stat := range stats {
+			ret = append(ret, chequeReceivedHistoryStats{
+				TotalReceived:      *stat.Amount,
+				TotalReceivedCount: stat.Count,
+				Date:               stat.Date,
+			})
+		}
+		return cmds.EmitOnce(res, &ret)
 	},
 	Type: []chequeReceivedHistoryStats{},
 	//Encoders: cmds.EncoderMap{

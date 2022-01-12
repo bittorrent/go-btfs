@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bittorrent/go-btfs/statestore"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/transaction/crypto"
 	"github.com/bittorrent/go-btfs/transaction/storage"
@@ -55,6 +56,7 @@ type ChequeStore interface {
 	ReceivedChequeRecordsByPeer(vault common.Address) ([]ChequeRecord, error)
 	// ListReceivedChequeRecords returns the records we received from a specific vault.
 	ReceivedChequeRecordsAll() (map[common.Address][]ChequeRecord, error)
+	ReceivedStatsHistory(days int) ([]DailyReceivedStats, error)
 
 	// StoreSendChequeRecord store send cheque records.
 	StoreSendChequeRecord(vault, beneficiary common.Address, amount *big.Int) error
@@ -282,7 +284,52 @@ func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int) e
 		return err
 	}
 
+	var stat DailyReceivedStats
+	err = s.store.Get(statestore.GetTodayTotalDailyReceivedKey(), &stat)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return err
+		}
+		stat = DailyReceivedStats{
+			Amount: big.NewInt(0),
+			Count:  0,
+		}
+		y, m, d := time.Now().Date()
+		today := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+		stat.Date = today.Unix()
+	}
+	stat.Amount.Add(stat.Amount, amount)
+	stat.Count += 1
+	err = s.store.Put(statestore.GetTodayTotalDailyReceivedKey(), stat)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+func (s *chequeStore) ReceivedStatsHistory(days int) ([]DailyReceivedStats, error) {
+	stats := make([]DailyReceivedStats, 0, days)
+	y, m, d := time.Now().Date()
+	todayStart := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+	for i := 0; i < days; i++ {
+		stat := DailyReceivedStats{}
+		t := todayStart.AddDate(0, 0, -1*i)
+		key := statestore.GetTotalDailyReceivedKeyByTime(t.Unix())
+		err := s.store.Get(key, &stat)
+		if err != nil {
+			if err != storage.ErrNotFound {
+				return nil, err
+			}
+			stat = DailyReceivedStats{
+				Amount: big.NewInt(0),
+				Count:  0,
+				Date:   t.Unix(),
+			}
+		}
+
+		stats = append(stats, stat)
+	}
+	return stats, nil
 }
 
 func (s *chequeStore) deleteRecordsExpired(vault common.Address, indexRange IndexRange) (uint64, error) {
