@@ -27,14 +27,35 @@ var ChequeStatsCmd = &cmds.Command{
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		cs := chequeStats{}
-		if issued, err := chain.SettleObject.VaultService.TotalIssued(); err != nil {
+		if issued, err := chain.SettleObject.VaultService.TotalIssued(); err == nil {
 			cs.TotalIssued = issued
 		}
-		if issuedCount, err := chain.SettleObject.VaultService.TotalIssuedCount(); err != nil {
+		if issuedCount, err := chain.SettleObject.VaultService.TotalIssuedCount(); err == nil {
 			cs.TotalIssuedCount = issuedCount
 		}
-		if paidOut, err := chain.SettleObject.VaultService.TotalPaidOut(context.Background()); err != nil {
+		if paidOut, err := chain.SettleObject.VaultService.TotalPaidOut(context.Background()); err == nil {
 			cs.TotalIssuedCashed = paidOut
+		}
+
+		if received, err := chain.SettleObject.VaultService.TotalReceived(); err == nil {
+			cs.TotalReceived = received
+		}
+
+		if cashed, err := chain.SettleObject.VaultService.TotalReceivedCashed(); err == nil {
+			cs.TotalReceivedUncashed.Sub(cs.TotalReceived, cashed)
+		}
+
+		if count, err := chain.SettleObject.VaultService.TotalReceivedCount(); err == nil {
+			cs.TotalReceivedCount = count
+		}
+		if count, err := chain.SettleObject.VaultService.TotalReceivedCashedCount(); err == nil {
+			cs.TotalReceivedCashedCount = count
+		}
+		if dailyReceived, err := chain.SettleObject.VaultService.TotalDailyReceived(); err == nil {
+			cs.TotalReceivedDailyUncashed = dailyReceived
+			if dailyCashed, err := chain.SettleObject.VaultService.TotalDailyReceivedCashed(); err == nil {
+				cs.TotalReceivedDailyUncashed.Sub(dailyReceived, dailyCashed)
+			}
 		}
 
 		return cmds.EmitOnce(res, &chequeStats{})

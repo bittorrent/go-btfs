@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/bittorrent/go-btfs/statestore"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/ethereum/go-ethereum"
@@ -155,7 +156,54 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 	if err != nil {
 		return common.Hash{}, err
 	}
+	go func() {
+		_, err := s.transactionService.WaitForReceipt(ctx, txHash)
+		if err == nil {
+			cs, err := s.CashoutStatus(ctx, vault)
+			if err != nil {
+				log.Infof("CashOutStats:get cashout status err:%+v", err)
+			} else {
+				// update totalReceivedCashed
+				totalPaidOut := big.NewInt(0)
+				if cs.Last != nil && cs.Last.Result != nil && cs.Last.Result.TotalPayout != nil {
+					totalPaidOut = cs.Last.Result.TotalPayout
+				}
+				totalReceivedCashed := big.NewInt(0)
+				if err = s.store.Get(statestore.TotalReceivedCashedKey, &totalReceivedCashed); err == nil || err == storage.ErrNotFound {
+					totalReceivedCashed = totalReceivedCashed.Add(totalReceivedCashed, totalPaidOut)
+					err := s.store.Put(statestore.TotalReceivedCashedKey, totalReceivedCashed)
+					if err != nil {
+						log.Infof("CashOutStats:put totalReceivedCashdKey err:%+v", err)
+					}
+				}
 
+				totalDailyReceivedCashed := big.NewInt(0)
+				if err = s.store.Get(statestore.GetTodayTotalDailyReceivedCashedKey(), &totalDailyReceivedCashed); err == nil || err == storage.ErrNotFound {
+					totalDailyReceivedCashed = totalDailyReceivedCashed.Add(totalDailyReceivedCashed, totalPaidOut)
+					err := s.store.Put(statestore.GetTodayTotalDailyReceivedCashedKey(), totalDailyReceivedCashed)
+					if err != nil {
+						log.Infof("CashOutStats:put totalReceivedDailyCashdKey err:%+v", err)
+					}
+				}
+
+				// update TotalReceivedCountCashed
+				records, err := s.chequeStore.ReceivedChequeRecordsByPeer(vault)
+				if err != nil {
+					log.Infof("CashOutStats:put totalReceivedCountCashed err:%+v", err)
+				} else {
+					cashedCount := 0
+					err := s.store.Get(statestore.TotalReceivedCashedCountKey, &cashedCount)
+					if err == nil || err == storage.ErrNotFound {
+						err := s.store.Put(statestore.TotalReceivedCashedCountKey, cashedCount+len(records))
+						if err != nil {
+							log.Infof("CashOutStats:put totalReceivedCashedConuntKey err:%+v", err)
+						}
+					}
+				}
+			}
+		} else {
+		}
+	}()
 	return txHash, nil
 }
 
