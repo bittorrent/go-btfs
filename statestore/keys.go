@@ -12,6 +12,7 @@ var (
 	TotalReceivedCashedKey      = "swap_vault_total_received_uncashed"
 	TotalReceivedCashedCountKey = "swap_vault_total_received_cashed_count"
 	TotalDailyReceivedKey       = "swap_vault_total_daily_received_"
+	TotalDailySentKey           = "swap_vault_total_daily_sent_"
 	TotalDailyReceivedCashedKey = "swap_vault_total_daily_received_cashed_"
 )
 
@@ -33,4 +34,14 @@ func GetTodayTotalDailyReceivedCashedKey() string {
 
 func GetTotalDailyReceivedCashedKeyByTime(timestamp int64) string {
 	return fmt.Sprintf("%s%d", TotalDailyReceivedCashedKey, timestamp)
+}
+
+func GetTodayTotalDailySentKey() string {
+	y, m, d := time.Now().Date()
+	todayStart := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+	return GetTotalDailySentKeyByTime(todayStart.Unix())
+}
+
+func GetTotalDailySentKeyByTime(timestamp int64) string {
+	return fmt.Sprintf("%s%d", TotalDailySentKey, timestamp)
 }

@@ -57,6 +57,7 @@ type ChequeStore interface {
 	// ListReceivedChequeRecords returns the records we received from a specific vault.
 	ReceivedChequeRecordsAll() (map[common.Address][]ChequeRecord, error)
 	ReceivedStatsHistory(days int) ([]DailyReceivedStats, error)
+	SentStatsHistory(days int) ([]DailySentStats, error)
 
 	// StoreSendChequeRecord store send cheque records.
 	StoreSendChequeRecord(vault, beneficiary common.Address, amount *big.Int) error
@@ -332,6 +333,31 @@ func (s *chequeStore) ReceivedStatsHistory(days int) ([]DailyReceivedStats, erro
 	return stats, nil
 }
 
+func (s *chequeStore) SentStatsHistory(days int) ([]DailySentStats, error) {
+	stats := make([]DailySentStats, 0, days)
+	y, m, d := time.Now().Date()
+	todayStart := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+	for i := 0; i < days; i++ {
+		stat := DailySentStats{}
+		t := todayStart.AddDate(0, 0, -1*i)
+		key := statestore.GetTotalDailySentKeyByTime(t.Unix())
+		err := s.store.Get(key, &stat)
+		if err != nil {
+			if err != storage.ErrNotFound {
+				return nil, err
+			}
+			stat = DailySentStats{
+				Amount: big.NewInt(0),
+				Count:  0,
+				Date:   t.Unix(),
+			}
+		}
+
+		stats = append(stats, stat)
+	}
+	return stats, nil
+}
+
 func (s *chequeStore) deleteRecordsExpired(vault common.Address, indexRange IndexRange) (uint64, error) {
 	//get the expire time
 	expire := time.Now().Unix() - expireTime
@@ -506,6 +532,27 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 
 	//update index
 	err = s.store.Put(historySendChequeIndexKey(beneficiary), indexRange)
+	if err != nil {
+		return err
+	}
+
+	var stat DailySentStats
+	err = s.store.Get(statestore.GetTodayTotalDailySentKey(), &stat)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return err
+		}
+		stat = DailySentStats{
+			Amount: big.NewInt(0),
+			Count:  0,
+		}
+		y, m, d := time.Now().Date()
+		today := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+		stat.Date = today.Unix()
+	}
+	stat.Amount.Add(stat.Amount, amount)
+	stat.Count += 1
+	err = s.store.Put(statestore.GetTodayTotalDailySentKey(), stat)
 	if err != nil {
 		return err
 	}

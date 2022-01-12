@@ -31,6 +31,12 @@ type DailyReceivedStats struct {
 	Date   int64 //time.now().Unix()
 }
 
+type DailySentStats struct {
+	Amount *big.Int
+	Count  int
+	Date   int64 //time.now().Unix()
+}
+
 // the valid range is [MinIndex, MaxIndex)
 type IndexRange struct {
 	MinIndex uint64
