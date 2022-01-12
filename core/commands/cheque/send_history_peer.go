@@ -27,9 +27,19 @@ var ChequeSendHistoryPeerCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
+		recordsRet := []chequeRecordRet{}
+		for _, v := range records {
+			recordsRet = append(recordsRet, chequeRecordRet{
+				PeerId:      peer_id,
+				Vault:       v.Vault,
+				Beneficiary: v.Beneficiary,
+				Amount:      v.Amount,
+				ReceiveTime: v.ReceiveTime,
+			})
+		}
 
-		listRet.Records = records
-		listRet.Len = len(records)
+		listRet.Records = recordsRet
+		listRet.Len = len(recordsRet)
 
 		return cmds.EmitOnce(res, &listRet)
 	},

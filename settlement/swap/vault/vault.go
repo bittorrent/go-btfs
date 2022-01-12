@@ -23,6 +23,9 @@ const (
 	lastIssuedChequeKeyPrefix = "swap_vault_last_issued_cheque_"
 	totalIssuedKey            = "swap_vault_total_issued_"
 	totalIssuedCountKey       = "swap_vault_total_issued_count_"
+
+	totalReceviedKey      = "swap_vault_total_received"
+	totalReceviedCountKey = "swap_vault_total_received_count"
 )
 
 var (
@@ -48,6 +51,9 @@ type Service interface {
 	TotalBalance(ctx context.Context) (*big.Int, error)
 	// TotalIssuedCount returns total issued count of the vault.
 	TotalIssuedCount() (int, error)
+	TotalIssued() (*big.Int, error)
+	TotalReceivedCount() (int, error)
+	TotalReceived() (*big.Int, error)
 	// LiquidBalance returns the token balance of the vault sub stake amount.
 	LiquidBalance(ctx context.Context) (*big.Int, error)
 	// AvailableBalance returns the token balance of the vault which is not yet used for uncashed cheques.
@@ -182,6 +188,21 @@ func (s *service) TotalIssuedCount() (int, error) {
 
 	return totalIssuedCount, nil
 }
+
+func (s *service) TotalIssued() (*big.Int, error) {
+	return s.totalIssued()
+}
+
+// total recevied cheque count.
+func (s *service) TotalReceivedCount() (int, error) {
+	return s.totalReceivedCount()
+}
+
+func (s *service) TotalReceived() (*big.Int, error) {
+	return s.totalReceived()
+}
+
+// WaitForDeposit waits for the deposit transaction to confirm and verifies the result.
 
 // WaitForDeposit waits for the deposit transaction to confirm and verifies the result.
 func (s *service) WaitForDeposit(ctx context.Context, txHash common.Hash) error {
@@ -324,6 +345,30 @@ func (s *service) totalIssuedCount() (totalIssuedCount int, err error) {
 		return 0, nil
 	}
 	return totalIssuedCount, nil
+}
+
+// returns the total amount in cheques recieved so far
+func (s *service) totalReceived() (totalReceived *big.Int, err error) {
+	err = s.store.Get(totalReceviedKey, &totalReceived)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return nil, err
+		}
+		return big.NewInt(0), nil
+	}
+	return totalReceived, nil
+}
+
+// returns the total count in cheques recieved so far
+func (s *service) totalReceivedCount() (totalReceivedCount int, err error) {
+	err = s.store.Get(totalReceviedCountKey, &totalReceivedCount)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return 0, err
+		}
+		return 0, nil
+	}
+	return totalReceivedCount, nil
 }
 
 // LastCheque returns the last cheque we issued for the beneficiary.
