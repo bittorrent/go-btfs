@@ -184,6 +184,13 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 		return common.Hash{}, err
 	}
 	go func() {
+		defer func() {
+			r := recover()
+			if r != nil {
+				log.Errorf("cash cheque cal stats err:%+v", r)
+			}
+		}()
+
 		cashResult := CashOutResult{
 			TxHash:   txHash,
 			Vault:    vault,

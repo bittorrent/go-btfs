@@ -286,6 +286,7 @@ func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int) e
 	}
 
 	var stat DailyReceivedStats
+	stat.Amount = big.NewInt(0)
 	err = s.store.Get(statestore.GetTodayTotalDailyReceivedKey(), &stat)
 	if err != nil {
 		if err != storage.ErrNotFound {
