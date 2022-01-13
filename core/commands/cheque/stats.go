@@ -62,9 +62,6 @@ var ChequeStatsCmd = &cmds.Command{
 		}
 		if dailyReceived, err := chain.SettleObject.VaultService.TotalDailyReceived(); err == nil {
 			cs.TotalReceivedDailyUncashed = dailyReceived
-			if dailyCashed, err := chain.SettleObject.VaultService.TotalDailyReceivedCashed(); err == nil {
-				cs.TotalReceivedDailyUncashed.Sub(dailyReceived, dailyCashed)
-			}
 		}
 
 		return cmds.EmitOnce(res, &cs)
