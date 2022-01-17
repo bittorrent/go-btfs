@@ -144,17 +144,6 @@ func (s *Service) ReceiveCheque(ctx context.Context, peer string, cheque *vault.
 		return err
 	}
 
-	// totalDailyReceived
-	totalDailyReceived, err := s.vault.TotalDailyReceived()
-	if err != nil {
-		return err
-	}
-	totalDailyReceived = totalDailyReceived.Add(totalDailyReceived, receivedAmount)
-	err = s.store.Put(statestore.GetTodayTotalDailyReceivedKey(), totalDailyReceived)
-	if err != nil {
-		return err
-	}
-
 	return s.accounting.NotifyPaymentReceived(peer, receivedAmount)
 }
 

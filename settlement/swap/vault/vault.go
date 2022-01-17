@@ -390,14 +390,15 @@ func (s *service) totalReceivedCashed() (totalReceived *big.Int, err error) {
 
 // returns the total amount in cheques recieved so far
 func (s *service) totalDailyReceived() (totalReceived *big.Int, err error) {
-	err = s.store.Get(statestore.GetTodayTotalDailyReceivedKey(), &totalReceived)
+	var stat DailyReceivedStats
+	err = s.store.Get(statestore.GetTodayTotalDailyReceivedKey(), &stat)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return nil, err
 		}
 		return big.NewInt(0), nil
 	}
-	return totalReceived, nil
+	return stat.Amount, nil
 }
 
 func (s *service) totalDailyReceivedCashed() (totalReceived *big.Int, err error) {
