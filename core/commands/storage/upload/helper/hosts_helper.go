@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 
@@ -39,6 +40,11 @@ func (p *CustomizedHostsProvider) NextValidHost() (string, error) {
 		if index, err := p.AddIndex(); err == nil {
 			id, err := peer.IDB58Decode(p.hosts[index])
 			if err != nil {
+				continue
+			}
+			// If my VaultFactory is not compatible with the host's one, skip
+			isFactoryCompatible, err := chain.SettleObject.Factory.IsPeerFactoryCompatible(p.cp.Ctx, id)
+			if err != nil || !isFactoryCompatible {
 				continue
 			}
 			if err := p.cp.Api.Swarm().Connect(p.cp.Ctx, peer.AddrInfo{ID: id}); err != nil {
@@ -179,6 +185,11 @@ func (p *HostsProvider) PickFromBackupHosts() (string, error) {
 		if err != nil {
 			continue
 		}
+		// If my VaultFactory is not compatible with the host's one, skip
+		isFactoryCompatible, err := chain.SettleObject.Factory.IsPeerFactoryCompatible(p.ctx, id)
+		if err != nil || !isFactoryCompatible {
+			continue
+		}
 		if err := p.cp.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: id}); err != nil {
 			continue
 		}
@@ -231,6 +242,11 @@ LOOP:
 			//	continue
 			//}
 			if err != nil {
+				continue
+			}
+			// If my VaultFactory is not compatible with the host's one, skip
+			isFactoryCompatible, err := chain.SettleObject.Factory.IsPeerFactoryCompatible(p.ctx, id)
+			if err != nil || !isFactoryCompatible {
 				continue
 			}
 			ctx, _ := context.WithTimeout(p.ctx, 3*time.Second)
