@@ -202,6 +202,9 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 		if err == nil {
 			cs, err := s.CashoutStatus(ctx, vault)
 			if err != nil {
+				if cs.UncashedAmount != nil {
+					cashResult.Amount = cs.UncashedAmount
+				}
 				log.Infof("CashOutStats:get cashout status err:%+v", err)
 			} else {
 				// update totalReceivedCashed
