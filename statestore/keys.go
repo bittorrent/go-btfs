@@ -16,7 +16,13 @@ var (
 	TotalDailyReceivedKey       = "swap_vault_total_daily_received_"
 	TotalDailySentKey           = "swap_vault_total_daily_sent_"
 	TotalDailyReceivedCashedKey = "swap_vault_total_daily_received_cashed_"
+
+	PeerReceivedUncashRecordsCountKeyPrefix = "swap_vault_peer_received_uncashed_records_count_"
 )
+
+func PeerReceivedUncashRecordsCountKey(vault common.Address) string {
+	return fmt.Sprintf("%s%s", PeerReceivedUncashRecordsCountKeyPrefix, vault.String())
+}
 
 func GetTodayTotalDailyReceivedKey() string {
 	y, m, d := time.Now().Date()

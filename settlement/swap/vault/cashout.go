@@ -233,16 +233,22 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 				}
 
 				// update TotalReceivedCountCashed
-				records, err := s.chequeStore.ReceivedChequeRecordsByPeer(vault)
+				uncashed := 0
+				err := s.store.Get(statestore.PeerReceivedUncashRecordsCountKey(vault), &uncashed)
 				if err != nil {
 					log.Infof("CashOutStats:put totalReceivedCountCashed err:%+v", err)
 				} else {
 					cashedCount := 0
 					err := s.store.Get(statestore.TotalReceivedCashedCountKey, &cashedCount)
 					if err == nil || err == storage.ErrNotFound {
-						err := s.store.Put(statestore.TotalReceivedCashedCountKey, cashedCount+len(records))
+						err := s.store.Put(statestore.TotalReceivedCashedCountKey, cashedCount+uncashed)
 						if err != nil {
 							log.Infof("CashOutStats:put totalReceivedCashedConuntKey err:%+v", err)
+						} else {
+							err := s.store.Put(statestore.TotalReceivedCashedCountKey, 0)
+							if err != nil {
+								log.Infof("CashOutStats:put totalReceivedCashedConuntKey err:%+v", err)
+							}
 						}
 					}
 				}

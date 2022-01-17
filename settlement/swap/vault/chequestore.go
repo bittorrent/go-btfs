@@ -307,6 +307,20 @@ func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int) e
 		return err
 	}
 
+	// update uncashed records key
+	uncashed := 0
+	err = s.store.Get(statestore.PeerReceivedUncashRecordsCountKey(vault), &uncashed)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return err
+		}
+	}
+	uncashed += 1
+	err = s.store.Put(statestore.PeerReceivedUncashRecordsCountKey(vault), uncashed)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 func (s *chequeStore) ReceivedStatsHistory(days int) ([]DailyReceivedStats, error) {
