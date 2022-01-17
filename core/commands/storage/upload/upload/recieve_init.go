@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/storage/challenge"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -57,6 +58,19 @@ the shard and replies back to client for the next challenge step.`,
 		if !ctxParams.Cfg.Experimental.StorageHostEnabled {
 			return fmt.Errorf("storage host api not enabled")
 		}
+		requestPid, ok := remote.GetStreamRequestRemotePeerID(req, ctxParams.N)
+		if !ok {
+			return fmt.Errorf("fail to get peer ID from request")
+		}
+
+		// if my factory is not compatible with the peer's one, reject uploading
+		isFactoryCompatible, err := chain.SettleObject.Factory.IsPeerFactoryCompatible(ctxParams.Ctx, requestPid)
+		if err != nil {
+			return err
+		}
+		if !isFactoryCompatible {
+			return fmt.Errorf("vault factory not compatible, please upgrade your node if possible")
+		}
 
 		// reject contract if holding contracts is above threshold
 		hm := NewHostManager(ctxParams.Cfg)
@@ -83,10 +97,6 @@ the shard and replies back to client for the next challenge step.`,
 		//	return fmt.Errorf("price invalid: want: >=%d, got: %d", settings.StoragePriceAsk, price)
 		//}
 
-		requestPid, ok := remote.GetStreamRequestRemotePeerID(req, ctxParams.N)
-		if !ok {
-			return fmt.Errorf("fail to get peer ID from request")
-		}
 		storeLen, err := strconv.Atoi(req.Arguments[6])
 		if err != nil {
 			return err

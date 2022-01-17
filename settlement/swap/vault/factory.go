@@ -5,11 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	conabi "github.com/bittorrent/go-btfs/chain/abi"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/patrickmn/go-cache"
 	"golang.org/x/net/context"
 )
 
@@ -34,12 +37,19 @@ type Factory interface {
 	VerifyBytecode(ctx context.Context) error
 	// VerifyVault checks that the supplied vault has been deployed by this factory.
 	VerifyVault(ctx context.Context, vault common.Address) error
+	// GetPeerVault query peer's vault address deployed by this factory.
+	GetPeerVault(ctx context.Context, peerID peer.ID) (vault common.Address, err error)
+	// GetPeerVaultWithCache query peer's vault address deployed by this factory. Return cached if cache exists, otherwise query from BTTC.
+	GetPeerVaultWithCache(ctx context.Context, peerID peer.ID) (vault common.Address, err error)
+	// IsPeerFactoryCompatible checks whether my vault factory is compatible with the `peerID's` factory.
+	IsPeerFactoryCompatible(ctx context.Context, peerID peer.ID) (bool, error)
 }
 
 type factory struct {
 	backend            transaction.Backend
 	transactionService transaction.Service
 	address            common.Address // address of the factory to use for deployments
+	peerVaultCache     *cache.Cache
 }
 
 type vaultDeployedEvent struct {
@@ -53,10 +63,12 @@ var currentDeployVersion []byte = common.FromHex(conabi.FactoryDeployedBin)
 
 // NewFactory creates a new factory service for the provided factory contract.
 func NewFactory(backend transaction.Backend, transactionService transaction.Service, address common.Address) Factory {
+	peerVaultCache := cache.New(5*time.Minute, 10*time.Minute)
 	return &factory{
 		backend:            backend,
 		transactionService: transactionService,
 		address:            address,
+		peerVaultCache:     peerVaultCache,
 	}
 }
 
@@ -192,4 +204,65 @@ func (c *factory) ERC20Address(ctx context.Context) (common.Address, error) {
 		return common.Address{}, errDecodeABI
 	}
 	return *erc20Address, nil
+}
+
+/*
+IsPeerFactoryCompatible checks whether my factory is compatible with the `peerID's` factory. Note that
+the peers cannot upload file and pay cheque to each other if their VaultFactory version doesn't same.
+Because they can't pay and cash cheque under current version.
+*/
+func (c *factory) IsPeerFactoryCompatible(ctx context.Context, peerID peer.ID) (bool, error) {
+	peerVault, err := c.GetPeerVaultWithCache(ctx, peerID)
+	if err != nil {
+		return false, err
+	}
+	// If the peer's vault exists in our factory, this means we are using the same factory.
+	isCompatible := peerVault != common.Address{}
+	return isCompatible, nil
+}
+
+/*GetPeerVaultWithCache query peer's vault address deployed by this factory.
+Return cached if cache exists, otherwise query from BTTC.
+*/
+func (c *factory) GetPeerVaultWithCache(ctx context.Context, peerID peer.ID) (vault common.Address, err error) {
+	peerStr := peerID.String()
+	vaultAddrIf, found := c.peerVaultCache.Get(peerStr)
+	if found {
+		return vaultAddrIf.(common.Address), nil
+	}
+
+	vault, err = c.GetPeerVault(ctx, peerID)
+	if err != nil {
+		return vault, err
+	}
+	c.peerVaultCache.SetDefault(peerStr, vault)
+	return vault, nil
+}
+
+// GetPeerVault query peer's vault address deployed by this factory .
+func (c *factory) GetPeerVault(ctx context.Context, peerID peer.ID) (vault common.Address, err error) {
+	callData, err := factoryABI.Pack("peerVaultAddress", peerID.String())
+	if err != nil {
+		return vault, err
+	}
+	output, err := c.transactionService.Call(ctx, &transaction.TxRequest{
+		To:   &c.address,
+		Data: callData,
+	})
+	if err != nil {
+		return vault, err
+	}
+
+	results, err := factoryABI.Unpack("peerVaultAddress", output)
+	if err != nil {
+		return vault, err
+	}
+	if len(results) != 1 {
+		return vault, errDecodeABI
+	}
+	vaultAddr, ok := abi.ConvertType(results[0], new(common.Address)).(*common.Address)
+	if !ok || vaultAddr == nil {
+		return vault, errDecodeABI
+	}
+	return *vaultAddr, nil
 }
