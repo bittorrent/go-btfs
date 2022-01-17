@@ -11,7 +11,9 @@ import (
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 
-	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	coreiface "github.com/TRON-US/interface-go-btfs-core"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 	"github.com/bittorrent/go-btfs/settlement/swap/priceoracle"
 	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol/pb"
@@ -69,6 +71,21 @@ type Service struct {
 	beneficiary common.Address
 }
 
+// Warning: this function is similar to `helper.ExtractContextParams`, and is used to avoid cycle-import.
+func extractNodeAndApi(req *cmds.Request, env cmds.Environment) (*core.IpfsNode, coreiface.CoreAPI, error) {
+	// get node
+	node, err := cmdenv.GetNode(env)
+	if err != nil {
+		return nil, nil, err
+	}
+	// get core api
+	api, err := cmdenv.GetApi(env, req)
+	if err != nil {
+		return nil, nil, err
+	}
+	return node, api, nil
+}
+
 // New creates a new swap protocol Service.
 func New(beneficiary common.Address, priceOracle priceoracle.Service) *Service {
 	return &Service{
@@ -124,15 +141,15 @@ func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, 
 				return ErrGetBeneficiary
 			}
 			ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
-			ctxParams, err := helper.ExtractContextParams(Req, Env)
+			node, coreApi, err := extractNodeAndApi(Req, Env)
 			if err != nil {
 				return err
 			}
 
 			//get handshakeInfo
-			output, err := remote.P2PCall(ctx, ctxParams.N, ctxParams.Api, peerhostPid, "/p2p/handshake",
+			output, err := remote.P2PCall(ctx, node, coreApi, peerhostPid, "/p2p/handshake",
 				s.GetChainID(),
-				ctxParams.N.Identity,
+				node.Identity,
 			)
 
 			if err != nil {
@@ -200,14 +217,14 @@ func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, 
 			go func() {
 				err = func() error {
 					ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
-					ctxParams, err := helper.ExtractContextParams(Req, Env)
+					node, coreApi, err := extractNodeAndApi(Req, Env)
 					if err != nil {
 						return err
 					}
 
 					//fmt.Println("begin send cheque: /storage/upload/cheque, hostPid, contractId = ", hostPid, contractId)
 					//send cheque
-					_, err = remote.P2PCall(ctx, ctxParams.N, ctxParams.Api, hostPid, "/storage/upload/cheque",
+					_, err = remote.P2PCall(ctx, node, coreApi, hostPid, "/storage/upload/cheque",
 						encodedCheque,
 						price,
 						contractId,
