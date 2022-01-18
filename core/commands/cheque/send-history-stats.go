@@ -11,9 +11,9 @@ import (
 )
 
 type chequeSentHistoryStats struct {
-	TotalIssued      big.Int `json:"total_issued"`
-	TotalIssuedCount int     `json:"total_issued_count"`
-	Date             int64   `json:"date"` //time.now().Unix()
+	TotalIssued      *big.Int `json:"total_issued"`
+	TotalIssuedCount int      `json:"total_issued_count"`
+	Date             int64    `json:"date"` //time.now().Unix()
 }
 
 var ChequeSendHistoryStatsCmd = &cmds.Command{
@@ -30,7 +30,7 @@ var ChequeSendHistoryStatsCmd = &cmds.Command{
 		ret := make([]chequeSentHistoryStats, 0, len(stats))
 		for _, stat := range stats {
 			ret = append(ret, chequeSentHistoryStats{
-				TotalIssued:      *stat.Amount,
+				TotalIssued:      stat.Amount,
 				TotalIssuedCount: stat.Count,
 				Date:             stat.Date,
 			})
