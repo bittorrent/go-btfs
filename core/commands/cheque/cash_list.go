@@ -1,7 +1,9 @@
 package cheque
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/big"
 	"sort"
 	"strconv"
@@ -84,4 +86,15 @@ var ChequeCashListCmd = &cmds.Command{
 		})
 	},
 	Type: &ChequeCashListRsp{},
+	Encoders: cmds.EncoderMap{
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *ChequeCashListRsp) error {
+			marshaled, err := json.MarshalIndent(out, "", "\t")
+			if err != nil {
+				return err
+			}
+			marshaled = append(marshaled, byte('\n'))
+			fmt.Fprintln(w, string(marshaled))
+			return nil
+		}),
+	},
 }

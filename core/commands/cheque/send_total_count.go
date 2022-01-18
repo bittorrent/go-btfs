@@ -1,6 +1,7 @@
 package cheque
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -29,7 +30,12 @@ var SendChequesCountCmd = &cmds.Command{
 	Type: SendTotalCountRet{},
 	Encoders: cmds.EncoderMap{
 		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, c *SendTotalCountRet) error {
-			fmt.Println("send cheque(s) count: ", c.Count)
+			marshaled, err := json.MarshalIndent(c, "", "\t")
+			if err != nil {
+				return err
+			}
+			marshaled = append(marshaled, byte('\n'))
+			fmt.Fprintln(w, string(marshaled))
 
 			return nil
 		}),

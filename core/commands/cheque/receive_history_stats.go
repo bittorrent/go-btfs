@@ -1,6 +1,9 @@
 package cheque
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
 	"math/big"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
@@ -35,9 +38,15 @@ var ChequeReceiveHistoryStatsCmd = &cmds.Command{
 		return cmds.EmitOnce(res, &ret)
 	},
 	Type: []chequeReceivedHistoryStats{},
-	//Encoders: cmds.EncoderMap{
-	//	cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *[]chequeReceivedHistoryStats) error {
-	//		return nil
-	//	}),
-	//},
+	Encoders: cmds.EncoderMap{
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *[]chequeReceivedHistoryStats) error {
+			marshaled, err := json.MarshalIndent(out, "", "\t")
+			if err != nil {
+				return err
+			}
+			marshaled = append(marshaled, byte('\n'))
+			fmt.Fprintln(w, string(marshaled))
+			return nil
+		}),
+	},
 }
