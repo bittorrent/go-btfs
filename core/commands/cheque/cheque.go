@@ -8,7 +8,7 @@ import (
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
-	"github.com/bittorrent/go-btfs/settlement/swap/vault"
+	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/net/context"
 )
 
@@ -34,8 +34,16 @@ type ListChequeRet struct {
 }
 
 type ChequeRecords struct {
-	Records []vault.ChequeRecord
+	Records []chequeRecordRet
 	Len     int
+}
+
+type chequeRecordRet struct {
+	PeerId      string
+	Vault       common.Address
+	Beneficiary common.Address
+	Amount      *big.Int
+	Time        int64 //time.now().Unix()
 }
 
 var ChequeCmd = &cmds.Command{
@@ -47,19 +55,23 @@ Vault services include issue cheque to peer, receive cheque and store operations
 	Subcommands: map[string]*cmds.Command{
 		"cash":       CashChequeCmd,
 		"cashstatus": ChequeCashStatusCmd,
+		"cashlist":   ChequeCashListCmd,
 		"price":      StorePriceCmd,
 
-		"send":              SendChequeCmd,
-		"sendlist":          ListSendChequesCmd,
-		"send-history-peer": ChequeSendHistoryPeerCmd,
-		"send-history-list": ChequeSendHistoryListCmd,
-		"send-total-count":  SendChequesCountCmd,
+		"send":               SendChequeCmd,
+		"sendlist":           ListSendChequesCmd,
+		"send-history-peer":  ChequeSendHistoryPeerCmd,
+		"send-history-list":  ChequeSendHistoryListCmd,
+		"send-history-stats": ChequeSendHistoryStatsCmd,
+		"send-total-count":   SendChequesCountCmd,
 
-		"receive":              ReceiveChequeCmd,
-		"receivelist":          ListReceiveChequeCmd,
-		"receive-history-peer": ChequeReceiveHistoryPeerCmd,
-		"receive-history-list": ChequeReceiveHistoryListCmd,
-		"receive-total-count":  ReceiveChequesCountCmd,
+		"receive":               ReceiveChequeCmd,
+		"receivelist":           ListReceiveChequeCmd,
+		"receive-history-peer":  ChequeReceiveHistoryPeerCmd,
+		"receive-history-list":  ChequeReceiveHistoryListCmd,
+		"receive-history-stats": ChequeReceiveHistoryStatsCmd,
+		"receive-total-count":   ReceiveChequesCountCmd,
+		"stats":                 ChequeStatsCmd,
 
 		"chaininfo":  ChequeChainInfoCmd,
 		"bttbalance": ChequeBttBalanceCmd,

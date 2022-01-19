@@ -10,6 +10,7 @@ import (
 
 	conabi "github.com/bittorrent/go-btfs/chain/abi"
 	"github.com/bittorrent/go-btfs/settlement/swap/erc20"
+	"github.com/bittorrent/go-btfs/statestore"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -48,6 +49,13 @@ type Service interface {
 	TotalBalance(ctx context.Context) (*big.Int, error)
 	// TotalIssuedCount returns total issued count of the vault.
 	TotalIssuedCount() (int, error)
+	TotalIssued() (*big.Int, error)
+	TotalReceivedCount() (int, error)
+	TotalReceivedCashedCount() (int, error)
+	TotalReceived() (*big.Int, error)
+	TotalReceivedCashed() (*big.Int, error)
+	TotalDailyReceived() (*big.Int, error)
+	TotalDailyReceivedCashed() (*big.Int, error)
 	// LiquidBalance returns the token balance of the vault sub stake amount.
 	LiquidBalance(ctx context.Context) (*big.Int, error)
 	// AvailableBalance returns the token balance of the vault which is not yet used for uncashed cheques.
@@ -182,6 +190,37 @@ func (s *service) TotalIssuedCount() (int, error) {
 
 	return totalIssuedCount, nil
 }
+
+func (s *service) TotalIssued() (*big.Int, error) {
+	return s.totalIssued()
+}
+
+// total recevied cheque count.
+func (s *service) TotalReceivedCount() (int, error) {
+	return s.totalReceivedCount()
+}
+
+func (s *service) TotalReceivedCashedCount() (int, error) {
+	return s.totalReceivedCashedCount()
+}
+
+func (s *service) TotalReceived() (*big.Int, error) {
+	return s.totalReceived()
+}
+
+func (s *service) TotalReceivedCashed() (*big.Int, error) {
+	return s.totalReceivedCashed()
+}
+
+func (s *service) TotalDailyReceived() (*big.Int, error) {
+	return s.totalDailyReceived()
+}
+
+func (s *service) TotalDailyReceivedCashed() (*big.Int, error) {
+	return s.totalDailyReceivedCashed()
+}
+
+// WaitForDeposit waits for the deposit transaction to confirm and verifies the result.
 
 // WaitForDeposit waits for the deposit transaction to confirm and verifies the result.
 func (s *service) WaitForDeposit(ctx context.Context, txHash common.Hash) error {
@@ -324,6 +363,76 @@ func (s *service) totalIssuedCount() (totalIssuedCount int, err error) {
 		return 0, nil
 	}
 	return totalIssuedCount, nil
+}
+
+// returns the total amount in cheques recieved so far
+func (s *service) totalReceived() (totalReceived *big.Int, err error) {
+	err = s.store.Get(statestore.TotalReceivedKey, &totalReceived)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return nil, err
+		}
+		return big.NewInt(0), nil
+	}
+	return totalReceived, nil
+}
+
+func (s *service) totalReceivedCashed() (totalReceived *big.Int, err error) {
+	err = s.store.Get(statestore.TotalReceivedCashedKey, &totalReceived)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return nil, err
+		}
+		return big.NewInt(0), nil
+	}
+	return totalReceived, nil
+}
+
+// returns the total amount in cheques recieved so far
+func (s *service) totalDailyReceived() (totalReceived *big.Int, err error) {
+	var stat DailyReceivedStats
+	err = s.store.Get(statestore.GetTodayTotalDailyReceivedKey(), &stat)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return nil, err
+		}
+		return big.NewInt(0), nil
+	}
+	return stat.Amount, nil
+}
+
+func (s *service) totalDailyReceivedCashed() (totalReceived *big.Int, err error) {
+	err = s.store.Get(statestore.GetTodayTotalDailyReceivedCashedKey(), &totalReceived)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return nil, err
+		}
+		return big.NewInt(0), nil
+	}
+	return totalReceived, nil
+}
+
+// returns the total count in cheques recieved so far
+func (s *service) totalReceivedCount() (totalReceivedCount int, err error) {
+	err = s.store.Get(statestore.TotalReceivedCountKey, &totalReceivedCount)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return 0, err
+		}
+		return 0, nil
+	}
+	return totalReceivedCount, nil
+}
+
+func (s *service) totalReceivedCashedCount() (totalReceivedCount int, err error) {
+	err = s.store.Get(statestore.TotalReceivedCashedCountKey, &totalReceivedCount)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return 0, err
+		}
+		return 0, nil
+	}
+	return totalReceivedCount, nil
 }
 
 // LastCheque returns the last cheque we issued for the beneficiary.

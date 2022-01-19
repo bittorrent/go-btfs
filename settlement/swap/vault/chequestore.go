@@ -9,9 +9,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bittorrent/go-btfs/statestore"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/transaction/crypto"
 	"github.com/bittorrent/go-btfs/transaction/storage"
+	"github.com/bittorrent/go-btfs/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -55,6 +57,8 @@ type ChequeStore interface {
 	ReceivedChequeRecordsByPeer(vault common.Address) ([]ChequeRecord, error)
 	// ListReceivedChequeRecords returns the records we received from a specific vault.
 	ReceivedChequeRecordsAll() (map[common.Address][]ChequeRecord, error)
+	ReceivedStatsHistory(days int) ([]DailyReceivedStats, error)
+	SentStatsHistory(days int) ([]DailySentStats, error)
 
 	// StoreSendChequeRecord store send cheque records.
 	StoreSendChequeRecord(vault, beneficiary common.Address, amount *big.Int) error
@@ -282,7 +286,90 @@ func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int) e
 		return err
 	}
 
+	var stat DailyReceivedStats
+	stat.Amount = big.NewInt(0)
+	err = s.store.Get(statestore.GetTodayTotalDailyReceivedKey(), &stat)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return err
+		}
+		stat = DailyReceivedStats{
+			Amount: big.NewInt(0),
+			Count:  0,
+		}
+		stat.Date = utils.TodayUnix()
+	}
+	stat.Amount.Add(stat.Amount, amount)
+	stat.Count += 1
+	err = s.store.Put(statestore.GetTodayTotalDailyReceivedKey(), stat)
+	if err != nil {
+		return err
+	}
+
+	// update uncashed records key
+	uncashed := 0
+	err = s.store.Get(statestore.PeerReceivedUncashRecordsCountKey(vault), &uncashed)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return err
+		}
+	}
+	uncashed += 1
+	err = s.store.Put(statestore.PeerReceivedUncashRecordsCountKey(vault), uncashed)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+func (s *chequeStore) ReceivedStatsHistory(days int) ([]DailyReceivedStats, error) {
+	stats := make([]DailyReceivedStats, 0, days)
+	y, m, d := time.Now().Date()
+	todayStart := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+	for i := 0; i < days; i++ {
+		stat := DailyReceivedStats{}
+		t := todayStart.AddDate(0, 0, -1*i)
+		key := statestore.GetTotalDailyReceivedKeyByTime(t.Unix())
+		err := s.store.Get(key, &stat)
+		if err != nil {
+			if err != storage.ErrNotFound {
+				return nil, err
+			}
+			stat = DailyReceivedStats{
+				Amount: big.NewInt(0),
+				Count:  0,
+				Date:   t.Unix(),
+			}
+		}
+
+		stats = append(stats, stat)
+	}
+	return stats, nil
+}
+
+func (s *chequeStore) SentStatsHistory(days int) ([]DailySentStats, error) {
+	stats := make([]DailySentStats, 0, days)
+	y, m, d := time.Now().Date()
+	todayStart := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+	for i := 0; i < days; i++ {
+		stat := DailySentStats{}
+		t := todayStart.AddDate(0, 0, -1*i)
+		key := statestore.GetTotalDailySentKeyByTime(t.Unix())
+		err := s.store.Get(key, &stat)
+		if err != nil {
+			if err != storage.ErrNotFound {
+				return nil, err
+			}
+			stat = DailySentStats{
+				Amount: big.NewInt(0),
+				Count:  0,
+				Date:   t.Unix(),
+			}
+		}
+
+		stats = append(stats, stat)
+	}
+	return stats, nil
 }
 
 func (s *chequeStore) deleteRecordsExpired(vault common.Address, indexRange IndexRange) (uint64, error) {
@@ -459,6 +546,25 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 
 	//update index
 	err = s.store.Put(historySendChequeIndexKey(beneficiary), indexRange)
+	if err != nil {
+		return err
+	}
+
+	var stat DailySentStats
+	err = s.store.Get(statestore.GetTodayTotalDailySentKey(), &stat)
+	if err != nil {
+		if err != storage.ErrNotFound {
+			return err
+		}
+		stat = DailySentStats{
+			Amount: big.NewInt(0),
+			Count:  0,
+		}
+		stat.Date = utils.TodayUnix()
+	}
+	stat.Amount.Add(stat.Amount, amount)
+	stat.Count += 1
+	err = s.store.Put(statestore.GetTodayTotalDailySentKey(), stat)
 	if err != nil {
 		return err
 	}
