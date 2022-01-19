@@ -53,7 +53,7 @@ var ChequeSendHistoryListCmd = &cmds.Command{
 						Vault:       result.Vault,
 						Beneficiary: result.Beneficiary,
 						Amount:      result.Amount,
-						ReceiveTime: result.ReceiveTime,
+						Time:        result.ReceiveTime,
 					}
 					ret = append(ret, r)
 				}

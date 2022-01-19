@@ -36,36 +36,53 @@ var ChequeStatsCmd = &cmds.Command{
 			TotalReceivedUncashed:      big.NewInt(0),
 			TotalReceivedDailyUncashed: big.NewInt(0),
 		}
-		if issued, err := chain.SettleObject.VaultService.TotalIssued(); err == nil {
-			cs.TotalIssued = issued
+		issued, err := chain.SettleObject.VaultService.TotalIssued()
+		if err != nil {
+			return err
 		}
-		if issuedCount, err := chain.SettleObject.VaultService.TotalIssuedCount(); err == nil {
-			cs.TotalIssuedCount = issuedCount
-		}
-		if paidOut, err := chain.SettleObject.VaultService.TotalPaidOut(context.Background()); err == nil {
-			cs.TotalIssuedCashed = paidOut
-		}
+		cs.TotalIssued = issued
 
-		if received, err := chain.SettleObject.VaultService.TotalReceived(); err == nil {
-			cs.TotalReceived = received
+		issuedCount, err := chain.SettleObject.VaultService.TotalIssuedCount()
+		if err != nil {
+			return err
 		}
+		cs.TotalIssuedCount = issuedCount
 
-		if cashed, err := chain.SettleObject.VaultService.TotalReceivedCashed(); err == nil {
-			if cs.TotalReceived == nil {
-				cs.TotalReceived = big.NewInt(0)
-			}
-			cs.TotalReceivedUncashed.Sub(cs.TotalReceived, cashed)
+		paidOut, err := chain.SettleObject.VaultService.TotalPaidOut(context.Background())
+		if err != nil {
+			return err
 		}
+		cs.TotalIssuedCashed = paidOut
 
-		if count, err := chain.SettleObject.VaultService.TotalReceivedCount(); err == nil {
-			cs.TotalReceivedCount = count
+		received, err := chain.SettleObject.VaultService.TotalReceived()
+		if err != nil {
+			return err
 		}
-		if count, err := chain.SettleObject.VaultService.TotalReceivedCashedCount(); err == nil {
-			cs.TotalReceivedCashedCount = count
+		cs.TotalReceived = received
+
+		cashed, err := chain.SettleObject.VaultService.TotalReceivedCashed()
+		if err != nil {
+			return err
 		}
-		if dailyReceived, err := chain.SettleObject.VaultService.TotalDailyReceived(); err == nil {
-			cs.TotalReceivedDailyUncashed = dailyReceived
+		cs.TotalReceivedUncashed.Sub(cs.TotalReceived, cashed)
+
+		count, err := chain.SettleObject.VaultService.TotalReceivedCount()
+		if err != nil {
+			return err
 		}
+		cs.TotalReceivedCount = count
+
+		receivedCount, err := chain.SettleObject.VaultService.TotalReceivedCashedCount()
+		if err != nil {
+			return err
+		}
+		cs.TotalReceivedCashedCount = receivedCount
+
+		dailyReceived, err := chain.SettleObject.VaultService.TotalDailyReceived()
+		if err != nil {
+			return err
+		}
+		cs.TotalReceivedDailyUncashed = dailyReceived
 
 		return cmds.EmitOnce(res, &cs)
 	},

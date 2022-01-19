@@ -43,7 +43,7 @@ type chequeRecordRet struct {
 	Vault       common.Address
 	Beneficiary common.Address
 	Amount      *big.Int
-	ReceiveTime int64 //time.now().Unix()
+	Time        int64 //time.now().Unix()
 }
 
 var ChequeCmd = &cmds.Command{

@@ -33,7 +33,7 @@ var ChequeReceiveHistoryPeerCmd = &cmds.Command{
 				Vault:       v.Vault,
 				Beneficiary: v.Beneficiary,
 				Amount:      v.Amount,
-				ReceiveTime: v.ReceiveTime,
+				Time:        v.ReceiveTime,
 			})
 		}
 
