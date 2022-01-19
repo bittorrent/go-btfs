@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/bittorrent/go-btfs/settlement"
 	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
+	"github.com/bittorrent/go-btfs/statestore"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/ethereum/go-ethereum/common"
 	logging "github.com/ipfs/go-log"
@@ -58,6 +60,7 @@ type Interface interface {
 
 // Service is the implementation of the swap settlement layer.
 type Service struct {
+	lock        sync.Mutex
 	proto       swapprotocol.Interface
 	store       storage.StateStorer
 	accounting  settlement.Accounting
@@ -100,6 +103,8 @@ func (s *Service) ReceiveCheque(ctx context.Context, peer string, cheque *vault.
 		return ErrWrongVault
 	}
 
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	receivedAmount, err := s.chequeStore.ReceiveCheque(ctx, cheque, price)
 	if err != nil {
 		s.metrics.ChequesRejected.Inc()
@@ -116,6 +121,28 @@ func (s *Service) ReceiveCheque(ctx context.Context, peer string, cheque *vault.
 	tot, _ := big.NewFloat(0).SetInt(receivedAmount).Float64()
 	s.metrics.TotalReceived.Add(tot)
 	s.metrics.ChequesReceived.Inc()
+
+	// total received count
+	totalReceivedCount, err := s.vault.TotalReceivedCount()
+	if err != nil {
+		return err
+	}
+	totalReceivedCount = totalReceivedCount + 1
+	err = s.store.Put(statestore.TotalReceivedCountKey, totalReceivedCount)
+	if err != nil {
+		return err
+	}
+
+	// totalReceived
+	totalReceived, err := s.vault.TotalReceived()
+	if err != nil {
+		return err
+	}
+	totalReceived = totalReceived.Add(totalReceived, receivedAmount)
+	err = s.store.Put(statestore.TotalReceivedKey, totalReceived)
+	if err != nil {
+		return err
+	}
 
 	return s.accounting.NotifyPaymentReceived(peer, receivedAmount)
 }
@@ -480,6 +507,10 @@ func (s *Service) PutBeneficiary(peer string, beneficiary common.Address) (commo
 
 func (s *Service) Beneficiary(peer string) (beneficiary common.Address, known bool, err error) {
 	return s.addressbook.Beneficiary(peer)
+}
+
+func (s *Service) VaultPeer(vault common.Address) (peer string, known bool, err error) {
+	return s.addressbook.VaultPeer(vault)
 }
 
 func (s *Service) HasCashoutAction(ctx context.Context, peer string) (bool, error) {

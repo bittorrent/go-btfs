@@ -28,8 +28,19 @@ var ChequeReceiveHistoryPeerCmd = &cmds.Command{
 			return err
 		}
 
-		listRet.Records = records
-		listRet.Len = len(records)
+		recordsRet := []chequeRecordRet{}
+		for _, v := range records {
+			recordsRet = append(recordsRet, chequeRecordRet{
+				PeerId:      peer_id,
+				Vault:       v.Vault,
+				Beneficiary: v.Beneficiary,
+				Amount:      v.Amount,
+				Time:        v.ReceiveTime,
+			})
+		}
+
+		listRet.Records = recordsRet
+		listRet.Len = len(recordsRet)
 
 		return cmds.EmitOnce(res, &listRet)
 	},
@@ -39,7 +50,7 @@ var ChequeReceiveHistoryPeerCmd = &cmds.Command{
 			var tm time.Time
 			fmt.Fprintf(w, "\t%-46s\t%-46s\t%-10s\ttimestamp: \n", "beneficiary:", "vault:", "amount:")
 			for index := 0; index < out.Len; index++ {
-				tm = time.Unix(out.Records[index].ReceiveTime, 0)
+				tm = time.Unix(out.Records[index].Time, 0)
 				year, mon, day := tm.Date()
 				h, m, s := tm.Clock()
 				fmt.Fprintf(w, "\t%-46s\t%-46s\t%-10d\t%d-%d-%d %02d:%02d:%02d \n",
