@@ -22,7 +22,9 @@ var ChequeReceiveHistoryStatsCmd = &cmds.Command{
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		stats, err := chain.SettleObject.ChequeStore.ReceivedStatsHistory(30)
+		// now only return 30days cheque received stats
+		const receivedStatsDuration = 30
+		stats, err := chain.SettleObject.ChequeStore.ReceivedStatsHistory(receivedStatsDuration)
 		if err != nil {
 			return err
 		}
