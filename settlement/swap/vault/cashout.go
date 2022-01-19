@@ -183,11 +183,16 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 	if err != nil {
 		return common.Hash{}, err
 	}
-	err = s.storeCashResult(ctx, vault, txHash, cheque)
-	if err != nil {
-		// only log err,cash success
-		log.Infof("CashCheque storeCashResult err:%+v", err)
-	}
+
+	// WaitForReceipt takes long time
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Errorf("storeCashResult recovered:%+v", err)
+			}
+		}()
+		s.storeCashResult(ctx, vault, txHash, cheque)
+	}()
 	return txHash, nil
 }
 
