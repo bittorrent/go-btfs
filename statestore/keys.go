@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/bittorrent/go-btfs/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -25,9 +26,7 @@ func PeerReceivedUncashRecordsCountKey(vault common.Address) string {
 }
 
 func GetTodayTotalDailyReceivedKey() string {
-	y, m, d := time.Now().Date()
-	todayStart := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
-	return fmt.Sprintf("%s%d", TotalDailyReceivedKey, todayStart.Unix())
+	return fmt.Sprintf("%s%d", TotalDailyReceivedKey, utils.TodayUnix())
 }
 
 func GetTotalDailyReceivedKeyByTime(timestamp int64) string {
@@ -35,9 +34,7 @@ func GetTotalDailyReceivedKeyByTime(timestamp int64) string {
 }
 
 func GetTodayTotalDailyReceivedCashedKey() string {
-	y, m, d := time.Now().Date()
-	todayStart := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
-	return fmt.Sprintf("%s%d", TotalDailyReceivedCashedKey, todayStart.Unix())
+	return fmt.Sprintf("%s%d", TotalDailyReceivedCashedKey, utils.TodayUnix())
 }
 
 func GetTotalDailyReceivedCashedKeyByTime(timestamp int64) string {
@@ -45,9 +42,7 @@ func GetTotalDailyReceivedCashedKeyByTime(timestamp int64) string {
 }
 
 func GetTodayTotalDailySentKey() string {
-	y, m, d := time.Now().Date()
-	todayStart := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
-	return GetTotalDailySentKeyByTime(todayStart.Unix())
+	return GetTotalDailySentKeyByTime(utils.TodayUnix())
 }
 
 func GetTotalDailySentKeyByTime(timestamp int64) string {

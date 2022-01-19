@@ -13,6 +13,7 @@ import (
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/transaction/crypto"
 	"github.com/bittorrent/go-btfs/transaction/storage"
+	"github.com/bittorrent/go-btfs/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -296,9 +297,7 @@ func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int) e
 			Amount: big.NewInt(0),
 			Count:  0,
 		}
-		y, m, d := time.Now().Date()
-		today := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
-		stat.Date = today.Unix()
+		stat.Date = utils.TodayUnix()
 	}
 	stat.Amount.Add(stat.Amount, amount)
 	stat.Count += 1
@@ -561,9 +560,7 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 			Amount: big.NewInt(0),
 			Count:  0,
 		}
-		y, m, d := time.Now().Date()
-		today := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
-		stat.Date = today.Unix()
+		stat.Date = utils.TodayUnix()
 	}
 	stat.Amount.Add(stat.Amount, amount)
 	stat.Count += 1

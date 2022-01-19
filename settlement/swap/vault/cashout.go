@@ -183,83 +183,85 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 	if err != nil {
 		return common.Hash{}, err
 	}
-	go func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				log.Errorf("cash cheque cal stats err:%+v", r)
+	err = s.storeCashResult(ctx, vault, txHash, cheque)
+	if err != nil {
+		// only log err,cash success
+		log.Infof("CashCheque storeCashResult err:%+v", err)
+	}
+	return txHash, nil
+}
+
+func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Address, txHash common.Hash, cheque *SignedCheque) error {
+	cashResult := CashOutResult{
+		TxHash:   txHash,
+		Vault:    vault,
+		Amount:   cheque.CumulativePayout,
+		CashTime: time.Now().Unix(),
+		Status:   "fail",
+	}
+	_, err := s.transactionService.WaitForReceipt(ctx, txHash)
+	if err != nil {
+		log.Infof("storeCashResult err:%+v", err)
+	} else {
+		cs, err := s.CashoutStatus(ctx, vault)
+		if err != nil {
+			log.Infof("CashOutStats:get cashout status err:%+v", err)
+			if cs.UncashedAmount != nil {
+				cashResult.Amount = cs.UncashedAmount
 			}
-		}()
-
-		cashResult := CashOutResult{
-			TxHash:   txHash,
-			Vault:    vault,
-			Amount:   cheque.CumulativePayout,
-			CashTime: time.Now().Unix(),
-			Status:   "fail",
-		}
-		_, err := s.transactionService.WaitForReceipt(ctx, txHash)
-		if err == nil {
-			cs, err := s.CashoutStatus(ctx, vault)
-			if err != nil {
-				if cs.UncashedAmount != nil {
-					cashResult.Amount = cs.UncashedAmount
-				}
-				log.Infof("CashOutStats:get cashout status err:%+v", err)
-			} else {
-				// update totalReceivedCashed
-				totalPaidOut := big.NewInt(0)
-				if cs.Last != nil && cs.Last.Result != nil && cs.Last.Result.TotalPayout != nil {
-					totalPaidOut = cs.Last.Result.TotalPayout
-				}
-				cashResult.Amount = totalPaidOut
-				cashResult.Status = "success"
-				totalReceivedCashed := big.NewInt(0)
-				if err = s.store.Get(statestore.TotalReceivedCashedKey, &totalReceivedCashed); err == nil || err == storage.ErrNotFound {
-					totalReceivedCashed = totalReceivedCashed.Add(totalReceivedCashed, totalPaidOut)
-					err := s.store.Put(statestore.TotalReceivedCashedKey, totalReceivedCashed)
-					if err != nil {
-						log.Infof("CashOutStats:put totalReceivedCashdKey err:%+v", err)
-					}
-				}
-
-				totalDailyReceivedCashed := big.NewInt(0)
-				if err = s.store.Get(statestore.GetTodayTotalDailyReceivedCashedKey(), &totalDailyReceivedCashed); err == nil || err == storage.ErrNotFound {
-					totalDailyReceivedCashed = totalDailyReceivedCashed.Add(totalDailyReceivedCashed, totalPaidOut)
-					err := s.store.Put(statestore.GetTodayTotalDailyReceivedCashedKey(), totalDailyReceivedCashed)
-					if err != nil {
-						log.Infof("CashOutStats:put totalReceivedDailyCashdKey err:%+v", err)
-					}
-				}
-
-				// update TotalReceivedCountCashed
-				uncashed := 0
-				err := s.store.Get(statestore.PeerReceivedUncashRecordsCountKey(vault), &uncashed)
+		} else {
+			// update totalReceivedCashed
+			totalPaidOut := big.NewInt(0)
+			if cs.Last != nil && cs.Last.Result != nil && cs.Last.Result.TotalPayout != nil {
+				totalPaidOut = cs.Last.Result.TotalPayout
+			}
+			cashResult.Amount = totalPaidOut
+			cashResult.Status = "success"
+			totalReceivedCashed := big.NewInt(0)
+			if err = s.store.Get(statestore.TotalReceivedCashedKey, &totalReceivedCashed); err == nil || err == storage.ErrNotFound {
+				totalReceivedCashed = totalReceivedCashed.Add(totalReceivedCashed, totalPaidOut)
+				err := s.store.Put(statestore.TotalReceivedCashedKey, totalReceivedCashed)
 				if err != nil {
-					log.Infof("CashOutStats:put totalReceivedCountCashed err:%+v", err)
-				} else {
-					cashedCount := 0
-					err := s.store.Get(statestore.TotalReceivedCashedCountKey, &cashedCount)
-					if err == nil || err == storage.ErrNotFound {
-						err := s.store.Put(statestore.TotalReceivedCashedCountKey, cashedCount+uncashed)
+					log.Infof("CashOutStats:put totalReceivedCashdKey err:%+v", err)
+				}
+			}
+
+			totalDailyReceivedCashed := big.NewInt(0)
+			if err = s.store.Get(statestore.GetTodayTotalDailyReceivedCashedKey(), &totalDailyReceivedCashed); err == nil || err == storage.ErrNotFound {
+				totalDailyReceivedCashed = totalDailyReceivedCashed.Add(totalDailyReceivedCashed, totalPaidOut)
+				err := s.store.Put(statestore.GetTodayTotalDailyReceivedCashedKey(), totalDailyReceivedCashed)
+				if err != nil {
+					log.Infof("CashOutStats:put totalReceivedDailyCashdKey err:%+v", err)
+				}
+			}
+
+			// update TotalReceivedCountCashed
+			uncashed := 0
+			err := s.store.Get(statestore.PeerReceivedUncashRecordsCountKey(vault), &uncashed)
+			if err != nil {
+				log.Infof("CashOutStats:put totalReceivedCountCashed err:%+v", err)
+			} else {
+				cashedCount := 0
+				err := s.store.Get(statestore.TotalReceivedCashedCountKey, &cashedCount)
+				if err == nil || err == storage.ErrNotFound {
+					err := s.store.Put(statestore.TotalReceivedCashedCountKey, cashedCount+uncashed)
+					if err != nil {
+						log.Infof("CashOutStats:put totalReceivedCashedConuntKey err:%+v", err)
+					} else {
+						err := s.store.Put(statestore.TotalReceivedCashedCountKey, 0)
 						if err != nil {
 							log.Infof("CashOutStats:put totalReceivedCashedConuntKey err:%+v", err)
-						} else {
-							err := s.store.Put(statestore.TotalReceivedCashedCountKey, 0)
-							if err != nil {
-								log.Infof("CashOutStats:put totalReceivedCashedConuntKey err:%+v", err)
-							}
 						}
 					}
 				}
 			}
 		}
-		err = s.store.Put(statestore.CashoutResultKey(vault), &cashResult)
-		if err != nil {
-			log.Infof("CashOutStats:put cashoutResultKey err:%+v", err)
-		}
-	}()
-	return txHash, nil
+	}
+	err = s.store.Put(statestore.CashoutResultKey(vault), &cashResult)
+	if err != nil {
+		log.Infof("CashOutStats:put cashoutResultKey err:%+v", err)
+	}
+	return nil
 }
 
 // CashoutStatus gets the status of the latest cashout transaction for the vault
