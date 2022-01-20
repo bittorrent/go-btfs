@@ -43,7 +43,7 @@ var ChequeSendHistoryListCmd = &cmds.Command{
 				records = records[from:]
 			}
 			for _, result := range records {
-				peer, known, err := chain.SettleObject.SwapService.VaultPeer(result.Vault)
+				peer, known, err := chain.SettleObject.SwapService.BeneficiaryPeer(result.Vault)
 				if err == nil {
 					if !known {
 						peer = "unknown"
