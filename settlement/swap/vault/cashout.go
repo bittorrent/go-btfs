@@ -253,7 +253,7 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 					if err != nil {
 						log.Infof("CashOutStats:put totalReceivedCashedConuntKey err:%+v", err)
 					} else {
-						err := s.store.Put(statestore.TotalReceivedCashedCountKey, 0)
+						err := s.store.Put(statestore.PeerReceivedUncashRecordsCountKey(vault), 0)
 						if err != nil {
 							log.Infof("CashOutStats:put totalReceivedCashedConuntKey err:%+v", err)
 						}

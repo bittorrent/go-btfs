@@ -9,16 +9,17 @@ import (
 )
 
 var (
-	TotalReceivedKey      = "swap_vault_total_received"
-	TotalReceivedCountKey = "swap_vault_total_received_count"
+	TotalReceivedKey      = "swap_vault_total_received"       // 收到支票总额度
+	TotalReceivedCountKey = "swap_vault_total_received_count" // 收到支票总数量
 
-	TotalReceivedCashedKey      = "swap_vault_total_received_uncashed"
-	TotalReceivedCashedCountKey = "swap_vault_total_received_cashed_count"
-	TotalDailyReceivedKey       = "swap_vault_total_daily_received_"
-	TotalDailySentKey           = "swap_vault_total_daily_sent_"
-	TotalDailyReceivedCashedKey = "swap_vault_total_daily_received_cashed_"
+	TotalReceivedCashedKey      = "swap_vault_total_received_cashed"       // 收到支票兑现总额度
+	TotalReceivedCashedCountKey = "swap_vault_total_received_cashed_count" // 收到支票兑现总数量
 
-	PeerReceivedUncashRecordsCountKeyPrefix = "swap_vault_peer_received_uncashed_records_count_"
+	TotalDailyReceivedKey       = "swap_vault_total_daily_received_"        // 单日收到支票总额度+总数量
+	TotalDailyReceivedCashedKey = "swap_vault_total_daily_received_cashed_" // 单日收到支票兑现总额度
+	TotalDailySentKey           = "swap_vault_total_daily_sent_"            // 单日发出支票总额度/总数量
+
+	PeerReceivedUncashRecordsCountKeyPrefix = "swap_vault_peer_received_uncashed_records_count_" // 每个peer收到支票未兑现数量
 )
 
 func PeerReceivedUncashRecordsCountKey(vault common.Address) string {
