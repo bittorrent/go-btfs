@@ -216,7 +216,6 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 // ReceivedChequeRecords returns the records we received from a specific vault.
 func (s *chequeStore) ReceivedChequeRecordsByPeer(vault common.Address) ([]ChequeRecord, error) {
 	var records []ChequeRecord
-	var record ChequeRecord
 	var indexrange IndexRange
 	err := s.store.Get(historyReceivedChequeIndexKey(vault), &indexrange)
 	if err != nil {
@@ -227,6 +226,7 @@ func (s *chequeStore) ReceivedChequeRecordsByPeer(vault common.Address) ([]Chequ
 	}
 
 	for index := indexrange.MinIndex; index < indexrange.MaxIndex; index++ {
+		var record ChequeRecord
 		err = s.store.Get(historyReceivedChequeKey(vault, index), &record)
 		if err != nil {
 			return nil, err
@@ -612,7 +612,6 @@ func (s *chequeStore) deleteSendRecordsExpired(beneficiary common.Address, index
 // SendChequeRecordsByPeer returns the records we received from a specific vault.
 func (s *chequeStore) SendChequeRecordsByPeer(beneficiary common.Address) ([]ChequeRecord, error) {
 	var records []ChequeRecord
-	var record ChequeRecord
 	var indexrange IndexRange
 	err := s.store.Get(historySendChequeIndexKey(beneficiary), &indexrange)
 	if err != nil {
@@ -623,6 +622,7 @@ func (s *chequeStore) SendChequeRecordsByPeer(beneficiary common.Address) ([]Che
 	}
 
 	for index := indexrange.MinIndex; index < indexrange.MaxIndex; index++ {
+		var record ChequeRecord
 		err = s.store.Get(historySendChequeKey(beneficiary, index), &record)
 		if err != nil {
 			return nil, err
