@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
@@ -40,6 +41,9 @@ var ChequeSendHistoryListCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
+		sort.Slice(records, func(i, j int) bool {
+			return records[i].ReceiveTime > records[j].ReceiveTime
+		})
 		listRet.Total = len(records)
 		ret := make([]chequeRecordRet, 0, limit)
 		if from < len(records) {
