@@ -191,7 +191,7 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 				log.Errorf("storeCashResult recovered:%+v", err)
 			}
 		}()
-		s.storeCashResult(ctx, vault, txHash, cheque)
+		s.storeCashResult(context.Background(), vault, txHash, cheque)
 	}()
 	return txHash, nil
 }
