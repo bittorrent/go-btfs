@@ -45,10 +45,10 @@ var ChequeCashListCmd = &cmds.Command{
 			return fmt.Errorf("parse limit:%v failed", req.Arguments[1])
 		}
 		if from < 0 {
-			return fmt.Errorf("invalid from:%d", from)
+			return fmt.Errorf("invalid from: %d", from)
 		}
 		if limit < 0 {
-			return fmt.Errorf("invalid limit:%d", from)
+			return fmt.Errorf("invalid limit: %d", limit)
 		}
 
 		results, err := chain.SettleObject.CashoutService.CashoutResults()

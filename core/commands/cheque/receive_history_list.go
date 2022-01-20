@@ -35,10 +35,10 @@ var ChequeReceiveHistoryListCmd = &cmds.Command{
 		}
 
 		if from < 0 {
-			return fmt.Errorf("invalid from:%d", from)
+			return fmt.Errorf("invalid from: %d", from)
 		}
 		if limit < 0 {
-			return fmt.Errorf("invalid limit:%d", from)
+			return fmt.Errorf("invalid limit: %d", limit)
 		}
 
 		var listRet chequeReceivedHistoryListRet
