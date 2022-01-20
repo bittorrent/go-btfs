@@ -51,7 +51,7 @@ var ChequeReceiveHistoryListCmd = &cmds.Command{
 				peer, known, err := chain.SettleObject.SwapService.VaultPeer(result.Vault)
 				if err == nil {
 					if !known {
-						continue
+						peer = "unknown"
 					}
 					r := chequeRecordRet{
 						PeerId:      peer,
