@@ -44,6 +44,12 @@ var ChequeCashListCmd = &cmds.Command{
 		if err != nil {
 			return fmt.Errorf("parse limit:%v failed", req.Arguments[1])
 		}
+		if from < 0 {
+			return fmt.Errorf("invalid from: %d", from)
+		}
+		if limit < 0 {
+			return fmt.Errorf("invalid limit: %d", limit)
+		}
 
 		results, err := chain.SettleObject.CashoutService.CashoutResults()
 		if err != nil {
@@ -65,7 +71,7 @@ var ChequeCashListCmd = &cmds.Command{
 				peer, known, err := chain.SettleObject.SwapService.VaultPeer(result.Vault)
 				if err == nil {
 					if !known {
-						continue
+						peer = "unkonwn"
 					}
 					r := ChequeCashListRet{
 						TxHash:   result.TxHash.String(),

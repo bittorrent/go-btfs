@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 
 	cmds "github.com/TRON-US/go-btfs-cmds"
@@ -34,11 +35,21 @@ var ChequeReceiveHistoryListCmd = &cmds.Command{
 			return fmt.Errorf("parse limit:%v failed", req.Arguments[1])
 		}
 
+		if from < 0 {
+			return fmt.Errorf("invalid from: %d", from)
+		}
+		if limit < 0 {
+			return fmt.Errorf("invalid limit: %d", limit)
+		}
+
 		var listRet chequeReceivedHistoryListRet
 		records, err := chain.SettleObject.SwapService.ReceivedChequeRecordsAll()
 		if err != nil {
 			return err
 		}
+		sort.Slice(records, func(i, j int) bool {
+			return records[i].ReceiveTime > records[j].ReceiveTime
+		})
 		listRet.Total = len(records)
 		ret := make([]chequeRecordRet, 0, limit)
 		if from < len(records) {
@@ -51,7 +62,7 @@ var ChequeReceiveHistoryListCmd = &cmds.Command{
 				peer, known, err := chain.SettleObject.SwapService.VaultPeer(result.Vault)
 				if err == nil {
 					if !known {
-						continue
+						peer = "unknown"
 					}
 					r := chequeRecordRet{
 						PeerId:      peer,
