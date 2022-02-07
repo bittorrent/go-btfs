@@ -173,3 +173,5 @@ replace github.com/libp2p/go-libp2p-circuit => github.com/libp2p/go-libp2p-circu
 replace github.com/libp2p/go-libp2p-quic-transport => github.com/libp2p/go-libp2p-quic-transport v0.8.0
 
 go 1.14
+
+replace github.com/TRON-US/go-btfs-cmds => github.com/bittorrent/go-btfs-cmds v0.0.0-20220207074329-ea4771c548a8
