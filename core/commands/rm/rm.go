@@ -7,10 +7,10 @@ import (
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
-	cmds "github.com/bittorrent/go-btfs-cmds"
 	coreiface "github.com/TRON-US/interface-go-btfs-core"
 	"github.com/TRON-US/interface-go-btfs-core/options"
 	"github.com/TRON-US/interface-go-btfs-core/path"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	ipld "github.com/ipfs/go-ipld-format"
 )
 

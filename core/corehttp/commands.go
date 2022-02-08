@@ -15,9 +15,9 @@ import (
 	"github.com/bittorrent/go-btfs/core"
 	corecommands "github.com/bittorrent/go-btfs/core/commands"
 
+	config "github.com/TRON-US/go-btfs-config"
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	cmdsHttp "github.com/bittorrent/go-btfs-cmds/http"
-	config "github.com/TRON-US/go-btfs-config"
 	path "github.com/ipfs/go-path"
 )
 

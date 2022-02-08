@@ -14,8 +14,8 @@ import (
 	"github.com/bittorrent/go-btfs/core/corerepo"
 	"github.com/bittorrent/go-btfs/core/hub"
 
-	cmds "github.com/bittorrent/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	nodepb "github.com/tron-us/go-btfs-common/protos/node"
 
 	ds "github.com/ipfs/go-datastore"

@@ -14,10 +14,10 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/e"
 	"github.com/bittorrent/go-btfs/core/coredag"
 
-	cmds "github.com/bittorrent/go-btfs-cmds"
 	files "github.com/TRON-US/go-btfs-files"
 	"github.com/TRON-US/interface-go-btfs-core/options"
 	path "github.com/TRON-US/interface-go-btfs-core/path"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	cid "github.com/ipfs/go-cid"
 	cidenc "github.com/ipfs/go-cidutil/cidenc"
 	ipld "github.com/ipfs/go-ipld-format"

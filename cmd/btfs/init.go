@@ -19,9 +19,9 @@ import (
 	"github.com/bittorrent/go-btfs/namesys"
 	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 
-	cmds "github.com/bittorrent/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"
 	files "github.com/TRON-US/go-btfs-files"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 )
 
 const (

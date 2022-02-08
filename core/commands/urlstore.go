@@ -8,9 +8,9 @@ import (
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	filestore "github.com/ipfs/go-filestore"
 
-	cmds "github.com/bittorrent/go-btfs-cmds"
 	files "github.com/TRON-US/go-btfs-files"
 	"github.com/TRON-US/interface-go-btfs-core/options"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 )
 
 var urlStoreCmd = &cmds.Command{

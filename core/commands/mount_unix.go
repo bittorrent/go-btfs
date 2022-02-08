@@ -9,8 +9,8 @@ import (
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	nodeMount "github.com/bittorrent/go-btfs/fuse/node"
 
-	cmds "github.com/bittorrent/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 )
 
 const (
