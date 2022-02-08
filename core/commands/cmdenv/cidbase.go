@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	cid "github.com/ipfs/go-cid"
 	cidenc "github.com/ipfs/go-cidutil/cidenc"
 	mbase "github.com/multiformats/go-multibase"

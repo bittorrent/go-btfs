@@ -17,7 +17,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"

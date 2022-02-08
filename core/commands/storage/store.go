@@ -10,7 +10,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/stats"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/upload"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 )
 
 var StorageCmd = &cmds.Command{

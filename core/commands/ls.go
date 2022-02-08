@@ -9,7 +9,7 @@ import (
 
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	unixfs "github.com/TRON-US/go-unixfs"
 	unixfs_pb "github.com/TRON-US/go-unixfs/pb"
 	iface "github.com/TRON-US/interface-go-btfs-core"

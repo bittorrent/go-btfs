@@ -1,12 +1,13 @@
 module github.com/bittorrent/go-btfs
 
+go 1.15
+
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
 	github.com/FactomProject/basen v0.0.0-20150613233007-fe3947df716e // indirect
 	github.com/FactomProject/btcutilecc v0.0.0-20130527213604-d3a63a5752ec // indirect
 	github.com/TRON-US/go-btfs-api v0.3.0
 	github.com/TRON-US/go-btfs-chunker v0.3.0
-	github.com/TRON-US/go-btfs-cmds v0.2.13
 	github.com/TRON-US/go-btfs-config v0.11.5
 	github.com/TRON-US/go-btfs-files v0.2.0
 	github.com/TRON-US/go-btfs-pinner v0.1.1
@@ -17,6 +18,7 @@ require (
 	github.com/TRON-US/interface-go-btfs-core v0.7.0
 	github.com/Workiva/go-datastructures v1.0.52
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d
+	github.com/bittorrent/go-btfs-cmds v0.2.14
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bren2010/proquint v0.0.0-20160323162903-38337c27106d
 	github.com/btcsuite/btcd v0.22.0-beta
@@ -171,7 +173,3 @@ replace github.com/libp2p/go-libp2p => github.com/libp2p/go-libp2p v0.11.0
 replace github.com/libp2p/go-libp2p-circuit => github.com/libp2p/go-libp2p-circuit v0.3.1
 
 replace github.com/libp2p/go-libp2p-quic-transport => github.com/libp2p/go-libp2p-quic-transport v0.8.0
-
-go 1.14
-
-replace github.com/TRON-US/go-btfs-cmds => github.com/bittorrent/go-btfs-cmds v0.0.0-20220207074329-ea4771c548a8

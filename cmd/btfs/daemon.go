@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"
 	cserial "github.com/TRON-US/go-btfs-config/serialize"
 	version "github.com/bittorrent/go-btfs"

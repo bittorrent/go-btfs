@@ -14,7 +14,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/e"
 	"github.com/bittorrent/go-btfs/core/coredag"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	files "github.com/TRON-US/go-btfs-files"
 	"github.com/TRON-US/interface-go-btfs-core/options"
 	path "github.com/TRON-US/interface-go-btfs-core/path"

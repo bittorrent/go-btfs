@@ -16,7 +16,7 @@ import (
 	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 	humanize "github.com/dustin/go-humanize"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	cid "github.com/ipfs/go-cid"
 	bstore "github.com/ipfs/go-ipfs-blockstore"
 )

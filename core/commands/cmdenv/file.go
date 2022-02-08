@@ -9,7 +9,7 @@ import (
 	gopath "path"
 	"strings"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"
 	files "github.com/TRON-US/go-btfs-files"
 	"github.com/bittorrent/go-btfs/core"
