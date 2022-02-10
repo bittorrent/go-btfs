@@ -3,6 +3,7 @@ package hub
 import (
 	"context"
 	"fmt"
+	version "github.com/bittorrent/go-btfs"
 	"strings"
 
 	"github.com/bittorrent/go-btfs/core"
@@ -54,8 +55,9 @@ func QueryHosts(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb
 	err = grpc.HubQueryClient(config.Services.HubDomain).WithContext(ctx, func(ctx context.Context,
 		client hubpb.HubQueryServiceClient) error {
 		resp, err = client.GetHosts(ctx, &hubpb.HostsReq{
-			Id:   node.Identity.Pretty(),
-			Mode: hrm,
+			Id:      node.Identity.Pretty(),
+			Mode:    hrm,
+			Version: version.CurrentVersionNumber,
 		})
 		if err != nil {
 			return err
