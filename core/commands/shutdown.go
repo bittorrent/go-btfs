@@ -3,7 +3,7 @@ package commands
 import (
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
-	"github.com/TRON-US/go-btfs-cmds"
+	"github.com/bittorrent/go-btfs-cmds"
 )
 
 var daemonShutdownCmd = &cmds.Command{

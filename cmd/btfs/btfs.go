@@ -5,7 +5,7 @@ import (
 
 	commands "github.com/bittorrent/go-btfs/core/commands"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 )
 
 // This is the CLI root, used for executing commands accessible to CLI clients.

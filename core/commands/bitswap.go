@@ -7,7 +7,7 @@ import (
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	e "github.com/bittorrent/go-btfs/core/commands/e"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	humanize "github.com/dustin/go-humanize"
 	bitswap "github.com/ipfs/go-bitswap"
 	decision "github.com/ipfs/go-bitswap/decision"

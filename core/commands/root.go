@@ -15,7 +15,7 @@ import (
 	unixfs "github.com/bittorrent/go-btfs/core/commands/unixfs"
 	"github.com/bittorrent/go-btfs/core/commands/vault"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	logging "github.com/ipfs/go-log"
 )
 

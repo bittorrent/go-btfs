@@ -9,7 +9,7 @@ import (
 
 	oldcmds "github.com/bittorrent/go-btfs/commands"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 )
 
 const (

@@ -10,9 +10,9 @@ import (
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	namesys "github.com/bittorrent/go-btfs/namesys"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
 	options "github.com/TRON-US/interface-go-btfs-core/options"
 	nsopts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	logging "github.com/ipfs/go-log"
 	path "github.com/ipfs/go-path"
 )

@@ -11,7 +11,7 @@ import (
 
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"

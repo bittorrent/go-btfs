@@ -9,9 +9,9 @@ import (
 	gopath "path"
 	"strings"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"
 	files "github.com/TRON-US/go-btfs-files"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/corerepo"
 
