@@ -10,7 +10,7 @@ import (
 	e "github.com/bittorrent/go-btfs/core/commands/e"
 	filestore "github.com/ipfs/go-filestore"
 
-	"github.com/TRON-US/go-btfs-cmds"
+	"github.com/bittorrent/go-btfs-cmds"
 	"github.com/ipfs/go-cid"
 )
 

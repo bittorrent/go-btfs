@@ -5,8 +5,8 @@ import (
 
 	"github.com/bittorrent/go-btfs/core"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
-	cmdsHttp "github.com/TRON-US/go-btfs-cmds/http"
+	cmds "github.com/bittorrent/go-btfs-cmds"
+	cmdsHttp "github.com/bittorrent/go-btfs-cmds/http"
 
 	"github.com/libp2p/go-libp2p-core/peer"
 	ma "github.com/multiformats/go-multiaddr"

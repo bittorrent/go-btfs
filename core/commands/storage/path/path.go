@@ -14,7 +14,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/TRON-US/go-btfs-cmds"
+	"github.com/bittorrent/go-btfs-cmds"
 
 	"github.com/dustin/go-humanize"
 	logging "github.com/ipfs/go-log"

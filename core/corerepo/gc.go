@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/gc"
 	"github.com/bittorrent/go-btfs/repo"

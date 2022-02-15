@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/e"
 

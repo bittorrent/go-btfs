@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 
 	coreiface "github.com/TRON-US/interface-go-btfs-core"
 	"github.com/bittorrent/go-btfs/core"

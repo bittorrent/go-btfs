@@ -8,7 +8,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/tron-us/go-btfs-common/crypto"
 	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
 	"github.com/tron-us/go-btfs-common/utils/grpc"

@@ -1,7 +1,7 @@
 package keyencode
 
 import (
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	mbase "github.com/multiformats/go-multibase"
 )

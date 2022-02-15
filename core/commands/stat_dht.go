@@ -8,7 +8,7 @@ import (
 
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 
 	"github.com/libp2p/go-libp2p-core/network"
 	pstore "github.com/libp2p/go-libp2p-core/peerstore"

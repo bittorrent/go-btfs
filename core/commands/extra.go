@@ -1,6 +1,6 @@
 package commands
 
-import cmds "github.com/TRON-US/go-btfs-cmds"
+import cmds "github.com/bittorrent/go-btfs-cmds"
 
 func CreateCmdExtras(opts ...func(e *cmds.Extra)) *cmds.Extra {
 	e := new(cmds.Extra)

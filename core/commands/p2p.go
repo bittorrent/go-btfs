@@ -19,7 +19,7 @@ import (
 	p2p "github.com/bittorrent/go-btfs/p2p"
 	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol/pb"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	pstore "github.com/libp2p/go-libp2p-core/peerstore"
 	protocol "github.com/libp2p/go-libp2p-core/protocol"

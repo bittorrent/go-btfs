@@ -3,7 +3,7 @@
 package commands
 
 import (
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 )
 
 var MountCmd = &cmds.Command{

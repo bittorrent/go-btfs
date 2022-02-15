@@ -14,8 +14,8 @@ import (
 	"github.com/bittorrent/go-btfs/repo"
 	"github.com/bittorrent/go-btfs/repo/fsrepo"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/elgris/jsondiff"
 )
 

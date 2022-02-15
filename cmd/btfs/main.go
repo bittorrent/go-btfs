@@ -21,10 +21,10 @@ import (
 	repo "github.com/bittorrent/go-btfs/repo"
 	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
-	"github.com/TRON-US/go-btfs-cmds/cli"
-	cmdhttp "github.com/TRON-US/go-btfs-cmds/http"
 	config "github.com/TRON-US/go-btfs-config"
+	cmds "github.com/bittorrent/go-btfs-cmds"
+	"github.com/bittorrent/go-btfs-cmds/cli"
+	cmdhttp "github.com/bittorrent/go-btfs-cmds/http"
 	u "github.com/ipfs/go-ipfs-util"
 	logging "github.com/ipfs/go-log"
 	loggables "github.com/libp2p/go-libp2p-loggables"

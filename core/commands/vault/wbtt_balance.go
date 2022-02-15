@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"time"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/net/context"
