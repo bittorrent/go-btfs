@@ -25,10 +25,10 @@ var (
 	tronOracleAddress  = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	tronBatchAddress   = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 
-	bttcTestFactoryAddress = common.HexToAddress("0x1c2f5fC7f16453D24E0690a145EFc581A1cC5A1e")
-	bttcTestOracleAddress  = common.HexToAddress("0xb2C746a9C81564bEF8382e885AF11e73De4a9E15")
-	bttcTestBatchAddress   = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
-	bttcTestLogicAddress   = common.HexToAddress("0x4eb00adbbDb54a1A7ffea949f2658a0bf2b05320")
+	bttcTestFactoryAddress    = common.HexToAddress("0xe7Bd5FD1386DA5D2efBA7d78b0AfD4e4F22B907f")
+	bttcTestOracleAddress     = common.HexToAddress("0xb2C746a9C81564bEF8382e885AF11e73De4a9E15")
+	bttcTestBatchAddress      = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
+	bttcTestVaultLogicAddress = common.HexToAddress("0xaD63C7fB5141b77C41A3374cB04E3Ce47BaB48D4")
 
 	bttcFactoryAddress = common.HexToAddress("0x107742EB846b86CEaAF7528D5C85cddcad3e409A")
 	bttcOracleAddress  = common.HexToAddress("0x70fD2b6b6fEd65c8BC0D9Fd0656502Ffd05B6B0E")
@@ -56,7 +56,7 @@ type ChainConfig struct {
 	CurrentFactory     common.Address
 	PriceOracleAddress common.Address
 	BatchAddress       common.Address
-	LogicAddress       common.Address
+	VaultLogicAddress  common.Address
 	DeploymentGas      string
 	Endpoint           string
 }
@@ -95,7 +95,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.DeploymentGas = bttcTestDeploymentGas
 		cfg.Endpoint = bttcTestEndpoint
 		cfg.BatchAddress = bttcTestBatchAddress
-		cfg.LogicAddress = bttcTestLogicAddress
+		cfg.VaultLogicAddress = bttcTestVaultLogicAddress
 		return &cfg, true
 	case testChainID:
 		cfg.StartBlock = ethStartBlock
@@ -113,7 +113,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.DeploymentGas = bttcTestDeploymentGas
 		cfg.Endpoint = bttcTestEndpoint
 		cfg.BatchAddress = bttcTestBatchAddress
-		cfg.LogicAddress = bttcTestLogicAddress
+		cfg.VaultLogicAddress = bttcTestVaultLogicAddress
 		return &cfg, true
 	}
 }
