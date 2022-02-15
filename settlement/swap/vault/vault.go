@@ -78,6 +78,8 @@ type Service interface {
 	TotalPaidOut(ctx context.Context) (*big.Int, error)
 	// CheckBalance
 	CheckBalance(amount *big.Int) (err error)
+	// UpgradeTo will upgrade vault implementation to `newVaultImpl`
+	UpgradeTo(ctx context.Context, newVaultImpl common.Address) (old, new common.Address, err error)
 }
 
 type service struct {
@@ -555,4 +557,42 @@ func (s *service) BTTBalanceOf(ctx context.Context, address common.Address, bloc
 }
 func (s *service) TotalPaidOut(ctx context.Context) (*big.Int, error) {
 	return s.contract.TotalPaidOut(ctx)
+}
+
+// UpgradeTo will upgrade vault implementation to `newVaultImpl`
+func (s *service) UpgradeTo(ctx context.Context, newVaultImpl common.Address) (old, new common.Address, err error) {
+	empty := common.Address{}
+	if newVaultImpl == empty {
+		err = errors.New("given vault implementation address is empty")
+		return
+	}
+	oldVaultImpl, err := GetVaultImpl(ctx, s.address, s.transactionService)
+	if err != nil {
+		return
+	}
+	if oldVaultImpl == newVaultImpl {
+		err = errors.New(fmt.Sprintf("already upgraded to version %s", newVaultImpl))
+		return
+	}
+
+	err = s.contract.UpgradeTo(ctx, newVaultImpl)
+	if err != nil {
+		return
+	}
+	return oldVaultImpl, newVaultImpl, nil
+}
+
+// IsVaultImplCompatibleBetween checks whether my vault's impl is compatible with peer's one.
+func IsVaultImplCompatibleBetween(ctx context.Context, vault1, vault2 common.Address, trxSvc transaction.Service) (isCompatible bool, err error) {
+	notFound := common.Address{}
+	impl1, err := GetVaultImpl(ctx, vault1, trxSvc)
+	if err != nil || impl1 == notFound {
+		return
+	}
+	impl2, err := GetVaultImpl(ctx, vault2, trxSvc)
+	if err != nil || impl2 == notFound {
+		return
+	}
+	isCompatible = impl1 == impl2
+	return
 }
