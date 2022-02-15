@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"strconv"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
 	"go4.org/sort"
 	"golang.org/x/net/context"

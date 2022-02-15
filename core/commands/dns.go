@@ -8,7 +8,7 @@ import (
 	ncmd "github.com/bittorrent/go-btfs/core/commands/name"
 	namesys "github.com/bittorrent/go-btfs/namesys"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 )
 
 const (

@@ -18,8 +18,8 @@ import (
 	contractspb "github.com/bittorrent/go-btfs/protos/contracts"
 	shardpb "github.com/bittorrent/go-btfs/protos/shard"
 
-	cmds "github.com/TRON-US/go-btfs-cmds"
 	config "github.com/TRON-US/go-btfs-config"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	cconfig "github.com/tron-us/go-btfs-common/config"
 	"github.com/tron-us/go-btfs-common/crypto"
 	escrowpb "github.com/tron-us/go-btfs-common/protos/escrow"

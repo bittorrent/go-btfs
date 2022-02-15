@@ -7,7 +7,7 @@ import (
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/path"
 
-	"github.com/TRON-US/go-btfs-cmds"
+	"github.com/bittorrent/go-btfs-cmds"
 	"github.com/cenkalti/backoff/v4"
 )
 
