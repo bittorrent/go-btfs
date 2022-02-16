@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/core/commands/rm"
 	"github.com/bittorrent/go-btfs/core/commands/storage/challenge"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -179,7 +180,7 @@ the shard and replies back to client for the next challenge step.`,
 				}
 
 				fileHash := req.Arguments[1]
-				err = downloadShardFromClient(ctxParams, halfSignedGuardContract, fileHash, shardHash)
+				err = downloadShardFromClient(ctxParams, halfSignedGuardContract, fileHash, shardHash, false)
 				if err != nil {
 					return err
 				}
@@ -192,21 +193,43 @@ the shard and replies back to client for the next challenge step.`,
 				fmt.Printf("upload init: send /storage/upload/recvcontract ok, wait for pay status, requestPid:%v, shardIndex:%v. \n",
 					requestPid, shardIndex)
 
+				blPay := false
 				var wg sync.WaitGroup
 				wg.Add(1)
 				go func() {
-					tick := time.Tick(10 * time.Second)
+					// every 30s check pay status
+					tick := time.Tick(30 * time.Second)
+
+					// total timeout for checking pay status
+					timeoutPay := time.NewTimer(10 * time.Minute)
 					for true {
 						select {
 						case <-tick:
 							if bl := shard.IsPayStatus(); bl {
+								blPay = true
 								wg.Done()
 								return
 							}
+						case <-timeoutPay.C:
+							return
 						}
 					}
 				}()
 				wg.Wait()
+
+				if blPay == true {
+					// pin shardHash
+					err = pinShard(ctxParams, halfSignedGuardContract, fileHash, shardHash)
+					if err != nil {
+						return err
+					}
+				} else {
+					// rm shardHash
+					err = rmShard(ctxParams, req, env, shardHash)
+					if err != nil {
+						return err
+					}
+				}
 
 				fmt.Printf("upload init: Complete! requestPid:%v, shardIndex:%v. \n", requestPid, shardIndex)
 				if err := shard.Complete(); err != nil {
@@ -391,8 +414,30 @@ func checkPaymentFromClient(ctxParams *uh.ContextParams, paidIn chan bool, contr
 	}
 }
 
-func downloadShardFromClient(ctxParams *uh.ContextParams, guardContract *guardpb.Contract, fileHash string,
+func pinShard(ctxParams *uh.ContextParams, guardContract *guardpb.Contract, fileHash string,
 	shardHash string) error {
+
+	err := downloadShardFromClient(ctxParams, guardContract, fileHash, shardHash, true)
+	if err != nil {
+		return errors.New("pinShard, stale contracts clean up error:" + err.Error())
+	}
+
+	return nil
+}
+
+func rmShard(ctxParams *uh.ContextParams, req *cmds.Request, env cmds.Environment, shardHash string) error {
+
+	_, err := rm.RmDag(context.Background(), []string{shardHash}, ctxParams.N, req, env, true)
+	if err != nil {
+		// may have been cleaned up already, ignore
+		return errors.New("rmShard, stale contracts clean up error:" + err.Error())
+	}
+
+	return nil
+}
+
+func downloadShardFromClient(ctxParams *uh.ContextParams, guardContract *guardpb.Contract, fileHash string,
+	shardHash string, blPin bool) error {
 
 	// Get + pin to make sure it does not get accidentally deleted
 	// Sharded scheme as special pin logic to add
@@ -428,7 +473,7 @@ func downloadShardFromClient(ctxParams *uh.ContextParams, guardContract *guardpb
 	err = backoff.Retry(func() error {
 		ctx, cancel := context.WithTimeout(context.Background(), scaled)
 		defer cancel()
-		_, err = challenge.NewStorageChallengeResponse(ctx, ctxParams.N, ctxParams.Api, fileCid, shardCid, "", true, expir)
+		_, err = challenge.NewStorageChallengeResponse(ctx, ctxParams.N, ctxParams.Api, fileCid, shardCid, "", blPin, expir)
 		return err
 	}, uh.DownloadShardBo(scaledRetry))
 
