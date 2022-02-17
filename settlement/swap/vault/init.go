@@ -17,7 +17,7 @@ import (
 var log = logging.Logger("vault:init")
 
 const (
-	vaultKey           = "swap_vault"
+	VaultKey           = "swap_vault"
 	VaultDeploymentKey = "swap_vault_transaction_deployment"
 
 	balanceCheckBackoffDuration = 20 * time.Second
@@ -90,7 +90,7 @@ func Init(
 	erc20Service := erc20.New(swapBackend, transactionService, erc20Address)
 
 	var vaultAddress common.Address
-	err = stateStore.Get(vaultKey, &vaultAddress)
+	err = stateStore.Get(VaultKey, &vaultAddress)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return nil, err
@@ -140,7 +140,7 @@ func Init(
 		log.Infof("deployed vault at address 0x%x", vaultAddress)
 
 		// save the address for later use
-		err = stateStore.Put(vaultKey, vaultAddress)
+		err = stateStore.Put(VaultKey, vaultAddress)
 		if err != nil {
 			return nil, err
 		}
