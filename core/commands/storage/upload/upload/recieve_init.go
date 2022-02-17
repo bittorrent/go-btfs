@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"strconv"
 	"sync"
 	"time"
@@ -64,12 +65,13 @@ the shard and replies back to client for the next challenge step.`,
 			return fmt.Errorf("fail to get peer ID from request")
 		}
 
-		// if my factory is not compatible with the peer's one, reject uploading
-		isFactoryCompatible, err := chain.SettleObject.Factory.IsPeerFactoryCompatible(ctxParams.Ctx, requestPid)
+		// if my vault is not compatible with the peer's one, reject uploading
+		myPeerId, err := peer.IDB58Decode(ctxParams.Cfg.Identity.PeerID)
+		isVaultCompatible, err := chain.SettleObject.Factory.IsVaultCompatibleBetween(ctxParams.Ctx, myPeerId, requestPid)
 		if err != nil {
 			return err
 		}
-		if !isFactoryCompatible {
+		if !isVaultCompatible {
 			return fmt.Errorf("vault factory not compatible, please upgrade your node if possible")
 		}
 

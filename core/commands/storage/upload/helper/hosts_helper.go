@@ -36,15 +36,20 @@ type CustomizedHostsProvider struct {
 }
 
 func (p *CustomizedHostsProvider) NextValidHost() (string, error) {
+	myPeerId, err := peer.IDB58Decode(p.cp.Cfg.Identity.PeerID)
+	if err != nil {
+		return "", err
+	}
+
 	for true {
 		if index, err := p.AddIndex(); err == nil {
 			id, err := peer.IDB58Decode(p.hosts[index])
 			if err != nil {
 				continue
 			}
-			// If my VaultFactory is not compatible with the host's one, skip
-			isFactoryCompatible, err := chain.SettleObject.Factory.IsPeerFactoryCompatible(p.cp.Ctx, id)
-			if err != nil || !isFactoryCompatible {
+			// If my vault is not compatible with the host's one, skip
+			isVaultCompatible, err := chain.SettleObject.Factory.IsVaultCompatibleBetween(p.cp.Ctx, myPeerId, id)
+			if err != nil || !isVaultCompatible {
 				continue
 			}
 			if err := p.cp.Api.Swarm().Connect(p.cp.Ctx, peer.AddrInfo{ID: id}); err != nil {
@@ -164,6 +169,11 @@ func (p *HostsProvider) AddIndex() (int, error) {
 }
 
 func (p *HostsProvider) PickFromBackupHosts() (string, error) {
+	myPeerId, err := peer.IDB58Decode(p.cp.Cfg.Identity.PeerID)
+	if err != nil {
+		return "", err
+	}
+
 	for true {
 		host, err := func() (string, error) {
 			p.backupListLock.Lock()
@@ -185,9 +195,9 @@ func (p *HostsProvider) PickFromBackupHosts() (string, error) {
 		if err != nil {
 			continue
 		}
-		// If my VaultFactory is not compatible with the host's one, skip
-		isFactoryCompatible, err := chain.SettleObject.Factory.IsPeerFactoryCompatible(p.ctx, id)
-		if err != nil || !isFactoryCompatible {
+		// If my vault is not compatible with the host's one, skip
+		isVaultCompatible, err := chain.SettleObject.Factory.IsVaultCompatibleBetween(p.ctx, myPeerId, id)
+		if err != nil || !isVaultCompatible {
 			continue
 		}
 		if err := p.cp.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: id}); err != nil {
@@ -217,6 +227,11 @@ func (p *HostsProvider) PickFromBackupHosts() (string, error) {
 }
 
 func (p *HostsProvider) NextValidHost() (string, error) {
+	myPeerId, err := peer.IDB58Decode(p.cp.Cfg.Identity.PeerID)
+	if err != nil {
+		return "", err
+	}
+
 	endOfBackup := false
 LOOP:
 	for true {
@@ -244,9 +259,9 @@ LOOP:
 			if err != nil {
 				continue
 			}
-			// If my VaultFactory is not compatible with the host's one, skip
-			isFactoryCompatible, err := chain.SettleObject.Factory.IsPeerFactoryCompatible(p.ctx, id)
-			if err != nil || !isFactoryCompatible {
+			// If my vault is not compatible with the host's one, skip
+			isVaultCompatible, err := chain.SettleObject.Factory.IsVaultCompatibleBetween(p.ctx, myPeerId, id)
+			if err != nil || !isVaultCompatible {
 				continue
 			}
 			ctx, _ := context.WithTimeout(p.ctx, 3*time.Second)
