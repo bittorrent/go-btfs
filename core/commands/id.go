@@ -7,17 +7,24 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
 
 	version "github.com/bittorrent/go-btfs"
 	"github.com/bittorrent/go-btfs/chain"
+	oldcmds "github.com/bittorrent/go-btfs/commands"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	ke "github.com/bittorrent/go-btfs/core/commands/keyencode"
+	"github.com/bittorrent/go-btfs/core/commands/storage/path"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault"
+	cpt "github.com/bittorrent/go-btfs/transaction/crypto"
+	"github.com/bittorrent/go-btfs/transaction/storage"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	"github.com/ethereum/go-ethereum/common"
 	ic "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -102,7 +109,7 @@ EXAMPLE:
 		}
 
 		if id == n.Identity {
-			output, err := printSelf(keyEnc, n)
+			output, err := printSelf(keyEnc, n, env)
 			if err != nil {
 				return err
 			}
@@ -124,7 +131,7 @@ EXAMPLE:
 			return err
 		}
 
-		output, err := printPeer(keyEnc, n.Peerstore, id)
+		output, err := printPeer(keyEnc, n.Peerstore, id, n, env)
 		if err != nil {
 			return err
 		}
@@ -158,7 +165,7 @@ EXAMPLE:
 	Type: IdOutput{},
 }
 
-func printPeer(keyEnc ke.KeyEncoder, ps pstore.Peerstore, p peer.ID) (interface{}, error) {
+func printPeer(keyEnc ke.KeyEncoder, ps pstore.Peerstore, p peer.ID, node *core.IpfsNode, env cmds.Environment) (interface{}, error) {
 	if p == "" {
 		return nil, errors.New("attempted to print nil peer")
 	}
@@ -202,14 +209,32 @@ func printPeer(keyEnc ke.KeyEncoder, ps pstore.Peerstore, p peer.ID) (interface{
 		}
 	}
 
-	info.BttcAddress = chain.ChainObject.OverlayAddress.Hex()
-	info.VaultAddress = chain.SettleObject.VaultService.Address().Hex()
+	if node.IsDaemon {
+		info.DaemonProcessID = os.Getpid()
+
+		info.BttcAddress = chain.ChainObject.OverlayAddress.Hex()
+		info.VaultAddress = chain.SettleObject.VaultService.Address().Hex()
+	} else {
+		info.DaemonProcessID = -1
+
+		bttcAddr, err := getBttcNonDaemon(env)
+		if err != nil {
+			return nil, err
+		}
+		info.BttcAddress = bttcAddr
+
+		valutAddr, err := getVaultNonDaemon(env)
+		if err != nil {
+			return nil, err
+		}
+		info.VaultAddress = valutAddr
+	}
 
 	return info, nil
 }
 
 // printing self is special cased as we get values differently.
-func printSelf(keyEnc ke.KeyEncoder, node *core.IpfsNode) (interface{}, error) {
+func printSelf(keyEnc ke.KeyEncoder, node *core.IpfsNode, env cmds.Environment) (interface{}, error) {
 	info := new(IdOutput)
 	info.ID = keyEnc.FormatID(node.Identity)
 
@@ -244,14 +269,87 @@ func printSelf(keyEnc ke.KeyEncoder, node *core.IpfsNode) (interface{}, error) {
 	}
 	info.TronAddress = keys.Base58Address
 
-	info.BttcAddress = chain.ChainObject.OverlayAddress.Hex()
-	info.VaultAddress = chain.SettleObject.VaultService.Address().Hex()
-
 	if node.IsDaemon {
 		info.DaemonProcessID = os.Getpid()
+
+		info.BttcAddress = chain.ChainObject.OverlayAddress.Hex()
+		info.VaultAddress = chain.SettleObject.VaultService.Address().Hex()
 	} else {
 		info.DaemonProcessID = -1
+
+		bttcAddr, err := getBttcNonDaemon(env)
+		if err != nil {
+			return nil, err
+		}
+		info.BttcAddress = bttcAddr
+
+		valutAddr, err := getVaultNonDaemon(env)
+		if err != nil {
+			return nil, err
+		}
+		info.VaultAddress = valutAddr
 	}
 
 	return info, nil
+}
+
+func getBttcNonDaemon(env cmds.Environment) (defaultAddr string, _err error) {
+	cctx := env.(*oldcmds.Context)
+	_, b := os.LookupEnv(path.BtfsPathKey)
+	if !b {
+		c := cctx.ConfigRoot
+		if bs, err := ioutil.ReadFile(path.PropertiesFileName); err == nil && len(bs) > 0 {
+			c = string(bs)
+		}
+		cctx.ConfigRoot = c
+	}
+
+	cfg, err := cctx.GetConfig()
+	if err != nil {
+		return defaultAddr, err
+	}
+
+	// decode from string
+	pkbytesOri, err := base64.StdEncoding.DecodeString(cfg.Identity.PrivKey)
+	if err != nil {
+		return defaultAddr, err
+	}
+
+	//new singer
+	pk := cpt.Secp256k1PrivateKeyFromBytes(pkbytesOri[4:])
+	singer := cpt.NewDefaultSigner(pk)
+
+	address0x, err := singer.EthereumAddress()
+	if err != nil {
+		return defaultAddr, err
+	}
+	return address0x.Hex(), nil
+}
+
+func getVaultNonDaemon(env cmds.Environment) (defaultAddr string, err error) {
+	cctx := env.(*oldcmds.Context)
+	_, b := os.LookupEnv(path.BtfsPathKey)
+	if !b {
+		c := cctx.ConfigRoot
+		if bs, err := ioutil.ReadFile(path.PropertiesFileName); err == nil && len(bs) > 0 {
+			c = string(bs)
+		}
+		cctx.ConfigRoot = c
+	}
+
+	statestore, err := chain.InitStateStore(cctx.ConfigRoot)
+	if err != nil {
+		return defaultAddr, err
+	}
+
+	var vaultAddress common.Address
+	err = statestore.Get(vault.VaultKey, &vaultAddress)
+	if err != nil {
+		if err == storage.ErrNotFound {
+			return defaultAddr, nil
+		}
+		return defaultAddr, err
+	}
+
+	return vaultAddress.Hex(), nil
 }
