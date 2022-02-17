@@ -166,3 +166,52 @@ func (c *vaultContract) Deposit(ctx context.Context, amount *big.Int) (common.Ha
 
 	return hash, nil
 }
+
+// UpgradeTo will upgrade the vault impl to `newImpl`
+func (c *vaultContract) UpgradeTo(ctx context.Context, newImpl common.Address) (err error) {
+	callData, err := vaultABI.Pack("upgradeTo", newImpl)
+	if err != nil {
+		return
+	}
+	txHash, err := c.transactionService.Send(ctx, &transaction.TxRequest{
+		To:   &c.address,
+		Data: callData,
+	})
+	if err != nil {
+		return
+	}
+
+	// wait tx finish
+	receipt, err := c.transactionService.WaitForReceipt(ctx, txHash)
+	if err != nil {
+		return
+	}
+	if receipt.Status != 1 {
+		return transaction.ErrTransactionReverted
+	}
+	return
+}
+
+// GetVaultImpl queries the vault implementation used for the proxy
+func GetVaultImpl(ctx context.Context, vault common.Address, trxSvc transaction.Service) (vaultImpl common.Address, err error) {
+	callData, err := vaultABI.Pack("implementation")
+	if err != nil {
+		return
+	}
+
+	output, err := trxSvc.Call(ctx, &transaction.TxRequest{
+		To:   &vault,
+		Data: callData,
+	})
+	if err != nil {
+		return
+	}
+
+	results, err := vaultABI.Unpack("implementation", output)
+	if err != nil {
+		return
+	}
+
+	vaultImpl = *abi.ConvertType(results[0], new(common.Address)).(*common.Address)
+	return
+}

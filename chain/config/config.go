@@ -25,13 +25,15 @@ var (
 	tronOracleAddress  = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	tronBatchAddress   = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 
-	bttcTestFactoryAddress = common.HexToAddress("0x6de0B87328597ef382A2a815a5B6d7be7dC051aF")
-	bttcTestOracleAddress  = common.HexToAddress("0xb2C746a9C81564bEF8382e885AF11e73De4a9E15")
-	bttcTestBatchAddress   = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
+	bttcTestFactoryAddress    = common.HexToAddress("0xC22B50Af1ee2791F55E2Ab62A593dBab702C24fd")
+	bttcTestOracleAddress     = common.HexToAddress("0xb2C746a9C81564bEF8382e885AF11e73De4a9E15")
+	bttcTestBatchAddress      = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
+	bttcTestVaultLogicAddress = common.HexToAddress("0x93fa216085226b689A1AAcA40f0BA0d14e9ddb3c")
 
-	bttcFactoryAddress = common.HexToAddress("0x107742EB846b86CEaAF7528D5C85cddcad3e409A")
-	bttcOracleAddress  = common.HexToAddress("0x70fD2b6b6fEd65c8BC0D9Fd0656502Ffd05B6B0E")
-	bttcBatchAddress   = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
+	bttcFactoryAddress    = common.HexToAddress("0x750915c161b38C8630E98079839F13b7Fd08da62")
+	bttcOracleAddress     = common.HexToAddress("0x791Af137022c01548A3B95daA29EF92B84522ebE")
+	bttcBatchAddress      = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
+	bttcVaultLogicAddress = common.HexToAddress("0xf4413c4d53ef4713e99b132aa489565ae6f11d3a")
 
 	// deploy gas
 	ethDeploymentGas      = "10"
@@ -55,6 +57,7 @@ type ChainConfig struct {
 	CurrentFactory     common.Address
 	PriceOracleAddress common.Address
 	BatchAddress       common.Address
+	VaultLogicAddress  common.Address
 	DeploymentGas      string
 	Endpoint           string
 }
@@ -82,6 +85,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.StartBlock = bttcStartBlock
 		cfg.CurrentFactory = bttcFactoryAddress
 		cfg.PriceOracleAddress = bttcOracleAddress
+		cfg.VaultLogicAddress = bttcVaultLogicAddress
 		cfg.DeploymentGas = bttcDeploymentGas
 		cfg.Endpoint = bttcEndpoint
 		cfg.BatchAddress = bttcBatchAddress
@@ -93,6 +97,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.DeploymentGas = bttcTestDeploymentGas
 		cfg.Endpoint = bttcTestEndpoint
 		cfg.BatchAddress = bttcTestBatchAddress
+		cfg.VaultLogicAddress = bttcTestVaultLogicAddress
 		return &cfg, true
 	case testChainID:
 		cfg.StartBlock = ethStartBlock
@@ -110,6 +115,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.DeploymentGas = bttcTestDeploymentGas
 		cfg.Endpoint = bttcTestEndpoint
 		cfg.BatchAddress = bttcTestBatchAddress
+		cfg.VaultLogicAddress = bttcTestVaultLogicAddress
 		return &cfg, true
 	}
 }
