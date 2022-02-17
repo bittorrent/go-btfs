@@ -206,7 +206,7 @@ the shard and replies back to client for the next challenge step.`,
 						select {
 						case <-tick:
 							if bl := shard.IsPayStatus(); bl {
-								blPay = false
+								blPay = true
 								wg.Done()
 								return
 							}
