@@ -41,8 +41,8 @@ type Factory interface {
 	GetPeerVault(ctx context.Context, peerID peer.ID) (vault common.Address, err error)
 	// GetPeerVaultWithCache query peer's vault address deployed by this factory. Return cached if cache exists, otherwise query from BTTC.
 	GetPeerVaultWithCache(ctx context.Context, peerID peer.ID) (vault common.Address, err error)
-	// IsPeerFactoryCompatible checks whether my vault factory is compatible with the `peerID's` factory.
-	IsPeerFactoryCompatible(ctx context.Context, peerID peer.ID) (bool, error)
+	// IsVaultCompatibleBetween checks whether my vault is compatible with the `peerID`'s one.
+	IsVaultCompatibleBetween(ctx context.Context, peerID1, peerID2 peer.ID) (isCompatible bool, err error)
 }
 
 type factory struct {
@@ -214,18 +214,26 @@ func (c *factory) ERC20Address(ctx context.Context) (common.Address, error) {
 }
 
 /*
-IsPeerFactoryCompatible checks whether my factory is compatible with the `peerID's` factory. Note that
-the peers cannot upload file and pay cheque to each other if their VaultFactory version doesn't same.
-Because they can't pay and cash cheque under current version.
+IsVaultCompatibleBetween checks whether my vault is compatible with the `peerID`'s one.
+If peer's vaults not compatible, they cannot upload/receive files to/from each other.
 */
-func (c *factory) IsPeerFactoryCompatible(ctx context.Context, peerID peer.ID) (bool, error) {
-	peerVault, err := c.GetPeerVaultWithCache(ctx, peerID)
-	if err != nil {
-		return false, err
+func (c *factory) IsVaultCompatibleBetween(ctx context.Context, peerID1, peerID2 peer.ID) (isCompatible bool, err error) {
+	notFound := common.Address{}
+
+	// Validate whether peer1 and peer2 are using the same factory
+	vault1, err := c.GetPeerVaultWithCache(ctx, peerID1)
+	if err != nil || vault1 == notFound {
+		return
 	}
-	// If the peer's vault exists in our factory, this means we are using the same factory.
-	isCompatible := peerVault != common.Address{}
-	return isCompatible, nil
+	vault2, err := c.GetPeerVaultWithCache(ctx, peerID2)
+	if err != nil || vault2 == notFound {
+		return
+	}
+
+	// Validate whether peer1 and peer2 are using the same vault implementation;
+	// Because vaults are deployed in proxy mode, different peer may use different vault implementation.
+	isCompatible, err = IsVaultImplCompatibleBetween(ctx, vault1, vault2, c.transactionService)
+	return
 }
 
 /*GetPeerVaultWithCache query peer's vault address deployed by this factory.

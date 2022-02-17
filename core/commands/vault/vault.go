@@ -16,5 +16,6 @@ Vault services include balance, address, withdraw, deposit operations.`,
 		"withdraw":    VaultWithdrawCmd,
 		"deposit":     VaultDepositCmd,
 		"wbttbalance": VaultWbttBalanceCmd,
+		"upgrade":     VaultUpgradeCmd,
 	},
 }
