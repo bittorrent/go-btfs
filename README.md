@@ -80,7 +80,6 @@ System version: amd64/darwin
 Golang version: go1.16.5
 Repo location: /Users/yangsai/.btfs
 Peer identity: 16Uiu2HAmKFQPM72SssFRrqcH1qwUsPwcp7vXSg3SEzfdYua1J5qc
-the private key of wallet import format is:  396128d47810c5b60f448043c686112****63d893176fbb0b4fb85069bfc77b8
 the address of Bttc format is:  0x7Cf4B71017F0312037D53fe966CE625BF98FFff6
 the address of Tron format is:  TMMuwwxsuQGrDrN3aanc5y5r4FbibgLYDa
 cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on 0x7cf4b71017f0312037d53fe966ce625bf98ffff6

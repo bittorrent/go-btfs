@@ -33,9 +33,9 @@ func checkBalance(
 	overlayEthAddress common.Address,
 	erc20Token erc20.Service,
 ) error {
-	timeoutCtx, cancel := context.WithTimeout(ctx, balanceCheckBackoffDuration*time.Duration(balanceCheckMaxRetries))
-	defer cancel()
+
 	for {
+		timeoutCtx, _ := context.WithTimeout(ctx, balanceCheckBackoffDuration*time.Duration(balanceCheckMaxRetries))
 		ethBalance, err := swapBackend.BalanceAt(timeoutCtx, overlayEthAddress, nil)
 		if err != nil {
 			return err
@@ -54,10 +54,8 @@ func checkBalance(
 			fmt.Printf("cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on 0x%x \n", overlayEthAddress)
 			select {
 			case <-time.After(balanceCheckBackoffDuration):
-			case <-timeoutCtx.Done():
-				return fmt.Errorf("insufficient BTT for initial deposit")
+				continue
 			}
-			continue
 		}
 
 		return nil
