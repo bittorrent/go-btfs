@@ -33,7 +33,7 @@ var (
 	bttcFactoryAddress    = common.HexToAddress("0x750915c161b38C8630E98079839F13b7Fd08da62")
 	bttcOracleAddress     = common.HexToAddress("0x791Af137022c01548A3B95daA29EF92B84522ebE")
 	bttcBatchAddress      = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
-	bttcVaultLogicAddress = common.HexToAddress("0x2a9c05421dc3abf54613647cd3b2ba447e76a903")
+	bttcVaultLogicAddress = common.HexToAddress("0xf4413c4d53ef4713e99b132aa489565ae6f11d3a")
 
 	// deploy gas
 	ethDeploymentGas      = "10"

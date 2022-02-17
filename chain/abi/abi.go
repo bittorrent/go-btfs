@@ -88,25 +88,6 @@ const VaultABI = `[
 				{
 					"indexed": true,
 					"internalType": "address",
-					"name": "from",
-					"type": "address"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "amount",
-					"type": "uint256"
-				}
-			],
-			"name": "Deposit",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": true,
-					"internalType": "address",
 					"name": "implementation",
 					"type": "address"
 				}
@@ -130,7 +111,26 @@ const VaultABI = `[
 					"type": "uint256"
 				}
 			],
-			"name": "Withdraw",
+			"name": "VaultDeposit",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "address",
+					"name": "from",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				}
+			],
+			"name": "VaultWithdraw",
 			"type": "event"
 		},
 		{
