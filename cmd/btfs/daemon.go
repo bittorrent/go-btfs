@@ -385,7 +385,6 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 
 	address0x, _ := singer.EthereumAddress()
 
-	fmt.Println("the private key of wallet import format is: ", keys.HexPrivateKey)
 	fmt.Println("the address of Bttc format is: ", address0x)
 	fmt.Println("the address of Tron format is: ", keys.Base58Address)
 

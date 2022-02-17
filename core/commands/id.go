@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	version "github.com/bittorrent/go-btfs"
+	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	ke "github.com/bittorrent/go-btfs/core/commands/keyencode"
@@ -43,6 +44,8 @@ type IdOutput struct {
 	Protocols       []string
 	DaemonProcessID int
 	TronAddress     string
+	BttcAddress     string
+	VaultAddress    string
 }
 
 const (
@@ -199,6 +202,9 @@ func printPeer(keyEnc ke.KeyEncoder, ps pstore.Peerstore, p peer.ID) (interface{
 		}
 	}
 
+	info.BttcAddress = chain.ChainObject.OverlayAddress.Hex()
+	info.VaultAddress = chain.SettleObject.VaultService.Address().Hex()
+
 	return info, nil
 }
 
@@ -237,6 +243,9 @@ func printSelf(keyEnc ke.KeyEncoder, node *core.IpfsNode) (interface{}, error) {
 		return nil, err
 	}
 	info.TronAddress = keys.Base58Address
+
+	info.BttcAddress = chain.ChainObject.OverlayAddress.Hex()
+	info.VaultAddress = chain.SettleObject.VaultService.Address().Hex()
 
 	if node.IsDaemon {
 		info.DaemonProcessID = os.Getpid()
