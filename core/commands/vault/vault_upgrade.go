@@ -3,10 +3,11 @@ package vault
 import (
 	"context"
 	"fmt"
-	cmds "github.com/TRON-US/go-btfs-cmds"
-	"github.com/bittorrent/go-btfs/chain"
 	"io"
 	"time"
+
+	cmds "github.com/bittorrent/go-btfs-cmds"
+	"github.com/bittorrent/go-btfs/chain"
 )
 
 type VaultUpgradeCmdRet struct {
