@@ -206,7 +206,7 @@ the shard and replies back to client for the next challenge step.`,
 						select {
 						case <-tick:
 							if bl := shard.IsPayStatus(); bl {
-								blPay = true
+								blPay = false
 								wg.Done()
 								return
 							}
@@ -223,12 +223,14 @@ the shard and replies back to client for the next challenge step.`,
 					if err != nil {
 						return err
 					}
+					fmt.Printf("upload init: pin shard ok, requestPid:%v, shardIndex:%v. \n", requestPid, shardIndex)
 				} else {
 					// rm shardHash
 					err = rmShard(ctxParams, req, env, shardHash)
 					if err != nil {
 						return err
 					}
+					fmt.Printf("upload init: timeout, remove Shard, requestPid:%v, shardIndex:%v. \n", requestPid, shardIndex)
 				}
 
 				fmt.Printf("upload init: Complete! requestPid:%v, shardIndex:%v. \n", requestPid, shardIndex)
