@@ -406,11 +406,6 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		}
 	}
 
-	if cc.DefaultChain != chainid {
-		fmt.Println("invalid chainid")
-		return fmt.Errorf("invalid chainid")
-	}
-
 	//endpoint
 	chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000), chainid, cfg.Identity.PeerID)
 	if err != nil {

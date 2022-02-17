@@ -30,9 +30,10 @@ var (
 	bttcTestBatchAddress      = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	bttcTestVaultLogicAddress = common.HexToAddress("0x93fa216085226b689A1AAcA40f0BA0d14e9ddb3c")
 
-	bttcFactoryAddress = common.HexToAddress("0x107742EB846b86CEaAF7528D5C85cddcad3e409A")
-	bttcOracleAddress  = common.HexToAddress("0x70fD2b6b6fEd65c8BC0D9Fd0656502Ffd05B6B0E")
-	bttcBatchAddress   = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
+	bttcFactoryAddress    = common.HexToAddress("0x750915c161b38C8630E98079839F13b7Fd08da62")
+	bttcOracleAddress     = common.HexToAddress("0x791Af137022c01548A3B95daA29EF92B84522ebE")
+	bttcBatchAddress      = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
+	bttcVaultLogicAddress = common.HexToAddress("0x2a9c05421dc3abf54613647cd3b2ba447e76a903")
 
 	// deploy gas
 	ethDeploymentGas      = "10"
@@ -84,6 +85,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.StartBlock = bttcStartBlock
 		cfg.CurrentFactory = bttcFactoryAddress
 		cfg.PriceOracleAddress = bttcOracleAddress
+		cfg.VaultLogicAddress = bttcVaultLogicAddress
 		cfg.DeploymentGas = bttcDeploymentGas
 		cfg.Endpoint = bttcEndpoint
 		cfg.BatchAddress = bttcBatchAddress
