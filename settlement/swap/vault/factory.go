@@ -30,7 +30,7 @@ type Factory interface {
 	// ERC20Address returns the token for which this factory deploys vaults.
 	ERC20Address(ctx context.Context) (common.Address, error)
 	// Deploy deploys a new vault and returns once the transaction has been submitted.
-	Deploy(ctx context.Context, issuer common.Address, nonce common.Hash, peerId string) (common.Hash, error)
+	Deploy(ctx context.Context, issuer common.Address, vaultLogic common.Address, nonce common.Hash, peerId string, tokenAddress common.Address) (common.Hash, error)
 	// WaitDeployed waits for the deployment transaction to confirm and returns the vault address
 	WaitDeployed(ctx context.Context, txHash common.Hash) (common.Address, error)
 	// VerifyBytecode checks that the factory is valid.
@@ -41,8 +41,8 @@ type Factory interface {
 	GetPeerVault(ctx context.Context, peerID peer.ID) (vault common.Address, err error)
 	// GetPeerVaultWithCache query peer's vault address deployed by this factory. Return cached if cache exists, otherwise query from BTTC.
 	GetPeerVaultWithCache(ctx context.Context, peerID peer.ID) (vault common.Address, err error)
-	// IsPeerFactoryCompatible checks whether my vault factory is compatible with the `peerID's` factory.
-	IsPeerFactoryCompatible(ctx context.Context, peerID peer.ID) (bool, error)
+	// IsVaultCompatibleBetween checks whether my vault is compatible with the `peerID`'s one.
+	IsVaultCompatibleBetween(ctx context.Context, peerID1, peerID2 peer.ID) (isCompatible bool, err error)
 }
 
 type factory struct {
@@ -76,10 +76,17 @@ func NewFactory(backend transaction.Backend, transactionService transaction.Serv
 func (c *factory) Deploy(
 	ctx context.Context,
 	issuer common.Address,
+	vaultLogic common.Address,
 	nonce common.Hash,
 	peerId string,
+	erc20Address common.Address,
 ) (common.Hash, error) {
-	callData, err := factoryABI.Pack("deployVault", issuer, nonce, peerId)
+	initCallData, err := vaultABI.Pack("init", issuer, erc20Address)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	callData, err := factoryABI.Pack("deployVault", issuer, vaultLogic, nonce, peerId, initCallData)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -207,18 +214,26 @@ func (c *factory) ERC20Address(ctx context.Context) (common.Address, error) {
 }
 
 /*
-IsPeerFactoryCompatible checks whether my factory is compatible with the `peerID's` factory. Note that
-the peers cannot upload file and pay cheque to each other if their VaultFactory version doesn't same.
-Because they can't pay and cash cheque under current version.
+IsVaultCompatibleBetween checks whether my vault is compatible with the `peerID`'s one.
+If peer's vaults not compatible, they cannot upload/receive files to/from each other.
 */
-func (c *factory) IsPeerFactoryCompatible(ctx context.Context, peerID peer.ID) (bool, error) {
-	peerVault, err := c.GetPeerVaultWithCache(ctx, peerID)
-	if err != nil {
-		return false, err
+func (c *factory) IsVaultCompatibleBetween(ctx context.Context, peerID1, peerID2 peer.ID) (isCompatible bool, err error) {
+	notFound := common.Address{}
+
+	// Validate whether peer1 and peer2 are using the same factory
+	vault1, err := c.GetPeerVaultWithCache(ctx, peerID1)
+	if err != nil || vault1 == notFound {
+		return
 	}
-	// If the peer's vault exists in our factory, this means we are using the same factory.
-	isCompatible := peerVault != common.Address{}
-	return isCompatible, nil
+	vault2, err := c.GetPeerVaultWithCache(ctx, peerID2)
+	if err != nil || vault2 == notFound {
+		return
+	}
+
+	// Validate whether peer1 and peer2 are using the same vault implementation;
+	// Because vaults are deployed in proxy mode, different peer may use different vault implementation.
+	isCompatible, err = IsVaultImplCompatibleBetween(ctx, vault1, vault2, c.transactionService)
+	return
 }
 
 /*GetPeerVaultWithCache query peer's vault address deployed by this factory.
