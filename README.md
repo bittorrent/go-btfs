@@ -55,7 +55,7 @@ We host pre-built binaries at https://github.com/bittorrent/go-btfs/releases/lat
 $ btfs init -p storage-host-testnet
 Generating TRON key with BIP39 seed phrase...
 Master public key:  xpub661MyMwAqRbcGgHpeMqFkS5hnwoGeAcHG5KkDQwke7wFxtKqfsXTCTjWsoU2dYVXVGvV7EuGcviEzEJ143TezxxXvs2zZ9FYTtCei8iRQ66
-initializing BTFS node at /home/ubuntu/.btfs
+initializing BTFS node at /Users/btfs/.btfs
 generating btfs node keypair with TRON key...done
 peer identity: 16Uiu2HAmKFQPM72SssFRrqcH1qwUsPwcp7vXSg3SEzfdYua1J5qc
 to get started, enter:
@@ -78,7 +78,7 @@ go-btfs version: 2.0
 Repo version: 10
 System version: amd64/darwin
 Golang version: go1.16.5
-Repo location: /Users/yangsai/.btfs
+Repo location: /Users/btfs/.btfs
 Peer identity: 16Uiu2HAmKFQPM72SssFRrqcH1qwUsPwcp7vXSg3SEzfdYua1J5qc
 the address of Bttc format is:  0x7Cf4B71017F0312037D53fe966CE625BF98FFff6
 the address of Tron format is:  TMMuwwxsuQGrDrN3aanc5y5r4FbibgLYDa
