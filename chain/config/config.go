@@ -25,13 +25,13 @@ var (
 	tronOracleAddress  = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	tronBatchAddress   = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 
-	bttcTestFactoryAddress    = common.HexToAddress("0x7C2093a74D48106FC4ff7416DB85E57386aAA478")
+	bttcTestFactoryAddress    = common.HexToAddress("0x92D7877103bC445A028516ea538E1B6D160c1915")
 	bttcTestOracleAddress     = common.HexToAddress("0xb2C746a9C81564bEF8382e885AF11e73De4a9E15")
 	bttcTestBatchAddress      = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	bttcTestVaultLogicAddress = common.HexToAddress("0x1Aae074cc51720AF3d10fF936FC490f5656E5455")
 
-	bttcFactoryAddress    = common.HexToAddress("0x750915c161b38C8630E98079839F13b7Fd08da62")
-	bttcOracleAddress     = common.HexToAddress("0x791Af137022c01548A3B95daA29EF92B84522ebE")
+	bttcFactoryAddress    = common.HexToAddress("0xE21228cad7b0018E77C610E90dfF1eB5f2EdFd87")
+	bttcOracleAddress     = common.HexToAddress("0xDC71C6B6c5f559F54DEE5900caC973A982b17Ae6")
 	bttcBatchAddress      = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	bttcVaultLogicAddress = common.HexToAddress("0xf4413c4d53ef4713e99b132aa489565ae6f11d3a")
 
