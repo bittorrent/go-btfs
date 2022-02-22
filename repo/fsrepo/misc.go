@@ -10,13 +10,13 @@ import (
 // present, this function returns that value. Otherwise, it returns the default
 // repo path.
 func BestKnownPath() (string, error) {
-	ipfsPath := "~/.btfs"
+	btfsPath := "~/.btfs"
 	if os.Getenv("BTFS_PATH") != "" {
-		ipfsPath = os.Getenv("BTFS_PATH")
+		btfsPath = os.Getenv("BTFS_PATH")
 	}
-	ipfsPath, err := homedir.Expand(ipfsPath)
+	curPath, err := homedir.Expand(btfsPath)
 	if err != nil {
 		return "", err
 	}
-	return ipfsPath, nil
+	return curPath, nil
 }

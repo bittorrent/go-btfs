@@ -37,19 +37,19 @@ var log = logging.Logger("fsrepo")
 // version number that we are currently expecting to see
 var RepoVersion = 10
 
-var migrationInstructions = `See https://github.com/ipfs/fs-repo-migrations/blob/master/run.md
+var migrationInstructions = `See https://github.com/bittorrent/go-btfs/releases
 Sorry for the inconvenience. In the future, these will run automatically.`
 
 var programTooLowMessage = `Your programs version (%d) is lower than your repos (%d).
 Please update btfs to a version that supports the existing repo, or run
 a migration in reverse.
 
-See https://github.com/ipfs/fs-repo-migrations/blob/master/run.md for details.`
+See https://github.com/bittorrent/go-btfs/releases for details.`
 
 var (
-	ErrNoVersion     = errors.New("no version file found, please run 0-to-1 migration tool.\n" + migrationInstructions)
-	ErrOldRepo       = errors.New("btfs repo found in old '~/.go-btfs' location, please run migration tool.\n" + migrationInstructions)
-	ErrNeedMigration = errors.New("btfs repo needs migration")
+	ErrNoVersion     = errors.New("no version file found,\n" + migrationInstructions)
+	ErrOldRepo       = errors.New("btfs repo found in old '~/.go-btfs' location, please migration it.\n" + migrationInstructions)
+	ErrNeedMigration = errors.New("btfs repo needs migration,\n" + migrationInstructions)
 )
 
 type NoRepoError struct {
