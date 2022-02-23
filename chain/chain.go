@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"math/big"
 	"strings"
 	"time"
@@ -76,7 +77,13 @@ func InitChain(
 
 	_, err = backend.BlockNumber(context.Background())
 	if err != nil {
-		return nil, fmt.Errorf("A working blockchain node is required,could not connect to backend at %v, with err: %w",
+		errMsg := "A working blockchain node is required,could not connect to backend at:"
+		if err == io.EOF {
+			return nil, fmt.Errorf("%s,%s", errMsg,
+				chainconfig.Endpoint)
+
+		}
+		return nil, fmt.Errorf("%s,%s,err:%w", errMsg,
 			chainconfig.Endpoint, err)
 	}
 
