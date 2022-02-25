@@ -38,7 +38,7 @@ var log = logging.Logger("fsrepo")
 var RepoVersion = 10
 
 var migrationInstructions = `See https://github.com/bittorrent/go-btfs/releases
-Sorry for the inconvenience. In the future, these will run automatically.`
+Please manually upgrade the version that you need.`
 
 var programTooLowMessage = `Your programs version (%d) is lower than your repos (%d).
 Please update btfs to a version that supports the existing repo, or run
@@ -142,20 +142,21 @@ func open(repoPath string) (repo.Repo, error) {
 	}()
 
 	// Check version, and error out if not matching
-	ver, err := mfsr.RepoPath(r.path).Version()
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, ErrNoVersion
-		}
-		return nil, err
-	}
-
-	if RepoVersion > ver {
-		return nil, ErrNeedMigration
-	} else if ver > RepoVersion {
-		// program version too low for existing repo
-		return nil, fmt.Errorf(programTooLowMessage, RepoVersion, ver)
-	}
+	//ver, err := mfsr.RepoPath(r.path).Version()
+	//fmt.Println("...3 checkInitialized ", ver, err)
+	//if err != nil {
+	//	if os.IsNotExist(err) {
+	//		return nil, ErrNoVersion
+	//	}
+	//	return nil, err
+	//}
+	//
+	//if RepoVersion > ver {
+	//	return nil, ErrNeedMigration
+	//} else if ver > RepoVersion {
+	//	// program version too low for existing repo
+	//	return nil, fmt.Errorf(programTooLowMessage, RepoVersion, ver)
+	//}
 
 	// check repo path, then check all constituent parts.
 	if err := dir.Writable(r.path); err != nil {

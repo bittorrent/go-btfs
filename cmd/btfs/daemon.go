@@ -313,8 +313,6 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	switch err {
 	default:
 		return err
-	case fsrepo.ErrNeedMigration:
-		return err
 	case nil:
 		break
 	}
