@@ -53,6 +53,7 @@ type IdOutput struct {
 	TronAddress     string
 	BttcAddress     string
 	VaultAddress    string
+	ChainID         int64
 }
 
 const (
@@ -274,6 +275,9 @@ func printSelf(keyEnc ke.KeyEncoder, node *core.IpfsNode, env cmds.Environment) 
 
 		info.BttcAddress = chain.ChainObject.OverlayAddress.Hex()
 		info.VaultAddress = chain.SettleObject.VaultService.Address().Hex()
+
+		// show chain id only local peer and in daemon mode
+		info.ChainID = chain.ChainObject.ChainID
 	} else {
 		info.DaemonProcessID = -1
 
