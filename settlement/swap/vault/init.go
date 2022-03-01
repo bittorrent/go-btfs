@@ -75,19 +75,13 @@ func Init(
 	overlayEthAddress common.Address,
 	chequeSigner ChequeSigner,
 	chequeStore ChequeStore,
+	erc20Service erc20.Service,
 ) (vaultService Service, err error) {
 	// verify that the supplied factory is valid
 	err = vaultFactory.VerifyBytecode(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	erc20Address, err := vaultFactory.ERC20Address(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	erc20Service := erc20.New(swapBackend, transactionService, erc20Address)
 
 	var vaultAddress common.Address
 	err = stateStore.Get(VaultKey, &vaultAddress)
@@ -117,7 +111,7 @@ func Init(
 
 			// if we don't yet have a vault, deploy a new one
 			txHash, err = vaultFactory.Deploy(ctx, overlayEthAddress, vaultLogicAddress,
-				common.BytesToHash(nonce), peerId, erc20Address)
+				common.BytesToHash(nonce), peerId, erc20Service.Address(ctx))
 			if err != nil {
 				return nil, err
 			}

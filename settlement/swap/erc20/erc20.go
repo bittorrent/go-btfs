@@ -17,7 +17,10 @@ var (
 )
 
 type Service interface {
+	Address(ctx context.Context) common.Address
 	BalanceOf(ctx context.Context, address common.Address) (*big.Int, error)
+	Deposit(ctx context.Context, value *big.Int) (common.Hash, error)
+	Withdraw(ctx context.Context, value *big.Int) (common.Hash, error)
 	Transfer(ctx context.Context, address common.Address, value *big.Int) (common.Hash, error)
 	Allowance(ctx context.Context, issuer common.Address, vault common.Address) (*big.Int, error)
 	Approve(ctx context.Context, address common.Address, value *big.Int) (common.Hash, error)
@@ -36,6 +39,10 @@ func New(backend transaction.Backend, transactionService transaction.Service, ad
 		transactionService: transactionService,
 		address:            address,
 	}
+}
+
+func (c *erc20Service) Address(ctx context.Context) common.Address {
+	return c.address
 }
 
 func (c *erc20Service) BalanceOf(ctx context.Context, address common.Address) (*big.Int, error) {
@@ -66,6 +73,36 @@ func (c *erc20Service) BalanceOf(ctx context.Context, address common.Address) (*
 		return nil, errDecodeABI
 	}
 	return balance, nil
+}
+
+func (c *erc20Service) Deposit(ctx context.Context, value *big.Int) (trx common.Hash, err error) {
+	callData, err := erc20ABI.Pack("deposit")
+	if err != nil {
+		return
+	}
+	req := &transaction.TxRequest{
+		To:          &c.address,
+		Data:        callData,
+		Value:       value,
+		Description: "deposit wbtt",
+	}
+	trx, err = c.transactionService.Send(ctx, req)
+	return
+}
+
+func (c *erc20Service) Withdraw(ctx context.Context, value *big.Int) (trx common.Hash, err error) {
+	callData, err := erc20ABI.Pack("withdraw", value)
+	if err != nil {
+		return
+	}
+	req := &transaction.TxRequest{
+		To:          &c.address,
+		Data:        callData,
+		Value:       big.NewInt(0),
+		Description: "withdraw wbtt",
+	}
+	trx, err = c.transactionService.Send(ctx, req)
+	return
 }
 
 func (c *erc20Service) Transfer(ctx context.Context, address common.Address, value *big.Int) (common.Hash, error) {
