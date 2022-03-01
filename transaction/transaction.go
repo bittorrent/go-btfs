@@ -66,6 +66,9 @@ type StoredTransaction struct {
 // limit and nonce management.
 type Service interface {
 	io.Closer
+	SenderAddress(ctx context.Context) (addr common.Address)
+	EthereumAddress(ctx context.Context) (addr common.Address)
+	OverlayEthAddress(ctx context.Context) (addr common.Address)
 	// Send creates a transaction based on the request and sends it.
 	Send(ctx context.Context, request *TxRequest) (txHash common.Hash, err error)
 	// Call simulate a transaction based on the request.
@@ -88,6 +91,8 @@ type Service interface {
 	CancelTransaction(ctx context.Context, originalTxHash common.Hash) (common.Hash, error)
 	// BalanceAt get btt balance from backend
 	BttBalanceAt(ctx context.Context, address common.Address, block *big.Int) (*big.Int, error)
+	// MyBttBalance get btt balance of current BTTC address
+	MyBttBalance(ctx context.Context) (*big.Int, error)
 }
 
 type transactionService struct {
@@ -133,6 +138,18 @@ func NewService(backend Backend, signer crypto.Signer, store storage.StateStorer
 	}
 
 	return t, nil
+}
+
+func (t *transactionService) SenderAddress(ctx context.Context) (addr common.Address) {
+	return t.sender
+}
+
+func (t *transactionService) EthereumAddress(ctx context.Context) (addr common.Address) {
+	return t.sender
+}
+
+func (t *transactionService) OverlayEthAddress(ctx context.Context) (addr common.Address) {
+	return t.sender
 }
 
 // Send creates and signs a transaction based on the request and sends it.
@@ -488,4 +505,8 @@ func (t *transactionService) Close() error {
 
 func (t *transactionService) BttBalanceAt(ctx context.Context, address common.Address, block *big.Int) (*big.Int, error) {
 	return t.backend.BalanceAt(ctx, address, block)
+}
+
+func (t *transactionService) MyBttBalance(ctx context.Context) (*big.Int, error) {
+	return t.BttBalanceAt(ctx, t.sender, nil)
 }
