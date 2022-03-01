@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 
@@ -279,6 +280,13 @@ func (dc *dcWrap) doSendData(ctx context.Context, config *config.Config, sm *pb.
 	cb := cgrpc.StatusClient(config.Services.StatusServerDomain)
 	return cb.WithContext(ctx, func(ctx context.Context, client pb.StatusServiceClient) error {
 		_, err := client.UpdateMetricsAndDiscovery(ctx, sm)
+		if err != nil {
+			chain.CodeStatus = chain.ConstCodeError
+			chain.ErrStatus = err
+		} else {
+			chain.CodeStatus = chain.ConstCodeSuccess
+			chain.ErrStatus = nil
+		}
 		return err
 	})
 }
