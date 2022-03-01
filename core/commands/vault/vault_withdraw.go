@@ -8,6 +8,7 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/utils"
 	"golang.org/x/net/context"
 )
 
@@ -24,7 +25,8 @@ var VaultWithdrawCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		amount, ok := new(big.Int).SetString(req.Arguments[0], 10)
+		argAmount := utils.RemoveSpaceAndComma(req.Arguments[0])
+		amount, ok := new(big.Int).SetString(argAmount, 10)
 		if !ok {
 			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[0])
 		}

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"math/big"
 	"strings"
 	"time"
@@ -74,9 +75,16 @@ func InitChain(
 		return nil, fmt.Errorf("dial eth client: %w", err)
 	}
 
+	_, err = backend.BlockNumber(context.Background())
 	if err != nil {
-		log.Infof("could not connect to backend at %v. In a swap-enabled network a working blockchain node (for goerli network in production) is required. Check your node or specify another node using --swap-endpoint.", chainconfig.Endpoint)
-		return nil, fmt.Errorf("get chain id: %w", err)
+		errMsg := "A working blockchain node is required,could not connect to backend at"
+		if err == io.EOF {
+			return nil, fmt.Errorf("%s:%s", errMsg,
+				chainconfig.Endpoint)
+
+		}
+		return nil, fmt.Errorf("%s:%s,err:%w", errMsg,
+			chainconfig.Endpoint, err)
 	}
 
 	overlayEthAddress, err := signer.EthereumAddress()
