@@ -304,6 +304,7 @@ func TestCommands(t *testing.T) {
 		"/vault/wbttbalance",
 		"/vault/withdraw",
 		"/vault/upgrade",
+		"/network",
 	}
 
 	cmdSet := make(map[string]struct{})
