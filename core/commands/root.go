@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 
+	"github.com/bittorrent/go-btfs/core/commands/bttc"
 	"github.com/bittorrent/go-btfs/core/commands/cheque"
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	dag "github.com/bittorrent/go-btfs/core/commands/dag"
@@ -55,24 +56,11 @@ DATA STRUCTURE COMMANDS
   dag           Interact with IPLD documents (experimental)
   metadata      Interact with metadata for BTFS files
 
-CHEQUE COMMANDS
-  cheque bttbalance <addr>              Get btt balance by addr.
-  cheque cash <peer-id>                 Cash a cheque by peerID.
-  cheque cashstatus <peer-id>           Get cash status by peerID.
-  cheque chaininfo                      Show current chain info.
-  cheque price                          Get btfs store price.
-  cheque receive <peer-id>              List cheque(s) received from peers.
-  cheque receive-history-list           Display the received cheques from peer.
-  cheque receive-history-peer <peer-id> Display the received cheques from peer.
-  cheque receive-total-count            send cheque(s) count
-  cheque receivelist <offset> <limit>   List cheque(s) received from peers.
-  cheque send <peer-id>                 List cheque send to peers.
-  cheque send-history-list              Display the send cheques from peer.
-  cheque send-history-peer <peer-id>    Display the send cheques from peer.
-  cheque send-total-count               send cheque(s) count
-  cheque sendlist                       List cheque(s) send to peers.
-  vault                                 Interact with vault services on BTFS
-  settlement                            Show cheque settlement info
+ASSETS COMMANDS
+  bttc          BTTC service related commands, e.g. swap between BTT and WBTT
+  vault         Vault service reladted commands, e.g. deposit WBTT to your vault
+  cheque        Cheque service related commands, e.g. list cheques you have received
+  settlement    Show cheque settlement info
 
 ADVANCED COMMANDS
   daemon        Start a long-running daemon process
@@ -185,6 +173,7 @@ var rootSubcommands = map[string]*cmds.Command{
 	"guard":      GuardCmd,
 	"cheque":     cheque.ChequeCmd,
 	"vault":      vault.VaultCmd,
+	"bttc":       bttc.BttcCmd,
 	"settlement": settlement.SettlementCmd,
 	//"update":    ExternalBinary(),
 	"network": NetworkCmd,
