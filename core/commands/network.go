@@ -16,10 +16,10 @@ const (
 )
 
 type NetworkRet struct {
-	CodeBttc   int
-	ErrBttc    string
-	CodeStatus int
-	ErrStatus  string
+	CodeBttc   int    `json:"code_bttc"`
+	ErrBttc    string `json:"err_bttc"`
+	CodeStatus int    `json:"code_status"`
+	ErrStatus  string `json:"err_status"`
 }
 
 var NetworkCmd = &cmds.Command{
