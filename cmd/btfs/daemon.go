@@ -38,7 +38,6 @@ import (
 	libp2p "github.com/bittorrent/go-btfs/core/node/libp2p"
 	nodeMount "github.com/bittorrent/go-btfs/fuse/node"
 	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
-	migrate "github.com/bittorrent/go-btfs/repo/fsrepo/migrations"
 	"github.com/bittorrent/go-btfs/spin"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/transaction/crypto"
@@ -314,39 +313,6 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	switch err {
 	default:
 		return err
-	case fsrepo.ErrNeedMigration:
-		domigrate, found := req.Options[migrateKwd].(bool)
-		fmt.Println("Found outdated fs-repo, migrations need to be run.")
-
-		if !found {
-			domigrate = YesNoPrompt("Run migrations now? [y/N]")
-		}
-
-		if !domigrate {
-			fmt.Println("Not running migrations of fs-repo now.")
-			fmt.Println("Please get fs-repo-migrations from https://dist.ipfs.io")
-			return fmt.Errorf("fs-repo requires migration")
-		}
-
-		curPath, err := fsrepo.BestKnownPath()
-		if err != nil {
-			return err
-		}
-		// Set to get ipfs' fs-repo-migrations to work without hacks
-		os.Setenv("IPFS_PATH", curPath)
-		err = migrate.RunMigration(fsrepo.RepoVersion)
-		if err != nil {
-			fmt.Println("The migrations of fs-repo failed:")
-			fmt.Printf("  %s\n", err)
-			fmt.Println("If you think this is a bug, please file an issue and include this whole log output.")
-			fmt.Println("  https://github.com/ipfs/fs-repo-migrations")
-			return err
-		}
-
-		repo, err = fsrepo.Open(cctx.ConfigRoot)
-		if err != nil {
-			return err
-		}
 	case nil:
 		break
 	}

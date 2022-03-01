@@ -187,6 +187,7 @@ var rootSubcommands = map[string]*cmds.Command{
 	"vault":      vault.VaultCmd,
 	"settlement": settlement.SettlementCmd,
 	//"update":    ExternalBinary(),
+	"network": NetworkCmd,
 }
 
 // RootRO is the readonly version of Root

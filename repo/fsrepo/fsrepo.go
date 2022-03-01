@@ -37,19 +37,19 @@ var log = logging.Logger("fsrepo")
 // version number that we are currently expecting to see
 var RepoVersion = 10
 
-var migrationInstructions = `See https://github.com/ipfs/fs-repo-migrations/blob/master/run.md
-Sorry for the inconvenience. In the future, these will run automatically.`
+var migrationInstructions = `See https://github.com/bittorrent/go-btfs/releases
+Please manually upgrade the version that you need.`
 
 var programTooLowMessage = `Your programs version (%d) is lower than your repos (%d).
 Please update btfs to a version that supports the existing repo, or run
 a migration in reverse.
 
-See https://github.com/ipfs/fs-repo-migrations/blob/master/run.md for details.`
+See https://github.com/bittorrent/go-btfs/releases for details.`
 
 var (
-	ErrNoVersion     = errors.New("no version file found, please run 0-to-1 migration tool.\n" + migrationInstructions)
-	ErrOldRepo       = errors.New("btfs repo found in old '~/.go-btfs' location, please run migration tool.\n" + migrationInstructions)
-	ErrNeedMigration = errors.New("btfs repo needs migration")
+	ErrNoVersion     = errors.New("no version file found,\n" + migrationInstructions)
+	ErrOldRepo       = errors.New("btfs repo found in old '~/.go-btfs' location, please migration it.\n" + migrationInstructions)
+	ErrNeedMigration = errors.New("btfs repo needs migration,\n" + migrationInstructions)
 )
 
 type NoRepoError struct {
@@ -142,20 +142,21 @@ func open(repoPath string) (repo.Repo, error) {
 	}()
 
 	// Check version, and error out if not matching
-	ver, err := mfsr.RepoPath(r.path).Version()
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, ErrNoVersion
-		}
-		return nil, err
-	}
-
-	if RepoVersion > ver {
-		return nil, ErrNeedMigration
-	} else if ver > RepoVersion {
-		// program version too low for existing repo
-		return nil, fmt.Errorf(programTooLowMessage, RepoVersion, ver)
-	}
+	//ver, err := mfsr.RepoPath(r.path).Version()
+	//fmt.Println("...3 checkInitialized ", ver, err)
+	//if err != nil {
+	//	if os.IsNotExist(err) {
+	//		return nil, ErrNoVersion
+	//	}
+	//	return nil, err
+	//}
+	//
+	//if RepoVersion > ver {
+	//	return nil, ErrNeedMigration
+	//} else if ver > RepoVersion {
+	//	// program version too low for existing repo
+	//	return nil, fmt.Errorf(programTooLowMessage, RepoVersion, ver)
+	//}
 
 	// check repo path, then check all constituent parts.
 	if err := dir.Writable(r.path); err != nil {
