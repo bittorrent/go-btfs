@@ -30,7 +30,7 @@ const (
 	profileOptionName   = "profile"
 	keyTypeDefault      = "BIP39"
 	keyTypeOptionName   = "key"
-	//importKeyOptionName    = "import"
+	importKeyOptionName = "import"
 	rmOnUnpinOptionName = "rm-on-unpin"
 	seedOptionName      = "seed"
 	/*
@@ -65,7 +65,7 @@ environment variable:
 		cmds.BoolOption(emptyRepoOptionName, "e", "Don't add and pin help files to the local storage."),
 		cmds.StringOption(profileOptionName, "p", "Apply profile settings to config. Multiple profiles can be separated by ','"),
 		cmds.StringOption(keyTypeOptionName, "k", "Key generation algorithm, e.g. RSA, Ed25519, Secp256k1, ECDSA, BIP39. By default is BIP39"),
-		//cmds.StringOption(importKeyOptionName, "i", "Import TRON private key to generate btfs PeerID."),
+		cmds.StringOption(importKeyOptionName, "i", "Import TRON private key to generate btfs PeerID."),
 		cmds.BoolOption(rmOnUnpinOptionName, "r", "Remove unpinned files.").WithDefault(false),
 		cmds.StringOption(seedOptionName, "s", "Import seed phrase"),
 		/*
@@ -125,7 +125,7 @@ environment variable:
 		}
 
 		profile, _ := req.Options[profileOptionName].(string)
-		//importKey, _ := req.Options[importKeyOptionName].(string)
+		importKey, _ := req.Options[importKeyOptionName].(string)
 		keyType, _ := req.Options[keyTypeOptionName].(string)
 		seedPhrase, _ := req.Options[seedOptionName].(string)
 		/*
@@ -133,7 +133,7 @@ environment variable:
 			passwordFile, _ := req.Options[passwordFileoptionName].(string)
 		*/
 
-		return doInit(os.Stdout, cctx.ConfigRoot, empty, nBitsForKeypair, profile, conf, keyType, "", seedPhrase, rmOnUnpin)
+		return doInit(os.Stdout, cctx.ConfigRoot, empty, nBitsForKeypair, profile, conf, keyType, importKey, seedPhrase, rmOnUnpin)
 	},
 }
 
