@@ -44,7 +44,7 @@ var StorageUploadChequeCmd = &cmds.Command{
 
 		encodedCheque := req.Arguments[0]
 		contractId := req.Arguments[2]
-		fmt.Printf("receive cheque, requestPid:%s contractId:%+v \n", requestPid.String(), contractId)
+		fmt.Printf("receive cheque, requestPid:%s contractId:%+v,encodedCheque:%+v \n", requestPid.String(), contractId, encodedCheque)
 
 		// decode and deal the cheque
 		err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price)
