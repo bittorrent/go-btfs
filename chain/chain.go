@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"math/big"
 	"strings"
 	"time"
@@ -13,6 +14,8 @@ import (
 	"github.com/bittorrent/go-btfs/chain/config"
 	"github.com/bittorrent/go-btfs/settlement"
 	"github.com/bittorrent/go-btfs/settlement/swap"
+	"github.com/bittorrent/go-btfs/settlement/swap/bttc"
+	"github.com/bittorrent/go-btfs/settlement/swap/erc20"
 	"github.com/bittorrent/go-btfs/settlement/swap/priceoracle"
 	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
@@ -55,6 +58,7 @@ type SettleInfo struct {
 	CashoutService vault.CashoutService
 	SwapService    *swap.Service
 	OracleService  priceoracle.Service
+	BttcService    bttc.Service
 }
 
 // InitChain will initialize the Ethereum backend at the given endpoint and
@@ -74,9 +78,16 @@ func InitChain(
 		return nil, fmt.Errorf("dial eth client: %w", err)
 	}
 
+	_, err = backend.BlockNumber(context.Background())
 	if err != nil {
-		log.Infof("could not connect to backend at %v. In a swap-enabled network a working blockchain node (for goerli network in production) is required. Check your node or specify another node using --swap-endpoint.", chainconfig.Endpoint)
-		return nil, fmt.Errorf("get chain id: %w", err)
+		errMsg := "A working blockchain node is required,could not connect to backend at"
+		if err == io.EOF {
+			return nil, fmt.Errorf("%s:%s", errMsg,
+				chainconfig.Endpoint)
+
+		}
+		return nil, fmt.Errorf("%s:%s,err:%w", errMsg,
+			chainconfig.Endpoint, err)
 	}
 
 	overlayEthAddress, err := signer.EthereumAddress()
@@ -119,6 +130,16 @@ func InitSettlement(
 		return nil, errors.New("init vault factory error")
 	}
 
+	// init wbtt service
+	erc20Address, err := factory.ERC20Address(ctx)
+	if err != nil {
+		return nil, err
+	}
+	erc20Service := erc20.New(chaininfo.Backend, chaininfo.TransactionService, erc20Address)
+
+	// init bttc service
+	bttcService := bttc.New(chaininfo.TransactionService, erc20Service)
+
 	//initChequeStoreCashout
 	chequeStore, cashoutService := initChequeStoreCashout(
 		stateStore,
@@ -150,6 +171,7 @@ func InitSettlement(
 		factory,
 		deployGasPrice,
 		chequeStore,
+		erc20Service,
 	)
 
 	if err != nil {
@@ -182,6 +204,7 @@ func InitSettlement(
 		CashoutService: cashoutService,
 		SwapService:    swapService,
 		OracleService:  priceOracleService,
+		BttcService:    bttcService,
 	}
 
 	return &SettleObject, nil
@@ -235,6 +258,7 @@ func initVaultService(
 	vaultFactory vault.Factory,
 	deployGasPrice string,
 	chequeStore vault.ChequeStore,
+	erc20Service erc20.Service,
 ) (vault.Service, error) {
 	chequeSigner := vault.NewChequeSigner(signer, chainID)
 
@@ -258,6 +282,7 @@ func initVaultService(
 		overlayEthAddress,
 		chequeSigner,
 		chequeStore,
+		erc20Service,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("vault init: %w", err)

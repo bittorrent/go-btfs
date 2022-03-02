@@ -230,7 +230,8 @@ func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, 
 						contractId,
 					)
 					if err != nil {
-						fmt.Println("end send cheque: /storage/upload/cheque, hostPid, contractId, err = ", hostPid, contractId, err)
+						fmt.Printf("end send cheque: /storage/upload/cheque, hostPid:%+v, encodedCheque:%+v,price:%+v,contractId:%+v, err:%+v \n",
+							hostPid, encodedCheque, price, contractId, err)
 						return err
 					}
 					return nil
