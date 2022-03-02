@@ -114,3 +114,28 @@ func GetWalletImportPrvKey(env cmds.Environment) (string, error) {
 
 	return keys.HexPrivateKey, nil
 }
+
+var chainIdKey = "ChainIdKey"
+var DefaultStoreChainId = int64(-1)
+
+// add chain id into leveldb
+func StoreChainIdToDisk(ChainId int64, stateStorer storage.StateStorer) error {
+	err := stateStorer.Put(chainIdKey, ChainId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// get chain id from leveldb
+func GetChainIdFromDisk(stateStorer storage.StateStorer) (int64, error) {
+	var storeChainId int64
+	err := stateStorer.Get(chainIdKey, &storeChainId)
+	if err != nil {
+		if err == storage.ErrNotFound {
+			return DefaultStoreChainId, nil
+		}
+		return 0, err
+	}
+	return storeChainId, nil
+}

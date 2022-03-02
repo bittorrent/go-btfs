@@ -188,6 +188,10 @@ func doInit(out io.Writer, repoRoot string, empty bool, nBitsForKeypair int, con
 		return err
 	}
 
+	if err := storeChainId(conf, repoRoot); err != nil {
+		return err
+	}
+
 	if err := fsrepo.Init(repoRoot, conf); err != nil {
 		return err
 	}
@@ -199,6 +203,23 @@ func doInit(out io.Writer, repoRoot string, empty bool, nBitsForKeypair int, con
 	}
 
 	return initializeIpnsKeyspace(repoRoot)
+}
+
+// add chain id into leveldb
+func storeChainId(conf *config.Config, repoRoot string) error {
+	statestore, err := chain.InitStateStore(repoRoot)
+	if err != nil {
+		fmt.Println("init statestore err: ", err)
+		return err
+	}
+
+	err = chain.StoreChainIdToDisk(conf.ChainInfo.ChainId, statestore)
+	if err != nil {
+		fmt.Println("init StoreChainId err: ", err)
+		return err
+	}
+
+	return nil
 }
 
 // add chain info

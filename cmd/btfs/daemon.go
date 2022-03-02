@@ -6,7 +6,6 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
-	cc "github.com/bittorrent/go-btfs/chain/config"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -26,6 +25,7 @@ import (
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/bindata"
 	"github.com/bittorrent/go-btfs/chain"
+	cc "github.com/bittorrent/go-btfs/chain/config"
 	utilmain "github.com/bittorrent/go-btfs/cmd/btfs/util"
 	oldcmds "github.com/bittorrent/go-btfs/commands"
 	"github.com/bittorrent/go-btfs/core"
@@ -41,6 +41,7 @@ import (
 	"github.com/bittorrent/go-btfs/spin"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/transaction/crypto"
+	"github.com/bittorrent/go-btfs/transaction/storage"
 
 	multierror "github.com/hashicorp/go-multierror"
 	util "github.com/ipfs/go-ipfs-util"
@@ -361,7 +362,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		return err
 	}
 
-	chainid, err := getChainID(req, cfg)
+	chainid, err := getChainID(req, cfg, statestore)
 	if err != nil {
 		fmt.Println("getChainID err: ", err)
 		return err
@@ -750,17 +751,13 @@ func getInputChainID(req *cmds.Request) (chainid int64, err error) {
 	return 0, nil
 }
 
-func getStoreChainID(req *cmds.Request) (chainid int64, err error) {
-	return cc.LevelDBChainId, nil
-}
-
-func getChainID(req *cmds.Request, cfg *config.Config) (chainId int64, err error) {
+func getChainID(req *cmds.Request, cfg *config.Config, stateStorer storage.StateStorer) (chainId int64, err error) {
 	cfgChainId := cfg.ChainInfo.ChainId
 	inputChainId, err := getInputChainID(req)
 	if err != nil {
 		return 0, err
 	}
-	storeChainid, err := getStoreChainID(req)
+	storeChainid, err := chain.GetChainIdFromDisk(stateStorer)
 	if err != nil {
 		return 0, err
 	}
