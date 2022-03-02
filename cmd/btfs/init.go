@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/bittorrent/go-btfs/assets"
+	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/cmd/btfs/util"
 	oldcmds "github.com/bittorrent/go-btfs/commands"
 	"github.com/bittorrent/go-btfs/core"
@@ -178,6 +179,10 @@ func doInit(out io.Writer, repoRoot string, empty bool, nBitsForKeypair int, con
 		return err
 	}
 
+	if err := addIdentityInfo(conf, importKey); err != nil {
+		return err
+	}
+
 	if err := fsrepo.Init(repoRoot, conf); err != nil {
 		return err
 	}
@@ -189,6 +194,18 @@ func doInit(out io.Writer, repoRoot string, empty bool, nBitsForKeypair int, con
 	}
 
 	return initializeIpnsKeyspace(repoRoot)
+}
+
+// add Identity info
+func addIdentityInfo(conf *config.Config, importKey string) error {
+	conf.Identity.HexPrivKey = importKey
+
+	bttcAddr, err := chain.GetBttcByKey(importKey)
+	if err != nil {
+		return err
+	}
+	conf.Identity.BttcAddr = bttcAddr
+	return nil
 }
 
 func applyProfiles(conf *config.Config, profiles string) error {

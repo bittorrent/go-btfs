@@ -144,6 +144,8 @@ require (
 	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
 )
 
+replace github.com/TRON-US/go-btfs-config => ../../TRON-US/go-btfs-config
+
 replace github.com/ipfs/go-ipld-format => github.com/TRON-US/go-ipld-format v0.2.0
 
 replace github.com/ipfs/go-cid => github.com/TRON-US/go-cid v0.3.0

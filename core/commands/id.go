@@ -7,24 +7,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
 
 	version "github.com/bittorrent/go-btfs"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
-	oldcmds "github.com/bittorrent/go-btfs/commands"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	ke "github.com/bittorrent/go-btfs/core/commands/keyencode"
-	"github.com/bittorrent/go-btfs/core/commands/storage/path"
-	"github.com/bittorrent/go-btfs/settlement/swap/vault"
-	cpt "github.com/bittorrent/go-btfs/transaction/crypto"
-	"github.com/bittorrent/go-btfs/transaction/storage"
 
-	cmds "github.com/bittorrent/go-btfs-cmds"
-	"github.com/ethereum/go-ethereum/common"
 	ic "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -217,13 +210,13 @@ func printPeer(keyEnc ke.KeyEncoder, ps pstore.Peerstore, p peer.ID, node *core.
 	} else {
 		info.DaemonProcessID = -1
 
-		bttcAddr, err := getBttcNonDaemon(env)
+		bttcAddr, err := chain.GetBttcNonDaemon(env)
 		if err != nil {
 			return nil, err
 		}
 		info.BttcAddress = bttcAddr
 
-		valutAddr, err := getVaultNonDaemon(env)
+		valutAddr, err := chain.GetVaultNonDaemon(env)
 		if err != nil {
 			return nil, err
 		}
@@ -277,13 +270,13 @@ func printSelf(keyEnc ke.KeyEncoder, node *core.IpfsNode, env cmds.Environment) 
 	} else {
 		info.DaemonProcessID = -1
 
-		bttcAddr, err := getBttcNonDaemon(env)
+		bttcAddr, err := chain.GetBttcNonDaemon(env)
 		if err != nil {
 			return nil, err
 		}
 		info.BttcAddress = bttcAddr
 
-		valutAddr, err := getVaultNonDaemon(env)
+		valutAddr, err := chain.GetVaultNonDaemon(env)
 		if err != nil {
 			return nil, err
 		}
@@ -291,65 +284,4 @@ func printSelf(keyEnc ke.KeyEncoder, node *core.IpfsNode, env cmds.Environment) 
 	}
 
 	return info, nil
-}
-
-func getBttcNonDaemon(env cmds.Environment) (defaultAddr string, _err error) {
-	cctx := env.(*oldcmds.Context)
-	_, b := os.LookupEnv(path.BtfsPathKey)
-	if !b {
-		c := cctx.ConfigRoot
-		if bs, err := ioutil.ReadFile(path.PropertiesFileName); err == nil && len(bs) > 0 {
-			c = string(bs)
-		}
-		cctx.ConfigRoot = c
-	}
-
-	cfg, err := cctx.GetConfig()
-	if err != nil {
-		return defaultAddr, err
-	}
-
-	// decode from string
-	pkbytesOri, err := base64.StdEncoding.DecodeString(cfg.Identity.PrivKey)
-	if err != nil {
-		return defaultAddr, err
-	}
-
-	//new singer
-	pk := cpt.Secp256k1PrivateKeyFromBytes(pkbytesOri[4:])
-	singer := cpt.NewDefaultSigner(pk)
-
-	address0x, err := singer.EthereumAddress()
-	if err != nil {
-		return defaultAddr, err
-	}
-	return address0x.Hex(), nil
-}
-
-func getVaultNonDaemon(env cmds.Environment) (defaultAddr string, err error) {
-	cctx := env.(*oldcmds.Context)
-	_, b := os.LookupEnv(path.BtfsPathKey)
-	if !b {
-		c := cctx.ConfigRoot
-		if bs, err := ioutil.ReadFile(path.PropertiesFileName); err == nil && len(bs) > 0 {
-			c = string(bs)
-		}
-		cctx.ConfigRoot = c
-	}
-
-	statestore, err := chain.InitStateStore(cctx.ConfigRoot)
-	if err != nil {
-		return defaultAddr, err
-	}
-
-	var vaultAddress common.Address
-	err = statestore.Get(vault.VaultKey, &vaultAddress)
-	if err != nil {
-		if err == storage.ErrNotFound {
-			return defaultAddr, nil
-		}
-		return defaultAddr, err
-	}
-
-	return vaultAddress.Hex(), nil
 }
