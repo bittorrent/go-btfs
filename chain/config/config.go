@@ -49,7 +49,8 @@ var (
 	bttcTestEndpoint = "https://pre-rpc.bt.io/"
 	testEndpoint     = "http://18.144.29.246:8110"
 
-	DefaultChain = bttcTestChainID
+	DefaultChain   = bttcTestChainID
+	LevelDBChainId = int64(1029)
 )
 
 type ChainConfig struct {

@@ -13,6 +13,7 @@ import (
 
 	"github.com/bittorrent/go-btfs/assets"
 	"github.com/bittorrent/go-btfs/chain"
+	chaincfg "github.com/bittorrent/go-btfs/chain/config"
 	"github.com/bittorrent/go-btfs/cmd/btfs/util"
 	oldcmds "github.com/bittorrent/go-btfs/commands"
 	"github.com/bittorrent/go-btfs/core"
@@ -179,6 +180,10 @@ func doInit(out io.Writer, repoRoot string, empty bool, nBitsForKeypair int, con
 		return err
 	}
 
+	if err := addChainInfo(conf); err != nil {
+		return err
+	}
+
 	if err := addIdentityInfo(conf, importKey); err != nil {
 		return err
 	}
@@ -194,6 +199,21 @@ func doInit(out io.Writer, repoRoot string, empty bool, nBitsForKeypair int, con
 	}
 
 	return initializeIpnsKeyspace(repoRoot)
+}
+
+// add chain info
+func addChainInfo(conf *config.Config) error {
+	chainId := conf.ChainInfo.ChainId
+	chainCfg, found := chaincfg.GetChainConfig(chainId)
+	if !found {
+		return errors.New(fmt.Sprintf("chainid=%d is not found.", chainId))
+	}
+
+	conf.ChainInfo.CurrentFactory = chainCfg.CurrentFactory.Hex()
+	conf.ChainInfo.PriceOracleAddress = chainCfg.PriceOracleAddress.Hex()
+	conf.ChainInfo.VaultLogicAddress = chainCfg.VaultLogicAddress.Hex()
+	conf.ChainInfo.Endpoint = chainCfg.Endpoint
+	return nil
 }
 
 // add Identity info

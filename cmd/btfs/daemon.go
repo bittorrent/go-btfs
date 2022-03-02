@@ -6,6 +6,7 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
+	cc "github.com/bittorrent/go-btfs/chain/config"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -25,7 +26,6 @@ import (
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/bindata"
 	"github.com/bittorrent/go-btfs/chain"
-	cc "github.com/bittorrent/go-btfs/chain/config"
 	utilmain "github.com/bittorrent/go-btfs/cmd/btfs/util"
 	oldcmds "github.com/bittorrent/go-btfs/commands"
 	"github.com/bittorrent/go-btfs/core"
@@ -361,14 +361,10 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		return err
 	}
 
-	chainid := cc.DefaultChain
-
-	chainidstr, found := req.Options[chainID].(string)
-	if found {
-		chainid, err = strconv.ParseInt(chainidstr, 10, 64)
-		if err != nil {
-			return err
-		}
+	chainid, err := getChainID(req, cfg)
+	if err != nil {
+		fmt.Println("getChainID err: ", err)
+		return err
 	}
 
 	//endpoint
@@ -739,6 +735,62 @@ func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, error
 	}()
 
 	return errc, nil
+}
+
+func getInputChainID(req *cmds.Request) (chainid int64, err error) {
+	inputChainIdStr, found := req.Options[chainID].(string)
+	if found {
+		inputChainid, err := strconv.ParseInt(inputChainIdStr, 10, 64)
+		if err != nil {
+			return 0, err
+		}
+
+		return inputChainid, nil
+	}
+	return 0, nil
+}
+
+func getStoreChainID(req *cmds.Request) (chainid int64, err error) {
+	return cc.LevelDBChainId, nil
+}
+
+func getChainID(req *cmds.Request, cfg *config.Config) (chainId int64, err error) {
+	cfgChainId := cfg.ChainInfo.ChainId
+	inputChainId, err := getInputChainID(req)
+	if err != nil {
+		return 0, err
+	}
+	storeChainid, err := getStoreChainID(req)
+	if err != nil {
+		return 0, err
+	}
+
+	chainId = cc.DefaultChain
+	//config chain version, must be have cfgChainId
+	if storeChainid > 0 {
+		// compare cfg chain id and leveldb chain id
+		if storeChainid != cfgChainId {
+			return 0, errors.New(
+				fmt.Sprintf("current chainId=%d is different from config chainId=%d, "+
+					"you can not change chain id in config file", storeChainid, cfgChainId))
+		}
+
+		// compare input chain id and leveldb chain id
+		if inputChainId > 0 && storeChainid != inputChainId {
+			return 0, errors.New(
+				fmt.Sprintf("current chainId=%d is different from input chainId=%d, "+
+					"you can not change chain id with --chain-id when node start", storeChainid, inputChainId))
+		}
+
+		chainId = storeChainid
+	} else {
+		// old version, should be inputChainId id or DefaultChainId
+		if inputChainId > 0 {
+			chainId = inputChainId
+		}
+	}
+
+	return chainId, nil
 }
 
 // printSwarmAddrs prints the addresses of the host
