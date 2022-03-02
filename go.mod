@@ -8,7 +8,7 @@ require (
 	github.com/FactomProject/btcutilecc v0.0.0-20130527213604-d3a63a5752ec // indirect
 	github.com/TRON-US/go-btfs-api v0.3.0
 	github.com/TRON-US/go-btfs-chunker v0.3.0
-	github.com/TRON-US/go-btfs-config v0.11.5
+	github.com/TRON-US/go-btfs-config v0.11.7
 	github.com/TRON-US/go-btfs-files v0.2.0
 	github.com/TRON-US/go-btfs-pinner v0.1.1
 	github.com/TRON-US/go-btns v0.1.1
@@ -143,8 +143,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
 )
-
-replace github.com/TRON-US/go-btfs-config => ../../TRON-US/go-btfs-config
 
 replace github.com/ipfs/go-ipld-format => github.com/TRON-US/go-ipld-format v0.2.0
 

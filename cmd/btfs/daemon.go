@@ -364,7 +364,6 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 
 	chainid, err := getChainID(req, cfg, statestore)
 	if err != nil {
-		fmt.Println("getChainID err: ", err)
 		return err
 	}
 
@@ -781,7 +780,7 @@ func getChainID(req *cmds.Request, cfg *config.Config, stateStorer storage.State
 
 		chainId = storeChainid
 	} else {
-		// old version, should be inputChainId id or DefaultChainId
+		// old version, should be inputChainId first, DefaultChainId second.
 		if inputChainId > 0 {
 			chainId = inputChainId
 		}
