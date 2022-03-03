@@ -80,14 +80,12 @@ func InitChain(
 
 	_, err = backend.BlockNumber(context.Background())
 	if err != nil {
-		errMsg := "A working blockchain node is required,could not connect to backend at"
+		errMsg := "Could not connect to blockchain rpc, please check your network connection"
 		if err == io.EOF {
-			return nil, fmt.Errorf("%s:%s", errMsg,
-				chainconfig.Endpoint)
+			return nil, errors.New(errMsg)
 
 		}
-		return nil, fmt.Errorf("%s:%s,err:%w", errMsg,
-			chainconfig.Endpoint, err)
+		return nil, fmt.Errorf("%s.%w", errMsg, err)
 	}
 
 	overlayEthAddress, err := signer.EthereumAddress()
