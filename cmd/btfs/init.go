@@ -12,6 +12,8 @@ import (
 	"strings"
 
 	"github.com/bittorrent/go-btfs/assets"
+	"github.com/bittorrent/go-btfs/chain"
+	chaincfg "github.com/bittorrent/go-btfs/chain/config"
 	"github.com/bittorrent/go-btfs/cmd/btfs/util"
 	oldcmds "github.com/bittorrent/go-btfs/commands"
 	"github.com/bittorrent/go-btfs/core"
@@ -30,7 +32,7 @@ const (
 	profileOptionName   = "profile"
 	keyTypeDefault      = "BIP39"
 	keyTypeOptionName   = "key"
-	//importKeyOptionName    = "import"
+	importKeyOptionName = "import"
 	rmOnUnpinOptionName = "rm-on-unpin"
 	seedOptionName      = "seed"
 	/*
@@ -65,7 +67,7 @@ environment variable:
 		cmds.BoolOption(emptyRepoOptionName, "e", "Don't add and pin help files to the local storage."),
 		cmds.StringOption(profileOptionName, "p", "Apply profile settings to config. Multiple profiles can be separated by ','"),
 		cmds.StringOption(keyTypeOptionName, "k", "Key generation algorithm, e.g. RSA, Ed25519, Secp256k1, ECDSA, BIP39. By default is BIP39"),
-		//cmds.StringOption(importKeyOptionName, "i", "Import TRON private key to generate btfs PeerID."),
+		cmds.StringOption(importKeyOptionName, "i", "Import TRON private key to generate btfs PeerID."),
 		cmds.BoolOption(rmOnUnpinOptionName, "r", "Remove unpinned files.").WithDefault(false),
 		cmds.StringOption(seedOptionName, "s", "Import seed phrase"),
 		/*
@@ -125,7 +127,7 @@ environment variable:
 		}
 
 		profile, _ := req.Options[profileOptionName].(string)
-		//importKey, _ := req.Options[importKeyOptionName].(string)
+		importKey, _ := req.Options[importKeyOptionName].(string)
 		keyType, _ := req.Options[keyTypeOptionName].(string)
 		seedPhrase, _ := req.Options[seedOptionName].(string)
 		/*
@@ -133,7 +135,7 @@ environment variable:
 			passwordFile, _ := req.Options[passwordFileoptionName].(string)
 		*/
 
-		return doInit(os.Stdout, cctx.ConfigRoot, empty, nBitsForKeypair, profile, conf, keyType, "", seedPhrase, rmOnUnpin)
+		return doInit(os.Stdout, cctx.ConfigRoot, empty, nBitsForKeypair, profile, conf, keyType, importKey, seedPhrase, rmOnUnpin)
 	},
 }
 
@@ -178,6 +180,18 @@ func doInit(out io.Writer, repoRoot string, empty bool, nBitsForKeypair int, con
 		return err
 	}
 
+	if err := addChainInfo(conf); err != nil {
+		return err
+	}
+
+	if err := addIdentityInfo(conf, importKey); err != nil {
+		return err
+	}
+
+	if err := storeChainId(conf, repoRoot); err != nil {
+		return err
+	}
+
 	if err := fsrepo.Init(repoRoot, conf); err != nil {
 		return err
 	}
@@ -189,6 +203,50 @@ func doInit(out io.Writer, repoRoot string, empty bool, nBitsForKeypair int, con
 	}
 
 	return initializeIpnsKeyspace(repoRoot)
+}
+
+// add chain id into leveldb
+func storeChainId(conf *config.Config, repoRoot string) error {
+	statestore, err := chain.InitStateStore(repoRoot)
+	if err != nil {
+		fmt.Println("init statestore err: ", err)
+		return err
+	}
+
+	err = chain.StoreChainIdToDisk(conf.ChainInfo.ChainId, statestore)
+	if err != nil {
+		fmt.Println("init StoreChainId err: ", err)
+		return err
+	}
+
+	return nil
+}
+
+// add chain info
+func addChainInfo(conf *config.Config) error {
+	chainId := conf.ChainInfo.ChainId
+	chainCfg, found := chaincfg.GetChainConfig(chainId)
+	if !found {
+		return errors.New(fmt.Sprintf("chainid=%d is not found.", chainId))
+	}
+
+	conf.ChainInfo.CurrentFactory = chainCfg.CurrentFactory.Hex()
+	conf.ChainInfo.PriceOracleAddress = chainCfg.PriceOracleAddress.Hex()
+	conf.ChainInfo.VaultLogicAddress = chainCfg.VaultLogicAddress.Hex()
+	conf.ChainInfo.Endpoint = chainCfg.Endpoint
+	return nil
+}
+
+// add Identity info
+func addIdentityInfo(conf *config.Config, importKey string) error {
+	conf.Identity.HexPrivKey = importKey
+
+	bttcAddr, err := chain.GetBttcByKey(importKey)
+	if err != nil {
+		return err
+	}
+	conf.Identity.BttcAddr = bttcAddr
+	return nil
 }
 
 func applyProfiles(conf *config.Config, profiles string) error {

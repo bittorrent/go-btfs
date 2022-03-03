@@ -6,8 +6,6 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
-	oldcmds "github.com/bittorrent/go-btfs/commands"
-	"github.com/tron-us/go-btfs-common/crypto"
 )
 
 type ChainInfoRet struct {
@@ -22,16 +20,7 @@ var ChequeChainInfoCmd = &cmds.Command{
 		Tagline: "Show current chain info.",
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		cctx := env.(*oldcmds.Context)
-		cfg, err := cctx.GetConfig()
-		if err != nil {
-			return err
-		}
-		privKey, err := crypto.ToPrivKey(cfg.Identity.PrivKey)
-		if err != nil {
-			return err
-		}
-		keys, err := crypto.FromIcPrivateKey(privKey)
+		walletImportPrvKey, err := chain.GetWalletImportPrvKey(env)
 		if err != nil {
 			return err
 		}
@@ -40,7 +29,7 @@ var ChequeChainInfoCmd = &cmds.Command{
 			ChainId:            chain.ChainObject.ChainID,
 			NodeAddr:           chain.ChainObject.OverlayAddress.String(),
 			VaultAddr:          chain.SettleObject.VaultService.Address().String(),
-			WalletImportPrvKey: keys.HexPrivateKey,
+			WalletImportPrvKey: walletImportPrvKey,
 		})
 	},
 	Type: &ChainInfoRet{},
