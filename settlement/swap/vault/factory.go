@@ -2,6 +2,7 @@ package vault
 
 import (
 	"bytes"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"math/big"
@@ -29,8 +30,8 @@ var (
 type Factory interface {
 	// ERC20Address returns the token for which this factory deploys vaults.
 	ERC20Address(ctx context.Context) (common.Address, error)
-	// Deploy deploys a new vault and returns once the transaction has been submitted.
-	Deploy(ctx context.Context, issuer common.Address, vaultLogic common.Address, nonce common.Hash, peerId string, tokenAddress common.Address) (common.Hash, error)
+	// Deploy return the existed one if already deployed, otherwise deploy one and return the trxHash
+	Deploy(ctx context.Context, issuer common.Address, vaultLogic common.Address, peerId string, tokenAddress common.Address) (vault common.Address, trx common.Hash, err error)
 	// WaitDeployed waits for the deployment transaction to confirm and returns the vault address
 	WaitDeployed(ctx context.Context, txHash common.Hash) (common.Address, error)
 	// VerifyBytecode checks that the factory is valid.
@@ -72,12 +73,51 @@ func NewFactory(backend transaction.Backend, transactionService transaction.Serv
 	}
 }
 
-// Deploy deploys a new vault and returns once the transaction has been submitted.
+// Deploy return the existed one if already deployed, otherwise deploy one and return the trxHash
 func (c *factory) Deploy(
 	ctx context.Context,
 	issuer common.Address,
 	vaultLogic common.Address,
-	nonce common.Hash,
+	peerId string,
+	erc20Address common.Address,
+) (vault common.Address, trx common.Hash, err error) {
+
+	_peerId, err := peer.IDB58Decode(peerId)
+	if err != nil {
+		return
+	}
+
+	// check whether vault has already been deployed
+	zeroAddr := common.Address{}
+	vault, err = c.GetPeerVault(ctx, _peerId)
+	if err != nil {
+		return
+	}
+	if vault != zeroAddr {
+		var vaultImpl common.Address
+		vaultImpl, err = GetVaultImpl(ctx, vault, c.transactionService)
+		if err != nil {
+			return
+		}
+		if vaultImpl != vaultLogic {
+			fmt.Printf("you already have one vault, you can upgrade it via `btfs vault upgrade` command")
+		}
+		return
+	}
+
+	// deploy one new vault, and return the trxHash
+	err = checkBalance(ctx, c.backend, issuer)
+	if err != nil {
+		return
+	}
+	trx, err = c.deployVault(ctx, issuer, vaultLogic, peerId, erc20Address)
+	return
+}
+
+func (c *factory) deployVault(
+	ctx context.Context,
+	issuer common.Address,
+	vaultLogic common.Address,
 	peerId string,
 	erc20Address common.Address,
 ) (common.Hash, error) {
@@ -85,6 +125,13 @@ func (c *factory) Deploy(
 	if err != nil {
 		return common.Hash{}, err
 	}
+
+	nonceBytes := make([]byte, 32)
+	_, err = rand.Read(nonceBytes)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	nonce := common.BytesToHash(nonceBytes)
 
 	callData, err := factoryABI.Pack("deployVault", issuer, vaultLogic, nonce, peerId, initCallData)
 	if err != nil {
