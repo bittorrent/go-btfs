@@ -112,14 +112,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		return &cfg, true
 
 	default:
-		cfg.StartBlock = bttcStartBlock
-		cfg.CurrentFactory = bttcTestFactoryAddress
-		cfg.PriceOracleAddress = bttcTestOracleAddress
-		cfg.DeploymentGas = bttcTestDeploymentGas
-		cfg.Endpoint = bttcTestEndpoint
-		cfg.BatchAddress = bttcTestBatchAddress
-		cfg.VaultLogicAddress = bttcTestVaultLogicAddress
-		return &cfg, true
+		return nil, false
 	}
 }
 
