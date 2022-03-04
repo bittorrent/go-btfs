@@ -7,6 +7,7 @@ import (
 
 	conabi "github.com/bittorrent/go-btfs/chain/abi"
 	"github.com/bittorrent/go-btfs/transaction"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -80,10 +81,24 @@ func (c *erc20Service) Deposit(ctx context.Context, value *big.Int) (trx common.
 	if err != nil {
 		return
 	}
+
+	var gasLimit uint64
+	gasLimit, err = c.backend.EstimateGas(ctx, ethereum.CallMsg{
+		From: c.transactionService.SenderAddress(ctx),
+		To:   &c.address,
+		Data: callData,
+	})
+	if err != nil {
+		return
+	}
+	// When the balance of WBTT is zero, the estimated gas is much less than the actually consumed
+	gasLimit = uint64(float64(gasLimit) * 2.5)
+
 	req := &transaction.TxRequest{
 		To:          &c.address,
 		Data:        callData,
 		Value:       value,
+		GasLimit:    gasLimit,
 		Description: "deposit wbtt",
 	}
 	trx, err = c.transactionService.Send(ctx, req)
