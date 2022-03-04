@@ -232,7 +232,6 @@ func addChainInfo(conf *config.Config) error {
 
 	conf.ChainInfo.CurrentFactory = chainCfg.CurrentFactory.Hex()
 	conf.ChainInfo.PriceOracleAddress = chainCfg.PriceOracleAddress.Hex()
-	conf.ChainInfo.VaultLogicAddress = chainCfg.VaultLogicAddress.Hex()
 	conf.ChainInfo.Endpoint = chainCfg.Endpoint
 	return nil
 }

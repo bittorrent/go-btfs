@@ -63,9 +63,9 @@ Set the value of the 'Datastore.Path' key:
 		"show":    configShowCmd,
 		"edit":    configEditCmd,
 		"replace": configReplaceCmd,
-		"profile": configProfileCmd,
-		"optin":   optInCmd,
-		"optout":  optOutCmd,
+		//"profile": configProfileCmd,
+		"optin":  optInCmd,
+		"optout": optOutCmd,
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("key", true, false, "The key of the config entry (e.g. \"Addresses.API\")."),
