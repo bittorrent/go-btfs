@@ -26,6 +26,7 @@ import (
 	"github.com/bittorrent/go-btfs/bindata"
 	"github.com/bittorrent/go-btfs/chain"
 	cc "github.com/bittorrent/go-btfs/chain/config"
+	chainconfig "github.com/bittorrent/go-btfs/chain/config"
 	utilmain "github.com/bittorrent/go-btfs/cmd/btfs/util"
 	oldcmds "github.com/bittorrent/go-btfs/commands"
 	"github.com/bittorrent/go-btfs/core"
@@ -362,13 +363,19 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		return err
 	}
 
-	chainid, err := getChainID(req, cfg, statestore)
+	chainid, stored, err := getChainID(req, cfg, statestore)
+	if err != nil {
+		return err
+	}
+
+	chainCfg, err := chainconfig.InitChainConfig(cfg, stored, chainid)
 	if err != nil {
 		return err
 	}
 
 	//endpoint
-	chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000), chainid, cfg.Identity.PeerID)
+	chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000),
+		chainid, cfg.Identity.PeerID, chainCfg)
 	if err != nil {
 		return err
 	}
@@ -394,7 +401,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	}
 
 	/*settleinfo*/
-	_, err = chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
+	_, err = chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID, chainCfg)
 	if err != nil {
 		fmt.Println("init settlement err: ", err)
 		return err
@@ -749,15 +756,15 @@ func getInputChainID(req *cmds.Request) (chainid int64, err error) {
 	return 0, nil
 }
 
-func getChainID(req *cmds.Request, cfg *config.Config, stateStorer storage.StateStorer) (chainId int64, err error) {
+func getChainID(req *cmds.Request, cfg *config.Config, stateStorer storage.StateStorer) (chainId int64, stored bool, err error) {
 	cfgChainId := cfg.ChainInfo.ChainId
 	inputChainId, err := getInputChainID(req)
 	if err != nil {
-		return 0, err
+		return 0, stored, err
 	}
 	storeChainid, err := chain.GetChainIdFromDisk(stateStorer)
 	if err != nil {
-		return 0, err
+		return 0, stored, err
 	}
 
 	chainId = cc.DefaultChain
@@ -765,27 +772,29 @@ func getChainID(req *cmds.Request, cfg *config.Config, stateStorer storage.State
 	if storeChainid > 0 {
 		// compare cfg chain id and leveldb chain id
 		if storeChainid != cfgChainId {
-			return 0, errors.New(
+			return 0, stored, errors.New(
 				fmt.Sprintf("current chainId=%d is different from config chainId=%d, "+
 					"you can not change chain id in config file", storeChainid, cfgChainId))
 		}
 
 		// compare input chain id and leveldb chain id
 		if inputChainId > 0 && storeChainid != inputChainId {
-			return 0, errors.New(
+			return 0, stored, errors.New(
 				fmt.Sprintf("current chainId=%d is different from input chainId=%d, "+
 					"you can not change chain id with --chain-id when node start", storeChainid, inputChainId))
 		}
 
 		chainId = storeChainid
+		stored = true
 	} else {
 		// old version, should be inputChainId first, DefaultChainId second.
 		if inputChainId > 0 {
 			chainId = inputChainId
 		}
+		stored = false
 	}
 
-	return chainId, nil
+	return chainId, stored, nil
 }
 
 // printSwarmAddrs prints the addresses of the host

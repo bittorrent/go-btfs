@@ -134,7 +134,7 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 				}
 				log.Info("session", rss.SsId, "contractNum", completeNum, "errorNum", errorNum)
 				if completeNum == numShards {
-					//所有shard全部转账成功，然后确认并返回
+					// while all shards upload completely, submit its.
 					err := Submit(rss, fileSize, offlineSigning)
 					if err != nil {
 						_ = rss.To(sessions.RssToErrorEvent, err)

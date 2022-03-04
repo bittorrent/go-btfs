@@ -70,9 +70,9 @@ func InitChain(
 	pollingInterval time.Duration,
 	chainID int64,
 	peerid string,
+	chainconfig *config.ChainConfig,
 ) (*ChainInfo, error) {
 
-	chainconfig, _ := config.GetChainConfig(chainID)
 	backend, err := ethclient.Dial(chainconfig.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("dial eth client: %w", err)
@@ -122,7 +122,8 @@ func InitSettlement(
 	chainID int64,
 ) (*SettleInfo, error) {
 	//InitVaultFactory
-	factory, err := initVaultFactory(chaininfo.Backend, chaininfo.ChainID, chaininfo.TransactionService, chaininfo.Chainconfig.CurrentFactory.String())
+	factory, err := initVaultFactory(chaininfo.Backend, chaininfo.ChainID, chaininfo.TransactionService,
+		chaininfo.Chainconfig.CurrentFactory.String())
 
 	if err != nil {
 		return nil, errors.New("init vault factory error")
@@ -218,15 +219,9 @@ func initVaultFactory(
 ) (vault.Factory, error) {
 	var currentFactory common.Address
 
-	chainCfg, found := config.GetChainConfig(chainID)
-
-	foundFactory := chainCfg.CurrentFactory
 	if factoryAddress == "" {
-		if !found {
-			return nil, fmt.Errorf("no known factory address for this network (chain id: %d)", chainID)
-		}
-		currentFactory = foundFactory
-		log.Infof("using default factory address for chain id %d: %x", chainID, currentFactory)
+		log.Infof("none factory address for chain id %d: %x", chainID, currentFactory)
+		return nil, errors.New("none factory address for chain id")
 	} else if !common.IsHexAddress(factoryAddress) {
 		return nil, errors.New("malformed factory address")
 	} else {
@@ -331,11 +326,7 @@ func initSwap(
 
 	var currentPriceOracleAddress common.Address
 	if priceOracleAddress == "" {
-		chainCfg, found := config.GetChainConfig(chainID)
-		currentPriceOracleAddress = chainCfg.PriceOracleAddress
-		if !found {
-			return nil, nil, errors.New("no known price oracle address for this network")
-		}
+		return nil, nil, errors.New("no known price oracle address for this network")
 	} else {
 		currentPriceOracleAddress = common.HexToAddress(priceOracleAddress)
 	}

@@ -1,0 +1,4 @@
+{"addresses":["/p2p-circuit","/ip4/127.0.0.1/tcp/4001","/ip4/192.168.106.19/tcp/4001","/ip4/2.0.1.29/tcp/4001","/ip6/::1/tcp/4001"],"event":"interfaceListenAddresses","system":"addrutil","time":"2022-03-03T09:23:35.895106Z"}
+{"addresses":["/p2p-circuit","/ip4/127.0.0.1/tcp/4001","/ip4/192.168.106.19/tcp/4001","/ip4/2.0.1.29/tcp/4001","/ip6/::1/tcp/4001"],"event":"interfaceListenAddresses","system":"addrutil","time":"2022-03-03T09:23:40.895435Z"}
+InrHandler receive signal: interrupt
+Start handle signal

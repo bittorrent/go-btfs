@@ -1,6 +1,9 @@
 package config
 
 import (
+	"errors"
+
+	cfg "github.com/TRON-US/go-btfs-config"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -118,4 +121,38 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.VaultLogicAddress = bttcTestVaultLogicAddress
 		return &cfg, true
 	}
+}
+
+func InitChainConfig(
+	cfg *cfg.Config,
+	stored bool,
+	chainid int64,
+) (*ChainConfig, error) {
+	if stored {
+		if cfg.ChainInfo.ChainId <= 0 {
+			return nil, errors.New("ChainId is None in config file")
+		}
+		if len(cfg.ChainInfo.CurrentFactory) <= 0 {
+			return nil, errors.New("CurrentFactory is None in config file")
+		}
+		if len(cfg.ChainInfo.PriceOracleAddress) <= 0 {
+			return nil, errors.New("PriceOracleAddress is None in config file")
+		}
+		if len(cfg.ChainInfo.Endpoint) <= 0 {
+			return nil, errors.New("Endpoint is None in config file")
+		}
+	}
+
+	chainconfig, found := GetChainConfig(chainid)
+	if !found {
+		return nil, errors.New("chainid is error, cannot find it")
+	}
+
+	if stored {
+		chainconfig.CurrentFactory = common.HexToAddress(cfg.ChainInfo.CurrentFactory)
+		chainconfig.PriceOracleAddress = common.HexToAddress(cfg.ChainInfo.PriceOracleAddress)
+		chainconfig.Endpoint = cfg.ChainInfo.Endpoint
+	}
+
+	return chainconfig, nil
 }
