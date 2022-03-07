@@ -62,3 +62,4 @@ github.com/bittorrent/go-btfs/thirdparty/dir
 github.com/bittorrent/go-btfs/thirdparty/notifier
 github.com/bittorrent/go-btfs/thirdparty/unit
 github.com/bittorrent/go-btfs/thirdparty/verifbs
+github.com/bittorrent/go-btfs/utils
