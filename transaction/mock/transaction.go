@@ -14,14 +14,40 @@ import (
 )
 
 type transactionServiceMock struct {
+	senderAddress        func(ctx context.Context) (addr common.Address)
+	ethereumAddress      func(ctx context.Context) (addr common.Address)
+	overlayEthAddress    func(ctx context.Context) (addr common.Address)
 	send                 func(ctx context.Context, request *transaction.TxRequest) (txHash common.Hash, err error)
+	call                 func(ctx context.Context, request *transaction.TxRequest) (result []byte, err error)
 	waitForReceipt       func(ctx context.Context, txHash common.Hash) (receipt *types.Receipt, err error)
 	watchSentTransaction func(txHash common.Hash) (chan types.Receipt, chan error, error)
-	call                 func(ctx context.Context, request *transaction.TxRequest) (result []byte, err error)
+	storedTransaction    func(txHash common.Hash) (*transaction.StoredTransaction, error)
 	pendingTransactions  func() ([]common.Hash, error)
 	resendTransaction    func(ctx context.Context, txHash common.Hash) error
-	storedTransaction    func(txHash common.Hash) (*transaction.StoredTransaction, error)
 	cancelTransaction    func(ctx context.Context, originalTxHash common.Hash) (common.Hash, error)
+	bttBalanceAt         func(ctx context.Context, address common.Address, block *big.Int) (*big.Int, error)
+	myBttBalance         func(ctx context.Context) (*big.Int, error)
+}
+
+func (m *transactionServiceMock) SenderAddress(ctx context.Context) (addr common.Address) {
+	if m.senderAddress != nil {
+		return m.SenderAddress(ctx)
+	}
+	return common.Address{}
+}
+
+func (m *transactionServiceMock) EthereumAddress(ctx context.Context) (addr common.Address) {
+	if m.ethereumAddress != nil {
+		return m.ethereumAddress(ctx)
+	}
+	return common.Address{}
+}
+
+func (m *transactionServiceMock) OverlayEthAddress(ctx context.Context) (addr common.Address) {
+	if m.overlayEthAddress != nil {
+		return m.overlayEthAddress(ctx)
+	}
+	return common.Address{}
 }
 
 func (m *transactionServiceMock) Send(ctx context.Context, request *transaction.TxRequest) (txHash common.Hash, err error) {
@@ -84,6 +110,20 @@ func (m *transactionServiceMock) Close() error {
 	return nil
 }
 
+func (m *transactionServiceMock) BttBalanceAt(ctx context.Context, address common.Address, block *big.Int) (*big.Int, error) {
+	if m.bttBalanceAt != nil {
+		return m.bttBalanceAt(ctx, address, block)
+	}
+	return big.NewInt(0), errors.New("Error")
+}
+
+func (m *transactionServiceMock) MyBttBalance(ctx context.Context) (*big.Int, error) {
+	if m.myBttBalance != nil {
+		return m.myBttBalance(ctx)
+	}
+	return big.NewInt(0), errors.New("Error")
+}
+
 // Option is the option passed to the mock Chequebook service
 type Option interface {
 	apply(*transactionServiceMock)
@@ -92,6 +132,24 @@ type Option interface {
 type optionFunc func(*transactionServiceMock)
 
 func (f optionFunc) apply(r *transactionServiceMock) { f(r) }
+
+func WithSenderAddress(f func(ctx context.Context) (addr common.Address)) Option {
+	return optionFunc(func(s *transactionServiceMock) {
+		s.senderAddress = f
+	})
+}
+
+func WithEthereumAddress(f func(ctx context.Context) (addr common.Address)) Option {
+	return optionFunc(func(s *transactionServiceMock) {
+		s.ethereumAddress = f
+	})
+}
+
+func WithOverlayEthAddress(f func(ctx context.Context) (addr common.Address)) Option {
+	return optionFunc(func(s *transactionServiceMock) {
+		s.overlayEthAddress = f
+	})
+}
 
 func WithSendFunc(f func(ctx context.Context, request *transaction.TxRequest) (txHash common.Hash, err error)) Option {
 	return optionFunc(func(s *transactionServiceMock) {
@@ -132,6 +190,18 @@ func WithResendTransactionFunc(f func(ctx context.Context, txHash common.Hash) e
 func WithCancelTransactionFunc(f func(ctx context.Context, originalTxHash common.Hash) (common.Hash, error)) Option {
 	return optionFunc(func(s *transactionServiceMock) {
 		s.cancelTransaction = f
+	})
+}
+
+func WithBttBalanceAt(f func(ctx context.Context, address common.Address, block *big.Int) (*big.Int, error)) Option {
+	return optionFunc(func(s *transactionServiceMock) {
+		s.bttBalanceAt = f
+	})
+}
+
+func WithMyBttBalance(f func(ctx context.Context) (*big.Int, error)) Option {
+	return optionFunc(func(s *transactionServiceMock) {
+		s.myBttBalance = f
 	})
 }
 
