@@ -330,8 +330,14 @@ var storageHostEnableCmd = &cmds.Command{
 			return err
 		}
 
-		fmt.Println("set storage-host-enable =", enable)
-		return nil
+		out := fmt.Sprintf("set storage-host-enable = %v \n", enable)
+		return cmds.EmitOnce(res, &out)
+	},
+	Encoders: cmds.EncoderMap{
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *string) error {
+			_, err := w.Write([]byte(*out))
+			return err
+		}),
 	},
 }
 
@@ -350,8 +356,14 @@ var SyncChainInfoCmd = &cmds.Command{
 			return err
 		}
 
-		fmt.Println("sync chain info ok.")
-		return nil
+		out := fmt.Sprintf("sync chain info ok. \n")
+		return cmds.EmitOnce(res, &out)
+	},
+	Encoders: cmds.EncoderMap{
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *string) error {
+			_, err := w.Write([]byte(*out))
+			return err
+		}),
 	},
 }
 
