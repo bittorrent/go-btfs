@@ -94,6 +94,8 @@ func TestCommands(t *testing.T) {
 		"/config/show",
 		//"/config/profile",
 		//"/config/profile/apply",
+		"/config/storage-host-enable",
+		"/config/sync-chain-info",
 		"/config/optin",
 		"/config/optout",
 		"/dag",
