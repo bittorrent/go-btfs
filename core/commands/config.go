@@ -8,8 +8,10 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
+	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/repo"
 	"github.com/bittorrent/go-btfs/repo/fsrepo"
@@ -64,8 +66,10 @@ Set the value of the 'Datastore.Path' key:
 		"edit":    configEditCmd,
 		"replace": configReplaceCmd,
 		//"profile": configProfileCmd,
-		"optin":  optInCmd,
-		"optout": optOutCmd,
+		"storage-host-enable": storageHostEnableCmd,
+		"sync-chain-info":     SyncChainInfoCmd,
+		"optin":               optInCmd,
+		"optout":              optOutCmd,
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("key", true, false, "The key of the config entry (e.g. \"Addresses.API\")."),
@@ -300,6 +304,66 @@ can't be undone.
 		defer file.Close()
 
 		return replaceConfig(r, file)
+	},
+}
+
+var storageHostEnableCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "host is or not.",
+	},
+	Arguments: []cmds.Argument{
+		cmds.StringArg("enable", true, false, "host is or not."),
+	},
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		enable, err := strconv.ParseBool(req.Arguments[0])
+		if err != nil {
+			return err
+		}
+
+		cfgRoot, err := cmdenv.GetConfigRoot(env)
+		if err != nil {
+			return err
+		}
+
+		err = SetConfigStorageHostEnable(cfgRoot, enable)
+		if err != nil {
+			return err
+		}
+
+		out := fmt.Sprintf("set storage-host-enable = %v \n", enable)
+		return cmds.EmitOnce(res, &out)
+	},
+	Encoders: cmds.EncoderMap{
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *string) error {
+			_, err := w.Write([]byte(*out))
+			return err
+		}),
+	},
+}
+
+var SyncChainInfoCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "sync chain info.",
+	},
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		cfgRoot, err := cmdenv.GetConfigRoot(env)
+		if err != nil {
+			return err
+		}
+		chainInfo := chain.ChainObject
+		err = SyncConfigChainInfo(cfgRoot, &chainInfo)
+		if err != nil {
+			return err
+		}
+
+		out := fmt.Sprintf("sync chain info ok. \n")
+		return cmds.EmitOnce(res, &out)
+	},
+	Encoders: cmds.EncoderMap{
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *string) error {
+			_, err := w.Write([]byte(*out))
+			return err
+		}),
 	},
 }
 
@@ -540,6 +604,53 @@ func transformConfig(configRoot string, configName string, transformer config.Tr
 	}
 
 	return oldCfg, newCfg, nil
+}
+
+func SyncConfigChainInfo(configRoot string, chainInfo *chain.ChainInfo) error {
+	r, err := fsrepo.Open(configRoot)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	cfg, err := r.Config()
+	if err != nil {
+		return err
+	}
+	cfg.ChainInfo.ChainId = chainInfo.ChainID
+	cfg.ChainInfo.CurrentFactory = chainInfo.Chainconfig.CurrentFactory.Hex()
+	cfg.ChainInfo.PriceOracleAddress = chainInfo.Chainconfig.PriceOracleAddress.Hex()
+	cfg.ChainInfo.Endpoint = chainInfo.Chainconfig.Endpoint
+
+	cfg.Identity.BttcAddr = chainInfo.OverlayAddress.Hex()
+
+	err = r.SetConfig(cfg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func SetConfigStorageHostEnable(configRoot string, enable bool) error {
+	r, err := fsrepo.Open(configRoot)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	cfg, err := r.Config()
+	if err != nil {
+		return err
+	}
+	cfg.Experimental.StorageHostEnabled = enable
+
+	err = r.SetConfig(cfg)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func getConfig(r repo.Repo, key string) (*ConfigField, error) {
