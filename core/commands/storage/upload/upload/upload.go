@@ -159,7 +159,11 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
-		//this is old price [Compatible with older versions]
+		// CheckNewPrice, get latest price when upload.
+		_, err = chain.SettleObject.OracleService.CheckNewPrice()
+		if err != nil {
+			return err
+		}
 		priceObj, err := chain.SettleObject.OracleService.CurrentPrice()
 		if err != nil {
 			return err

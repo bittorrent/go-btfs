@@ -332,6 +332,10 @@ func initSwap(
 	}
 
 	priceOracle := priceoracle.New(currentPriceOracleAddress, transactionService)
+	_, err := priceOracle.CheckNewPrice() // CheckNewPrice when node starts
+	if err != nil {
+		return nil, nil, err
+	}
 
 	swapProtocol := swapprotocol.New(overlayEthAddress, priceOracle)
 	swapAddressBook := swap.NewAddressbook(stateStore)
