@@ -400,6 +400,19 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		deployGasPrice = chainInfo.Chainconfig.DeploymentGas
 	}
 
+	// start guide server
+	closeGuideServer := startGuideServer(req, cctx, &guideInfo{
+		BtfsVersion: version.CurrentVersionNumber,
+		HostID:      cfg.Identity.PeerID,
+		BttcAddress: address0x.String(),
+		PrivateKey:  cfg.Identity.PrivKey,
+	})
+	defer func() {
+		if closeGuideServer != nil {
+			closeGuideServer()
+		}
+	}()
+
 	/*settleinfo*/
 	_, err = chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
 	if err != nil {
@@ -533,6 +546,11 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		return err
 	}
 	node.Process.AddChild(goprocess.WithTeardown(cctx.Plugins.Close))
+
+	// stop the guide sever, release the API address
+	if closeGuideServer != nil {
+		closeGuideServer()
+	}
 
 	// construct api endpoint - every time
 	apiErrc, err := serveHTTPApi(req, cctx)
