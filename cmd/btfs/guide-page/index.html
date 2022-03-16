@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Guide</title>
+</head>
+<body>
+<h1>Guide</h1>
+<h2>BTTC Balance Status: <span id="balance-status"></span><span id="loading" style="color: red"></span></h2>
+<p>BTFS: <span id="version"></span></p>
+<p>HOSTID: <span id="host-id"></span></p>
+<p>BTTC Address: <span id="bttc-address"></span></p>
+<p>Private Key: <span id="private-key"></span></p>
+<script>
+    window.onload = function () {
+        let checkInterval = setInterval(function () {
+            console.log("check ready...")
+            let xhr = new XMLHttpRequest()
+            xhr.timeout = 200
+            xhr.onreadystatechange = function () {
+                if (xhr.status === 200) {
+                    console.log("ready")
+                    clearInterval(checkInterval)
+                    window.location.href = "/dashboard"
+                }
+            }
+            xhr.open('POST', '/api/v1/id')
+            xhr.send()
+        }, 2000);
+
+        let elLoading = document.getElementById("loading")
+        let loadingText = ""
+        let loadingInterval = setInterval(function (){
+            if (loadingText.length > 3) {
+                loadingText = ""
+            }
+            elLoading.innerText = loadingText
+            loadingText += "."
+        }, 400)
+
+
+        let elBalanceStatus = document.getElementById("balance-status")
+        let elVersion = document.getElementById("version")
+        let elHostID = document.getElementById("host-id")
+        let elBttcAddress = document.getElementById("bttc-address")
+        let elPrivateKey = document.getElementById("private-key")
+        let setInfo = false
+        let infoUpdate = function () {
+            let xhr = new XMLHttpRequest()
+            xhr.timeout = 200
+            xhr.responseType = 'json'
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    if (!setInfo) {
+                        let info = xhr.response.info
+                        elVersion.innerText = info.btfs_version
+                        elHostID.innerText = info.host_id
+                        elBttcAddress.innerText = info.bttc_address
+                        elPrivateKey.innerText = info.private_key
+                        setInfo = true
+                    }
+                    let balanceStatus = xhr.response.balance_status
+                    if (balanceStatus === 0) {
+                        elBalanceStatus.innerText = "Insufficient"
+                        elBalanceStatus.style.color = "red"
+                        setTimeout(infoUpdate, 1000)
+                    } else {
+                        elBalanceStatus.innerText = "Sufficient"
+                        elBalanceStatus.style.color = "green"
+                        clearInterval(loadingInterval)
+                        elLoading.innerText = ""
+                    }
+                }
+            }
+            xhr.open('GET', '/api/v1/guide-info')
+            xhr.send()
+        };
+        infoUpdate()
+    }
+</script>
+</body>
+</html>

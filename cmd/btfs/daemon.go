@@ -6,6 +6,7 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault/guide"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -356,6 +357,16 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	fmt.Println("the address of Bttc format is: ", address0x)
 	fmt.Println("the address of Tron format is: ", keys.Base58Address)
 
+	// guide server init
+	optionApiAddr, _ := req.Options[commands.ApiOption].(string)
+	guide.SetServerAddr(cfg.Addresses.API, optionApiAddr)
+	guide.SetInfoVal(&guide.Info{
+		BtfsVersion: version.CurrentVersionNumber,
+		HostID:      cfg.Identity.PeerID,
+		BttcAddress: address0x.String(),
+		PrivateKey:  cfg.Identity.HexPrivKey,
+	})
+
 	//chain init
 	statestore, err := chain.InitStateStore(cctx.ConfigRoot)
 	if err != nil {
@@ -533,6 +544,9 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		return err
 	}
 	node.Process.AddChild(goprocess.WithTeardown(cctx.Plugins.Close))
+
+	// if the guide server was started, shutdown it
+	guide.TryShutdownServer()
 
 	// construct api endpoint - every time
 	apiErrc, err := serveHTTPApi(req, cctx)
