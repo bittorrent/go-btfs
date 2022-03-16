@@ -405,7 +405,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		BtfsVersion: version.CurrentVersionNumber,
 		HostID:      cfg.Identity.PeerID,
 		BttcAddress: address0x.String(),
-		PrivateKey:  cfg.Identity.PrivKey,
+		PrivateKey:  cfg.Identity.HexPrivKey,
 	})
 	defer func() {
 		if closeGuideServer != nil {
