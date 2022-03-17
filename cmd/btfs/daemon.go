@@ -6,6 +6,7 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault/guide"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -356,6 +357,16 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	fmt.Println("the address of Bttc format is: ", address0x)
 	fmt.Println("the address of Tron format is: ", keys.Base58Address)
 
+	// guide server init
+	optionApiAddr, _ := req.Options[commands.ApiOption].(string)
+	guide.SetServerAddr(cfg.Addresses.API, optionApiAddr)
+	guide.SetInfoVal(&guide.Info{
+		BtfsVersion: version.CurrentVersionNumber,
+		HostID:      cfg.Identity.PeerID,
+		BttcAddress: address0x.String(),
+		PrivateKey:  cfg.Identity.HexPrivKey,
+	})
+
 	//chain init
 	statestore, err := chain.InitStateStore(cctx.ConfigRoot)
 	if err != nil {
@@ -399,19 +410,6 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	if !found {
 		deployGasPrice = chainInfo.Chainconfig.DeploymentGas
 	}
-
-	// start guide server
-	closeGuideServer := startGuideServer(req, cctx, &guideInfo{
-		BtfsVersion: version.CurrentVersionNumber,
-		HostID:      cfg.Identity.PeerID,
-		BttcAddress: address0x.String(),
-		PrivateKey:  cfg.Identity.HexPrivKey,
-	})
-	defer func() {
-		if closeGuideServer != nil {
-			closeGuideServer()
-		}
-	}()
 
 	/*settleinfo*/
 	_, err = chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
@@ -547,10 +545,8 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	}
 	node.Process.AddChild(goprocess.WithTeardown(cctx.Plugins.Close))
 
-	// stop the guide sever, release the API address
-	if closeGuideServer != nil {
-		closeGuideServer()
-	}
+	// if the guide server was started, shutdown it
+	guide.TryShutdownServer()
 
 	// construct api endpoint - every time
 	apiErrc, err := serveHTTPApi(req, cctx)

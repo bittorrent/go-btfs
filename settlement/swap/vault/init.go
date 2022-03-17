@@ -3,6 +3,7 @@ package vault
 import (
 	"context"
 	"fmt"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault/guide"
 	"math/big"
 	"time"
 
@@ -26,6 +27,7 @@ const (
 )
 
 func checkBalance(ctx context.Context, swapBackend transaction.Backend, overlayEthAddress common.Address) error {
+	var guideServerStarted bool
 	for {
 		timeoutCtx, _ := context.WithTimeout(ctx, balanceCheckBackoffDuration*time.Duration(balanceCheckMaxRetries))
 		ethBalance, err := swapBackend.BalanceAt(timeoutCtx, overlayEthAddress, nil)
@@ -41,12 +43,17 @@ func checkBalance(ctx context.Context, swapBackend transaction.Backend, overlayE
 		minimumEth := gasPrice.Mul(gasPrice, big.NewInt(300000))
 		insufficientETH := ethBalance.Cmp(minimumEth) < 0
 		if insufficientETH {
+			if !guideServerStarted {
+				guideServerStarted = true
+				guide.StartServer()
+			}
 			fmt.Printf("cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on 0x%x \n", overlayEthAddress)
 			select {
 			case <-time.After(balanceCheckBackoffDuration):
 				continue
 			}
 		}
+		guide.SetBalanceStatusOK()
 		return nil
 	}
 }
