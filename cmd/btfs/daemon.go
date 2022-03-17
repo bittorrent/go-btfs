@@ -366,6 +366,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		BttcAddress: address0x.String(),
 		PrivateKey:  cfg.Identity.HexPrivKey,
 	})
+	defer guide.TryShutdownServer()
 
 	//chain init
 	statestore, err := chain.InitStateStore(cctx.ConfigRoot)
