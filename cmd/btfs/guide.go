@@ -70,8 +70,8 @@ func startGuideServer(req *cmds.Request, cctx *oldcmds.Context, info *guideInfo)
 
 	// guide server setup
 	handler := &http.ServeMux{}
-	handler.Handle("/guide-info", guideDataFunc)
-	handler.Handle("/hostui", guidePageFunc)
+	handler.Handle("/api/guide-info", guideDataFunc)
+	handler.Handle("/hostui/guide", guidePageFunc)
 	server := &http.Server{
 		Addr:    guideAddr,
 		Handler: handler,
@@ -80,7 +80,7 @@ func startGuideServer(req *cmds.Request, cctx *oldcmds.Context, info *guideInfo)
 
 	// start server
 	fmt.Printf("Start guide server at: %s\n", guideAddr)
-	fmt.Printf("Guide: http://%s/hostui\n", guideAddr)
+	fmt.Printf("Guide: http://%s/hostui/guide\n", guideAddr)
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			fmt.Printf("Start guide server failed: %v\n", err)
@@ -92,16 +92,17 @@ func startGuideServer(req *cmds.Request, cctx *oldcmds.Context, info *guideInfo)
 	closeFunc = func() {
 		select {
 		case <-done: // if closed, do nothing
+			return
 		default:
-			fmt.Println("Closing guide server...")
+			fmt.Println("Closing guide server")
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			if err := server.Shutdown(ctx); err != nil {
 				fmt.Printf("Close guide server failed: %v\n", err)
 			}
 			<-done
+			fmt.Println("Guide server closed")
 		}
-		fmt.Println("Guide server closed")
 	}
 
 	return

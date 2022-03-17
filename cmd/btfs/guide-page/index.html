@@ -18,11 +18,12 @@
             xhr.timeout = 200
             xhr.onreadystatechange = function () {
                 if ( xhr.status === 200 ) {
+                    console.log("ready")
                     clearInterval(checkInterval)
                     window.location.href = "/dashboard"
                 }
             }
-            xhr.open('GET', '/dashboard')
+            xhr.open('POST', '/api/v1/id')
             xhr.send()
         }, 1000);
 
@@ -44,7 +45,7 @@
                     elPrivateKey.innerText = resp.info.private_key
                 }
             }
-            xhr.open('GET', '/guide-info')
+            xhr.open('GET', '/api/guide-info')
             xhr.send()
         })();
     }
