@@ -2,6 +2,7 @@ package chain
 
 import (
 	"encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -138,4 +139,27 @@ func GetChainIdFromDisk(stateStorer storage.StateStorer) (int64, error) {
 		return 0, err
 	}
 	return storeChainId, nil
+}
+
+func StoreChainIdIfNotExists(cfgRoot string, chainID int64) error {
+	statestore, err := InitStateStore(cfgRoot)
+	if err != nil {
+		fmt.Println("StoreChainIdIfNotExists: init statestore err: ", err)
+		return err
+	}
+
+	storeChainid, err := GetChainIdFromDisk(statestore)
+	if err != nil {
+		return err
+	}
+
+	if storeChainid <= 0 {
+		err = StoreChainIdToDisk(chainID, statestore)
+		if err != nil {
+			fmt.Println("StoreChainIdIfNotExists: init StoreChainId err: ", err)
+			return err
+		}
+	}
+
+	return nil
 }
