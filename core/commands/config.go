@@ -330,7 +330,7 @@ var storageHostEnableCmd = &cmds.Command{
 			return err
 		}
 
-		out := fmt.Sprintf("set storage-host-enable = %v \n", enable)
+		out := fmt.Sprintf("set storage-host-enable = %v \n    please restart the node to use it!\n", enable)
 		return cmds.EmitOnce(res, &out)
 	},
 	Encoders: cmds.EncoderMap{
