@@ -330,7 +330,7 @@ var storageHostEnableCmd = &cmds.Command{
 			return err
 		}
 
-		out := fmt.Sprintf("set storage-host-enable = %v \n", enable)
+		out := fmt.Sprintf("set storage-host-enable = %v \n    please restart the node to use it!\n", enable)
 		return cmds.EmitOnce(res, &out)
 	},
 	Encoders: cmds.EncoderMap{
@@ -346,6 +346,15 @@ var SyncChainInfoCmd = &cmds.Command{
 		Tagline: "sync chain info.",
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		node, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+
+		if !node.IsDaemon {
+			return errors.New("please start the node first, for synchronization")
+		}
+
 		cfgRoot, err := cmdenv.GetConfigRoot(env)
 		if err != nil {
 			return err

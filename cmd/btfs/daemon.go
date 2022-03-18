@@ -770,23 +770,29 @@ func getChainID(req *cmds.Request, cfg *config.Config, stateStorer storage.State
 	chainId = cc.DefaultChain
 	//config chain version, must be have cfgChainId
 	if storeChainid > 0 {
-		// compare cfg chain id and leveldb chain id
-		if storeChainid != cfgChainId {
-			return 0, stored, errors.New(
-				fmt.Sprintf("current chainId=%d is different from config chainId=%d, "+
-					"you can not change chain id in config file", storeChainid, cfgChainId))
-		}
+		// on moving, from old version to new version, later must be sync info
+		if cfgChainId == 0 && cfg.ChainInfo.Endpoint == "" {
+			chainId = storeChainid
+			stored = false
+		} else { // not move, new version start.
+			// compare cfg chain id and leveldb chain id
+			if storeChainid != cfgChainId {
+				return 0, stored, errors.New(
+					fmt.Sprintf("current chainId=%d is different from config chainId=%d, "+
+						"you can not change chain id in config file", storeChainid, cfgChainId))
+			}
 
-		// compare input chain id and leveldb chain id
-		if inputChainId > 0 && storeChainid != inputChainId {
-			return 0, stored, errors.New(
-				fmt.Sprintf("current chainId=%d is different from input chainId=%d, "+
-					"you can not change chain id with --chain-id when node start", storeChainid, inputChainId))
-		}
+			// compare input chain id and leveldb chain id
+			if inputChainId > 0 && storeChainid != inputChainId {
+				return 0, stored, errors.New(
+					fmt.Sprintf("current chainId=%d is different from input chainId=%d, "+
+						"you can not change chain id with --chain-id when node start", storeChainid, inputChainId))
+			}
 
-		chainId = storeChainid
-		stored = true
-	} else {
+			chainId = storeChainid
+			stored = true
+		}
+	} else { // not move, old version start.
 		// old version, should be inputChainId first, DefaultChainId second.
 		if inputChainId > 0 {
 			chainId = inputChainId
