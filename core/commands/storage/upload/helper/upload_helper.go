@@ -179,7 +179,7 @@ func TotalPay(shardSize int64, price int64, storageLength int) int64 {
 	if totalPay <= 0 {
 		totalPay = 1
 	}
-	fmt.Printf("size:%v, price:%v, storageLength:%v,  TotalPay:%v \n", float64(shardSize)/float64(units.GiB), price, storageLength, totalPay)
+	fmt.Printf("size:%v GB, price:%v000000000000 , storageLength:%v,  TotalPay:%v000000000000 \n", float64(shardSize)/float64(units.GiB), price, storageLength, totalPay)
 	return totalPay
 }
 
