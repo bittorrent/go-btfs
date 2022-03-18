@@ -346,6 +346,15 @@ var SyncChainInfoCmd = &cmds.Command{
 		Tagline: "sync chain info.",
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		node, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+
+		if !node.IsDaemon {
+			return errors.New("please start the node first, for synchronization")
+		}
+
 		cfgRoot, err := cmdenv.GetConfigRoot(env)
 		if err != nil {
 			return err

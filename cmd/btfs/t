@@ -1,0 +1,500 @@
+   81  ls
+   82  cd tmp/
+   83  echo "1234" >> s
+   84  cat s
+   85  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs add s
+   86  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload QmekJfjgdmu8Aob2Ktveq1RbnZ4kfRvHvCWfXTcwtWS1Jx --copy=2
+   87  echo "12345" >> s
+   88  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs add s
+   89  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload QmQfNY7oQhqNdhRKJVxyd1XVAssf4cMjvBTXPJGgMLufxW --copy=2
+   90  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload status
+   91  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload status ff3d8ae9-3ba3-4aa8-829c-6dfaae508506
+   92  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload status ff3d8ae9-3ba3-4aa8-829c-6dfaae508506 | jq .
+   93  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload status ff3d8ae9-3ba3-4aa8-829c-6dfaae508506 | jq .
+   94  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload status ff3d8ae9-3ba3-4aa8-829c-6dfaae508506 | jq .
+   95  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload QmekJfjgdmu8Aob2Ktveq1RbnZ4kfRvHvCWfXTcwtWS1Jx -m=custom -s=16Uiu2HAm9FuG2UfhH5ihKUP5PehzkoTRbHNSUsNofqufJ8QUvdSW,16Uiu2HAm9FuG2UfhH5ihKUP5PehzkoTRbHNSUsNofqufJ8QUvdSW,16Uiu2HAm9FuG2UfhH5ihKUP5PehzkoTRbHNSUsNofqufJ8QUvdSW
+   96  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload --copy=2 QmekJfjgdmu8Aob2Ktveq1RbnZ4kfRvHvCWfXTcwtWS1Jx -m=custom -s=16Uiu2HAm9FuG2UfhH5ihKUP5PehzkoTRbHNSUsNofqufJ8QUvdSW,16Uiu2HAm9FuG2UfhH5ihKUP5PehzkoTRbHNSUsNofqufJ8QUvdSW,16Uiu2HAm9FuG2UfhH5ihKUP5PehzkoTRbHNSUsNofqufJ8QUvdSW
+   97  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs ping 16Uiu2HAm9FuG2UfhH5ihKUP5PehzkoTRbHNSUsNofqufJ8QUvdSW
+   98  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/bootstap/list 
+   99  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs bootstrap list
+  100  ls
+  101  echo "888" >> s
+  102  cat s
+  103  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs add s --chunker=reed-solomon-1-1-262144
+  104  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload QmWSLsWUFTjEC2P2di3YdsuQGwQDv319QT2ubcsV5WGGCr -m=cunstom -s=16Uiu2HAm9FuG2UfhH5ihKUP5PehzkoTRbHNSUsNofqufJ8QUvdSW,16Uiu2HAm9FuG2UfhH5ihKUP5PehzkoTRbHNSUsNofqufJ8QUvdSW
+  105  echo "333" >>s
+  106  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs add s --chunker=reed-solomon-1-1-262144
+  107  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload QmVWZaPrNwb5MuZagFixwbS8LGSRC7CqrZ61K69TDRtSpT -m=cunstom -s=16Uiu2HAm9FuG2UfhH5ihKUP5PehzkoTRbHNSUsNofqufJ8QUvdSW,16Uiu2HAm9FuG2UfhH5ihKUP5PehzkoTRbHNSUsNofqufJ8QUvdSW
+  108  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload status 8d87bfa3-017d-4067-a452-2d1dc37472df
+  109  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload status 8d87bfa3-017d-4067-a452-2d1dc37472df
+  110  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs storage upload status 8d87bfa3-017d-4067-a452-2d1dc37472df
+  111  ls
+  112  cd services/guard-reporter/
+  113  ls
+  114  go run main.go 
+  115  git branch
+  116  git status
+  117  git checkout laocheng_export
+  118  git status
+  119  gitbranch
+  120  git branch
+  121  go run main.go 
+  122  ls
+  123  export BTFS_PATH=/Users/laocheng.cheng/.btfs.tmp222
+  124  cd /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs
+  125  cd /Users/laocheng.cheng/.btfs.tmp222
+  126  ./btfs init -p storage-client-testnet
+  127  ls
+  128  cat /Users/laocheng.cheng/.btfs.tmp222/config 
+  129  ./btfs init -p storage-client-testnet
+  130  /Users/laocheng.cheng/Downloads/tmp/kk9/k9s ; exit;
+  131  ls
+  132  cd 
+  133  ls
+  134  cd .aws/
+  135  ls
+  136  cp config config.1224
+  137  vim config
+  138  vim config
+  139  btfs dev
+  140  btfs-dev
+  141  aws eks --region us-east-1 update-kubeconfig --name btfs-dev-2 --profile btfs-dev
+  142  btfs-dev
+  143  source /Users/tron/code/devops-tools/bin/tron-aliases
+  144  btfs-dev
+  145  as btfs-dev-1
+  146  btfs-dev
+  147  kubectl config use-context arn:aws:eks:us-east-1:268537527716:cluster/btfs-dev-2
+  148  btfs-dev
+  149  vim config
+  150  cd
+  151  cd .kube/
+  152  ls
+  153  cp config  config.1224
+  154  vim config
+  155  ls
+  156  vim config
+  157  arn:aws:eks:us-east-1:268537527716:cluster/btfs-dev-2
+  158  kubectl config use-context arn:aws:eks:us-east-1:268537527716:cluster/btfs-dev-2
+  159  btfs-dev
+  160  brew install k9s
+  161  sudo brew install k9s
+  162  sudo brew install k9s
+  163  sudo brew install k9s
+  164  cd
+  165  cd Downloads/
+  166  ls
+  167  mv k9s_Darwin_x86_64.tar.gz tmp/
+  168  cd tmp/
+  169  ls
+  170  tar -zxvf k9s_Darwin_x86_64.tar.gz 
+  171  ls
+  172  cd k9s
+  173  ls
+  174  cd k9s
+  175  ls
+  176  ls -l
+  177  mkdir kk9
+  178  mv k9s_Darwin_x86_64.tar.gz kk9/
+  179  cd kk9/
+  180  ls
+  181  tar -zxvf k9s_Darwin_x86_64.tar.gz 
+  182  ls
+  183  ls -l
+  184  ./k9s 
+  185  ./k9s 
+  186  kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep eks-admin | awk ‘{print $1}’) > ccc
+  187  vim eks-admin
+  188  vim ccc 
+  189  kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep eks-admin | awk '{print $1}')
+  190  top
+  191  top
+  192   ssh btfs@laocheng.insidebt.net
+  193   ssh btfs@laocheng.insidebt.net
+  194  python
+  195   ssh btfs@laocheng.insidebt.net
+  196   ssh btfs@laocheng.insidebt.net
+  197  python 1/16/0
+  198  pyhton
+  199  python
+  200  pwd
+  201  ./btfs add daemon.go 
+  202  ./btfs files rm QmewQCmbW351kW3oxHNzEXTxXfJW6PACQnLg8MqfZ1hCb3
+  203  ./btfs files remove QmewQCmbW351kW3oxHNzEXTxXfJW6PACQnLg8MqfZ1hCb3
+  204  ./btfs rm QmewQCmbW351kW3oxHNzEXTxXfJW6PACQnLg8MqfZ1hCb3
+  205  ./btfs get QmewQCmbW351kW3oxHNzEXTxXfJW6PACQnLg8MqfZ1hCb3
+  206  ./btfs add main.go 
+  207  ./btfs get QmVLfQ749R6XRKDvAJ4bXsAq3mC4JmgCkDrzP6nESffw3p
+  208  ls
+  209  pwd
+  210  ls
+  211  ./btfs rm QmVLfQ749R6XRKDvAJ4bXsAq3mC4JmgCkDrzP6nESffw3p
+  212  ./btfs get QmVLfQ749R6XRKDvAJ4bXsAq3mC4JmgCkDrzP6nESffw3p
+  213  ls
+  214  ls
+  215  export BTFS_PATH=/Users/laocheng.cheng/.btfs.local2.bttc.staging
+  216  ./btfs add main.go 
+  217  ./btfs storage upload QmVLfQ749R6XRKDvAJ4bXsAq3mC4JmgCkDrzP6nESffw3p --copy=1 -m=custom -s=16Uiu2HAm5HBZsuJkFQPzuxVTB1mFqgEKDcVPc2oCmQ7u2QnRvFgt,16Uiu2HAm5HBZsuJkFQPzuxVTB1mFqgEKDcVPc2oCmQ7u2QnRvFgt
+  218  ./btfs storage upload status 94870191-7256-4ee5-a23f-cf9f9b1f67ba
+  219  ./btfs storage upload status 94870191-7256-4ee5-a23f-cf9f9b1f67ba | jq
+  220  ./btfs storage upload status 94870191-7256-4ee5-a23f-cf9f9b1f67ba | jq
+  221  ./btfs storage upload status 94870191-7256-4ee5-a23f-cf9f9b1f67ba | jq
+  222  ./btfs storage upload QmVLfQ749R6XRKDvAJ4bXsAq3mC4JmgCkDrzP6nESffw3p --copy=1 -m=custom -s=16Uiu2HAm5HBZsuJkFQPzuxVTB1mFqgEKDcVPc2oCmQ7u2QnRvFgt,16Uiu2HAm5HBZsuJkFQPzuxVTB1mFqgEKDcVPc2oCmQ7u2QnRvFgt
+  223  ./btfs add init.go 
+  224  ./btfs storage upload QmP6atxNRu21eyhGHf82B4i5VNQAgCugZWX9HP1TkJbHYh --copy=1 -m=custom -s=16Uiu2HAm5HBZsuJkFQPzuxVTB1mFqgEKDcVPc2oCmQ7u2QnRvFgt,16Uiu2HAm5HBZsuJkFQPzuxVTB1mFqgEKDcVPc2oCmQ7u2QnRvFgt
+  225  ./btfs storage upload status 6d8e0fee-ab4c-493b-a5d1-67c442564be0 | jq
+  226  ./btfs version
+  227  curl -v -X POST "http://127.0.0.1:5001/api/v1/version"
+  228  ./btfs id
+  229  ./btfs id
+  230  ./btfs id
+  231  ./btfs id
+  232  export BTFS_PATH=/Users/laocheng.cheng/.btfs.local2.bttc.staging
+  233  ./btfs id
+  234  ./btfs id
+  235  ./btfs id
+  236  ./btfs id
+  237  curl -v -X POST "http://127.0.0.1:55001/api/v1/id"
+  238  pwd
+  239  ./btfs id
+  240  ./btfs id
+  241  ./btfs id
+  242  ./btfs id
+  243  ls
+  244  ./btfs add functest.go 
+  245  ./btfs storage upload QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS  -m=custom -s=16Uiu2HAm5HBZsuJkFQPzuxVTB1mFqgEKDcVPc2oCmQ7u2QnRvFgt
+  246  ./btfs get QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  247  ./btfs rm QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  248  ./btfs get QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  249  ./btfs get QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  250  ./btfs get QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  251  ./btfs rm QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  252  ./btfs get QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  253  ./btfs get QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  254  ./btfs get QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  255  ls
+  256  ./btfs add generatekey_test.go 
+  257  ./btfs storage upload QmcDmY8hoVAkQNXB6GzGzUAxruGkGywqCLVGr4ZssMwgXM -m=custom -s=16Uiu2HAm5HBZsuJkFQPzuxVTB1mFqgEKDcVPc2oCmQ7u2QnRvFgt
+  258  ./btfs ping 16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  259  ./btfs ping 16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  260  ls
+  261  ./btfs add runmain_test.go
+  262  ./btfs storage upload QmUjGcU52fqk1eSgg8qRHQ1hbzQtEGr2re8rsAEg3Ns3FR -m=custom -s=16Uiu2HAm5HBZsuJkFQPzuxVTB1mFqgEKDcVPc2oCmQ7u2QnRvFgt
+  263  ./btfs storage upload QmUjGcU52fqk1eSgg8qRHQ1hbzQtEGr2re8rsAEg3Ns3FR -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  264  ./btfs ping 16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  265  ./btfs storage upload QmUjGcU52fqk1eSgg8qRHQ1hbzQtEGr2re8rsAEg3Ns3FR -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  266  ./btfs storage upload QmUjGcU52fqk1eSgg8qRHQ1hbzQtEGr2re8rsAEg3Ns3FR -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  267  ./btfs ping 16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  268  ./btfs ping 16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  269  ls
+  270  ./btfs add autoupdate.go
+  271  ./btfs storage upload QmaR1Ucw1ma5LBwJtPJdvJZVfaKEJv4MBdmYSGxA9zsWhD -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  272  ./btfs storage upload QmaR1Ucw1ma5LBwJtPJdvJZVfaKEJv4MBdmYSGxA9zsWhD 
+  273  ./btfs ping 16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  274  ./btfs ping 16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  275  ls
+  276  ./btfs add main.go 
+  277  ./btfs storage upload QmVLfQ749R6XRKDvAJ4bXsAq3mC4JmgCkDrzP6nESffw3p -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  278  ls
+  279  ./btfs add functest.go 
+  280  ./btfs storage upload QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS --copy=1 -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu,16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  281  history
+  282  ./btfs dnsresolve_test.go 
+  283  ./btfs add dnsresolve_test.go 
+  284  ./btfs storage upload QmWNKB47Z2FXhycDp3LMN3MHafFU7T8C8dkmvDRRb3b8jK -s=cunstom -m=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  285  ./btfs storage upload QmWNKB47Z2FXhycDp3LMN3MHafFU7T8C8dkmvDRRb3b8jK -m=cunstom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  286  ./btfs storage upload QmWNKB47Z2FXhycDp3LMN3MHafFU7T8C8dkmvDRRb3b8jK -m=cunstom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  287  ./btfs storage upload QmWNKB47Z2FXhycDp3LMN3MHafFU7T8C8dkmvDRRb3b8jK -m=true -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  288  ./btfs storage upload QmWNKB47Z2FXhycDp3LMN3MHafFU7T8C8dkmvDRRb3b8jK -m=cunstom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  289  ./btfs storage upload QmWNKB47Z2FXhycDp3LMN3MHafFU7T8C8dkmvDRRb3b8jK -m=cunstom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  290  ./btfs storage upload QmWNKB47Z2FXhycDp3LMN3MHafFU7T8C8dkmvDRRb3b8jK -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  291  ls
+  292  ./btfs add send_error.go 
+  293  ./btfs storage upload QmbBzaDqUZJaHXuRvMnFRduDyyv96FaPD7xXYmruGE2XX4 -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  294  ./btfs storage upload QmbBzaDqUZJaHXuRvMnFRduDyyv96FaPD7xXYmruGE2XX4 -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  295  pwd
+  296  ./btfs storage upload QmbBzaDqUZJaHXuRvMnFRduDyyv96FaPD7xXYmruGE2XX4 -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  297  ./btfs storage upload QmbBzaDqUZJaHXuRvMnFRduDyyv96FaPD7xXYmruGE2XX4 -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  298  ./btfs add send_error_test.go 
+  299  ./btfs storage upload QmPoeHZNeP6hfJqimskbdVjKpQaSf4uP9r2FDR5PHKknhh -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  300  ./btfs storage upload QmPoeHZNeP6hfJqimskbdVjKpQaSf4uP9r2FDR5PHKknhh -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  301  ./btfs ping 16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  302  ./btfs storage upload QmPoeHZNeP6hfJqimskbdVjKpQaSf4uP9r2FDR5PHKknhh -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  303  ./btfs storage upload QmPoeHZNeP6hfJqimskbdVjKpQaSf4uP9r2FDR5PHKknhh -m=custom -s=16Uiu2HAmJDPW96QmbfBxKbn22brYxnXEYQwTuEJRWUuuv9PUY1Yu
+  304  vim ~/.kube/config
+  305  export BTFS_PATH=/Users/laocheng.cheng/.btfs.343
+  306  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs
+  307  cd /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs
+  308  ./btfs add autoupdate.go 
+  309  export BTFS_PATH=/Users/laocheng.cheng/.btfs.343
+  310  ./btfs add daemon.go 
+  311  ./btfs storage upload QmYHcUG7b9GA5BCE1MznSCjhbBpXfuv4WaABDSpSj637wf
+  312  ./btfs storage upload status 796e4957-af92-461e-9826-afbfc60ca404
+  313  vim config
+  314  export BTFS_PATH=/Users/laocheng.cheng/.btfs2
+  315  btfs storage contracts list
+  316  btfs storage contracts list host
+  317  btfs storage contracts list host renter
+  318  btfs storage contracts list renter
+  319  pwd
+  320  cd ..
+  321  cp -rf .btfs2 .btfs2.normal
+  322  cp -rf .btfs2 .btfs2.bttc
+  323  export BTFS_PATH=/Users/laocheng.cheng/.btfs2.bttc/
+  324  pwd
+  325  cd .btfs2.bttc/
+  326  ls
+  327  ls
+  328  cd ..
+  329  ls
+  330  pwd
+  331  cd .btfs2.bttc/
+  332  ls
+  333  vim config 
+  334  ls
+  335  vim config 
+  336  export BTFS_PATH=/Users/laocheng.cheng/.btfs2.bttc/
+  337  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs config profile apply storage-host
+  338  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs config --json UI.Host.Initialized true
+  339  ls
+  340  mv datastore datastore.1
+  341  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs config profile apply storage-host
+  342  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs config --json UI.Host.Initialized true
+  343  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs ping 16Uiu2HAmNrZzE4JaUwKkg8MbpgHSQ5Drtf2Ndn9ikRUtazpZK46d
+  344  vim config
+  345  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs ping 16Uiu2HAmNrZzE4JaUwKkg8MbpgHSQ5Drtf2Ndn9ikRUtazpZK46d
+  346  vim config
+  347  vim config
+  348  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs ping 16Uiu2HAmNrZzE4JaUwKkg8MbpgHSQ5Drtf2Ndn9ikRUtazpZK46d
+  349  ls
+  350  ls
+  351  cd blocks/
+  352  ls
+  353  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs cat QmQfNY7oQhqNdhRKJVxyd1XVAssf4cMjvBTXPJGgMLufxW
+  354  /Users/laocheng.cheng/go/src/github.com/TRON-US/go-btfs/cmd/btfs/btfs cheque list
+  355  ls
+  356  pwd
+  357  cd
+  358  export BTFS_PATH=/Users/laocheng.cheng/.btfs.123
+  359  cd /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs
+  360  ./btfs init -p storage-host-testnet
+  361  export BTFS_PATH=/Users/laocheng.cheng/.btfs.111
+  362  ./btfs init -p storage-host-testnet
+  363  ./btfs daemon
+  364  ./btfs daemon
+  365  ./btfs daemon
+  366  ./btfs daemon
+  367  ./btfs daemon
+  368  ./btfs daemon
+  369  ./btfs daemon
+  370  ./btfs daemon
+  371  ./btfs daemon
+  372  ./btfs daemon
+  373  ./btfs daemon
+  374  ./btfs daemon
+  375  ./btfs daemon
+  376  ./btfs daemon
+  377  ./btfs daemon
+  378  pwd
+  379  ls
+  380  export BTFS_PATH=/Users/laocheng.cheng/.btfs.343
+  381  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs
+  382  cd /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs
+  383  ./btfs init -p storage-host-testnet
+  384  ./btfs daemon
+  385  ./btfs daemon
+  386  pwd
+  387  ./btfs daemon
+  388  cd
+  389  ls
+  390  cd country_distrubute/
+  391  ls
+  392  vim 1115
+  393  cat 1115 | head
+  394  cat 1115 | sort -nr -k2 | head
+  395  cd
+  396   ls
+  397  cd
+  398  cd go/
+  399  cd src/
+  400  ls
+  401  cat ~/.bash_profile 
+  402  curl -v -X POST "http://18.144.29.246:5001/api/v0/files/stat?arg=%2F"
+  403  curl -v -X POST "http://18.144.29.246:5001/api/v0/ls?arg=QmfV7GjmgT4uTknTb5Z6bdtHWbucYmBnr54oeYn6FhctYU"
+  404  curl -v -X POST "http://18.144.29.246:5001/api/v0/ls?arg=QmbHhebHJAumaVogAKh7ieVpD42vKbuexdFoEm65WseYaH"
+  405  curl -v -X POST "http://18.144.29.246:5001/api/v0/files/stat?arg=%2F"
+  406  curl -v -X POST "http://18.144.29.246:5001/api/v0/ls?arg=QmfV7GjmgT4uTknTb5Z6bdtHWbucYmBnr54oeYn6FhctYU"
+  407  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  408  export BTFS_PATH=/Users/laocheng.cheng/.btfs2.bttc.staging
+  409  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  410  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  411  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  412  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  413  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  414  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  415  export BTFS_PATH=/Users/laocheng.cheng/.btfs2.bttc.staging
+  416  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs 
+  417  pwd
+  418  cd ..
+  419  rm -rf /Users/laocheng.cheng/.btfs2.bttc.staging
+  420  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs  init -p storage-client-testnet
+  421  cd /Users/laocheng.cheng/.btfs2.bttc.staging
+  422  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  423  vim config 
+  424  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  425  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  426  vim config 
+  427  vim config 
+  428  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  429  vim config 
+  430  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  431  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  432  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  433  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  434  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  435  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  436  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  437  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  438  export BTFS_PATH=/Users/laocheng.cheng/.btfs.local2.bttc.staging
+  439  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  440  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  441  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  442  ls
+  443  vim config
+  444  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  445  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  446  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  447  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  448  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  449  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  450  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  451  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  452  vim config
+  453  vim config
+  454  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  455  vim config
+  456  vim config
+  457  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  458  ls
+  459  pwd
+  460  cd ..
+  461  rm -rf /Users/laocheng.cheng/.btfs.local2.bttc.staging
+  462  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs  init -p storage-client-testnet
+  463  cd  /Users/laocheng.cheng/.btfs.local2.bttc.staging
+  464  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  465  vim config 
+  466  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  467  vim config 
+  468  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  469  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  470  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  471  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  472  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  473  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  474  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  475  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  476  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  477  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  478  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  479  /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs/btfs daemon
+  480  export BTFS_PATH=/Users/laocheng.cheng/.btfs2.bttc.staging
+  481  ls
+  482  ./btfs get QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  483  ./btfs rm QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  484  QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  485  ./btfs get QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  486  ./btfs rm QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  487  ./btfs pin rm QmWLhwCpg844uAdzaM9BL3urAc7ipC2C1zNKYSTGLhRcfS
+  488  ./btfs rm QmcDmY8hoVAkQNXB6GzGzUAxruGkGywqCLVGr4ZssMwgXM
+  489  export BTFS_PATH=/Users/laocheng.cheng/.btfs2.bttc.staging
+  490  ./btfs ping 16Uiu2HAmQtUE1DJUB1oNAoQ8soskNkJNWTVioHVSg6ZrbfhFo1sK
+  491  ./
+  492  cd
+  493  cd country_distrubute/
+  494  ls
+  495  vim 0221
+  496  cat 0221 | sort -nr -k2 | head
+  497  export BTFS_PATH=/Users/laocheng.cheng/.btfs.iuy
+  498  cd /Users/laocheng.cheng/go/src/github.com/bittorrent/go-btfs/cmd/btfs
+  499  ./btfs init -p storage-host-testnet
+  500  ./btfs daemon
+  501  export BTFS_PATH=/Users/laocheng.cheng/.btfs.iuy
+  502  ./btfs id
+  503  pwd
+  504  ./btfs config profile apply storage-host-testnet
+  505  ./btfs config profile apply storage-host-testnet
+  506  ./btfs id
+  507  ./btfs id
+  508  ./btfs id
+  509  ./btfs id
+  510  ./btfs add s
+  511  ./btfs config storage-host-enbale true
+  512  ./btfs config storage-host-enbale true
+  513  ./btfs config storage-host-enable true
+  514  ./btfs config storage-host-enable true
+  515  ./btfs config storage-host-enable true
+  516  ./btfs config storage-host-enable false
+  517  ./btfs config storage-host-enable false
+  518  ./btfs config storage-host-enable ture
+  519  ./btfs config storage-host-enable true
+  520  ./btfs config storage-host-enable true22
+  521  ./btfs config storage-host-enable true
+  522  ./btfs config storage-host-enable false
+  523  ls
+  524  ./btfs config syn-chain-info
+  525  ./btfs config syn-chain-info
+  526  ./btfs config syn-chain-info
+  527  ./btfs config syn-chain-info
+  528  ./btfs config syn-chain-info
+  529  ./btfs config syn-chain-info
+  530  ./btfs config storage-host-enable true
+  531  ./btfs config sync-chain-info
+  532  ./btfs config sync-chain-info
+  533  ./btfs config sync-chain-info
+  534  ./btfs config storage-host-enable true
+  535  ./btfs config storage-host-enable true
+  536  ./btfs config storage-host-enable true
+  537  ./btfs config storage-host-enable true
+  538  curl -v -X POST "http://127.0.0.1:5001/api/v1/config/sync-chain-info"
+  539  curl -v -X POST "http://127.0.0.1:5001/api/v1/config/sync-chain-info"
+  540  curl -v -X POST "http://127.0.0.1:5001/api/v1/config/sync-chain-info" | jq
+  541  curl -v -X POST "http://127.0.0.1:5001/api/v1/config/sync-chain-info" | jq
+  542  ./btfs config storage-host-enable true
+  543  ./btfs config sync-chain-info
+  544  ./btfs config sync-chain-info
+  545  ./btfs config sync-chain-info
+  546  ./btfs config sync-chain-info
+  547  ./btfs config sync-chain-info
+  548  ;s
+  549  ls
+  550  ls
+  551  ls
+  552  ./btfs cheque price
+  553  ls -l
+  554  ./btfs add btfs.go
+  555  ./btfs add btfs.go 
+  556  ./btfs id
+  557  ./btfs id
+  558  ./btfs id
+  559  ./btfs storage path ~/tmp
+  560  ./btfs storage path status
+  561  ./btfs storage path volumes
+  562  ./btfs storage path list
+  563  ./btfs storage path volumes
+  564  pwd
+  565  ./btfs storage path volumes
+  566  ./btfs storage path list
+  567  ./btfs storage path list ~/
+  568  ./btfs storage path list ~/ | jq
+  569  ./btfs storage path list ~/.btfs.iuy/ | jq
+  570  mkdir ~/.btfs.iuy2
+  571  ./btfs storage path
+  572  echo $BTFS_PATH
+  573   ./btfs storage path migrate ~/.btfs.iuy2
+  574  ./btfs storage path capacity ~/.btfs.iuy2
+  575  ./btfs storage path capacity ~/.btfs.iuy
+  576  ./btfs storage path migrate ~/.btfs.iuy2
+  577  ls  ~/.btfs.iuy2
+  578  ls -l  ~/.btfs.iuy2
+  579  ls -l  ~/.btfs.iuy2/
+  580  history > t
