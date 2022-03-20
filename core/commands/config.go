@@ -365,7 +365,7 @@ var SyncChainInfoCmd = &cmds.Command{
 			return err
 		}
 
-		err = chain.StoreChainIdIfNotExists(chainInfo.ChainID)
+		err = chain.StoreChainIdIfNotExists(chainInfo.ChainID, chain.StateStore)
 		if err != nil {
 			return err
 		}

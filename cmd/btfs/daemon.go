@@ -762,7 +762,7 @@ func getChainID(req *cmds.Request, cfg *config.Config, stateStorer storage.State
 	if err != nil {
 		return 0, stored, err
 	}
-	storeChainid, err := chain.GetChainIdFromDisk()
+	storeChainid, err := chain.GetChainIdFromDisk(stateStorer)
 	if err != nil {
 		return 0, stored, err
 	}

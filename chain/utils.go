@@ -130,9 +130,9 @@ func StoreChainIdToDisk(ChainId int64, stateStorer storage.StateStorer) error {
 }
 
 // get chain id from leveldb
-func GetChainIdFromDisk() (int64, error) {
+func GetChainIdFromDisk(stateStorer storage.StateStorer) (int64, error) {
 	var storeChainId int64
-	err := store.Get(chainIdKey, &storeChainId)
+	err := stateStorer.Get(chainIdKey, &storeChainId)
 	if err != nil {
 		if err == storage.ErrNotFound {
 			return DefaultStoreChainId, nil
@@ -142,14 +142,14 @@ func GetChainIdFromDisk() (int64, error) {
 	return storeChainId, nil
 }
 
-func StoreChainIdIfNotExists(chainID int64) error {
-	storeChainid, err := GetChainIdFromDisk()
+func StoreChainIdIfNotExists(chainID int64, statestore storage.StateStorer) error {
+	storeChainid, err := GetChainIdFromDisk(statestore)
 	if err != nil {
 		return err
 	}
 
 	if storeChainid <= 0 {
-		err = StoreChainIdToDisk(chainID, store)
+		err = StoreChainIdToDisk(chainID, statestore)
 		if err != nil {
 			fmt.Println("StoreChainIdIfNotExists: init StoreChainId err: ", err)
 			return err

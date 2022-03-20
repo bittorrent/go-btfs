@@ -33,6 +33,8 @@ var (
 	log          = logging.Logger("chain")
 	ChainObject  ChainInfo
 	SettleObject SettleInfo
+
+	StateStore storage.StateStorer
 )
 
 const (
@@ -72,6 +74,8 @@ func InitChain(
 	peerid string,
 	chainconfig *config.ChainConfig,
 ) (*ChainInfo, error) {
+
+	StateStore = stateStore
 
 	backend, err := ethclient.Dial(chainconfig.Endpoint)
 	if err != nil {
