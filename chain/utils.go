@@ -80,6 +80,7 @@ func GetVaultNonDaemon(env cmds.Environment) (defaultAddr string, err error) {
 		cctx.ConfigRoot = c
 	}
 
+	// btfs id cmd, not node process
 	statestore, err := InitStateStore(cctx.ConfigRoot)
 	if err != nil {
 		return defaultAddr, err
@@ -129,9 +130,9 @@ func StoreChainIdToDisk(ChainId int64, stateStorer storage.StateStorer) error {
 }
 
 // get chain id from leveldb
-func GetChainIdFromDisk(stateStorer storage.StateStorer) (int64, error) {
+func GetChainIdFromDisk() (int64, error) {
 	var storeChainId int64
-	err := stateStorer.Get(chainIdKey, &storeChainId)
+	err := store.Get(chainIdKey, &storeChainId)
 	if err != nil {
 		if err == storage.ErrNotFound {
 			return DefaultStoreChainId, nil
@@ -141,20 +142,14 @@ func GetChainIdFromDisk(stateStorer storage.StateStorer) (int64, error) {
 	return storeChainId, nil
 }
 
-func StoreChainIdIfNotExists(cfgRoot string, chainID int64) error {
-	statestore, err := InitStateStore(cfgRoot)
-	if err != nil {
-		fmt.Println("StoreChainIdIfNotExists: init statestore err: ", err)
-		return err
-	}
-
-	storeChainid, err := GetChainIdFromDisk(statestore)
+func StoreChainIdIfNotExists(chainID int64) error {
+	storeChainid, err := GetChainIdFromDisk()
 	if err != nil {
 		return err
 	}
 
 	if storeChainid <= 0 {
-		err = StoreChainIdToDisk(chainID, statestore)
+		err = StoreChainIdToDisk(chainID, store)
 		if err != nil {
 			fmt.Println("StoreChainIdIfNotExists: init StoreChainId err: ", err)
 			return err

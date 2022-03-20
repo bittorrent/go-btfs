@@ -356,7 +356,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	fmt.Println("the address of Bttc format is: ", address0x)
 	fmt.Println("the address of Tron format is: ", keys.Base58Address)
 
-	//chain init
+	//chain init, node process
 	statestore, err := chain.InitStateStore(cctx.ConfigRoot)
 	if err != nil {
 		fmt.Println("init statestore err: ", err)
@@ -762,7 +762,7 @@ func getChainID(req *cmds.Request, cfg *config.Config, stateStorer storage.State
 	if err != nil {
 		return 0, stored, err
 	}
-	storeChainid, err := chain.GetChainIdFromDisk(stateStorer)
+	storeChainid, err := chain.GetChainIdFromDisk()
 	if err != nil {
 		return 0, stored, err
 	}

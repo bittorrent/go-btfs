@@ -8,6 +8,8 @@ import (
 	"github.com/bittorrent/go-btfs/transaction/storage"
 )
 
+var store storage.StateStorer
+
 func InitStateStore(dataDir string) (ret storage.StateStorer, err error) {
 	if dataDir == "" {
 		ret = mock.NewStateStore()
@@ -15,5 +17,6 @@ func InitStateStore(dataDir string) (ret storage.StateStorer, err error) {
 		return ret, nil
 	}
 
-	return leveldb.NewStateStore(filepath.Join(dataDir, "statestore"))
+	store, err = leveldb.NewStateStore(filepath.Join(dataDir, "statestore"))
+	return store, err
 }
