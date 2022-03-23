@@ -8,7 +8,7 @@ require (
 	github.com/FactomProject/btcutilecc v0.0.0-20130527213604-d3a63a5752ec // indirect
 	github.com/TRON-US/go-btfs-api v0.3.0
 	github.com/TRON-US/go-btfs-chunker v0.3.0
-	github.com/TRON-US/go-btfs-config v0.11.7
+	github.com/TRON-US/go-btfs-config v0.11.8
 	github.com/TRON-US/go-btfs-files v0.2.0
 	github.com/TRON-US/go-btfs-pinner v0.1.1
 	github.com/TRON-US/go-btns v0.1.1
@@ -70,6 +70,7 @@ require (
 	github.com/ipfs/go-path v0.0.8
 	github.com/ipfs/go-verifcid v0.0.1
 	github.com/ipld/go-car v0.1.1-0.20200429200904-c222d793c339
+	github.com/jbenet/go-fuse-version v0.0.0-20160322195114-6d4c97bcf253 // indirect
 	github.com/jbenet/go-is-domain v1.0.5
 	github.com/jbenet/go-random v0.0.0-20190219211222-123a90aedc0c
 	github.com/jbenet/go-temp-err-catcher v0.1.0
