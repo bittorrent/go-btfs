@@ -4,17 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"path"
+	"time"
+
+	"github.com/markbates/pkger"
 	ma "github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
-	"html/template"
-	"net/http"
-	"time"
 )
 
 const (
-	pageFilePath       = "./guide-page/index.html" // TODO: replace it
-	pagePath           = "/hostui"
-	infoPath           = "/api/v1/guide-info"
+	pageFilePath       = "/hostui/"
+	pagePath           = "/hostui/"
+	infoPath           = "/api/v1/guide-info/"
 	serverCloseTimeout = 5 * time.Second
 )
 
@@ -68,7 +70,26 @@ func SetServerAddr(cfgAddrs []string, optAddr string) {
 }
 
 func newServer() *http.Server {
-	infoHandlerFunc := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+
+	// page
+	static := http.StripPrefix(pageFilePath, http.FileServer(pkger.Dir(pageFilePath)))
+	mux.HandleFunc(pagePath, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == pagePath {
+			indexPath := path.Join(pagePath, "index.html")
+			f, err := pkger.Open(indexPath)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			http.ServeContent(w, r, "index.html", time.Now(), f)
+			return
+		}
+		static.ServeHTTP(w, r)
+	})
+
+	// api
+	mux.HandleFunc(infoPath, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "text/json")
 		w.WriteHeader(http.StatusOK)
 		resp := map[string]interface{}{
@@ -80,17 +101,9 @@ func newServer() *http.Server {
 		return
 	})
 
-	pageHandlerFunc := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t, _ := template.ParseFiles(pageFilePath)
-		_ = t.Execute(w, nil)
-	})
-
-	serverMux := http.NewServeMux()
-	serverMux.Handle(infoPath+"/", infoHandlerFunc)
-	serverMux.Handle(pagePath+"/", pageHandlerFunc)
 	return &http.Server{
 		Addr:    serverAddr,
-		Handler: serverMux,
+		Handler: mux,
 	}
 }
 

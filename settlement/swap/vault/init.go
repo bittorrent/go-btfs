@@ -3,7 +3,7 @@ package vault
 import (
 	"context"
 	"fmt"
-	"github.com/bittorrent/go-btfs/settlement/swap/vault/guide"
+	"github.com/bittorrent/go-btfs/guide"
 	"math/big"
 	"time"
 

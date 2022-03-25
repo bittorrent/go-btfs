@@ -6,7 +6,7 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
-	"github.com/bittorrent/go-btfs/settlement/swap/vault/guide"
+	"github.com/bittorrent/go-btfs/guide"
 	"io/ioutil"
 	"net"
 	"net/http"
