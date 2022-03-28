@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/base64"
 	"errors"
 	_ "expvar"
@@ -17,16 +16,14 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	config "github.com/TRON-US/go-btfs-config"
 	cserial "github.com/TRON-US/go-btfs-config/serialize"
+        cc "github.com/bittorrent/go-btfs/chain/config"
 	version "github.com/bittorrent/go-btfs"
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/bindata"
 	"github.com/bittorrent/go-btfs/chain"
-	cc "github.com/bittorrent/go-btfs/chain/config"
-	chainconfig "github.com/bittorrent/go-btfs/chain/config"
 	utilmain "github.com/bittorrent/go-btfs/cmd/btfs/util"
 	oldcmds "github.com/bittorrent/go-btfs/commands"
 	"github.com/bittorrent/go-btfs/core"
@@ -40,7 +37,6 @@ import (
 	nodeMount "github.com/bittorrent/go-btfs/fuse/node"
 	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 	"github.com/bittorrent/go-btfs/spin"
-	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/transaction/crypto"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 
@@ -355,57 +351,6 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 
 	fmt.Println("the address of Bttc format is: ", address0x)
 	fmt.Println("the address of Tron format is: ", keys.Base58Address)
-
-	//chain init
-	statestore, err := chain.InitStateStore(cctx.ConfigRoot)
-	if err != nil {
-		fmt.Println("init statestore err: ", err)
-		return err
-	}
-
-	chainid, stored, err := getChainID(req, cfg, statestore)
-	if err != nil {
-		return err
-	}
-
-	chainCfg, err := chainconfig.InitChainConfig(cfg, stored, chainid)
-	if err != nil {
-		return err
-	}
-
-	//endpoint
-	chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000),
-		chainid, cfg.Identity.PeerID, chainCfg)
-	if err != nil {
-		return err
-	}
-
-	// Sync the with the given Ethereum backend:
-	isSynced, _, err := transaction.IsSynced(context.Background(), chainInfo.Backend, chain.MaxDelay)
-	if err != nil {
-		return fmt.Errorf("is synced: %w", err)
-	}
-
-	if !isSynced {
-		log.Infof("waiting to sync with the Ethereum backend")
-
-		err := transaction.WaitSynced(context.Background(), chainInfo.Backend, chain.MaxDelay)
-		if err != nil {
-			return fmt.Errorf("waiting backend sync: %w", err)
-		}
-	}
-
-	deployGasPrice, found := req.Options[deploymentGasPrice].(string)
-	if !found {
-		deployGasPrice = chainInfo.Chainconfig.DeploymentGas
-	}
-
-	/*settleinfo*/
-	_, err = chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
-	if err != nil {
-		fmt.Println("init settlement err: ", err)
-		return err
-	}
 
 	// init ip2location db
 	if err := bindata.Init(); err != nil {

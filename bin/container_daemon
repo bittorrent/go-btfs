@@ -30,8 +30,8 @@ else
     *) INIT_ARGS="--profile=$BTFS_PROFILE" ;;
   esac
 
-  btfs init $INIT_ARGS
   if [ "$BTFS_ENV" != "" ]; then
+    btfs init
     btfs config Services.EscrowDomain escrow-service:50051
     btfs config Services.GuardDomain guard-interceptor-service:50051
     btfs config Services.HubDomain query-service:50051
@@ -39,11 +39,11 @@ else
     btfs config --bool Experimental.DisableAutoUpdate true
   fi
   if [ "$BTFS_ENV" == "dev" ] || [ "$BTFS_ENV" == "staging" ]; then
-    btfs config profile apply storage-client-dev
+    btfs init -p storage-host-testnet
     btfs config --bool Experimental.Analytics true
     btfs config Datastore.StorageMax 500GiB
   elif [ "$BTFS_ENV" == "production" ]; then
-    btfs config profile apply storage-client
+    btfs init -p storage-client
     btfs config --bool Experimental.Analytics true
     btfs config Datastore.StorageMax 10TiB
   fi
