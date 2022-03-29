@@ -89,7 +89,7 @@ func newServer() *http.Server {
 	})
 
 	// api
-	mux.HandleFunc(infoPath, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(infoPath, cos(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "text/json")
 		w.WriteHeader(http.StatusOK)
 		resp := map[string]interface{}{
@@ -99,7 +99,7 @@ func newServer() *http.Server {
 		encodeResp, _ := json.Marshal(resp)
 		_, _ = w.Write(encodeResp)
 		return
-	})
+	}))
 
 	return &http.Server{
 		Addr:    serverAddr,
@@ -139,4 +139,19 @@ func TryShutdownServer() {
 		return
 	}
 	shutdownServerFunc()
+}
+
+func cos(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next(w, r)
+	})
 }
