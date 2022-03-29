@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path"
 	"time"
 
 	"github.com/markbates/pkger"
@@ -14,9 +13,9 @@ import (
 )
 
 const (
-	pageFilePath       = "/hostui/"
-	pagePath           = "/hostui/"
-	infoPath           = "/api/v1/guide-info/"
+	pageFilePath       = "/hostui"
+	pagePath           = "/hostui"
+	infoPath           = "/api/v1/guide-info"
 	serverCloseTimeout = 5 * time.Second
 )
 
@@ -73,23 +72,10 @@ func newServer() *http.Server {
 	mux := http.NewServeMux()
 
 	// page
-	static := http.StripPrefix(pageFilePath, http.FileServer(pkger.Dir(pageFilePath)))
-	mux.HandleFunc(pagePath, func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == pagePath {
-			indexPath := path.Join(pagePath, "index.html")
-			f, err := pkger.Open(indexPath)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			http.ServeContent(w, r, "index.html", time.Now(), f)
-			return
-		}
-		static.ServeHTTP(w, r)
-	})
+	page := http.StripPrefix(pageFilePath, http.FileServer(pkger.Dir(pageFilePath)))
 
-	// api
-	mux.HandleFunc(infoPath, cos(func(w http.ResponseWriter, r *http.Request) {
+	// info
+	info := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "text/json")
 		w.WriteHeader(http.StatusOK)
 		resp := map[string]interface{}{
@@ -98,8 +84,11 @@ func newServer() *http.Server {
 		}
 		encodeResp, _ := json.Marshal(resp)
 		_, _ = w.Write(encodeResp)
-		return
-	}))
+	})
+
+	// router
+	mux.Handle(pagePath+"/", page)
+	mux.Handle(infoPath+"/", info)
 
 	return &http.Server{
 		Addr:    serverAddr,
@@ -131,27 +120,10 @@ func StartServer() {
 			<-done
 		}
 	}
-	return
 }
 
 func TryShutdownServer() {
-	if shutdownServerFunc == nil {
-		return
+	if shutdownServerFunc != nil {
+		shutdownServerFunc()
 	}
-	shutdownServerFunc()
-}
-
-func cos(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		next(w, r)
-	})
 }
