@@ -2,6 +2,7 @@ package chain
 
 import (
 	"encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -79,6 +80,7 @@ func GetVaultNonDaemon(env cmds.Environment) (defaultAddr string, err error) {
 		cctx.ConfigRoot = c
 	}
 
+	// btfs id cmd, not node process
 	statestore, err := InitStateStore(cctx.ConfigRoot)
 	if err != nil {
 		return defaultAddr, err
@@ -138,4 +140,21 @@ func GetChainIdFromDisk(stateStorer storage.StateStorer) (int64, error) {
 		return 0, err
 	}
 	return storeChainId, nil
+}
+
+func StoreChainIdIfNotExists(chainID int64, statestore storage.StateStorer) error {
+	storeChainid, err := GetChainIdFromDisk(statestore)
+	if err != nil {
+		return err
+	}
+
+	if storeChainid <= 0 {
+		err = StoreChainIdToDisk(chainID, statestore)
+		if err != nil {
+			fmt.Println("StoreChainIdIfNotExists: init StoreChainId err: ", err)
+			return err
+		}
+	}
+
+	return nil
 }

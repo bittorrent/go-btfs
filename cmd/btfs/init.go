@@ -206,6 +206,7 @@ func doInit(out io.Writer, repoRoot string, empty bool, nBitsForKeypair int, con
 }
 
 // add chain id into leveldb
+// btfs init cmd, not node process
 func storeChainId(conf *config.Config, repoRoot string) error {
 	statestore, err := chain.InitStateStore(repoRoot)
 	if err != nil {
