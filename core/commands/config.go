@@ -365,6 +365,11 @@ var SyncChainInfoCmd = &cmds.Command{
 			return err
 		}
 
+		err = chain.StoreChainIdIfNotExists(chainInfo.ChainID, chain.StateStore)
+		if err != nil {
+			return err
+		}
+
 		out := fmt.Sprintf("sync chain info ok. \n")
 		return cmds.EmitOnce(res, &out)
 	},
