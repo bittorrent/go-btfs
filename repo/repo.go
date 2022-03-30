@@ -25,6 +25,7 @@ type Repo interface {
 	// BackupConfig creates a backup of the current configuration file using
 	// the given prefix for naming.
 	BackupConfig(prefix string) (string, error)
+	BackUpConfigV2(suffix string) (string, error)
 
 	// SetConfig persists the given configuration struct to storage.
 	SetConfig(*config.Config) error
