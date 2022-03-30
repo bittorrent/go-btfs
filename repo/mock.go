@@ -35,6 +35,10 @@ func (m *Mock) BackupConfig(prefix string) (string, error) {
 	return "", errTODO
 }
 
+func (m *Mock) BackUpConfigV2(suffix string) (string, error) {
+	return "", errTODO
+}
+
 func (m *Mock) SetConfigKey(key string, value interface{}) error {
 	return errTODO
 }

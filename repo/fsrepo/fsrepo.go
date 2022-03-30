@@ -516,13 +516,27 @@ func (r *FSRepo) FileManager() *filestore.FileManager {
 	return r.filemgr
 }
 
+func (r *FSRepo) BackUpConfigV2(suffix string) (string, error) {
+	fname := filepath.Join(r.path, fmt.Sprintf("%s.%s", config.DefaultConfigFile, suffix))
+	f, err := os.OpenFile(fname, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
+	if os.IsExist(err) {
+		return "", err
+	}
+	defer f.Close()
+	_, err = r.doBackUp(f)
+	return fname, err
+}
+
 func (r *FSRepo) BackupConfig(prefix string) (string, error) {
 	temp, err := ioutil.TempFile(r.path, "config-"+prefix)
 	if err != nil {
 		return "", err
 	}
 	defer temp.Close()
+	return r.doBackUp(temp)
+}
 
+func (r *FSRepo) doBackUp(dst io.Writer) (string, error) {
 	configFilename, err := config.Filename(r.path)
 	if err != nil {
 		return "", err
@@ -534,7 +548,7 @@ func (r *FSRepo) BackupConfig(prefix string) (string, error) {
 	}
 	defer orig.Close()
 
-	_, err = io.Copy(temp, orig)
+	_, err = io.Copy(dst, orig)
 	if err != nil {
 		return "", err
 	}

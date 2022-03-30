@@ -28,12 +28,16 @@ var (
 	tronOracleAddress  = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	tronBatchAddress   = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 
-	bttcTestFactoryAddress    = common.HexToAddress("0xc4e269975e5277eA16c32023A5A70F96541ED854")
+	bttcTestFactoryAddressV1 = common.HexToAddress("0xc4e269975e5277eA16c32023A5A70F96541ED854")
+	// v2 link: https://testnet.bttcscan.com/address/0x0f82a8a3cdb37b2c1bea17719b332df40c1f6b78
+	bttcTestFactoryAddress    = common.HexToAddress("0x0f82A8A3Cdb37B2c1bea17719b332Df40C1f6b78")
 	bttcTestOracleAddress     = common.HexToAddress("0xb2C746a9C81564bEF8382e885AF11e73De4a9E15")
 	bttcTestBatchAddress      = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	bttcTestVaultLogicAddress = common.HexToAddress("0x212324b18255593AdE87597Fa37C2c582aD72d24")
 
-	bttcFactoryAddress    = common.HexToAddress("0x9AF4bEc1A30BeC47756Ecef4cf43B91592121bC9")
+	bttcFactoryAddressV1 = common.HexToAddress("0x9AF4bEc1A30BeC47756Ecef4cf43B91592121bC9")
+	// v2 link: https://bttcscan.com/address/0xc87721691Ee635aD7d27563214c15A54E88b2962#code
+	bttcFactoryAddress    = common.HexToAddress("0xc87721691Ee635aD7d27563214c15A54E88b2962")
 	bttcOracleAddress     = common.HexToAddress("0x0064d80C42b6E2cE3aC92eaD445B3D83C510c7AA")
 	bttcBatchAddress      = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	bttcVaultLogicAddress = common.HexToAddress("0x102dbCe01394C4a44Da3a1DF1De418e3fC225077")
@@ -54,6 +58,14 @@ var (
 
 	DefaultChain = bttcTestChainID
 )
+
+func IsV1FactoryAddr(addr string) bool {
+	return addr == bttcTestFactoryAddressV1.Hex() || addr == bttcFactoryAddressV1.Hex()
+}
+
+func IsV2FactoryAddr(addr string) bool {
+	return addr == bttcTestFactoryAddress.Hex() || addr == bttcFactoryAddress.Hex()
+}
 
 type ChainConfig struct {
 	StartBlock         uint64

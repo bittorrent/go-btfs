@@ -15,6 +15,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/repo"
 	"github.com/bittorrent/go-btfs/repo/fsrepo"
+	"github.com/ethereum/go-ethereum/common"
 
 	config "github.com/TRON-US/go-btfs-config"
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -643,6 +644,29 @@ func SyncConfigChainInfo(configRoot string, chainInfo *chain.ChainInfo) error {
 		return err
 	}
 
+	return nil
+}
+
+func SyncConfigChainInfoV2(configRoot string, chainid int64, endpoint string, currentFactoryAddr, priceOracleAddr common.Address) error {
+	r, err := fsrepo.Open(configRoot)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	cfg, err := r.Config()
+	if err != nil {
+		return err
+	}
+	cfg.ChainInfo.ChainId = chainid
+	cfg.ChainInfo.CurrentFactory = currentFactoryAddr.Hex()
+	cfg.ChainInfo.PriceOracleAddress = priceOracleAddr.Hex()
+	cfg.ChainInfo.Endpoint = endpoint
+
+	err = r.SetConfig(cfg)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

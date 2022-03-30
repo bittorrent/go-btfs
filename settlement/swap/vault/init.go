@@ -98,6 +98,19 @@ func Init(
 	return vaultService, err
 }
 
+// GetStoredVaultAddr returns vault address stored in stateStore. If you want exactly result, pls query the bttc chain.
+func GetStoredVaultAddr(stateStore storage.StateStorer) (vault common.Address, err error) {
+	err = stateStore.Get(VaultKey, &vault)
+	if err == nil {
+		return
+	} else {
+		if err == storage.ErrNotFound {
+			return common.Address{}, nil
+		}
+		return
+	}
+}
+
 func deployVaultIfNotExist(
 	ctx context.Context,
 	peerId string,
