@@ -1256,6 +1256,10 @@ func doIfNeedUpgradeFactoryToV2(chainid int64, chainCfg *chainconfig.ChainConfig
 		return
 	}
 
-	fmt.Printf("will re-deploy a vault contract for you, your old vault is %s\n", oldVault)
+	zeroaddr := common.Address{}
+	if oldVault != zeroaddr {
+		fmt.Printf("your old vault address is %s\n", oldVault)
+	}
+	fmt.Println("will re-deploy a vault contract for you")
 	return
 }
