@@ -56,7 +56,7 @@ var (
 	bttcTestEndpoint = "https://pre-rpc.bt.io/"
 	testEndpoint     = "http://18.144.29.246:8110"
 
-	DefaultChain = bttcTestChainID
+	DefaultChain = bttcChainID
 )
 
 func IsV1FactoryAddr(addr string) bool {
