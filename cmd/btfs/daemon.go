@@ -390,6 +390,11 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 			fmt.Println("init statestore err: ", err)
 			return err
 		}
+		err = chain.StoreChainIdIfNotExists(chainid, statestore)
+		if err != nil {
+			fmt.Printf("save chainid failed, err: %s\n", err)
+			return
+		}
 	}
 
 	//endpoint
@@ -1232,7 +1237,7 @@ func doIfNeedUpgradeFactoryToV2(chainid int64, chainCfg *chainconfig.ChainConfig
 	var bkConfig string
 	bkConfig, err = repo.BackUpConfigV2(bkSuffix)
 	if err != nil {
-		fmt.Printf("backup config file failed, err=%s\n", err)
+		fmt.Printf("backup config file failed, err: %s\n", err)
 		return
 	}
 	fmt.Printf("backup config file successfully to %s\n", bkConfig)
