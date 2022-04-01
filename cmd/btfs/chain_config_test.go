@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"gotest.tools/assert"
 	"testing"
+
+	"gotest.tools/assert"
 
 	Cfg "github.com/TRON-US/go-btfs-config"
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -20,7 +21,7 @@ func TestGetChainID(t *testing.T) {
 	// 1.not store chainid, first input chainid, second default chainid
 	req := &cmds.Request{}
 	cfg := &Cfg.Config{}
-	cfg.ChainInfo.ChainId = int64(1029) // default chainid
+	cfg.ChainInfo.ChainId = int64(199) // default chainid
 	chainid, stored, err := getChainID(req, cfg, statestore)
 	if err != nil {
 		t.Errorf("1 init getChainID err: %v", err)
