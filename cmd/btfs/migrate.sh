@@ -7,9 +7,9 @@ withdraw_fee=15000000000000000000
 wait_seconds=15
 
 # for test
-#cash_fee=27000000000
-#withdraw_fee=15000000000
-#wait_seconds=4
+cash_fee=27000000000
+withdraw_fee=15000000000
+wait_seconds=4
 
 
 # check curl
@@ -105,7 +105,7 @@ echo ">> Node info: "
 IFS=$' '
 id_rsp=$(post $node_info_api "ID" "BttcAddress")
 if [ "$?" -ne 0 ]; then
-    echo -e "\terror: $id_rsp"
+    echo -e "   error: $id_rsp"
     IFS=$IFS_old
     exit 1
 fi
@@ -113,8 +113,8 @@ IFS=$'\"'
 id_arr=($id_rsp)
 my_peer_id=${id_arr[0]}
 bttc_addr=${id_arr[1]}
-echo -e "\tpeer_id: $my_peer_id"
-echo -e "\tbttc_address: $bttc_addr"
+echo -e "   peer_id: $my_peer_id"
+echo -e "   bttc_address: $bttc_addr"
 
 # stat received cheques
 echo ""
@@ -125,13 +125,13 @@ cash_amount=0
 cash_peers=()
 stats_rsp=$(post $cheque_stats_api "total_received_count")
 if [ $? -ne 0 ]; then
-    echo -e "\terror: $stat_rsp"
+    echo -e "   error: $stat_rsp"
     IFS=$IFS_old
     exit 1
 fi
 list_rsp=$(post "$receive_cheques_api?arg=0&arg=$stats_rsp" "PeerID" "Payout" "CashedAmount")
 if [ $? -ne 0 ]; then
-    echo -e "\terror: $list_rsp"
+    echo -e "   error: $list_rsp"
     IFS=$IFS_old
     exit 1
 fi
@@ -143,23 +143,23 @@ while [ $i -lt ${#list_arr[@]} ]; do
     payout=${list_arr[$((i++))]}
     cashed_amount=${list_arr[$((i++))]}
     balance=$(echo "$payout - $cashed_amount" | bc)
-    echo -e "\t----------------------------------------"
-    echo -e "\tpeer_id: $peer_id"
-    echo -e "\tpayout: $(to_btt $payout) BTT"
-    echo -e "\tcashed_amount: $(to_btt $cashed_amount) BTT"
-    echo -e "\tbalance: $(to_btt $balance) BTT"
+    echo -e "   ----------------------------------------"
+    echo -e "   peer_id: $peer_id"
+    echo -e "   payout: $(to_btt $payout) BTT"
+    echo -e "   cashed_amount: $(to_btt $cashed_amount) BTT"
+    echo -e "   balance: $(to_btt $balance) BTT"
     balance_gt_0=$(echo "$balance > 0" | bc)
     if [ $balance_gt_0 -eq 1 ]; then
         balance_gt_fee=$(echo "$balance > $cash_fee" | bc)
         if [ $balance_gt_fee -eq 1 ]; then
             cash_peers[$((cash_count++))]=$peer_id
             cash_amount=$(echo "$cash_amount + $balance" | bc)
-            echo -e "\tneed_to_cash: 'yes'"
+            echo -e "   need_to_cash: 'yes'"
         else
-            echo -e "\tneed_to_cash: 'no: fee is to hight'"
+            echo -e "   need_to_cash: 'no: fee is to hight'"
         fi
     else
-        echo -e "\tneed_to_cash: 'no: zero balance'"
+        echo -e "   need_to_cash: 'no: zero balance'"
     fi
 done
 
@@ -169,7 +169,7 @@ echo ">> Cash amounts and handling fee assessment: "
 IFS=$' '
 vault_balance_rsp=$(post $vault_balance_api "balance")
 if [ $? -ne 0 ]; then
-    echo -e "\terror: $vault_balance_rsp"
+    echo -e "   error: $vault_balance_rsp"
     IFS=$IFS_old
     exit 1
 fi
@@ -177,15 +177,15 @@ IFS=$' '
 org_vault_balance=$vault_balance_rsp
 bttc_balance_rsp=$(post "$bttc_balance_api?arg=$bttc_addr" "balance")
 if [ $? -ne 0 ]; then
-    echo -e "\terror: $bttc_balance_rsp"
+    echo -e "   error: $bttc_balance_rsp"
     IFS=$IFS_old
     exit 1
 fi
 org_bttc_balance=$bttc_balance_rsp
-echo -e "\tto_be_cashed_cheques: $cash_count"
-echo -e "\tto_be_cashed_cheques_amount: $(to_btt $cash_amount) BTT"
+echo -e "   to_be_cashed_cheques: $cash_count"
+echo -e "   to_be_cashed_cheques_amount: $(to_btt $cash_amount) BTT"
 es_withdraw=$(echo "$cash_amount + $org_vault_balance" | bc)
-echo -e "\ttotal_withdrawal_amount: $(to_btt $es_withdraw) BTT"
+echo -e "   total_withdrawal_amount: $(to_btt $es_withdraw) BTT"
 es_with_gt_0=$(echo "$es_withdraw > 0" | bc)
 if [ $es_with_gt_0 -eq 0 ]; then
     echo ""
@@ -193,10 +193,10 @@ if [ $es_with_gt_0 -eq 0 ]; then
     IFS=$IFS_old
     exit 0
 fi
-echo -e "\t--------"
+echo -e "   --------"
 handle_fee=$(echo "$cash_fee * $cash_count + $withdraw_fee" | bc)
-echo -e "\testimated__handling_fee: $(to_btt $handle_fee) BTT"
-echo -e "\tcurrent_bttc_balance: $(to_btt $org_bttc_balance) BTT"
+echo -e "   estimated__handling_fee: $(to_btt $handle_fee) BTT"
+echo -e "   current_bttc_balance: $(to_btt $org_bttc_balance) BTT"
 echo ""
 need_btt=$(echo "$handle_fee - $org_bttc_balance" | bc)
 need_btt_gt_0=$(echo "$need_btt > 0" | bc)
@@ -216,7 +216,7 @@ while [ $i -lt $wait_seconds ]; do
     if [ $c -lt 10 ]; then
         c=$(echo "0$c")
     fi
-    echo -ne "\tseconds to start: ${c}s"
+    echo -ne "   seconds to start: ${c}s"
     sleep 1
     ((i++))
     echo -ne "\r"
@@ -233,23 +233,23 @@ if [ ${#cash_peers[@]} -gt 0 ]; then
         IFS=$' '
         cash_rsp=$(post "$cheque_cash_api?arg=${cash_peers[$i]}" "TxHash")
         if [ $? -eq 0 ]; then
-            echo -e "\tpeer_id: ${cash_peers[$i]}, transacation: $cash_rsp"
+            echo -e "   peer_id: ${cash_peers[$i]}, transacation: $cash_rsp"
         else
-            echo -e "\tpeer_id: ${cash_peers[$i]}, error: $cash_rsp"
+            echo -e "   peer_id: ${cash_peers[$i]}, error: $cash_rsp"
         fi
         ((i++))
     done
     i=0
-    echo -e "\twaiting for all transacations completed: "
-    echo -e "\t--------"
+    echo -e "   waiting for all transacations completed: "
+    echo -e "   --------"
     while [ $i -lt 10 ]; do
         IFS=$' '
         vault_balance_rsp=$(post $vault_balance_api "balance")
         if [ "$?" -eq 0 ]; then
             cash_vault_balance=$vault_balance_rsp
-            echo -e "\tcurrent_vault_balance: $(to_btt $cash_vault_balance) BTT, should_be: $(to_btt $es_withdraw) BTT, times: $i"
+            echo -e "   current_vault_balance: $(to_btt $cash_vault_balance) BTT, should_be: $(to_btt $es_withdraw) BTT, times: $i"
         else
-            echo -e "\terror: $vault_balance_rsp, times: $i"
+            echo -e "   error: $vault_balance_rsp, times: $i"
         fi
         cash_vault_balance_lt_wth=$(echo "$cash_vault_balance < $es_withdraw" | bc)
         if [ $cash_vault_balance_lt_wth -eq 1 ]; then
@@ -267,26 +267,26 @@ with_vault_balance=$cash_vault_balance
 with_vault_balance_gt_0=$(echo "$with_vault_balance > 0" | bc)
 if [ $with_vault_balance_gt_0 -eq 1 ]; then
     echo ">> Vault balance withdraw: "
-    echo -e "\twithdraw_amount: $(to_btt $cash_vault_balance) BTT"
+    echo -e "   withdraw_amount: $(to_btt $cash_vault_balance) BTT"
     withdraw_rsp=$(post "$withdraw_api?arg=$cash_vault_balance" "hash")
     if [ $? -eq 0 ]; then
-        echo -e "\ttransacation: $withdraw_rsp"
+        echo -e "   transacation: $withdraw_rsp"
     else
-        echo -e "\terror: $withdraw_rsp"
+        echo -e "   error: $withdraw_rsp"
         IFS=$IFS_old
         exit 1
     fi
     i=0
-    echo -e "\twaiting for the transacation completed: "
-    echo -e "\t--------"
+    echo -e "   waiting for the transacation completed: "
+    echo -e "   --------"
     while [ $i -lt 10 ]; do
         IFS=$' '
         vault_balance_rsp=$(post $vault_balance_api "balance")
         if [ "$?" -eq 0 ]; then
             with_vault_balance=$vault_balance_rsp
-            echo -e "\tremain_vault_balance: $(to_btt $with_vault_balance) BTT, should_be: $(to_btt 0) BTT, times: $i"
+            echo -e "   remain_vault_balance: $(to_btt $with_vault_balance) BTT, should_be: $(to_btt 0) BTT, times: $i"
         else
-            echo -e "\tfail: $vault_balance_rsp, times: $i"
+            echo -e "   fail: $vault_balance_rsp, times: $i"
         fi
         with_vault_balance_gt_0=$(echo "$with_vault_balance > 0" | bc)
         if [ $with_vault_balance_gt_0 -eq 1 ]; then
@@ -302,8 +302,8 @@ fi
 echo ">> Result"
 actual_cash_amount=$(echo "$cash_vault_balance - $org_vault_balance" | bc)
 actual_with_amount=$(echo "$cash_vault_balance - $with_vault_balance" | bc)
-echo -e "\tactual_cashed_cheques_amount: $(to_btt $actual_cash_amount) BTT"
-echo -e "\tactual_withdrawn_vault_amount: $(to_btt $actual_with_amount) BTT"
+echo -e "   actual_cashed_cheques_amount: $(to_btt $actual_cash_amount) BTT"
+echo -e "   actual_withdrawn_vault_amount: $(to_btt $actual_with_amount) BTT"
 echo -e ""
 not_cash_all=$(echo "$cash_vault_balance < $es_withdraw" | bc)
 not_with_all=$(echo "$with_vault_balance > 0" | bc)
