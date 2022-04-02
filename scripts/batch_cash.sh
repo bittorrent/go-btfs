@@ -161,7 +161,7 @@ while [ $i -lt ${#list_arr[@]} ]; do
             cash_amount=$(echo "$cash_amount + $balance" | bc)
             echo -e "   need_to_cash: 'Yes'"
         else
-            echo -e "   need_to_cash: 'No, fee is to high'"
+            echo -e "   need_to_cash: 'No, fee is too high'"
         fi
     else
         echo -e "   need_to_cash: 'No, zero balance'"
