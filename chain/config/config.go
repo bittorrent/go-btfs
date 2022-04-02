@@ -28,19 +28,19 @@ var (
 	tronOracleAddress  = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	tronBatchAddress   = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 
-	bttcTestFactoryAddressV1 = common.HexToAddress("0xc4e269975e5277eA16c32023A5A70F96541ED854")
-	// v2 link: https://testnet.bttcscan.com/address/0x0f82a8a3cdb37b2c1bea17719b332df40c1f6b78
-	bttcTestFactoryAddress    = common.HexToAddress("0x0f82A8A3Cdb37B2c1bea17719b332Df40C1f6b78")
-	bttcTestOracleAddress     = common.HexToAddress("0xb2C746a9C81564bEF8382e885AF11e73De4a9E15")
-	bttcTestBatchAddress      = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
-	bttcTestVaultLogicAddress = common.HexToAddress("0x212324b18255593AdE87597Fa37C2c582aD72d24")
+	bttcTestFactoryAddressV1    = common.HexToAddress("0xc4e269975e5277eA16c32023A5A70F96541ED854")
+	bttcTestFactoryAddress      = common.HexToAddress("0x0f82A8A3Cdb37B2c1bea17719b332Df40C1f6b78") // https://testnet.bttcscan.com/address/0x0f82a8a3cdb37b2c1bea17719b332df40c1f6b78
+	bttcTestOracleAddress       = common.HexToAddress("0xb2C746a9C81564bEF8382e885AF11e73De4a9E15")
+	bttcTestBatchAddress        = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
+	bttcTestVaultLogicAddressV1 = common.HexToAddress("0x212324b18255593AdE87597Fa37C2c582aD72d24")
+	bttcTestVaultLogicAddress   = common.HexToAddress("0x8E25a6DD876bE5bcBcAD0576236e73Fed23a4E7E") // https://testnet.bttcscan.com/address/0x8e25a6dd876be5bcbcad0576236e73fed23a4e7e#code
 
-	bttcFactoryAddressV1 = common.HexToAddress("0x9AF4bEc1A30BeC47756Ecef4cf43B91592121bC9")
-	// v2 link: https://bttcscan.com/address/0xc87721691Ee635aD7d27563214c15A54E88b2962#code
-	bttcFactoryAddress    = common.HexToAddress("0xc87721691Ee635aD7d27563214c15A54E88b2962")
-	bttcOracleAddress     = common.HexToAddress("0x0064d80C42b6E2cE3aC92eaD445B3D83C510c7AA")
-	bttcBatchAddress      = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
-	bttcVaultLogicAddress = common.HexToAddress("0x102dbCe01394C4a44Da3a1DF1De418e3fC225077")
+	bttcFactoryAddressV1    = common.HexToAddress("0x9AF4bEc1A30BeC47756Ecef4cf43B91592121bC9")
+	bttcFactoryAddress      = common.HexToAddress("0x763d7858287B9a33F4bE5bb3df0241dACc59BCc7") // https://bttcscan.com/address/0x763d7858287B9a33F4bE5bb3df0241dACc59BCc7
+	bttcOracleAddress       = common.HexToAddress("0x0064d80C42b6E2cE3aC92eaD445B3D83C510c7AA")
+	bttcBatchAddress        = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
+	bttcVaultLogicAddressV1 = common.HexToAddress("0x102dbCe01394C4a44Da3a1DF1De418e3fC225077") // https://bttcscan.com/address/0x102dbce01394c4a44da3a1df1de418e3fc225077
+	bttcVaultLogicAddress   = common.HexToAddress("0x11a91B7270ea000768F7A2C543547e832b5cb031") // https://bttcscan.com/address/0x11a91B7270ea000768F7A2C543547e832b5cb031
 
 	// deploy gas
 	ethDeploymentGas      = "10"
