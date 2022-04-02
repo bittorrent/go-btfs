@@ -241,7 +241,7 @@ func addChainInfo(conf *config.Config) error {
 func addIdentityInfo(conf *config.Config, importKey string) error {
 	conf.Identity.HexPrivKey = importKey
 
-	bttcAddr, err := chain.GetBttcByKey(importKey)
+	bttcAddr, err := chain.GetBttcByKey(conf.Identity.PrivKey)
 	if err != nil {
 		return err
 	}
