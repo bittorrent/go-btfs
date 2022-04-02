@@ -220,8 +220,10 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 			if cs.Last != nil && cs.Last.Result != nil && cs.Last.Result.TotalPayout != nil {
 				totalPaidOut = cs.Last.Result.TotalPayout
 			}
+			if cs.Last != nil && !cs.Last.Reverted {
+				cashResult.Status = "success"
+			}
 			cashResult.Amount = totalPaidOut
-			cashResult.Status = "success"
 			totalReceivedCashed := big.NewInt(0)
 			if err = s.store.Get(statestore.TotalReceivedCashedKey, &totalReceivedCashed); err == nil || err == storage.ErrNotFound {
 				totalReceivedCashed = totalReceivedCashed.Add(totalReceivedCashed, totalPaidOut)
