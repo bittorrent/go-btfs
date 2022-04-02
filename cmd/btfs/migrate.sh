@@ -7,9 +7,9 @@ withdraw_fee=15000000000000000000
 wait_seconds=15
 
 # for test
-cash_fee=27000000000
-withdraw_fee=15000000000
-wait_seconds=4
+#cash_fee=27000000000
+#withdraw_fee=15000000000
+#wait_seconds=4
 
 
 # check curl
