@@ -195,7 +195,7 @@ es_with_gt_0=$(echo "$es_withdraw > 0" | bc)
 if [ $es_with_gt_0 -eq 0 ]; then
     echo ""
     echo ">> Result: "
-    echo -e "   Successe, nothing to do!"
+    echo -e "   Success, nothing to do!"
     IFS=$IFS_old
     exit 0
 fi
