@@ -125,6 +125,7 @@ IFS=$' '
 cash_count=0
 cash_amount=0
 cash_peers=()
+cash_balances=()
 stats_rsp=$(post $cheque_stats_api "total_received_count")
 if [ $? -ne 0 ]; then
     echo -e "   error: $stat_rsp"
@@ -154,14 +155,16 @@ while [ $i -lt ${#list_arr[@]} ]; do
     if [ $balance_gt_0 -eq 1 ]; then
         balance_gt_fee=$(echo "$balance > $cash_fee" | bc)
         if [ $balance_gt_fee -eq 1 ]; then
-            cash_peers[$((cash_count++))]=$peer_id
+            cash_peers[$cash_count]=$peer_id
+            cash_balances[$cash_count]=$balance
+            ((cash_count++))
             cash_amount=$(echo "$cash_amount + $balance" | bc)
-            echo -e "   need_to_cash: 'yes'"
+            echo -e "   need_to_cash: 'Yes'"
         else
-            echo -e "   need_to_cash: 'no: fee is to high'"
+            echo -e "   need_to_cash: 'No, fee is to high'"
         fi
     else
-        echo -e "   need_to_cash: 'no: zero balance'"
+        echo -e "   need_to_cash: 'No, zero balance'"
     fi
 done
 
@@ -191,13 +194,14 @@ echo -e "   total_withdrawal_amount: $(human_btt $es_withdraw) WBTT"
 es_with_gt_0=$(echo "$es_withdraw > 0" | bc)
 if [ $es_with_gt_0 -eq 0 ]; then
     echo ""
-    echo -e ">> Nothing to do, success!"
+    echo ">> Result: "
+    echo -e "   Successe, nothing to do!"
     IFS=$IFS_old
     exit 0
 fi
 echo -e "   --------"
 handle_fee=$(echo "$cash_fee * $cash_count + $withdraw_fee" | bc)
-echo -e "   estimated__handling_fee: $(human_btt $handle_fee) BTT"
+echo -e "   estimated_handling_fee: $(human_btt $handle_fee) BTT"
 echo -e "   current_bttc_balance: $(human_btt $org_bttc_balance) BTT"
 echo ""
 need_btt=$(echo "$handle_fee - $org_bttc_balance" | bc)
@@ -238,6 +242,8 @@ if [ ${#cash_peers[@]} -gt 0 ]; then
             echo -e "   peer_id: ${cash_peers[$i]}, transacation: $cash_rsp"
         else
             echo -e "   peer_id: ${cash_peers[$i]}, error: $cash_rsp"
+            IFS=$IFS_old
+            exit 1
         fi
         ((i++))
     done
@@ -297,18 +303,14 @@ if [ $with_vault_balance_gt_0 -eq 1 ]; then
 fi
 
 # print result
-echo ">> Result"
-actual_cash_amount=$(echo "$cash_vault_balance - $org_vault_balance" | bc)
-actual_with_amount=$(echo "$cash_vault_balance - $with_vault_balance" | bc)
-echo -e "   actual_cashed: $(human_btt $actual_cash_amount) WBTT"
-echo -e "   actual_withdrawn: $(human_btt $actual_with_amount) WBTT"
-echo -e ""
+echo ""
+echo ">> Result: "
 not_cash_all=$(echo "$cash_vault_balance < $es_withdraw" | bc)
 not_with_all=$(echo "$with_vault_balance > 0" | bc)
 if [ $not_cash_all -eq 1 -o $not_with_all -eq 1 ]; then
-    echo ">> Some stages fail, please try again!"
+    echo "   Some transactions are still not completed, you can try again!"
 else
-    echo ">> All stages success, congratulate!"
+    echo "   Success, all tasks completed!"
 fi
 
 IFS=$IFS_old
