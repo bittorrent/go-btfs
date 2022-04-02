@@ -249,9 +249,8 @@ if [ ${#cash_peers[@]} -gt 0 ]; then
         vault_balance_rsp=$(post $vault_balance_api "balance")
         if [ "$?" -eq 0 ]; then
             cash_vault_balance=$vault_balance_rsp
-            echo -e "   current_vault_balance: $(human_btt $cash_vault_balance) BTT, should_be: $(human_btt $es_withdraw) BTT, times: $i"
         else
-            echo -e "   error: $vault_balance_rsp, times: $i"
+            echo -e "   error: $vault_balance_rsp"
         fi
         cash_vault_balance_lt_wth=$(echo "$cash_vault_balance < $es_withdraw" | bc)
         if [ $cash_vault_balance_lt_wth -eq 1 ]; then
@@ -288,7 +287,7 @@ if [ $with_vault_balance_gt_0 -eq 1 ]; then
             with_vault_balance=$vault_balance_rsp
             echo -e "   remain_vault_balance: $(human_btt $with_vault_balance) BTT, should_be: $(human_btt 0) BTT, times: $i"
         else
-            echo -e "   fail: $vault_balance_rsp, times: $i"
+            echo -e "   error: $vault_balance_rsp"
         fi
         with_vault_balance_gt_0=$(echo "$with_vault_balance > 0" | bc)
         if [ $with_vault_balance_gt_0 -eq 1 ]; then
