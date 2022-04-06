@@ -14,7 +14,13 @@ wait_seconds=15
 
 # check curl
 if ! [ -x "$(command -v curl)" ]; then
-    echo "curl is not found"
+    echo "curl is not found, please install it"
+    exit 1
+fi
+
+# check bc
+if ! [ -x "$(command -v bc)" ]; then
+    echo "bc is not found, please install it"
     exit 1
 fi
 
