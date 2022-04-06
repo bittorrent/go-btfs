@@ -18,6 +18,12 @@ if ! [ -x "$(command -v curl)" ]; then
     exit 1
 fi
 
+# check bc
+if ! [ -x "$(command -v bc)" ]; then
+    echo "bc is not found, please install it"
+    exit 1
+fi
+
 # set api host
 echo -n ">> Btfs api host: "
 btfs_api_host="127.0.0.1:5001"
