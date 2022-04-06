@@ -3,10 +3,10 @@ package vault
 import (
 	"context"
 	"fmt"
-	"github.com/bittorrent/go-btfs/guide"
 	"math/big"
 	"time"
 
+	"github.com/bittorrent/go-btfs/guide"
 	"github.com/bittorrent/go-btfs/settlement/swap/erc20"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/transaction/storage"
@@ -53,7 +53,6 @@ func checkBalance(ctx context.Context, swapBackend transaction.Backend, overlayE
 				continue
 			}
 		}
-		guide.SetBalanceStatusOK()
 		return nil
 	}
 }

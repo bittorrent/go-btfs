@@ -19,16 +19,10 @@ const (
 	serverCloseTimeout = 5 * time.Second
 )
 
-const (
-	BalanceStatusNotOk = iota
-	BalanceStatusOK
-)
-
 var (
 	infoVal            *Info
 	serverAddr         string
 	shutdownServerFunc func()
-	balanceStatus      int
 )
 
 type Info struct {
@@ -40,10 +34,6 @@ type Info struct {
 
 func SetInfoVal(val *Info) {
 	infoVal = val
-}
-
-func SetBalanceStatusOK() {
-	balanceStatus = BalanceStatusOK
 }
 
 func SetServerAddr(cfgAddrs []string, optAddr string) {
@@ -79,8 +69,7 @@ func newServer() *http.Server {
 		w.Header().Set("content-type", "text/json")
 		w.WriteHeader(http.StatusOK)
 		resp := map[string]interface{}{
-			"info":           infoVal,
-			"balance_status": balanceStatus,
+			"info": infoVal,
 		}
 		encodeResp, _ := json.Marshal(resp)
 		_, _ = w.Write(encodeResp)
