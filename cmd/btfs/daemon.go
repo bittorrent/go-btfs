@@ -1227,6 +1227,11 @@ func doIfNeedUpgradeFactoryToV2(chainid int64, chainCfg *chainconfig.ChainConfig
 	}
 
 	// backup `statestore` folder
+	err = statestore.Close()
+	if err != nil {
+		return
+	}
+
 	bkSuffix := fmt.Sprintf("backup%d", rand.Intn(100))
 	err = chain.BackUpStateStore(configRoot, bkSuffix)
 	if err != nil {
