@@ -15,12 +15,14 @@ wait_seconds=15
 # check curl
 if ! [ -x "$(command -v curl)" ]; then
     echo "curl is not found"
+    echo "You can install this command through the corresponding package management tool on your system, such as 'yum install -y curl' on centos or 'apt install curl' on ubuntu"
     exit 1
 fi
 
 # check bc
 if ! [ -x "$(command -v bc)" ]; then
-    echo "bc is not found, please install it"
+    echo "bc is not found"
+    echo "You can install this command through the corresponding package management tool on your system, such as 'yum install -y bc' on centos or 'apt install bc' on ubuntu"
     exit 1
 fi
 
