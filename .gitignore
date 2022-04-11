@@ -48,3 +48,4 @@ cmd/btfs/update-darwin-amd64
 cmd/.DS_Store
 cmd/btfs/s
 cmd/btfs/btfs
+.DS_Store
