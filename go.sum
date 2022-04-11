@@ -89,8 +89,8 @@ github.com/TRON-US/go-btfs-api v0.3.0/go.mod h1:surmr8ztnpbVY7y2H7dbb7npNXfdaV0U
 github.com/TRON-US/go-btfs-chunker v0.3.0 h1:06/rAYKtC3BQRYVxMtEKvqFFHhSB+XKcqt3JZ0CjD4o=
 github.com/TRON-US/go-btfs-chunker v0.3.0/go.mod h1:m0xvt42kqLskWsLF6SQ51AA9cqPzWoweydOcDgSDX/U=
 github.com/TRON-US/go-btfs-config v0.6.0/go.mod h1:82nKCMRhsgY0I8DCasIUpSr6ZP9iHLsZJSMUxytMpEw=
-github.com/TRON-US/go-btfs-config v0.11.7 h1:gSawOqhU7ao0fz60recY8d/hy3qZacRQ9BQLLIT5bzQ=
-github.com/TRON-US/go-btfs-config v0.11.7/go.mod h1:9y6osJENDCjulSNJjSSt1J8OK+ADRatBdYPXRDewbko=
+github.com/TRON-US/go-btfs-config v0.11.8 h1:eSuNp488lBv+dip35KKBHWDRO3Wnrwn7h7M/0e+r4ZE=
+github.com/TRON-US/go-btfs-config v0.11.8/go.mod h1:9y6osJENDCjulSNJjSSt1J8OK+ADRatBdYPXRDewbko=
 github.com/TRON-US/go-btfs-files v0.1.1/go.mod h1:tD2vOKLcLCDNMn9rrA27n2VbNpHdKewGzEguIFY+EJ0=
 github.com/TRON-US/go-btfs-files v0.2.0 h1:JZ+F0gX8iPmUf1OlrdOdsA8GMGxCHhwQ03jEWWEgVLE=
 github.com/TRON-US/go-btfs-files v0.2.0/go.mod h1:Qx+rTOIC0xl3ZkosGcEoB4hqExZmTONErPys8K5suEc=
@@ -738,6 +738,8 @@ github.com/jackpal/go-nat-pmp v1.0.2 h1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7Bd
 github.com/jackpal/go-nat-pmp v1.0.2/go.mod h1:QPH045xvCAeXUZOxsnwmrtiCoxIr9eob+4orBN1SBKc=
 github.com/jbenet/go-cienv v0.1.0 h1:Vc/s0QbQtoxX8MwwSLWWh+xNNZvM3Lw7NsTcHrvvhMc=
 github.com/jbenet/go-cienv v0.1.0/go.mod h1:TqNnHUmJgXau0nCzC7kXWeotg3J9W34CUv5Djy1+FlA=
+github.com/jbenet/go-fuse-version v0.0.0-20160322195114-6d4c97bcf253 h1:+AUuGGAh/2X3wcomiZvjeTcx5OvGXsfdnIqk3KPM+HE=
+github.com/jbenet/go-fuse-version v0.0.0-20160322195114-6d4c97bcf253/go.mod h1:gWtF+3u3zVe5/+I44niTEcU/KmVo2oMyLh0WhxpBT28=
 github.com/jbenet/go-is-domain v1.0.5 h1:r92uiHbMEJo9Fkey5pMBtZAzjPQWic0ieo7Jw1jEuQQ=
 github.com/jbenet/go-is-domain v1.0.5/go.mod h1:xbRLRb0S7FgzDBTJlguhDVwLYM/5yNtvktxj2Ttfy7Q=
 github.com/jbenet/go-random v0.0.0-20190219211222-123a90aedc0c h1:uUx61FiAa1GI6ZmVd2wf2vULeQZIKG66eybjNXKYCz4=
