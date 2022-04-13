@@ -30,18 +30,16 @@ withdraw and query balance of token used in BTFS.`,
 	},
 
 	Subcommands: map[string]*cmds.Command{
-		"init":              walletInitCmd,
-		"deposit":           walletDepositCmd,
-		"withdraw":          walletWithdrawCmd,
-		"balance":           walletBalanceCmd,
-		"password":          walletPasswordCmd,
-		"keys":              walletKeysCmd,
-		"transactions":      walletTransactionsCmd,
-		"import":            walletImportCmd,
-		"transfer":          walletTransferCmd,
-		"discovery":         walletDiscoveryCmd,
-		"validate_password": walletCheckPasswordCmd,
-		"generate_key":      walletGenerateKeyCmd,
+		"init":         walletInitCmd,
+		"deposit":      walletDepositCmd,
+		"withdraw":     walletWithdrawCmd,
+		"balance":      walletBalanceCmd,
+		"keys":         walletKeysCmd,
+		"transactions": walletTransactionsCmd,
+		"import":       walletImportCmd,
+		"transfer":     walletTransferCmd,
+		"discovery":    walletDiscoveryCmd,
+		"generate_key": walletGenerateKeyCmd,
 	},
 }
 
@@ -85,7 +83,6 @@ var walletInitCmd = &cmds.Command{
 		go path.DoRestart(false)
 		return nil
 	},
-	// NoRemote: true,
 }
 
 var walletGenerateKeyCmd = &cmds.Command{
@@ -117,7 +114,6 @@ var walletGenerateKeyCmd = &cmds.Command{
 		})
 	},
 	Type: Keys{},
-	// NoRemote: true,
 }
 
 const (
@@ -137,7 +133,6 @@ var walletDepositCmd = &cmds.Command{
 	},
 	Options: []cmds.Option{
 		cmds.BoolOption(asyncOptionName, "a", "Deposit asynchronously."),
-		cmds.StringOption(passwordOptionName, "p", "password"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		n, err := cmdenv.GetNode(env)
@@ -146,16 +141,6 @@ var walletDepositCmd = &cmds.Command{
 		}
 		cfg, err := n.Repo.Config()
 		if err != nil {
-			return err
-		}
-		if err := checkWhetherPasswordSet(cfg); err != nil {
-			return err
-		}
-		password, err := getPassword(req)
-		if err != nil {
-			return err
-		}
-		if err := validatePassword(cfg, password); err != nil {
 			return err
 		}
 		async, _ := req.Options[asyncOptionName].(bool)
@@ -194,7 +179,6 @@ var walletDepositCmd = &cmds.Command{
 		}),
 	},
 	Type: MessageOutput{},
-	// NoRemote: true,
 }
 
 var walletWithdrawCmd = &cmds.Command{
@@ -207,9 +191,6 @@ var walletWithdrawCmd = &cmds.Command{
 	Arguments: []cmds.Argument{
 		cmds.StringArg("amount", true, false, "amount to deposit."),
 	},
-	Options: []cmds.Option{
-		cmds.StringOption(passwordOptionName, "p", "password"),
-	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
@@ -220,13 +201,6 @@ var walletWithdrawCmd = &cmds.Command{
 			return err
 		}
 		if err := checkWhetherPasswordSet(cfg); err != nil {
-			return err
-		}
-		password, err := getPassword(req)
-		if err != nil {
-			return err
-		}
-		if err := validatePassword(cfg, password); err != nil {
 			return err
 		}
 		amount, err := strconv.ParseInt(req.Arguments[0], 10, 64)
@@ -252,7 +226,6 @@ var walletWithdrawCmd = &cmds.Command{
 		}),
 	},
 	Type: MessageOutput{},
-	// NoRemote: true,
 }
 
 var walletBalanceCmd = &cmds.Command{
@@ -288,95 +261,11 @@ var walletBalanceCmd = &cmds.Command{
 		})
 	},
 	Type: BalanceResponse{},
-	// NoRemote: true,
 }
 
 type BalanceResponse struct {
 	BtfsWalletBalance uint64
 	BttWalletBalance  uint64
-}
-
-var walletPasswordCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
-		Tagline:          "BTFS wallet password",
-		ShortDescription: "set password for BTFS wallet",
-	},
-	Arguments: []cmds.Argument{
-		cmds.StringArg("password", true, false, "new password of BTFS wallet."),
-	},
-	Options: []cmds.Option{
-		cmds.StringOption(passwordOptionName, "p", "old password").WithDefault(""),
-	},
-	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		n, err := cmdenv.GetNode(env)
-		if err != nil {
-			return err
-		}
-		cfg, err := n.Repo.Config()
-		if err != nil {
-			return err
-		}
-		if err := checkWhetherPasswordSet(cfg); err == nil {
-			pw, err := getPassword(req)
-			if err != nil {
-				return err
-			}
-			if err := validatePassword(cfg, pw); err != nil {
-				return err
-			}
-		}
-		cipherMnemonic, err := wallet.EncryptWithAES(req.Arguments[0], cfg.Identity.Mnemonic)
-		if err != nil {
-			return err
-		}
-		cipherPrivKey, err := wallet.EncryptWithAES(req.Arguments[0], cfg.Identity.PrivKey)
-		if err != nil {
-			return err
-		}
-		cfg.Identity.EncryptedMnemonic = cipherMnemonic
-		cfg.Identity.EncryptedPrivKey = cipherPrivKey
-		err = n.Repo.SetConfig(cfg)
-		if err != nil {
-			return err
-		}
-		return cmds.EmitOnce(res, &MessageOutput{"Password set."})
-	},
-	Type: MessageOutput{},
-	// NoRemote: true,
-}
-
-var walletCheckPasswordCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
-		Tagline:          "check password",
-		ShortDescription: "check password",
-	},
-	Arguments: []cmds.Argument{},
-	Options: []cmds.Option{
-		cmds.StringOption(passwordOptionName, "p", "password"),
-	},
-	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		n, err := cmdenv.GetNode(env)
-		if err != nil {
-			return err
-		}
-		cfg, err := n.Repo.Config()
-		if err != nil {
-			return err
-		}
-		if err := checkWhetherPasswordSet(cfg); err != nil {
-			return err
-		}
-		password, err := getPassword(req)
-		if err != nil {
-			return err
-		}
-		if err := validatePassword(cfg, password); err != nil {
-			return err
-		}
-		return cmds.EmitOnce(res, &MessageOutput{"Password is correct."})
-	},
-	Type: MessageOutput{},
-	// NoRemote: true,
 }
 
 var walletKeysCmd = &cmds.Command{
@@ -410,7 +299,6 @@ var walletKeysCmd = &cmds.Command{
 		return cmds.EmitOnce(res, keys)
 	},
 	Type: Keys{},
-	// NoRemote: true,
 }
 
 type Keys struct {
@@ -492,7 +380,6 @@ var walletTransferCmd = &cmds.Command{
 		})
 	},
 	Type: &TransferResult{},
-	// NoRemote: true,
 }
 
 func checkWhetherPasswordSet(cfg *config.Config) error {
@@ -554,7 +441,6 @@ var walletImportCmd = &cmds.Command{
 		go path.DoRestart(false)
 		return nil
 	},
-	// NoRemote: true,
 }
 
 func doSetKeys(n *core.IpfsNode, privKey string, mnemonic string) error {
@@ -567,9 +453,6 @@ var walletDiscoveryCmd = &cmds.Command{
 		ShortDescription: "Speed wallet discovery",
 	},
 	Arguments: []cmds.Argument{},
-	Options: []cmds.Option{
-		cmds.StringOption(passwordOptionName, "p", "password"),
-	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
@@ -588,7 +471,6 @@ var walletDiscoveryCmd = &cmds.Command{
 		}
 		return cmds.EmitOnce(res, DiscoveryResult{Key: key})
 	},
-	// NoRemote: true,
 }
 
 type DiscoveryResult struct {
