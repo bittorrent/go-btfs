@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	config "github.com/TRON-US/go-btfs-config"
 	"github.com/bittorrent/go-btfs/cmd/btfs/util"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
@@ -14,35 +15,11 @@ import (
 	"github.com/bittorrent/go-btfs/core/wallet"
 	walletpb "github.com/bittorrent/go-btfs/protos/wallet"
 
-	"github.com/TRON-US/go-btfs-config"
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	"github.com/bittorrent/go-btfs-cmds/http"
 	"github.com/tron-us/go-btfs-common/crypto"
 
 	"github.com/libp2p/go-libp2p-core/peer"
 )
-
-const (
-	Domain = "wallet"
-)
-
-func init() {
-	http.AddDomainWhiteList(Domain)
-	for _, c := range []*cmds.Command{
-		walletInitCmd,
-		walletDepositCmd,
-		walletWithdrawCmd,
-		walletPasswordCmd,
-		walletKeysCmd,
-		walletImportCmd,
-		walletTransferCmd,
-		walletBalanceCmd,
-		walletDiscoveryCmd,
-		walletGenerateKeyCmd,
-	} {
-		c.Extra = c.Extra.SetValue(http.DomainKey, Domain)
-	}
-}
 
 var WalletCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
@@ -108,7 +85,7 @@ var walletInitCmd = &cmds.Command{
 		go path.DoRestart(false)
 		return nil
 	},
-	NoRemote: true,
+	// NoRemote: true,
 }
 
 var walletGenerateKeyCmd = &cmds.Command{
@@ -139,8 +116,8 @@ var walletGenerateKeyCmd = &cmds.Command{
 			SkInHex:    ks.HexPrivateKey,
 		})
 	},
-	Type:     Keys{},
-	NoRemote: true,
+	Type: Keys{},
+	// NoRemote: true,
 }
 
 const (
@@ -216,8 +193,8 @@ var walletDepositCmd = &cmds.Command{
 			return nil
 		}),
 	},
-	Type:     MessageOutput{},
-	NoRemote: true,
+	Type: MessageOutput{},
+	// NoRemote: true,
 }
 
 var walletWithdrawCmd = &cmds.Command{
@@ -274,8 +251,8 @@ var walletWithdrawCmd = &cmds.Command{
 			return nil
 		}),
 	},
-	Type:     MessageOutput{},
-	NoRemote: true,
+	Type: MessageOutput{},
+	// NoRemote: true,
 }
 
 var walletBalanceCmd = &cmds.Command{
@@ -310,8 +287,8 @@ var walletBalanceCmd = &cmds.Command{
 			BttWalletBalance:  uint64(tronBalance),
 		})
 	},
-	Type:     BalanceResponse{},
-	NoRemote: true,
+	Type: BalanceResponse{},
+	// NoRemote: true,
 }
 
 type BalanceResponse struct {
@@ -364,8 +341,8 @@ var walletPasswordCmd = &cmds.Command{
 		}
 		return cmds.EmitOnce(res, &MessageOutput{"Password set."})
 	},
-	Type:     MessageOutput{},
-	NoRemote: true,
+	Type: MessageOutput{},
+	// NoRemote: true,
 }
 
 var walletCheckPasswordCmd = &cmds.Command{
@@ -398,8 +375,8 @@ var walletCheckPasswordCmd = &cmds.Command{
 		}
 		return cmds.EmitOnce(res, &MessageOutput{"Password is correct."})
 	},
-	Type:     MessageOutput{},
-	NoRemote: true,
+	Type: MessageOutput{},
+	// NoRemote: true,
 }
 
 var walletKeysCmd = &cmds.Command{
@@ -432,8 +409,8 @@ var walletKeysCmd = &cmds.Command{
 		}
 		return cmds.EmitOnce(res, keys)
 	},
-	Type:     Keys{},
-	NoRemote: true,
+	Type: Keys{},
+	// NoRemote: true,
 }
 
 type Keys struct {
@@ -514,8 +491,8 @@ var walletTransferCmd = &cmds.Command{
 			Message: msg,
 		})
 	},
-	Type:     &TransferResult{},
-	NoRemote: true,
+	Type: &TransferResult{},
+	// NoRemote: true,
 }
 
 func checkWhetherPasswordSet(cfg *config.Config) error {
@@ -577,7 +554,7 @@ var walletImportCmd = &cmds.Command{
 		go path.DoRestart(false)
 		return nil
 	},
-	NoRemote: true,
+	// NoRemote: true,
 }
 
 func doSetKeys(n *core.IpfsNode, privKey string, mnemonic string) error {
@@ -611,7 +588,7 @@ var walletDiscoveryCmd = &cmds.Command{
 		}
 		return cmds.EmitOnce(res, DiscoveryResult{Key: key})
 	},
-	NoRemote: true,
+	// NoRemote: true,
 }
 
 type DiscoveryResult struct {
