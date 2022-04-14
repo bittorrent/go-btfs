@@ -200,9 +200,6 @@ var walletWithdrawCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
-		if err := checkWhetherPasswordSet(cfg); err != nil {
-			return err
-		}
 		amount, err := strconv.ParseInt(req.Arguments[0], 10, 64)
 		if err != nil {
 			return err
