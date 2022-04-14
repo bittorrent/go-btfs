@@ -312,6 +312,17 @@ func TestCommands(t *testing.T) {
 		"/bttc/wbtt2btt",
 		"/bttc/send-btt-to",
 		"/bttc/send-wbtt-to",
+		"/wallet/discovery",
+		"/wallet/balance",
+		"/wallet/init",
+		"/wallet",
+		"/wallet/transfer",
+		"/wallet/import",
+		"/wallet/generate_key",
+		"/wallet/deposit",
+		"/wallet/transactions",
+		"/wallet/keys",
+		"/wallet/withdraw",
 	}
 
 	cmdSet := make(map[string]struct{})
