@@ -99,7 +99,7 @@ func StartServer() {
 	shutdownServerFunc = func() {
 		select {
 		case <-done:
-			return // if the server has been closed, just return
+			return // if the server has been closed, just return.
 		default:
 			ctx, cancel := context.WithTimeout(context.Background(), serverCloseTimeout)
 			defer cancel()
