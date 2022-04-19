@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	config "github.com/TRON-US/go-btfs-config"
 	"github.com/bittorrent/go-btfs/cmd/btfs/util"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
@@ -124,7 +123,7 @@ const (
 var walletDepositCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline:          "BTFS wallet deposit",
-		ShortDescription: "BTFS wallet deposit from block chain to ledger. Use '-p=<password>' to specific password.",
+		ShortDescription: "BTFS wallet deposit from block chain to ledger.",
 		Options:          "unit is µBTT (=0.000001BTT)",
 	},
 
@@ -184,7 +183,7 @@ var walletDepositCmd = &cmds.Command{
 var walletWithdrawCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline:          "BTFS wallet withdraw",
-		ShortDescription: "BTFS wallet withdraw from ledger to block chain. Use '-p=<password>' to specific password.",
+		ShortDescription: "BTFS wallet withdraw from ledger to block chain.",
 		Options:          "unit is µBTT (=0.000001BTT)",
 	},
 
@@ -329,15 +328,12 @@ var walletTransactionsCmd = &cmds.Command{
 var walletTransferCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline:          "Send to another BTT wallet.",
-		ShortDescription: "Send to another BTT wallet from current BTT wallet. Use '-p=<password>' to specific password.",
+		ShortDescription: "Send to another BTT wallet from current BTT wallet.",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("to", true, false, "address of another BTFS wallet to transfer to"),
 		cmds.StringArg("amount", true, false, "amount of µBTT (=0.000001BTT) to transfer"),
 		cmds.StringArg("memo", false, false, "attached memo"),
-	},
-	Options: []cmds.Option{
-		cmds.StringOption(passwordOptionName, "p", "password"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		n, err := cmdenv.GetNode(env)
@@ -346,16 +342,6 @@ var walletTransferCmd = &cmds.Command{
 		}
 		cfg, err := n.Repo.Config()
 		if err != nil {
-			return err
-		}
-		if err := checkWhetherPasswordSet(cfg); err != nil {
-			return err
-		}
-		password, err := getPassword(req)
-		if err != nil {
-			return err
-		}
-		if err := validatePassword(cfg, password); err != nil {
 			return err
 		}
 		amount, err := strconv.ParseInt(req.Arguments[1], 10, 64)
@@ -377,30 +363,6 @@ var walletTransferCmd = &cmds.Command{
 		})
 	},
 	Type: &TransferResult{},
-}
-
-func checkWhetherPasswordSet(cfg *config.Config) error {
-	if cfg.Identity.EncryptedPrivKey == "" {
-		return errors.New(`Password required, but none set.
-Read 'btfs wallet password --help' and assign a password.`)
-	}
-	return nil
-}
-
-func getPassword(req *cmds.Request) (string, error) {
-	password, _ := req.Options[passwordOptionName].(string)
-	if password == "" {
-		return "", errors.New("Password required, please use '-p <password>' to specify the password.")
-	}
-	return password, nil
-}
-
-func validatePassword(cfg *config.Config, password string) error {
-	privK, err := wallet.DecryptWithAES(password, cfg.Identity.EncryptedPrivKey)
-	if err != nil || cfg.Identity.PrivKey != privK {
-		return errors.New("incorrect password")
-	}
-	return nil
 }
 
 type TransferResult struct {
