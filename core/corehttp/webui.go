@@ -15,3 +15,6 @@ var WebUIPaths = []string{
 var HostUIOption = RedirectOption("hostui", WebUIPath)
 var WebUIOption = RedirectOption("webui", WebUIPath)
 var DashboardOption = RedirectOption("dashboard", WebUIPath)
+
+// Allows redirects on root directory (i.e. no option given, for example http://localhost:5001)
+var RootToDashboardOption = RedirectOption("", WebUIPath)
