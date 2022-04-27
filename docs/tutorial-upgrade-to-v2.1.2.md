@@ -12,6 +12,8 @@ We provide a bash script to facilitate these burdensome operations, and you can 
 
 Note that the script will skip cashing cheques whose cashable amount is less than estimated gas fee.
 
+
+
 ```shell
 # When API endpoint is 127.0.0.1:5001, which is the default one
 $ curl -s https://raw.githubusercontent.com/bittorrent/go-btfs/master/scripts/batch_cash.sh | bash -s 127.0.0.1:5001
@@ -19,6 +21,26 @@ $ curl -s https://raw.githubusercontent.com/bittorrent/go-btfs/master/scripts/ba
 # or, if your API endpoint differs, please specify it
 $ curl -s https://raw.githubusercontent.com/bittorrent/go-btfs/master/scripts/batch_cash.sh | bash -s <your-api-host>
 ```
+
+Before running this script, please confirm that 'curl' and 'bc' tools are installed on your system. 
+If not, you can install them through the system's corresponding package management tools, for example:
+
+```shell
+# on centos
+$ sudo yum install -y curl
+$ sudo yum install -y bc
+
+# on ubuntu
+$ sudo apt install curl
+$ sudo apt install bc
+
+# on macos
+$ brew install curl
+$ brew install bc
+```
+
+If your system is windows, you may need to install 'git-bash' and the corresponding 'bc' tool to run this script. 
+If you have difficulty installing these tools, you can cash cheques and withdraw balance manually via commands or dashboard, just a little more tedious.
 
 The scripts will prompts "Success, all tasks completed!" if everything gose well.
 You can run the script again if it failed due to occasional reasons, weak network for example.

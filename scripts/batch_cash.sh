@@ -15,6 +15,14 @@ wait_seconds=15
 # check curl
 if ! [ -x "$(command -v curl)" ]; then
     echo "curl is not found"
+    echo "for details, please refer to this document: https://github.com/bittorrent/go-btfs/blob/master/docs/tutorial-upgrade-to-v2.1.2.md"
+    exit 1
+fi
+
+# check bc
+if ! [ -x "$(command -v bc)" ]; then
+    echo "bc is not found"
+    echo "for details, please refer to this document: https://github.com/bittorrent/go-btfs/blob/master/docs/tutorial-upgrade-to-v2.1.2.md"
     exit 1
 fi
 
