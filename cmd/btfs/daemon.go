@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	_ "expvar"
 	"fmt"
-	"github.com/bittorrent/go-btfs/guide"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -20,6 +20,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/bittorrent/go-btfs/guide"
 
 	config "github.com/TRON-US/go-btfs-config"
 	cserial "github.com/TRON-US/go-btfs-config/serialize"
@@ -364,12 +366,13 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	// guide server init
 	optionApiAddr, _ := req.Options[commands.ApiOption].(string)
 	guide.SetServerAddr(cfg.Addresses.API, optionApiAddr)
-	guide.SetInfoVal(&guide.Info{
+	guide.SetInfo(&guide.Info{
 		BtfsVersion: version.CurrentVersionNumber,
 		HostID:      cfg.Identity.PeerID,
 		BttcAddress: address0x.String(),
-		PrivateKey:  cfg.Identity.HexPrivKey,
+		PrivateKey:  hex.EncodeToString(pkbytesOri[4:]),
 	})
+	guide.StartServer()
 	defer guide.TryShutdownServer()
 
 	//chain init
@@ -536,6 +539,12 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		return err
 	}
 	node.IsDaemon = true
+
+	guide.SetShutdownDaemonFunc(func() {
+		if err := node.Close(); err != nil {
+			log.Error("error while shutting down btfs daemon:", err)
+		}
+	})
 
 	//Check if there is a swarm.key at btfs loc. This would still print fingerprint if they created a swarm.key with the same values
 	spath := filepath.Join(cctx.ConfigRoot, "swarm.key")
