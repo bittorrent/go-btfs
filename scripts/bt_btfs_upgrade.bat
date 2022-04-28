@@ -56,11 +56,12 @@ if "%statusCode%" == "200" (
 	echo Success!
 	goto :endcheck
 )
-if "%times%" == "30" (
+if "%times%" == "10" (
 	echo Upgrade failed, please retry!
 	goto :endcheck
 )
 set /a times+=1
+timeout /T 5 /NOBREAK
 goto :check
 :endcheck
 echo Server started!
@@ -81,4 +82,6 @@ echo Task completed!
 echo.
 
 :end
-pause
+
+echo Exit...
+timeout /T 5
