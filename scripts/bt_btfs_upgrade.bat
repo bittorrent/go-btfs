@@ -29,7 +29,7 @@ echo.
 echo Backup old btfs...
 set btfsroot=%btroot%btfs\
 set nowtime=%time:~0,2%%time:~3,2%%time:~6,2%%time:~9,2%
-set bakdir=%btroot%btfs_bak_%nowtime%
+set bakdir=btfs_bak_%nowtime%
 echo Backupt to %bakdir%
 ren %btfsroot% %bakdir%
 md %btfsroot%
@@ -51,8 +51,11 @@ set /a times=1
 for /f %%a in ('powershell -command "& {try { $response = Invoke-WebRequest http://127.0.0.1:5001/hostui/#/;$Response.StatusCode} catch {$_.Exception.Response.StatusCode.Value__}}"') do (
 set statusCode=%%a
 )
-echo %times%-%statusCode%
-if "%statusCode%" == "200" goto :endcheck
+echo Check times: %times%
+if "%statusCode%" == "200" (
+	echo Success!
+	goto :endcheck
+)
 if "%times%" == "30" (
 	echo Upgrade failed, please retry!
 	goto :endcheck
