@@ -28,8 +28,10 @@ taskkill /f /im BTFS.exe
 echo.
 echo Backup old btfs...
 set btfsroot=%btroot%btfs\
-set hms=%time:~0,2%%time:~3,2%%time:~6,2%%time:~9,2%
-ren %btfsroot% btfs_bak_%hms%
+set nowtime=%time:~0,2%%time:~3,2%%time:~6,2%%time:~9,2%
+set bakdir=%btroot%btfs_bak_%nowtime%
+echo Backupt to %bakdir%
+ren %btfsroot% %bakdir%
 md %btfsroot%
 echo tmp > %btfsroot%btfs.exe
 
@@ -41,15 +43,30 @@ echo wshell.run"%btpath%",0,false
 .\startbt.vbs
 del /f /q .\startbt.vbs 2>nul
 
-echo.
-echo Waiting for btfs upgrading...
-timeout /T 19 /NOBREAK
 
 echo.
-echo Start http://127.0.0.1:5001/hostui/#/...
+echo Waiting for btfs upgrading...
+set /a times=1
+:check
+for /f %%a in ('powershell -command "& {try { $response = Invoke-WebRequest http://127.0.0.1:5001/hostui/#/;$Response.StatusCode} catch {$_.Exception.Response.StatusCode.Value__}}"') do (
+set statusCode=%%a
+)
+echo %times%-%statusCode%
+if "%statusCode%" == "200" goto :endcheck
+if "%times%" == "30" (
+	echo Upgrade failed, please retry!
+	goto :endcheck
+)
+set /a times+=1
+goto :check
+:endcheck
+echo Server started!
+
+echo.
+echo Start host ui page...
 start http://127.0.0.1:5001/hostui/#/
 (echo set wshell=createobject^("wscript.shell"^)
-echo wscript.Sleep 2000
+echo wscript.Sleep 1000
 echo wshell.sendkeys "%^R"
 echo wshell.SendKeys "%^{F5}"
 )>".\refresh.vbs"
