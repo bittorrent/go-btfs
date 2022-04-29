@@ -227,7 +227,7 @@ Headers.
 	Subcommands: map[string]*cmds.Command{},
 	NoRemote:    true,
 	Extra:       commands.CreateCmdExtras(commands.SetDoesNotUseConfigAsInput(true)),
-	Run:         daemonFunc,
+	Run:         wrapDaemonFunc,
 }
 
 // defaultMux tells mux to serve path using the default muxer. This is
@@ -239,6 +239,12 @@ func defaultMux(path string) corehttp.ServeOption {
 		mux.Handle(path, http.DefaultServeMux)
 		return mux, nil
 	}
+}
+
+func wrapDaemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) (_err error) {
+	_err = daemonFunc(req, re, env)
+	commands.NotifyAndWaitIfOnRestarting()
+	return
 }
 
 func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) (_err error) {
@@ -382,6 +388,9 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		fmt.Println("init statestore err: ", err)
 		return err
 	}
+	defer func() {
+		statestore.Close()
+	}()
 
 	chainid, stored, err := getChainID(req, cfg, statestore)
 	if err != nil {
