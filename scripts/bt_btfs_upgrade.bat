@@ -29,8 +29,8 @@ echo.
 echo Backup old btfs...
 set btfsroot=%btroot%btfs\
 set nowtime=%time:~0,2%%time:~3,2%%time:~6,2%%time:~9,2%
-set bakdir=btfs_bak_%nowtime%
-echo Backupt to %bakdir%
+set bakdir="btfs_bak_%nowtime%"
+echo Backup to %bakdir%
 ren %btfsroot% %bakdir%
 md %btfsroot%
 echo tmp > %btfsroot%btfs.exe
