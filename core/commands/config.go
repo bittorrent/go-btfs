@@ -63,10 +63,10 @@ Set the value of the 'Datastore.Path' key:
 `,
 	},
 	Subcommands: map[string]*cmds.Command{
-		"show":    configShowCmd,
-		"edit":    configEditCmd,
-		"replace": configReplaceCmd,
-		//"profile": configProfileCmd,
+		"show":                configShowCmd,
+		"edit":                configEditCmd,
+		"replace":             configReplaceCmd,
+		"profile":             configProfileCmd,
 		"storage-host-enable": storageHostEnableCmd,
 		"sync-chain-info":     SyncChainInfoCmd,
 		"optin":               optInCmd,
@@ -315,6 +315,14 @@ var storageHostEnableCmd = &cmds.Command{
 	Arguments: []cmds.Argument{
 		cmds.StringArg("enable", true, false, "host is or not."),
 	},
+	PreRun: func(req *cmds.Request, env cmds.Environment) error {
+		if req.Arguments[0] == "storage-host" {
+			req.Arguments[0] = "true"
+		} else if req.Arguments[0] == "storage-client" {
+			req.Arguments[0] = "false"
+		}
+		return nil
+	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		enable, err := strconv.ParseBool(req.Arguments[0])
 		if err != nil {
@@ -392,7 +400,7 @@ Available profiles:
 	},
 
 	Subcommands: map[string]*cmds.Command{
-		"apply": configProfileApplyCmd,
+		"apply": storageHostEnableCmd,
 	},
 }
 
