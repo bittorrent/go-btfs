@@ -14,7 +14,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/bittorrent/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 
 	"github.com/dustin/go-humanize"
 	logging "github.com/ipfs/go-log"
@@ -409,7 +409,10 @@ func move(src string, dst string) error {
 	if err := copyDir(src, dst); err != nil {
 		return err
 	}
-	return os.RemoveAll(src)
+	if err := os.RemoveAll(src); err != nil {
+		fmt.Println("remove old path failed: %w", err)
+	}
+	return nil
 }
 
 func copyDir(src string, dst string) error {
