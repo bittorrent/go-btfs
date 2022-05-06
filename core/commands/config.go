@@ -400,7 +400,7 @@ Available profiles:
 	},
 
 	Subcommands: map[string]*cmds.Command{
-		"apply": storageHostEnableCmd,
+		"apply": configProfileApplyCmd,
 	},
 }
 
