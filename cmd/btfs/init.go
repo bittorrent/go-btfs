@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -100,10 +99,6 @@ environment variable:
 		return nil
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		options := fmt.Sprintf("%+v", req.Options)
-		arguments := fmt.Sprintf("%+v", req.Arguments)
-		all := options + "\n" + arguments
-		ioutil.WriteFile("./init.log.txt", []byte(all), 0666)
 		cctx := env.(*oldcmds.Context)
 		empty, _ := req.Options[emptyRepoOptionName].(bool)
 		nBitsForKeypair, _ := req.Options[bitsOptionName].(int)
@@ -218,6 +213,8 @@ func storeChainId(conf *config.Config, repoRoot string) error {
 		fmt.Println("init statestore err: ", err)
 		return err
 	}
+
+	defer statestore.Close()
 
 	err = chain.StoreChainIdToDisk(conf.ChainInfo.ChainId, statestore)
 	if err != nil {

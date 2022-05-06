@@ -242,10 +242,6 @@ func defaultMux(path string) corehttp.ServeOption {
 }
 
 func wrapDaemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) (_err error) {
-	options := fmt.Sprintf("%+v", req.Options)
-	arguments := fmt.Sprintf("%+v", req.Arguments)
-	all := options + "\n" + arguments
-	ioutil.WriteFile("./daemon.log.txt", []byte(all), 0666)
 	_err = daemonFunc(req, re, env)
 	commands.NotifyAndWaitIfOnRestarting()
 	return
