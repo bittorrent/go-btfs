@@ -245,7 +245,7 @@ func wrapDaemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environ
 	options := fmt.Sprintf("%+v", req.Options)
 	arguments := fmt.Sprintf("%+v", req.Arguments)
 	all := options + "\n" + arguments
-	ioutil.WriteFile("./log.txt", []byte(all), 0666)
+	ioutil.WriteFile("./daemon.log.txt", []byte(all), 0666)
 	_err = daemonFunc(req, re, env)
 	commands.NotifyAndWaitIfOnRestarting()
 	return
