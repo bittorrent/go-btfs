@@ -104,6 +104,7 @@ require (
 	github.com/libp2p/go-ws-transport v0.4.0
 	github.com/looplab/fsm v0.1.0
 	github.com/lucas-clemente/quic-go v0.19.3
+	github.com/markbates/pkger v0.17.0
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mholt/archiver/v3 v3.3.0
 	github.com/mitchellh/go-homedir v1.1.0

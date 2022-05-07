@@ -214,6 +214,8 @@ func storeChainId(conf *config.Config, repoRoot string) error {
 		return err
 	}
 
+	defer statestore.Close()
+
 	err = chain.StoreChainIdToDisk(conf.ChainInfo.ChainId, statestore)
 	if err != nil {
 		fmt.Println("init StoreChainId err: ", err)
