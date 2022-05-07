@@ -553,12 +553,6 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	}
 	node.IsDaemon = true
 
-	guide.SetShutdownDaemonFunc(func() {
-		if err := node.Close(); err != nil {
-			log.Error("error while shutting down btfs daemon:", err)
-		}
-	})
-
 	//Check if there is a swarm.key at btfs loc. This would still print fingerprint if they created a swarm.key with the same values
 	spath := filepath.Join(cctx.ConfigRoot, "swarm.key")
 	if node.PNetFingerprint != nil && util.FileExists(spath) {

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/markbates/pkger"
@@ -24,12 +23,7 @@ var (
 	info               *Info
 	serverAddr         string
 	shutdownServerFunc func()
-	shutdownDaemonFunc func()
 )
-
-func SetShutdownDaemonFunc(shutdownFunc func()) {
-	shutdownDaemonFunc = shutdownFunc
-}
 
 type Info struct {
 	BtfsVersion string `json:"btfs_version"`
@@ -81,19 +75,9 @@ func newServer() *http.Server {
 		_, _ = w.Write(encodeResp)
 	})
 
-	// shutdown
-	shutdown := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if shutdownDaemonFunc != nil {
-			shutdownDaemonFunc()
-			fmt.Println("shutdown...")
-		}
-		os.Exit(0)
-	})
-
 	// router
 	mux.Handle(pagePath+"/", page)
 	mux.Handle(infoPath+"/", info)
-	mux.Handle("/api/v1/shutdown", shutdown)
 
 	return &http.Server{
 		Addr:    serverAddr,
