@@ -66,7 +66,7 @@ Set the value of the 'Datastore.Path' key:
 		"show":    configShowCmd,
 		"edit":    configEditCmd,
 		"replace": configReplaceCmd,
-		//"profile": configProfileCmd,
+		//"profile":             configProfileCmd,
 		"storage-host-enable": storageHostEnableCmd,
 		"sync-chain-info":     SyncChainInfoCmd,
 		"optin":               optInCmd,

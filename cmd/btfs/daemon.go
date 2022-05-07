@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	_ "expvar"
 	"fmt"
@@ -19,6 +20,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/bittorrent/go-btfs/guide"
 
 	config "github.com/TRON-US/go-btfs-config"
 	cserial "github.com/TRON-US/go-btfs-config/serialize"
@@ -224,7 +227,7 @@ Headers.
 	Subcommands: map[string]*cmds.Command{},
 	NoRemote:    true,
 	Extra:       commands.CreateCmdExtras(commands.SetDoesNotUseConfigAsInput(true)),
-	Run:         daemonFunc,
+	Run:         wrapDaemonFunc,
 }
 
 // defaultMux tells mux to serve path using the default muxer. This is
@@ -236,6 +239,12 @@ func defaultMux(path string) corehttp.ServeOption {
 		mux.Handle(path, http.DefaultServeMux)
 		return mux, nil
 	}
+}
+
+func wrapDaemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) (_err error) {
+	_err = daemonFunc(req, re, env)
+	commands.NotifyAndWaitIfOnRestarting()
+	return
 }
 
 func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) (_err error) {
@@ -290,6 +299,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	// first, whether user has provided the initialization flag. we may be
 	// running in an uninitialized state.
 	initialize, _ := req.Options[initOptionKwd].(bool)
+	hValue, hasHval := req.Options[hValueKwd].(string)
 	inited := false
 	if initialize {
 		cfg := cctx.ConfigRoot
@@ -302,6 +312,9 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 				if conf, err = cserial.Load(cfgLocation); err != nil {
 					return err
 				}
+			}
+			if hasHval && profiles == "" {
+				profiles = "storage-host"
 			}
 
 			if err = doInit(os.Stdout, cfg, false, utilmain.NBitsForKeypairDefault, profiles, conf,
@@ -332,6 +345,17 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		return err
 	}
 
+	if !inited {
+		migrated := config.MigrateConfig(cfg, false, hasHval)
+		if migrated {
+			// Flush changes if migrated
+			err = repo.SetConfig(cfg)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	// Print self information for logging and debugging purposes
 	fmt.Printf("Repo location: %s\n", cctx.ConfigRoot)
 	fmt.Printf("Peer identity: %s\n", cfg.Identity.PeerID)
@@ -360,6 +384,18 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	fmt.Println("the address of Bttc format is: ", address0x)
 	fmt.Println("the address of Tron format is: ", keys.Base58Address)
 
+	// guide server init
+	optionApiAddr, _ := req.Options[commands.ApiOption].(string)
+	guide.SetServerAddr(cfg.Addresses.API, optionApiAddr)
+	guide.SetInfo(&guide.Info{
+		BtfsVersion: version.CurrentVersionNumber,
+		HostID:      cfg.Identity.PeerID,
+		BttcAddress: address0x.String(),
+		PrivateKey:  hex.EncodeToString(pkbytesOri[4:]),
+	})
+	guide.StartServer()
+	defer guide.TryShutdownServer()
+
 	//chain init
 	configRoot := cctx.ConfigRoot
 	statestore, err := chain.InitStateStore(configRoot)
@@ -367,6 +403,9 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		fmt.Println("init statestore err: ", err)
 		return err
 	}
+	defer func() {
+		statestore.Close()
+	}()
 
 	chainid, stored, err := getChainID(req, cfg, statestore)
 	if err != nil {
@@ -436,17 +475,6 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		// log init ip2location err
 		fmt.Println("init ip2location err: ", err)
 		log.Errorf("init ip2location err:%+v", err)
-	}
-
-	hValue, hasHval := req.Options[hValueKwd].(string)
-
-	migrated := config.MigrateConfig(cfg, inited, hasHval)
-	if migrated {
-		// Flush changes if migrated
-		err = repo.SetConfig(cfg)
-		if err != nil {
-			return err
-		}
 	}
 
 	offline, _ := req.Options[offlineKwd].(bool)
@@ -557,6 +585,9 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		return err
 	}
 	node.Process.AddChild(goprocess.WithTeardown(cctx.Plugins.Close))
+
+	// if the guide server was started, shutdown it
+	guide.TryShutdownServer()
 
 	// construct api endpoint - every time
 	apiErrc, err := serveHTTPApi(req, cctx)
