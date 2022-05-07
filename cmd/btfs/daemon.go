@@ -341,6 +341,17 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		return err
 	}
 
+	hValue, hasHval := req.Options[hValueKwd].(string)
+
+	migrated := config.MigrateConfig(cfg, inited, hasHval)
+	if migrated {
+		// Flush changes if migrated
+		err = repo.SetConfig(cfg)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Print self information for logging and debugging purposes
 	fmt.Printf("Repo location: %s\n", cctx.ConfigRoot)
 	fmt.Printf("Peer identity: %s\n", cfg.Identity.PeerID)
@@ -460,17 +471,6 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		// log init ip2location err
 		fmt.Println("init ip2location err: ", err)
 		log.Errorf("init ip2location err:%+v", err)
-	}
-
-	hValue, hasHval := req.Options[hValueKwd].(string)
-
-	migrated := config.MigrateConfig(cfg, inited, hasHval)
-	if migrated {
-		// Flush changes if migrated
-		err = repo.SetConfig(cfg)
-		if err != nil {
-			return err
-		}
 	}
 
 	offline, _ := req.Options[offlineKwd].(bool)
