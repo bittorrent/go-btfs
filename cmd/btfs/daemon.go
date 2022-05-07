@@ -299,6 +299,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	// first, whether user has provided the initialization flag. we may be
 	// running in an uninitialized state.
 	initialize, _ := req.Options[initOptionKwd].(bool)
+	hValue, hasHval := req.Options[hValueKwd].(string)
 	inited := false
 	if initialize {
 		cfg := cctx.ConfigRoot
@@ -311,6 +312,9 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 				if conf, err = cserial.Load(cfgLocation); err != nil {
 					return err
 				}
+			}
+			if hasHval && profiles == "" {
+				profiles = "storage-host"
 			}
 
 			if err = doInit(os.Stdout, cfg, false, utilmain.NBitsForKeypairDefault, profiles, conf,
@@ -341,14 +345,14 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		return err
 	}
 
-	hValue, hasHval := req.Options[hValueKwd].(string)
-
-	migrated := config.MigrateConfig(cfg, inited, hasHval)
-	if migrated {
-		// Flush changes if migrated
-		err = repo.SetConfig(cfg)
-		if err != nil {
-			return err
+	if !inited {
+		migrated := config.MigrateConfig(cfg, false, hasHval)
+		if migrated {
+			// Flush changes if migrated
+			err = repo.SetConfig(cfg)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
