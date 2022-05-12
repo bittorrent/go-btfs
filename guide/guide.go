@@ -86,6 +86,7 @@ func newServer() *http.Server {
 }
 
 func StartServer() {
+	applyStaticFiles()
 	server := newServer()
 	done := make(chan struct{})
 	go func() {
