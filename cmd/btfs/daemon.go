@@ -758,6 +758,7 @@ func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, error
 		corehttp.WebUIOption,
 		corehttp.DashboardOption,
 		corehttp.HostUIOption,
+		corehttp.RootToDashboardOption,
 		gatewayOpt,
 		corehttp.VersionOption(),
 		defaultMux("/debug/vars"),
