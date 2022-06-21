@@ -169,7 +169,9 @@ func doInit(out io.Writer, repoRoot string, empty bool, nBitsForKeypair int, con
 		if err != nil {
 			return err
 		}
-
+		if conf != nil && !conf.Experimental.StorageHostEnabled {
+			conf.Experimental.StorageHostEnabled = true
+		}
 		if rmOnUnpin {
 			raw := json.RawMessage(`{"rmOnUnpin":"` + strconv.FormatBool(rmOnUnpin) + `"}`)
 			conf.Datastore.Params = &raw
