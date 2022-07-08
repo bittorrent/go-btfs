@@ -20,6 +20,8 @@ type Service struct {
 	lastChequeFunc            func(common.Address) (*vault.SignedCheque, error)
 	lastChequesFunc           func() (map[common.Address]*vault.SignedCheque, error)
 	bttBalanceFunc            func(context.Context) (*big.Int, error)
+	totalReceivedFunc         func() (*big.Int, error)
+	totalReceivedCountFunc    func() (int, error)
 }
 
 // WithVault*Functions set the mock vault functions
@@ -68,6 +70,18 @@ func WithLastChequeFunc(f func(beneficiary common.Address) (*vault.SignedCheque,
 func WithLastChequesFunc(f func() (map[common.Address]*vault.SignedCheque, error)) Option {
 	return optionFunc(func(s *Service) {
 		s.lastChequesFunc = f
+	})
+}
+
+func WithTotalReceivedFunc(f func() (*big.Int, error)) Option {
+	return optionFunc(func(s *Service) {
+		s.totalReceivedFunc = f
+	})
+}
+
+func WithTotalReceivedCountFunc(f func() (int, error)) Option {
+	return optionFunc(func(s *Service) {
+		s.totalReceivedCountFunc = f
 	})
 }
 
@@ -177,6 +191,43 @@ func (s *Service) LastCheques() (map[common.Address]*vault.SignedCheque, error) 
 
 func (s *Service) Withdraw(ctx context.Context, amount *big.Int) (hash common.Hash, err error) {
 	return s.vaultWithdrawFunc(ctx, amount)
+}
+
+func (s *Service) TotalIssued() (*big.Int, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (s *Service) TotalReceived() (*big.Int, error) {
+	if s.totalReceivedFunc != nil {
+		return s.totalReceivedFunc()
+	}
+	return nil, errors.New("totalReceivedFunc not implemented")
+}
+
+func (s *Service) TotalReceivedCount() (int, error) {
+	if s.totalReceivedCountFunc != nil {
+		return s.totalReceivedCountFunc()
+	}
+	return 0, errors.New("totalReceivedCountFunc not implemented")
+}
+
+func (s *Service) TotalReceivedCashedCount() (int, error) {
+	return 0, errors.New("not implemented")
+}
+
+func (s *Service) TotalReceivedCashed() (*big.Int, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (s *Service) TotalDailyReceived() (*big.Int, error) {
+	return nil, errors.New("not implemented")
+}
+func (s *Service) TotalDailyReceivedCashed() (*big.Int, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (s *Service) UpgradeTo(ctx context.Context, newVaultImpl common.Address) (old, new common.Address, err error) {
+	return common.Address{}, common.Address{}, errors.New("not implemented")
 }
 
 // Option is the option passed to the mock Vault service

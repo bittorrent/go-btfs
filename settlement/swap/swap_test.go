@@ -122,8 +122,10 @@ func (m *addressbookMock) PutVault(peer string, vault common.Address) error {
 }
 
 type cashoutMock struct {
-	cashCheque    func(ctx context.Context, vault, recipient common.Address) (common.Hash, error)
-	cashoutStatus func(ctx context.Context, vaultAddress common.Address) (*vault.CashoutStatus, error)
+	cashCheque       func(ctx context.Context, vault, recipient common.Address) (common.Hash, error)
+	cashoutStatus    func(ctx context.Context, vaultAddress common.Address) (*vault.CashoutStatus, error)
+	cashoutResults   func() ([]vault.CashOutResult, error)
+	hasCashoutAction func(ctx context.Context, peer common.Address) (bool, error)
 }
 
 func (m *cashoutMock) CashCheque(ctx context.Context, vault, recipient common.Address) (common.Hash, error) {
@@ -132,10 +134,22 @@ func (m *cashoutMock) CashCheque(ctx context.Context, vault, recipient common.Ad
 func (m *cashoutMock) CashoutStatus(ctx context.Context, vaultAddress common.Address) (*vault.CashoutStatus, error) {
 	return m.cashoutStatus(ctx, vaultAddress)
 }
-
+func (m *cashoutMock) CashoutResults() ([]vault.CashOutResult, error) {
+	return m.cashoutResults()
+}
+func (m *cashoutMock) HasCashoutAction(ctx context.Context, peer common.Address) (bool, error) {
+	return m.hasCashoutAction(ctx, peer)
+}
 func TestReceiveCheque(t *testing.T) {
 	store := mockstore.NewStateStore()
-	vaultService := mockvault.NewVault()
+	vaultService := mockvault.NewVault(
+		mockvault.WithTotalReceivedFunc(func() (*big.Int, error) {
+			return big.NewInt(50), nil
+		}),
+		mockvault.WithTotalReceivedCountFunc(func() (int, error) {
+			return 50, nil
+		}),
+	)
 	amount := big.NewInt(50)
 	exchangeRate := big.NewInt(10)
 	vaultAddress := common.HexToAddress("0xcd")
@@ -354,7 +368,7 @@ func TestPay(t *testing.T) {
 	var emitCalled bool
 	swap := swap.New(
 		&swapProtocolMock{
-			emitCheque: func(ctx context.Context, p string, a *big.Int, issueFunc swapprotocol.IssueFunc) (*big.Int, error) {
+			emitCheque: func(ctx context.Context, p string, a *big.Int, s string, issueFunc swapprotocol.IssueFunc) (*big.Int, error) {
 				//if !peer.Equal(p) {
 				if strings.Compare(peer, p) != 0 {
 					t.Fatal("sending to wrong peer")
@@ -408,7 +422,7 @@ func TestPayIssueError(t *testing.T) {
 
 	swap := swap.New(
 		&swapProtocolMock{
-			emitCheque: func(c context.Context, a1 string, i *big.Int, issueFunc swapprotocol.IssueFunc) (*big.Int, error) {
+			emitCheque: func(c context.Context, a1 string, i *big.Int, s string, issueFunc swapprotocol.IssueFunc) (*big.Int, error) {
 				return nil, errReject
 			},
 		},

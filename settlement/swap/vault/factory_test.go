@@ -204,7 +204,7 @@ func TestFactoryDeploy(t *testing.T) {
 	factory := vault.NewFactory(
 		backendmock.New(),
 		transactionmock.New(
-			transactionmock.WithABISend(&factoryABI, deployTransactionHash, factoryAddress, big.NewInt(0), "deploySimpleSwap", issuerAddress, defaultTimeout, nonce),
+			transactionmock.WithABISend(&factoryABI, deployTransactionHash, factoryAddress, big.NewInt(0), "deploySimpleSwap", issuerAddress, nonce),
 			transactionmock.WithWaitForReceiptFunc(func(ctx context.Context, txHash common.Hash) (receipt *types.Receipt, err error) {
 				if txHash != deployTransactionHash {
 					t.Fatalf("waiting for wrong transaction. wanted %x, got %x", deployTransactionHash, txHash)
@@ -232,7 +232,7 @@ func TestFactoryDeploy(t *testing.T) {
 		//nil,
 	)
 
-	txHash, err := factory.Deploy(context.Background(), issuerAddress, nonce, peerId)
+	vaultAddress, txHash, err := factory.Deploy(context.Background(), issuerAddress, deployAddress, peerId.Hex(), deployAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -241,7 +241,7 @@ func TestFactoryDeploy(t *testing.T) {
 		t.Fatalf("returning wrong transaction hash. wanted %x, got %x", deployTransactionHash, txHash)
 	}
 
-	vaultAddress, err := factory.WaitDeployed(context.Background(), txHash)
+	vaultAddress, err = factory.WaitDeployed(context.Background(), txHash)
 	if err != nil {
 		t.Fatal(err)
 	}

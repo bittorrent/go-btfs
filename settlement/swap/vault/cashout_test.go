@@ -42,13 +42,13 @@ func TestCashout(t *testing.T) {
 	cashoutService := vault.NewCashoutService(
 		store,
 		backendmock.New(
-			backendmock.WithTransactionByHashFunc(func(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error) {
+			backendmock.WithTransactionByHashFunc(func(_ context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error) {
 				if hash != txHash {
 					t.Fatalf("fetching wrong transaction. wanted %v, got %v", txHash, hash)
 				}
 				return nil, false, nil
 			}),
-			backendmock.WithTransactionReceiptFunc(func(ctx context.Context, hash common.Hash) (*types.Receipt, error) {
+			backendmock.WithTransactionReceiptFunc(func(_ context.Context, hash common.Hash) (*types.Receipt, error) {
 				if hash != txHash {
 					t.Fatalf("fetching receipt for transaction. wanted %v, got %v", txHash, hash)
 				}
@@ -136,13 +136,13 @@ func TestCashoutBounced(t *testing.T) {
 	cashoutService := vault.NewCashoutService(
 		store,
 		backendmock.New(
-			backendmock.WithTransactionByHashFunc(func(ctx context.Context, hash common.Hash) (*types.Transaction, bool, error) {
+			backendmock.WithTransactionByHashFunc(func(_ context.Context, hash common.Hash) (*types.Transaction, bool, error) {
 				if hash != txHash {
 					t.Fatalf("fetching wrong transaction. wanted %v, got %v", txHash, hash)
 				}
 				return nil, false, nil
 			}),
-			backendmock.WithTransactionReceiptFunc(func(ctx context.Context, hash common.Hash) (*types.Receipt, error) {
+			backendmock.WithTransactionReceiptFunc(func(_ context.Context, hash common.Hash) (*types.Receipt, error) {
 				if hash != txHash {
 					t.Fatalf("fetching receipt for transaction. wanted %v, got %v", txHash, hash)
 				}
@@ -235,13 +235,13 @@ func TestCashoutStatusReverted(t *testing.T) {
 	cashoutService := vault.NewCashoutService(
 		store,
 		backendmock.New(
-			backendmock.WithTransactionByHashFunc(func(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error) {
+			backendmock.WithTransactionByHashFunc(func(_ context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error) {
 				if hash != txHash {
 					t.Fatalf("fetching wrong transaction. wanted %v, got %v", txHash, hash)
 				}
 				return nil, false, nil
 			}),
-			backendmock.WithTransactionReceiptFunc(func(ctx context.Context, hash common.Hash) (*types.Receipt, error) {
+			backendmock.WithTransactionReceiptFunc(func(_ context.Context, hash common.Hash) (*types.Receipt, error) {
 				if hash != txHash {
 					t.Fatalf("fetching receipt for transaction. wanted %v, got %v", txHash, hash)
 				}
@@ -307,7 +307,7 @@ func TestCashoutStatusPending(t *testing.T) {
 	cashoutService := vault.NewCashoutService(
 		store,
 		backendmock.New(
-			backendmock.WithTransactionByHashFunc(func(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error) {
+			backendmock.WithTransactionByHashFunc(func(_ context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error) {
 				if hash != txHash {
 					t.Fatalf("fetching wrong transaction. wanted %v, got %v", txHash, hash)
 				}

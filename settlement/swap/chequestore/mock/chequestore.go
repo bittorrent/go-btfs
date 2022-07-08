@@ -2,6 +2,7 @@ package mock
 
 import (
 	"context"
+	"errors"
 	"math/big"
 
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
@@ -52,6 +53,47 @@ func (s *Service) LastCheque(vault common.Address) (*vault.SignedCheque, error) 
 
 func (s *Service) LastCheques() (map[common.Address]*vault.SignedCheque, error) {
 	return s.lastCheques()
+}
+
+// LastReceivedCheque returns the last cheque we received from a specific vault.
+func (s *Service) LastReceivedCheque(vault common.Address) (*vault.SignedCheque, error) {
+	return nil, errors.New("not implemented")
+}
+
+// LastReceivedCheques return map[vault]cheque
+func (s *Service) LastReceivedCheques() (map[common.Address]*vault.SignedCheque, error) {
+	return nil, errors.New("not implemented")
+}
+
+// ReceivedChequeRecordsByPeer returns the records we received from a specific vault.
+func (s *Service) ReceivedChequeRecordsByPeer(vault common.Address) ([]vault.ChequeRecord, error) {
+	return nil, errors.New("not implemented")
+}
+
+// ListReceivedChequeRecords returns the records we received from a specific vault.
+func (s *Service) ReceivedChequeRecordsAll() (map[common.Address][]vault.ChequeRecord, error) {
+	return nil, errors.New("not implemented")
+}
+func (s *Service) ReceivedStatsHistory(days int) ([]vault.DailyReceivedStats, error) {
+	return nil, errors.New("not implemented")
+}
+func (s *Service) SentStatsHistory(days int) ([]vault.DailySentStats, error) {
+	return nil, errors.New("not implemented")
+}
+
+// StoreSendChequeRecord store send cheque records.
+func (s *Service) StoreSendChequeRecord(vault, beneficiary common.Address, amount *big.Int) error {
+	return errors.New("not implemented")
+}
+
+// SendChequeRecordsByPeer returns the records we send to a specific vault.
+func (s *Service) SendChequeRecordsByPeer(beneficiary common.Address) ([]vault.ChequeRecord, error) {
+	return nil, errors.New("not implemented")
+}
+
+// SendChequeRecordsAll returns the records we send to a specific vault.
+func (s *Service) SendChequeRecordsAll() (map[common.Address][]vault.ChequeRecord, error) {
+	return nil, errors.New("not implemented")
 }
 
 // Option is the option passed to the mock ChequeStore service
