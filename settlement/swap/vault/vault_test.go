@@ -66,6 +66,7 @@ func TestVaultBalance(t *testing.T) {
 	}
 }
 
+//TODO: FIX ME
 func TestVaultDeposit(t *testing.T) {
 	address := common.HexToAddress("0xabcd")
 	ownerAdress := common.HexToAddress("0xfff")
@@ -178,6 +179,7 @@ func TestVaultWaitForDepositReverted(t *testing.T) {
 	}
 }
 
+//TODO: FIX ME
 func TestVaultIssue(t *testing.T) {
 	address := common.HexToAddress("0xabcd")
 	beneficiary := common.HexToAddress("0xdddd")
@@ -410,6 +412,7 @@ func TestVaultIssueOutOfFunds(t *testing.T) {
 	}
 }
 
+//TODO: FIX ME
 func TestVaultWithdraw(t *testing.T) {
 	address := common.HexToAddress("0xabcd")
 	ownerAdress := common.HexToAddress("0xfff")
@@ -446,6 +449,7 @@ func TestVaultWithdraw(t *testing.T) {
 	}
 }
 
+//TODO: FIX ME
 func TestVaultWithdrawInsufficientFunds(t *testing.T) {
 	address := common.HexToAddress("0xabcd")
 	ownerAdress := common.HexToAddress("0xfff")
@@ -477,6 +481,7 @@ func TestVaultWithdrawInsufficientFunds(t *testing.T) {
 	}
 }
 
+//TODO: FIX ME
 func TestStateStoreKeys(t *testing.T) {
 	address := common.HexToAddress("0xabcd")
 

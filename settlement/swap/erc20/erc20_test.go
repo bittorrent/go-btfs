@@ -499,6 +499,7 @@ func TestBalanceOf(t *testing.T) {
 	}
 }
 
+//TODO: FIX ME
 func TestRealBalance(t *testing.T) {
 	backend, err := DialBackend()
 

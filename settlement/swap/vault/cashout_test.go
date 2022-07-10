@@ -80,6 +80,12 @@ func TestCashout(t *testing.T) {
 				}
 				return cheque, nil
 			}),
+			chequestoremock.WithLastReceivedChequeFunc(func(vault common.Address) (*vault.SignedCheque, error) {
+				if vault != vaultAddress {
+					t.Fatalf("using wrong vault. wanted %v, got %v", vaultAddress, vault)
+				}
+				return cheque, nil
+			}),
 		),
 	)
 
@@ -178,6 +184,12 @@ func TestCashoutBounced(t *testing.T) {
 				}
 				return cheque, nil
 			}),
+			chequestoremock.WithLastReceivedChequeFunc(func(vault common.Address) (*vault.SignedCheque, error) {
+				if vault != vaultAddress {
+					t.Fatalf("using wrong vault. wanted %v, got %v", vaultAddress, vault)
+				}
+				return cheque, nil
+			}),
 		),
 	)
 
@@ -261,6 +273,12 @@ func TestCashoutStatusReverted(t *testing.T) {
 				}
 				return cheque, nil
 			}),
+			chequestoremock.WithLastReceivedChequeFunc(func(vault common.Address) (*vault.SignedCheque, error) {
+				if vault != vaultAddress {
+					t.Fatalf("using wrong vault. wanted %v, got %v", vaultAddress, vault)
+				}
+				return cheque, nil
+			}),
 		),
 	)
 
@@ -321,6 +339,12 @@ func TestCashoutStatusPending(t *testing.T) {
 			chequestoremock.WithLastChequeFunc(func(c common.Address) (*vault.SignedCheque, error) {
 				if c != vaultAddress {
 					t.Fatalf("using wrong vault. wanted %v, got %v", vaultAddress, c)
+				}
+				return cheque, nil
+			}),
+			chequestoremock.WithLastReceivedChequeFunc(func(vault common.Address) (*vault.SignedCheque, error) {
+				if vault != vaultAddress {
+					t.Fatalf("using wrong vault. wanted %v, got %v", vaultAddress, vault)
 				}
 				return cheque, nil
 			}),

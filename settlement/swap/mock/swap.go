@@ -148,6 +148,7 @@ func (s *Service) Pay(ctx context.Context, peer string, amount *big.Int) {
 	}
 }
 
+//TODO: FIX ME(without return error if it exists)
 // TotalSent is the mock TotalSent function of swap.
 func (s *Service) TotalSent(peer string) (totalSent *big.Int, err error) {
 	if s.settlementSentFunc != nil {

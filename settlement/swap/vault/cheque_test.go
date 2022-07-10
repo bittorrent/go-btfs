@@ -57,6 +57,7 @@ func TestSignCheque(t *testing.T) {
 	}
 }
 
+//TODO: FIX ME
 func TestSignChequeIntegration(t *testing.T) {
 	vaultAddress := common.HexToAddress("0xfa02D396842E6e1D319E8E3D4D870338F791AA25")
 	beneficiaryAddress := common.HexToAddress("0x98E6C644aFeB94BBfB9FF60EB26fc9D83BBEcA79")

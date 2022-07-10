@@ -31,7 +31,7 @@ func TestFactoryERC20Address(t *testing.T) {
 				&factoryABI,
 				factoryAddress,
 				erc20Address.Hash().Bytes(),
-				"ERC20Address",
+				"TokenAddress",
 			),
 		),
 		factoryAddress,
@@ -63,6 +63,7 @@ func backendWithCodeAt(codeMap map[common.Address]string) transaction.Backend {
 	)
 }
 
+//TODO: FIX ME
 func TestFactoryVerifySelf(t *testing.T) {
 	factoryAddress := common.HexToAddress("0xabcd")
 
@@ -84,7 +85,7 @@ func TestFactoryVerifySelf(t *testing.T) {
 	t.Run("invalid deploy factory", func(t *testing.T) {
 		factory := vault.NewFactory(
 			backendWithCodeAt(map[common.Address]string{
-				factoryAddress: "abcd",
+				factoryAddress: "0xabcd",
 			}),
 			transactionmock.New(),
 			factoryAddress,
@@ -119,6 +120,7 @@ func TestFactoryVerifySelf(t *testing.T) {
 	})
 }
 
+//TODO: FIX ME
 func TestFactoryVerifyVault(t *testing.T) {
 	factoryAddress := common.HexToAddress("0xabcd")
 	vaultAddress := common.HexToAddress("0xefff")
@@ -193,6 +195,7 @@ func TestFactoryVerifyVault(t *testing.T) {
 	})
 }
 
+//TODO: FIX ME
 func TestFactoryDeploy(t *testing.T) {
 	factoryAddress := common.HexToAddress("0xabcd")
 	issuerAddress := common.HexToAddress("0xefff")
