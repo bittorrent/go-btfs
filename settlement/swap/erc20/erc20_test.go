@@ -10,8 +10,6 @@ import (
 	backendmock "github.com/bittorrent/go-btfs/transaction/backendmock"
 	transactionmock "github.com/bittorrent/go-btfs/transaction/mock"
 
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -499,48 +497,48 @@ func TestBalanceOf(t *testing.T) {
 	}
 }
 
-//TODO: FIX ME
-func TestRealBalance(t *testing.T) {
-	backend, err := DialBackend()
+//TODO: FIX ME(unit test should not rely on the real outside RPC calls)
+// func TestRealBalance(t *testing.T) {
+// 	backend, err := DialBackend()
 
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	callData, err := erc20ABI.Pack("balanceOf", SenderAdd)
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	callData, err := erc20ABI.Pack("balanceOf", SenderAdd)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	msg := ethereum.CallMsg{
-		From:     SenderAdd,
-		To:       &erc20Add,
-		Data:     callData,
-		GasPrice: big.NewInt(0),
-		Gas:      0,
-		Value:    big.NewInt(0),
-	}
-	data, err := backend.CallContract(context.Background(), msg, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	msg := ethereum.CallMsg{
+// 		From:     SenderAdd,
+// 		To:       &erc20Add,
+// 		Data:     callData,
+// 		GasPrice: big.NewInt(0),
+// 		Gas:      0,
+// 		Value:    big.NewInt(0),
+// 	}
+// 	data, err := backend.CallContract(context.Background(), msg, nil)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	results, err := erc20ABI.Unpack("balanceOf", data)
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	results, err := erc20ABI.Unpack("balanceOf", data)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	if len(results) != 1 {
-		t.Fatal(err)
-	}
+// 	if len(results) != 1 {
+// 		t.Fatal(err)
+// 	}
 
-	balance, ok := abi.ConvertType(results[0], new(big.Int)).(*big.Int)
-	if !ok || balance == nil {
-		t.Fatal(err)
-	}
+// 	balance, ok := abi.ConvertType(results[0], new(big.Int)).(*big.Int)
+// 	if !ok || balance == nil {
+// 		t.Fatal(err)
+// 	}
 
-	t.Log("real balance is: ", balance)
-}
+// 	t.Log("real balance is: ", balance)
+// }
 
 func TestTransfer(t *testing.T) {
 	address := common.HexToAddress("0xabcd")

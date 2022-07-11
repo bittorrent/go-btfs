@@ -30,28 +30,28 @@ func (m *signerMock) Sign(data []byte) ([]byte, error) {
 	if m.signFuncFunc != nil {
 		return m.signFuncFunc(data)
 	}
-	return nil, errors.New("signerMock.ethereumAddressFunc not implemented")
+	return nil, errors.New("signerMock.signFuncFunc not implemented")
 }
 
 func (m *signerMock) SignTx(transaction *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
 	if m.signTxFunc != nil {
 		return m.signTxFunc(transaction, chainID)
 	}
-	return nil, errors.New("signerMock.ethereumAddressFunc not implemented")
+	return nil, errors.New("signerMock.signTxFunc not implemented")
 }
 
 func (m *signerMock) PublicKey() (*ecdsa.PublicKey, error) {
 	if m.publicKeyFunc != nil {
 		return m.publicKeyFunc()
 	}
-	return nil, errors.New("signerMock.ethereumAddressFunc not implemented")
+	return nil, errors.New("signerMock.publicKeyFunc not implemented")
 }
 
 func (m *signerMock) SignTypedData(d *eip712.TypedData) ([]byte, error) {
 	if m.signTypedDataFunc != nil {
 		return m.signTypedDataFunc(d)
 	}
-	return nil, errors.New("signerMock.ethereumAddressFunc not implemented")
+	return nil, errors.New("signerMock.signTypedDataFunc not implemented")
 }
 
 func New(opts ...Option) crypto.Signer {

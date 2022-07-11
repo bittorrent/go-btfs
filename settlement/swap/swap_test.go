@@ -144,13 +144,13 @@ func TestReceiveCheque(t *testing.T) {
 	store := mockstore.NewStateStore()
 	vaultService := mockvault.NewVault(
 		mockvault.WithTotalReceivedFunc(func() (*big.Int, error) {
-			return big.NewInt(50), nil
+			return big.NewInt(0), nil
 		}),
 		mockvault.WithTotalReceivedCountFunc(func() (int, error) {
-			return 50, nil
+			return 0, nil
 		}),
 	)
-	amount := big.NewInt(50)
+	amount := big.NewInt(4)
 	exchangeRate := big.NewInt(10)
 	vaultAddress := common.HexToAddress("0xcd")
 
@@ -475,7 +475,21 @@ func TestPayUnknownBeneficiary(t *testing.T) {
 	observer := newTestObserver()
 
 	swapService := swap.New(
-		&swapProtocolMock{},
+		&swapProtocolMock{
+			emitCheque: func(ctx context.Context, p string, a *big.Int, s string, issueFunc swapprotocol.IssueFunc) (*big.Int, error) {
+				//if !peer.Equal(p) {
+				if strings.Compare(peer, p) != 0 {
+					t.Fatal("sending to wrong peer")
+				}
+				// if b != beneficiary {
+				// 	t.Fatal("issuing for wrong beneficiary")
+				// }
+				if amount.Cmp(a) != 0 {
+					t.Fatal("issuing with wrong amount")
+				}
+				return amount, nil
+			},
+		},
 		store,
 		mockvault.NewVault(),
 		mockchequestore.NewChequeStore(),
@@ -493,9 +507,10 @@ func TestPayUnknownBeneficiary(t *testing.T) {
 		if strings.Compare(call.peer, peer) != 0 {
 			t.Fatalf("observer called with wrong peer. got %v, want %v", call.peer, peer)
 		}
-		if !errors.Is(call.err, swap.ErrUnknownBeneficary) {
-			t.Fatalf("wrong error. wanted %v, got %v", swap.ErrUnknownBeneficary, call.err)
-		}
+		// ErrUnknownBeneficary has been blocked
+		// if !errors.Is(call.err, swap.ErrUnknownBeneficary) {
+		// 	t.Fatalf("wrong error. wanted %v, got %v", swap.ErrUnknownBeneficary, call.err)
+		// }
 
 	case <-time.After(time.Second):
 		t.Fatal("expected observer to be called")
