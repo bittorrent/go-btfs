@@ -16,9 +16,9 @@ func TestHostStatsSaveGet(t *testing.T) {
 	node := unixtest.HelpTestMockRepo(t, nil)
 
 	hs := &nodepb.StorageStat_Host{
-		Online:      true,
-		Uptime:      0.95,
-		Score:       0.88,
+		Online: true,
+		// Uptime:      0.95,
+		// Score:       0.88,
 		StorageUsed: 100000,
 		StorageCap:  10000000,
 	}

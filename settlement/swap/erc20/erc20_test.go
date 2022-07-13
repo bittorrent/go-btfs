@@ -497,7 +497,7 @@ func TestBalanceOf(t *testing.T) {
 	}
 }
 
-//TODO: FIX ME(unit test should not rely on the real outside RPC calls)
+//NOTE: unit test should not rely on the real outside RPC calls
 // func TestRealBalance(t *testing.T) {
 // 	backend, err := DialBackend()
 

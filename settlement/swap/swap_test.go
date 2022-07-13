@@ -345,6 +345,7 @@ func TestReceiveChequeWrongVault(t *testing.T) {
 
 }
 
+//TODO: FIX ME(checks if pay case is right and workable)
 func TestPay(t *testing.T) {
 	store := mockstore.NewStateStore()
 

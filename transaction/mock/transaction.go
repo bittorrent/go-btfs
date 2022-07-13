@@ -269,7 +269,7 @@ func WithABICall(abi *abi.ABI, to common.Address, result []byte, method string, 
 
 func WithABISend(abi *abi.ABI, txHash common.Hash, expectedAddress common.Address, expectedValue *big.Int, method string, params ...interface{}) Option {
 	return optionFunc(func(s *transactionServiceMock) {
-		s.send = func(ctx context.Context, request *transaction.TxRequest) (common.Hash, error) {
+		s.send = func(_ context.Context, request *transaction.TxRequest) (common.Hash, error) {
 			data, err := abi.Pack(method, params...)
 			if err != nil {
 				return common.Hash{}, err
@@ -282,7 +282,8 @@ func WithABISend(abi *abi.ABI, txHash common.Hash, expectedAddress common.Addres
 			if request.To != nil && *request.To != expectedAddress {
 				return common.Hash{}, fmt.Errorf("sending to wrong contract. wanted %x, got %x", expectedAddress, request.To)
 			}
-			if request.Value.Cmp(expectedValue) != 0 {
+			// if send is called by contract,then the request.Value is nil
+			if request.Value != nil && request.Value.Cmp(expectedValue) != 0 {
 				return common.Hash{}, fmt.Errorf("sending with wrong value. wanted %d, got %d", expectedValue, request.Value)
 			}
 

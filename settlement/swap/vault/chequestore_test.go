@@ -12,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-//TODO: FIX ME
 func TestReceiveCheque(t *testing.T) {
 	store := storemock.NewStateStore()
 	beneficiary := common.HexToAddress("0xffff")
@@ -152,7 +151,6 @@ func TestReceiveChequeInvalidBeneficiary(t *testing.T) {
 	}
 }
 
-//TODO: FIX ME
 func TestReceiveChequeInvalidAmount(t *testing.T) {
 	store := storemock.NewStateStore()
 	beneficiary := common.HexToAddress("0xffff")
@@ -292,7 +290,6 @@ func TestReceiveChequeInvalidSignature(t *testing.T) {
 	}
 }
 
-//TODO: FIX ME
 func TestReceiveChequeInsufficientBalance(t *testing.T) {
 	store := storemock.NewStateStore()
 	beneficiary := common.HexToAddress("0xffff")
@@ -335,7 +332,6 @@ func TestReceiveChequeInsufficientBalance(t *testing.T) {
 	}
 }
 
-//TODO: FIX ME
 func TestReceiveChequeSufficientBalancePaidOut(t *testing.T) {
 	store := storemock.NewStateStore()
 	beneficiary := common.HexToAddress("0xffff")
@@ -434,7 +430,6 @@ func TestReceiveChequeNotEnoughValue(t *testing.T) {
 	}
 }
 
-//TODO: FIX ME
 func TestReceiveChequeNotEnoughValue2(t *testing.T) {
 	store := storemock.NewStateStore()
 	beneficiary := common.HexToAddress("0xffff")

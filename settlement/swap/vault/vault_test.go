@@ -3,6 +3,7 @@ package vault_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -66,59 +67,58 @@ func TestVaultBalance(t *testing.T) {
 	}
 }
 
-//TODO: FIX ME
-// func TestVaultDeposit(t *testing.T) {
-// 	address := common.HexToAddress("0xabcd")
-// 	ownerAdress := common.HexToAddress("0xfff")
-// 	balance := big.NewInt(30)
-// 	depositAmount := big.NewInt(20)
-// 	txHash := common.HexToHash("0xdddd")
+func TestVaultDeposit(t *testing.T) {
+	address := common.HexToAddress("0xabcd")
+	ownerAdress := common.HexToAddress("0xfff")
+	balance := big.NewInt(30)
+	depositAmount := big.NewInt(20)
+	txHash := common.HexToHash("0xdddd")
 
-// 	factoryAddress := common.HexToAddress("0xabcd")
-// 	issuerAddress := common.HexToAddress("0xefff")
-// 	deployTransactionHash := common.HexToHash("0xffff")
-// 	nonce := common.HexToHash("eeff")
+	factoryAddress := common.HexToAddress("0xabcd")
+	// issuerAddress := common.HexToAddress("0xefff")
+	// deployTransactionHash := common.HexToHash("0xffff")
+	// nonce := common.HexToHash("eeff")
 
-// 	vaultService, err := vault.New(
-// 		transactionmock.New(
-// 			transactionmock.WithABISend(&vaultABI, deployTransactionHash, factoryAddress, big.NewInt(0), "deposit", issuerAddress, nonce),
-// 		),
-// 		address,
-// 		ownerAdress,
-// 		nil,
-// 		&chequeSignerMock{},
-// 		erc20mock.New(
-// 			erc20mock.WithBalanceOfFunc(func(ctx context.Context, address common.Address) (*big.Int, error) {
-// 				if address != ownerAdress {
-// 					return nil, errors.New("getting balance of wrong address")
-// 				}
-// 				return balance, nil
-// 			}),
-// 			erc20mock.WithTransferFunc(func(ctx context.Context, to common.Address, value *big.Int) (common.Hash, error) {
-// 				if to != address {
-// 					return common.Hash{}, fmt.Errorf("sending to wrong address. wanted %x, got %x", address, to)
-// 				}
-// 				if depositAmount.Cmp(value) != 0 {
-// 					return common.Hash{}, fmt.Errorf("sending wrong value. wanted %d, got %d", depositAmount, value)
-// 				}
-// 				return txHash, nil
-// 			}),
-// 		),
-// 		nil,
-// 	)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	vaultService, err := vault.New(
+		transactionmock.New(
+			transactionmock.WithABISend(&vaultABI, txHash, factoryAddress, big.NewInt(0), "deposit", depositAmount),
+		),
+		address,
+		ownerAdress,
+		nil,
+		&chequeSignerMock{},
+		erc20mock.New(
+			erc20mock.WithBalanceOfFunc(func(ctx context.Context, address common.Address) (*big.Int, error) {
+				if address != ownerAdress {
+					return nil, errors.New("getting balance of wrong address")
+				}
+				return balance, nil
+			}),
+			erc20mock.WithTransferFunc(func(ctx context.Context, to common.Address, value *big.Int) (common.Hash, error) {
+				if to != address {
+					return common.Hash{}, fmt.Errorf("sending to wrong address. wanted %x, got %x", address, to)
+				}
+				if depositAmount.Cmp(value) != 0 {
+					return common.Hash{}, fmt.Errorf("sending wrong value. wanted %d, got %d", depositAmount, value)
+				}
+				return txHash, nil
+			}),
+		),
+		nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	returnedTxHash, err := vaultService.Deposit(context.Background(), depositAmount)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	returnedTxHash, err := vaultService.Deposit(context.Background(), depositAmount)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	if txHash != returnedTxHash {
-// 		t.Fatalf("returned wrong transaction hash. wanted %v, got %v", txHash, returnedTxHash)
-// 	}
-// }
+	if txHash != returnedTxHash {
+		t.Fatalf("returned wrong transaction hash. wanted %v, got %v", txHash, returnedTxHash)
+	}
+}
 
 func TestVaultWaitForDeposit(t *testing.T) {
 	address := common.HexToAddress("0xabcd")
@@ -423,7 +423,6 @@ func TestVaultIssueOutOfFunds(t *testing.T) {
 	}
 }
 
-//TODO: FIX ME
 func TestVaultWithdraw(t *testing.T) {
 	address := common.HexToAddress("0xabcd")
 	ownerAdress := common.HexToAddress("0xfff")
@@ -460,7 +459,6 @@ func TestVaultWithdraw(t *testing.T) {
 	}
 }
 
-//TODO: FIX ME
 func TestVaultWithdrawInsufficientFunds(t *testing.T) {
 	address := common.HexToAddress("0xabcd")
 	ownerAdress := common.HexToAddress("0xfff")
