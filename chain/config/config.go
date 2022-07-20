@@ -34,6 +34,7 @@ var (
 	bttcTestBatchAddress        = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	bttcTestVaultLogicAddressV1 = common.HexToAddress("0x212324b18255593AdE87597Fa37C2c582aD72d24")
 	bttcTestVaultLogicAddress   = common.HexToAddress("0x73bcbE03999913dB7229FD5dC485cf23247c58B5") // https://testnet.bttcscan.com/address/0x73bcbE03999913dB7229FD5dC485cf23247c58B5
+	bttcTestStatusAddress       = common.HexToAddress("0x084616130594B1ac217216b4999057604ac9d753")
 
 	bttcFactoryAddressV1    = common.HexToAddress("0x9AF4bEc1A30BeC47756Ecef4cf43B91592121bC9")
 	bttcFactoryAddress      = common.HexToAddress("0x763d7858287B9a33F4bE5bb3df0241dACc59BCc7") // https://bttcscan.com/address/0x763d7858287B9a33F4bE5bb3df0241dACc59BCc7
@@ -41,6 +42,7 @@ var (
 	bttcBatchAddress        = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	bttcVaultLogicAddressV1 = common.HexToAddress("0x102dbCe01394C4a44Da3a1DF1De418e3fC225077") // https://bttcscan.com/address/0x102dbce01394c4a44da3a1df1de418e3fc225077
 	bttcVaultLogicAddress   = common.HexToAddress("0x11a91B7270ea000768F7A2C543547e832b5cb031") // https://bttcscan.com/address/0x11a91B7270ea000768F7A2C543547e832b5cb031
+	StatusAddress           = common.HexToAddress("")
 
 	// deploy gas
 	ethDeploymentGas      = "10"
@@ -75,6 +77,7 @@ type ChainConfig struct {
 	VaultLogicAddress  common.Address
 	DeploymentGas      string
 	Endpoint           string
+	StatusAddress      common.Address
 }
 
 func GetChainConfig(chainID int64) (*ChainConfig, bool) {
@@ -104,6 +107,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.DeploymentGas = bttcDeploymentGas
 		cfg.Endpoint = bttcEndpoint
 		cfg.BatchAddress = bttcBatchAddress
+		cfg.StatusAddress = StatusAddress
 		return &cfg, true
 	case bttcTestChainID:
 		cfg.StartBlock = bttcStartBlock
@@ -113,6 +117,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.Endpoint = bttcTestEndpoint
 		cfg.BatchAddress = bttcTestBatchAddress
 		cfg.VaultLogicAddress = bttcTestVaultLogicAddress
+		cfg.StatusAddress = bttcTestStatusAddress
 		return &cfg, true
 	case testChainID:
 		cfg.StartBlock = ethStartBlock

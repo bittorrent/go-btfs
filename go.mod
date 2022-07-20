@@ -8,7 +8,7 @@ require (
 	github.com/FactomProject/btcutilecc v0.0.0-20130527213604-d3a63a5752ec // indirect
 	github.com/TRON-US/go-btfs-api v0.3.0
 	github.com/TRON-US/go-btfs-chunker v0.3.0
-	github.com/TRON-US/go-btfs-config v0.11.8
+	github.com/TRON-US/go-btfs-config v0.11.9-pre2
 	github.com/TRON-US/go-btfs-files v0.2.0
 	github.com/TRON-US/go-btfs-pinner v0.1.1
 	github.com/TRON-US/go-btns v0.1.1
@@ -125,7 +125,8 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.1-0.20210305035536-64b5b1c73954
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
-	github.com/tron-us/go-btfs-common v0.8.6
+	github.com/tron-us/go-btfs-common v0.8.9-pre11
+	//github.com/tron-us/go-btfs-common v0.8.6
 	github.com/tron-us/go-common/v2 v2.3.0
 	github.com/tron-us/protobuf v1.3.7
 	github.com/tyler-smith/go-bip32 v0.0.0-20170922074101-2c9cfd177564
@@ -147,6 +148,8 @@ require (
 	gotest.tools v2.2.0+incompatible
 	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
 )
+
+replace github.com/tron-us/go-btfs-common => /Users/laocheng/go/src/github.com/TRON-US/go-btfs-common
 
 replace github.com/ipfs/go-ipld-format => github.com/TRON-US/go-ipld-format v0.2.0
 
