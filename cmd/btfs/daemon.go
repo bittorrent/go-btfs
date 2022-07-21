@@ -471,8 +471,8 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		return err
 	}
 
-	// init status heart
-	err = reportstatus.Init(chainInfo.TransactionService, cfg, chainCfg.StatusAddress)
+	// init report status contract
+	err = reportstatus.Init(chainInfo.TransactionService, cfg, configRoot, chainCfg.StatusAddress, chainInfo.ChainID)
 	if err != nil {
 		fmt.Println("init report status, err: ", err)
 		return err
