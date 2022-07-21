@@ -54,56 +54,56 @@ func (m *transactionServiceMock) Send(ctx context.Context, request *transaction.
 	if m.send != nil {
 		return m.send(ctx, request)
 	}
-	return common.Hash{}, errors.New("not implemented")
+	return common.Hash{}, errors.New("transactionServiceMock.send not implemented")
 }
 
 func (m *transactionServiceMock) WaitForReceipt(ctx context.Context, txHash common.Hash) (receipt *types.Receipt, err error) {
 	if m.waitForReceipt != nil {
 		return m.waitForReceipt(ctx, txHash)
 	}
-	return nil, errors.New("not implemented")
+	return nil, errors.New("transactionServiceMock.waitForReceipt not implemented")
 }
 
 func (m *transactionServiceMock) WatchSentTransaction(txHash common.Hash) (<-chan types.Receipt, <-chan error, error) {
 	if m.watchSentTransaction != nil {
 		return m.watchSentTransaction(txHash)
 	}
-	return nil, nil, errors.New("not implemented")
+	return nil, nil, errors.New("transactionServiceMock.watchSentTransaction not implemented")
 }
 
 func (m *transactionServiceMock) Call(ctx context.Context, request *transaction.TxRequest) (result []byte, err error) {
 	if m.call != nil {
 		return m.call(ctx, request)
 	}
-	return nil, errors.New("not implemented")
+	return nil, errors.New("transactionServiceMock.call not implemented")
 }
 
 func (m *transactionServiceMock) PendingTransactions() ([]common.Hash, error) {
 	if m.pendingTransactions != nil {
 		return m.pendingTransactions()
 	}
-	return nil, errors.New("not implemented")
+	return nil, errors.New("transactionServiceMock.pendingTransactions not implemented")
 }
 
 func (m *transactionServiceMock) ResendTransaction(ctx context.Context, txHash common.Hash) error {
 	if m.resendTransaction != nil {
 		return m.resendTransaction(ctx, txHash)
 	}
-	return errors.New("not implemented")
+	return errors.New("transactionServiceMock.resendTransaction not implemented")
 }
 
 func (m *transactionServiceMock) StoredTransaction(txHash common.Hash) (*transaction.StoredTransaction, error) {
 	if m.storedTransaction != nil {
 		return m.storedTransaction(txHash)
 	}
-	return nil, errors.New("not implemented")
+	return nil, errors.New("transactionServiceMock.storedTransaction not implemented")
 }
 
 func (m *transactionServiceMock) CancelTransaction(ctx context.Context, originalTxHash common.Hash) (common.Hash, error) {
 	if m.cancelTransaction != nil {
 		return m.cancelTransaction(ctx, originalTxHash)
 	}
-	return common.Hash{}, errors.New("not implemented")
+	return common.Hash{}, errors.New("transactionServiceMock.cancelTransaction not implemented")
 }
 
 func (m *transactionServiceMock) Close() error {
@@ -114,14 +114,14 @@ func (m *transactionServiceMock) BttBalanceAt(ctx context.Context, address commo
 	if m.bttBalanceAt != nil {
 		return m.bttBalanceAt(ctx, address, block)
 	}
-	return big.NewInt(0), errors.New("Error")
+	return big.NewInt(0), errors.New("transactionServiceMock.bttBalanceAt not implemented")
 }
 
 func (m *transactionServiceMock) MyBttBalance(ctx context.Context) (*big.Int, error) {
 	if m.myBttBalance != nil {
 		return m.myBttBalance(ctx)
 	}
-	return big.NewInt(0), errors.New("Error")
+	return big.NewInt(0), errors.New("transactionServiceMock.myBttBalance not implemented")
 }
 
 // Option is the option passed to the mock Chequebook service
@@ -269,7 +269,7 @@ func WithABICall(abi *abi.ABI, to common.Address, result []byte, method string, 
 
 func WithABISend(abi *abi.ABI, txHash common.Hash, expectedAddress common.Address, expectedValue *big.Int, method string, params ...interface{}) Option {
 	return optionFunc(func(s *transactionServiceMock) {
-		s.send = func(ctx context.Context, request *transaction.TxRequest) (common.Hash, error) {
+		s.send = func(_ context.Context, request *transaction.TxRequest) (common.Hash, error) {
 			data, err := abi.Pack(method, params...)
 			if err != nil {
 				return common.Hash{}, err
@@ -282,7 +282,8 @@ func WithABISend(abi *abi.ABI, txHash common.Hash, expectedAddress common.Addres
 			if request.To != nil && *request.To != expectedAddress {
 				return common.Hash{}, fmt.Errorf("sending to wrong contract. wanted %x, got %x", expectedAddress, request.To)
 			}
-			if request.Value.Cmp(expectedValue) != 0 {
+			// if send is called by contract,then the request.Value is nil
+			if request.Value != nil && request.Value.Cmp(expectedValue) != 0 {
 				return common.Hash{}, fmt.Errorf("sending with wrong value. wanted %d, got %d", expectedValue, request.Value)
 			}
 

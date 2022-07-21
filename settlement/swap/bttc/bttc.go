@@ -35,7 +35,7 @@ type service struct {
 	erc20Service erc20.Service
 }
 
-func New(trxSvc transaction.Service, erc20Svc erc20.Service) *service {
+func New(trxSvc transaction.Service, erc20Svc erc20.Service) Service {
 	return &service{
 		trxService:   trxSvc,
 		erc20Service: erc20Svc,

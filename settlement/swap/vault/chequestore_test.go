@@ -51,10 +51,10 @@ func TestReceiveCheque(t *testing.T) {
 		transactionmock.New(
 			transactionmock.WithABICallSequence(
 				transactionmock.ABICall(&vaultABI, vaultAddress, issuer.Hash().Bytes(), "issuer"),
-				transactionmock.ABICall(&vaultABI, vaultAddress, cumulativePayout2.FillBytes(make([]byte, 32)), "balance"),
+				transactionmock.ABICall(&vaultABI, vaultAddress, cumulativePayout2.FillBytes(make([]byte, 32)), "totalbalance"),
 				transactionmock.ABICall(&vaultABI, vaultAddress, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", beneficiary),
 				transactionmock.ABICall(&vaultABI, vaultAddress, issuer.Hash().Bytes(), "issuer"),
-				transactionmock.ABICall(&vaultABI, vaultAddress, cumulativePayout2.FillBytes(make([]byte, 32)), "balance"),
+				transactionmock.ABICall(&vaultABI, vaultAddress, cumulativePayout2.FillBytes(make([]byte, 32)), "totalbalance"),
 				transactionmock.ABICall(&vaultABI, vaultAddress, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", beneficiary),
 			),
 		),
@@ -173,7 +173,7 @@ func TestReceiveChequeInvalidAmount(t *testing.T) {
 		transactionmock.New(
 			transactionmock.WithABICallSequence(
 				transactionmock.ABICall(&vaultABI, vaultAddress, issuer.Hash().Bytes(), "issuer"),
-				transactionmock.ABICall(&vaultABI, vaultAddress, cumulativePayout.FillBytes(make([]byte, 32)), "balance"),
+				transactionmock.ABICall(&vaultABI, vaultAddress, cumulativePayout.FillBytes(make([]byte, 32)), "totalbalance"),
 				transactionmock.ABICall(&vaultABI, vaultAddress, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", beneficiary),
 			),
 		),
@@ -230,7 +230,7 @@ func TestReceiveChequeInvalidVault(t *testing.T) {
 		transactionmock.New(
 			transactionmock.WithABICallSequence(
 				transactionmock.ABICall(&vaultABI, vaultAddress, issuer.Bytes(), "issuer"),
-				transactionmock.ABICall(&vaultABI, vaultAddress, cumulativePayout.FillBytes(make([]byte, 32)), "balance"),
+				transactionmock.ABICall(&vaultABI, vaultAddress, cumulativePayout.FillBytes(make([]byte, 32)), "totalbalance"),
 			),
 		),
 		func(c *vault.SignedCheque, cid int64) (common.Address, error) {
@@ -311,7 +311,7 @@ func TestReceiveChequeInsufficientBalance(t *testing.T) {
 		transactionmock.New(
 			transactionmock.WithABICallSequence(
 				transactionmock.ABICall(&vaultABI, vaultAddress, issuer.Hash().Bytes(), "issuer"),
-				transactionmock.ABICall(&vaultABI, vaultAddress, new(big.Int).Sub(cumulativePayout, big.NewInt(1)).FillBytes(make([]byte, 32)), "balance"),
+				transactionmock.ABICall(&vaultABI, vaultAddress, new(big.Int).Sub(cumulativePayout, big.NewInt(1)).FillBytes(make([]byte, 32)), "totalbalance"),
 				transactionmock.ABICall(&vaultABI, vaultAddress, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", beneficiary),
 			),
 		),
@@ -353,7 +353,7 @@ func TestReceiveChequeSufficientBalancePaidOut(t *testing.T) {
 		transactionmock.New(
 			transactionmock.WithABICallSequence(
 				transactionmock.ABICall(&vaultABI, vaultAddress, issuer.Hash().Bytes(), "issuer"),
-				transactionmock.ABICall(&vaultABI, vaultAddress, new(big.Int).Sub(cumulativePayout, big.NewInt(100)).FillBytes(make([]byte, 32)), "balance"),
+				transactionmock.ABICall(&vaultABI, vaultAddress, new(big.Int).Sub(cumulativePayout, big.NewInt(100)).FillBytes(make([]byte, 32)), "totalbalance"),
 				transactionmock.ABICall(&vaultABI, vaultAddress, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", beneficiary),
 			),
 		),
@@ -410,7 +410,7 @@ func TestReceiveChequeNotEnoughValue(t *testing.T) {
 		transactionmock.New(
 			transactionmock.WithABICallSequence(
 				transactionmock.ABICall(&vaultABI, vaultAddress, issuer.Hash().Bytes(), "issuer"),
-				transactionmock.ABICall(&vaultABI, vaultAddress, cumulativePayout.FillBytes(make([]byte, 32)), "balance"),
+				transactionmock.ABICall(&vaultABI, vaultAddress, cumulativePayout.FillBytes(make([]byte, 32)), "totalbalance"),
 				transactionmock.ABICall(&vaultABI, vaultAddress, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", beneficiary),
 			),
 		),
@@ -425,8 +425,8 @@ func TestReceiveChequeNotEnoughValue(t *testing.T) {
 		})
 
 	_, err := chequestore.ReceiveCheque(context.Background(), cheque, exchangeRate)
-	if !errors.Is(err, vault.ErrChequeValueTooLow) {
-		t.Fatalf("got wrong error. wanted %v, got %v", vault.ErrChequeValueTooLow, err)
+	if err != nil {
+		t.Fatalf("got wrong error. wanted nil, got %v", err)
 	}
 }
 
@@ -471,7 +471,7 @@ func TestReceiveChequeNotEnoughValue2(t *testing.T) {
 		transactionmock.New(
 			transactionmock.WithABICallSequence(
 				transactionmock.ABICall(&vaultABI, vaultAddress, issuer.Hash().Bytes(), "issuer"),
-				transactionmock.ABICall(&vaultABI, vaultAddress, cumulativePayout.FillBytes(make([]byte, 32)), "balance"),
+				transactionmock.ABICall(&vaultABI, vaultAddress, cumulativePayout.FillBytes(make([]byte, 32)), "totalbalance"),
 				transactionmock.ABICall(&vaultABI, vaultAddress, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", beneficiary),
 			),
 		),
@@ -486,7 +486,7 @@ func TestReceiveChequeNotEnoughValue2(t *testing.T) {
 		})
 
 	_, err := chequestore.ReceiveCheque(context.Background(), cheque, exchangeRate)
-	if !errors.Is(err, vault.ErrChequeValueTooLow) {
-		t.Fatalf("got wrong error. wanted %v, got %v", vault.ErrChequeValueTooLow, err)
+	if err != nil {
+		t.Fatalf("got wrong error. wanted nil, got %v", err)
 	}
 }

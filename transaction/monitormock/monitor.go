@@ -19,14 +19,14 @@ func (m *transactionMonitorMock) WatchTransaction(txHash common.Hash, nonce uint
 	if m.watchTransaction != nil {
 		return m.watchTransaction(txHash, nonce)
 	}
-	return nil, nil, errors.New("not implemented")
+	return nil, nil, errors.New("transactionMonitorMock.watchTransaction not implemented")
 }
 
 func (m *transactionMonitorMock) WaitBlock(ctx context.Context, block *big.Int) (*types.Block, error) {
-	if m.watchTransaction != nil {
+	if m.waitBlock != nil {
 		return m.waitBlock(ctx, block)
 	}
-	return nil, errors.New("not implemented")
+	return nil, errors.New("transactionMonitorMock.waitBlock not implemented")
 }
 
 func (m *transactionMonitorMock) Close() error {
