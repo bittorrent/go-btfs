@@ -29,10 +29,10 @@ const (
 	ReportStatusTime = 60 * time.Second // 10 * time.Minute
 )
 
-func Init(transactionService transaction.Service, cfg *config.Config, statusAddress common.Address) error {
+func Init(transactionService transaction.Service, cfg *config.Config, configRoot string, statusAddress common.Address, chainId int64) error {
 	New(statusAddress, transactionService, cfg)
 
-	err := CheckExistLastOnline(cfg)
+	err := CheckExistLastOnline(cfg, configRoot, chainId)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (s *service) checkLastOnlineInfo(peerId, bttcAddr string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("...... getStatus - result v = %+v, err = %v \n", v, err)
+	//fmt.Printf("...... getStatus - result v = %+v, err = %v \n", v, err)
 
 	nonce := v[3].(uint32)
 	if nonce > 0 {
@@ -161,7 +161,7 @@ func (s *service) checkLastOnlineInfo(peerId, bttcAddr string) error {
 			LastSignature: "0x" + hex.EncodeToString(v[6].([]byte)),
 			LastTime:      time.Now(),
 		}
-		fmt.Printf("... set lastOnlineInfo = %+v \n", lastOnlineInfo)
+		fmt.Printf("... init reset lastOnlineInfo = %+v \n", lastOnlineInfo)
 
 		err = chain.StoreOnline(&lastOnlineInfo)
 		if err != nil {
