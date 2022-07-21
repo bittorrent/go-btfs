@@ -13,7 +13,7 @@ func CheckExistLastOnline(cfg *config.Config, configRoot string, chainId int64) 
 		return err
 	}
 
-	// set config online status config
+	// if nil, set config online status config
 	if lastOnline == nil {
 		var reportOnline bool
 		var reportStatusContract bool
@@ -35,7 +35,7 @@ func CheckExistLastOnline(cfg *config.Config, configRoot string, chainId int64) 
 		}
 	}
 
-	// set last online info
+	// if nil, set last online info
 	if lastOnline == nil {
 		err = serv.checkLastOnlineInfo(cfg.Identity.PeerID, cfg.Identity.BttcAddr)
 		if err != nil {

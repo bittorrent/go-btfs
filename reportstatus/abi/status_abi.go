@@ -315,11 +315,6 @@ const StatusHeartABI = `[
 				"type": "uint32"
 			},
 			{
-				"internalType": "uint32",
-				"name": "",
-				"type": "uint32"
-			},
-			{
 				"internalType": "bytes",
 				"name": "",
 				"type": "bytes"

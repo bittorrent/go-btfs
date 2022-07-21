@@ -158,7 +158,7 @@ func (s *service) checkLastOnlineInfo(peerId, bttcAddr string) error {
 				BttcAddress: bttcAddr,
 				SignedTime:  v[4].(uint32),
 			},
-			LastSignature: "0x" + hex.EncodeToString(v[6].([]byte)),
+			LastSignature: "0x" + hex.EncodeToString(v[5].([]byte)),
 			LastTime:      time.Now(),
 		}
 		fmt.Printf("... init reset lastOnlineInfo = %+v \n", lastOnlineInfo)
