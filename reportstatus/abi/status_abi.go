@@ -126,12 +126,6 @@ const StatusHeartABI = `[
 			},
 			{
 				"indexed": false,
-				"internalType": "uint32",
-				"name": "nowTime",
-				"type": "uint32"
-			},
-			{
-				"indexed": false,
 				"internalType": "address",
 				"name": "bttcAddress",
 				"type": "address"
@@ -140,6 +134,18 @@ const StatusHeartABI = `[
 				"indexed": false,
 				"internalType": "uint32",
 				"name": "signedTime",
+				"type": "uint32"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint32",
+				"name": "lastNonce",
+				"type": "uint32"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint32",
+				"name": "nowTime",
 				"type": "uint32"
 			},
 			{
@@ -170,19 +176,6 @@ const StatusHeartABI = `[
 		],
 		"name": "versionChanged",
 		"type": "event"
-	},
-	{
-		"inputs": [],
-		"name": "currentSignAddress",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
 	},
 	{
 		"inputs": [],
@@ -264,8 +257,13 @@ const StatusHeartABI = `[
 					},
 					{
 						"internalType": "uint32",
-						"name": "lastTime",
+						"name": "lastSignedTime",
 						"type": "uint32"
+					},
+					{
+						"internalType": "bytes",
+						"name": "lastSigned",
+						"type": "bytes"
 					},
 					{
 						"internalType": "uint16[30]",
@@ -317,6 +315,16 @@ const StatusHeartABI = `[
 				"type": "uint32"
 			},
 			{
+				"internalType": "uint32",
+				"name": "",
+				"type": "uint32"
+			},
+			{
+				"internalType": "bytes",
+				"name": "",
+				"type": "bytes"
+			},
+			{
 				"internalType": "uint16[30]",
 				"name": "",
 				"type": "uint16[30]"
@@ -326,7 +334,13 @@ const StatusHeartABI = `[
 		"type": "function"
 	},
 	{
-		"inputs": [],
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "signAddress",
+				"type": "address"
+			}
+		],
 		"name": "initialize",
 		"outputs": [],
 		"stateMutability": "nonpayable",

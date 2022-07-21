@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
 	"math/big"
 	"strings"
 	"time"
@@ -25,16 +26,21 @@ var (
 )
 
 const (
-	ReportStatusTime = 10 * time.Second // 10 * time.Second
+	ReportStatusTime = 60 * time.Second // 10 * time.Minute
 )
 
 func Init(transactionService transaction.Service, cfg *config.Config, statusAddress common.Address) error {
 	New(statusAddress, transactionService, cfg)
+
+	err := CheckExistLastOnline(cfg)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func isReportStatusEnabled(cfg *config.Config) bool {
-	return cfg.Experimental.StorageHostEnabled && cfg.Experimental.ReportStatusContract
+	return cfg.Experimental.StorageHostEnabled || cfg.Experimental.ReportStatusContract
 }
 
 type service struct {
@@ -118,6 +124,60 @@ func (s *service) ReportStatus() (common.Hash, error) {
 		}()
 	}()
 	return txHash, nil
+}
+
+// report heart status
+func (s *service) checkLastOnlineInfo(peerId, bttcAddr string) error {
+	callData, err := statusABI.Pack("getStatus", peerId)
+	if err != nil {
+		return err
+	}
+	request := &transaction.TxRequest{
+		To:   &s.statusAddress,
+		Data: callData,
+	}
+
+	result, err := s.transactionService.Call(context.Background(), request)
+	if err != nil {
+		return err
+	}
+	v, err := statusABI.Unpack("getStatus", result)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("...... getStatus - result v = %+v, err = %v \n", v, err)
+
+	nonce := v[3].(uint32)
+	if nonce > 0 {
+		lastOnlineInfo := chain.LastOnlineInfo{
+			LastSignedInfo: onlinePb.SignedInfo{
+				Peer:        v[0].(string),
+				CreatedTime: v[1].(uint32),
+				Version:     v[2].(string),
+				Nonce:       v[3].(uint32),
+				BttcAddress: bttcAddr,
+				SignedTime:  v[4].(uint32),
+			},
+			LastSignature: "0x" + hex.EncodeToString(v[6].([]byte)),
+			LastTime:      time.Now(),
+		}
+		fmt.Printf("... set lastOnlineInfo = %+v \n", lastOnlineInfo)
+
+		err = chain.StoreOnline(&lastOnlineInfo)
+		if err != nil {
+			return err
+		}
+	}
+
+	// WaitForReceipt takes long time
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Errorf("getStatus recovered:%+v", err)
+			}
+		}()
+	}()
+	return nil
 }
 
 // report heart status
