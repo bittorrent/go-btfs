@@ -63,4 +63,10 @@ github.com/bittorrent/go-btfs/thirdparty/notifier
 github.com/bittorrent/go-btfs/thirdparty/unit
 github.com/bittorrent/go-btfs/thirdparty/verifbs
 github.com/bittorrent/go-btfs/utils
+github.com/bittorrent/go-btfs/settlement/swap
 github.com/bittorrent/go-btfs/settlement/swap/bttc
+github.com/bittorrent/go-btfs/settlement/swap/erc20
+github.com/bittorrent/go-btfs/settlement/swap/vault
+github.com/bittorrent/go-btfs/transaction
+github.com/bittorrent/go-btfs/transaction/crypto
+github.com/bittorrent/go-btfs/transaction/crypto/clef

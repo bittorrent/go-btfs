@@ -2,12 +2,12 @@ package mock
 
 import (
 	"context"
+	"errors"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/bittorrent/go-btfs/settlement/swap"
-	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 )
 
@@ -24,8 +24,8 @@ type Service struct {
 	receiveChequeFunc   func(context.Context, string, *vault.SignedCheque, *big.Int) error
 	payFunc             func(context.Context, string, *big.Int)
 	handshakeFunc       func(string, common.Address) error
-	lastSentChequeFunc  func(string) (*vault.SignedCheque, error)
-	lastSentChequesFunc func() (map[string]*vault.SignedCheque, error)
+	lastSendChequeFunc  func(string) (*vault.SignedCheque, error)
+	lastSendChequesFunc func() (map[string]*vault.SignedCheque, error)
 
 	lastReceivedChequeFunc  func(string) (*vault.SignedCheque, error)
 	lastReceivedChequesFunc func() (map[string]*vault.SignedCheque, error)
@@ -78,15 +78,15 @@ func WithHandshakeFunc(f func(string, common.Address) error) Option {
 	})
 }
 
-func WithLastSentChequeFunc(f func(string) (*vault.SignedCheque, error)) Option {
+func WithLastSendChequeFunc(f func(string) (*vault.SignedCheque, error)) Option {
 	return optionFunc(func(s *Service) {
-		s.lastSentChequeFunc = f
+		s.lastSendChequeFunc = f
 	})
 }
 
-func WithLastSentChequesFunc(f func() (map[string]*vault.SignedCheque, error)) Option {
+func WithLastSendChequesFunc(f func() (map[string]*vault.SignedCheque, error)) Option {
 	return optionFunc(func(s *Service) {
-		s.lastSentChequesFunc = f
+		s.lastSendChequesFunc = f
 	})
 }
 
@@ -125,16 +125,16 @@ func New(opts ...Option) swap.Interface {
 	return mock
 }
 
-func NewSwap(opts ...Option) swapprotocol.Swap {
-	mock := new(Service)
-	mock.settlementsSent = make(map[string]*big.Int)
-	mock.settlementsRecv = make(map[string]*big.Int)
+// func NewSwap(opts ...Option) swapprotocol.Swap {
+// 	mock := new(Service)
+// 	mock.settlementsSent = make(map[string]*big.Int)
+// 	mock.settlementsRecv = make(map[string]*big.Int)
 
-	for _, o := range opts {
-		o.apply(mock)
-	}
-	return mock
-}
+// 	for _, o := range opts {
+// 		o.apply(mock)
+// 	}
+// 	return mock
+// }
 
 // Pay is the mock Pay function of swap.
 func (s *Service) Pay(ctx context.Context, peer string, amount *big.Int) {
@@ -157,7 +157,7 @@ func (s *Service) TotalSent(peer string) (totalSent *big.Int, err error) {
 	if v, ok := s.settlementsSent[peer]; ok {
 		return v, nil
 	}
-	return big.NewInt(0), nil
+	return big.NewInt(0), errors.New("can't get TotalSent in swap mock")
 }
 
 // TotalReceived is the mock TotalReceived function of swap.
@@ -168,7 +168,7 @@ func (s *Service) TotalReceived(peer string) (totalReceived *big.Int, err error)
 	if v, ok := s.settlementsRecv[peer]; ok {
 		return v, nil
 	}
-	return big.NewInt(0), nil
+	return big.NewInt(0), errors.New("can't get TotalReceived in swap mock")
 }
 
 // SettlementsSent is the mock SettlementsSent function of swap.
@@ -195,55 +195,61 @@ func (s *Service) Handshake(peer string, beneficiary common.Address) error {
 	return nil
 }
 
-func (s *Service) LastSentCheque(address string) (*vault.SignedCheque, error) {
-	if s.lastSentChequeFunc != nil {
-		return s.lastSentChequeFunc(address)
+func (s *Service) LastSendCheque(address string) (*vault.SignedCheque, error) {
+	if s.lastSendChequeFunc != nil {
+		return s.lastSendChequeFunc(address)
 	}
-	return nil, nil
+	return nil, errors.New("lastSendChequeFunc of swap mock don't implemented")
 }
 
-func (s *Service) LastSentCheques() (map[string]*vault.SignedCheque, error) {
-	if s.lastSentChequesFunc != nil {
-		return s.lastSentChequesFunc()
+func (s *Service) LastSendCheques() (map[string]*vault.SignedCheque, error) {
+	if s.lastSendChequesFunc != nil {
+		return s.lastSendChequesFunc()
 	}
-	return nil, nil
+	return nil, errors.New("lastSendChequesFunc of swap mock don't implemented")
 }
 
 func (s *Service) LastReceivedCheque(address string) (*vault.SignedCheque, error) {
 	if s.lastReceivedChequeFunc != nil {
 		return s.lastReceivedChequeFunc(address)
 	}
-	return nil, nil
+	return nil, errors.New("lastReceivedChequeFunc of swap mock don't implemented")
 }
 
 func (s *Service) LastReceivedCheques() (map[string]*vault.SignedCheque, error) {
 	if s.lastReceivedChequesFunc != nil {
 		return s.lastReceivedChequesFunc()
 	}
-	return nil, nil
+	return nil, errors.New("lastReceivedChequesFunc of swap mock don't implemented")
 }
 
 func (s *Service) CashCheque(ctx context.Context, peer string) (common.Hash, error) {
 	if s.cashChequeFunc != nil {
 		return s.cashChequeFunc(ctx, peer)
 	}
-	return common.Hash{}, nil
+	return common.Hash{}, errors.New("cashChequeFunc of swap mock don't implemented")
 }
 
 func (s *Service) CashoutStatus(ctx context.Context, peer string) (*vault.CashoutStatus, error) {
 	if s.cashoutStatusFunc != nil {
 		return s.cashoutStatusFunc(ctx, peer)
 	}
-	return nil, nil
+	return nil, errors.New("cashoutStatusFunc of swap mock don't implemented")
 }
 
 func (s *Service) ReceiveCheque(ctx context.Context, peer string, cheque *vault.SignedCheque, exchangeRate *big.Int) (err error) {
 	if s.receiveChequeFunc != nil {
 		return s.receiveChequeFunc(ctx, peer, cheque, exchangeRate)
 	}
-
-	return nil
+	return errors.New("receiveChequeFunc of swap mock don't implemented")
 }
+
+func (s *Service) HasCashoutAction(ctx context.Context, peer string) (bool, error)
+func (s *Service) ReceivedChequeRecordsByPeer(peer string) ([]vault.ChequeRecord, error)
+func (s *Service) ReceivedChequeRecordsAll() ([]vault.ChequeRecord, error)
+func (s *Service) ReceivedChequeRecordsCount() (int, error)
+func (s *Service) SendChequeRecordsByPeer(peer string) ([]vault.ChequeRecord, error)
+func (s *Service) SendChequeRecordsAll() ([]vault.ChequeRecord, error)
 
 // Option is the option passed to the mock settlement service
 type Option interface {

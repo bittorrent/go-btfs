@@ -89,7 +89,7 @@ func TestSignChequeIntegration(t *testing.T) {
 	}
 
 	// computed using ganache
-	expectedSignature, err := hex.DecodeString("171b63fc598ae2c7987f4a756959dadddd84ccd2071e7b5c3aa3437357be47286125edc370c344a163ba7f4183dfd3611996274a13e4b3496610fc00c0e2fc421c")
+	expectedSignature, err := hex.DecodeString("3305964770f9b66463d58b61e7de9bf2b784098fc715338083946aabf69c7dec0cae8345705d4bf2e556482bd27f11ceb0e5ae1eb191a907cde7aee3989a3ad51c")
 	if err != nil {
 		t.Fatal(err)
 	}
