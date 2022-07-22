@@ -18,7 +18,7 @@ import (
 )
 
 func isReportOnlineEnabled(cfg *config.Config) bool {
-	return cfg.Experimental.StorageHostEnabled && cfg.Experimental.ReportOnline
+	return cfg.Experimental.StorageHostEnabled || cfg.Experimental.ReportOnline
 }
 
 func (dc *dcWrap) doSendDataOnline(ctx context.Context, config *config.Config, sm *onlinePb.ReqSignMetrics) error {
@@ -161,7 +161,7 @@ func (dc *dcWrap) getPayloadOnline(btfsNode *core.IpfsNode) ([]byte, error) {
 
 func (dc *dcWrap) collectionAgentOnline(node *core.IpfsNode) {
 	//tick := time.NewTicker(heartBeat)
-	tick := time.NewTicker(10 * time.Second)
+	tick := time.NewTicker(60 * time.Second)
 	defer tick.Stop()
 
 	// Force tick on immediate start

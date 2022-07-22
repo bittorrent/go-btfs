@@ -670,6 +670,28 @@ func SyncConfigChainInfoV2(configRoot string, chainid int64, endpoint string, cu
 	return nil
 }
 
+func SyncConfigOnlineCfg(configRoot string, onlineServerDomain string, reportOnline, reportStatusContract bool) error {
+	r, err := fsrepo.Open(configRoot)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	cfg, err := r.Config()
+	if err != nil {
+		return err
+	}
+	cfg.Services.OnlineServerDomain = onlineServerDomain
+	cfg.Experimental.ReportOnline = reportOnline
+	cfg.Experimental.ReportStatusContract = reportStatusContract
+
+	err = r.SetConfig(cfg)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func SetConfigStorageHostEnable(configRoot string, enable bool) error {
 	r, err := fsrepo.Open(configRoot)
 	if err != nil {
