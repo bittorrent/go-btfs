@@ -245,9 +245,10 @@ func cycleCheckReport() {
 		fmt.Printf("... CheckReportStatus report: %+v \n", report)
 
 		now := time.Now()
+		nowUnixMod := now.Unix() % 86400
 		// report only 1 hour every, and must after 10 hour.
-		if (now.Unix()%86400) > report.ReportStatusSeconds &&
-			(now.Unix()%86400) < report.ReportStatusSeconds+3600 &&
+		if nowUnixMod > report.ReportStatusSeconds &&
+			nowUnixMod < report.ReportStatusSeconds+3600 &&
 			now.Sub(report.LastReportTime) > 10*time.Hour {
 
 			err = serv.CheckReportStatus()
