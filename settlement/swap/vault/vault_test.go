@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"testing"
 
+	mockchequestore "github.com/bittorrent/go-btfs/settlement/swap/chequestore/mock"
 	erc20mock "github.com/bittorrent/go-btfs/settlement/swap/erc20/mock"
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 	storemock "github.com/bittorrent/go-btfs/statestore/mock"
@@ -72,8 +73,16 @@ func TestVaultDeposit(t *testing.T) {
 	balance := big.NewInt(30)
 	depositAmount := big.NewInt(20)
 	txHash := common.HexToHash("0xdddd")
+
+	factoryAddress := common.HexToAddress("0xabcd")
+	// issuerAddress := common.HexToAddress("0xefff")
+	// deployTransactionHash := common.HexToHash("0xffff")
+	// nonce := common.HexToHash("eeff")
+
 	vaultService, err := vault.New(
-		transactionmock.New(),
+		transactionmock.New(
+			transactionmock.WithABISend(&vaultABI, txHash, factoryAddress, big.NewInt(0), "deposit", depositAmount),
+		),
 		address,
 		ownerAdress,
 		nil,
@@ -205,7 +214,11 @@ func TestVaultIssue(t *testing.T) {
 		store,
 		chequeSigner,
 		erc20mock.New(),
-		nil,
+		mockchequestore.NewChequeStore(
+			mockchequestore.WithStoreSendChequeRecordFunc(func(vault, beneficiary common.Address, amount *big.Int) error {
+				return nil
+			}),
+		),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -380,7 +393,7 @@ func TestVaultIssueOutOfFunds(t *testing.T) {
 	vaultService, err := vault.New(
 		transactionmock.New(
 			transactionmock.WithABICallSequence(
-				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "balance"),
+				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalbalance"),
 				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalPaidOut"),
 			),
 		),
@@ -420,7 +433,7 @@ func TestVaultWithdraw(t *testing.T) {
 	vaultService, err := vault.New(
 		transactionmock.New(
 			transactionmock.WithABICallSequence(
-				transactionmock.ABICall(&vaultABI, address, balance.FillBytes(make([]byte, 32)), "balance"),
+				transactionmock.ABICall(&vaultABI, address, balance.FillBytes(make([]byte, 32)), "totalbalance"),
 				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalPaidOut"),
 			),
 			transactionmock.WithABISend(&vaultABI, txHash, address, big.NewInt(0), "withdraw", withdrawAmount),
@@ -456,7 +469,7 @@ func TestVaultWithdrawInsufficientFunds(t *testing.T) {
 		transactionmock.New(
 			transactionmock.WithABISend(&vaultABI, txHash, address, big.NewInt(0), "withdraw", withdrawAmount),
 			transactionmock.WithABICallSequence(
-				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "balance"),
+				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalbalance"),
 				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalPaidOut"),
 			),
 		),
@@ -490,7 +503,7 @@ func TestStateStoreKeys(t *testing.T) {
 		t.Fatalf("wrong last issued cheque key. wanted %s, got %s", expected, vault.LastIssuedChequeKey(address))
 	}
 
-	expected = "swap_vault_last_received_cheque__000000000000000000000000000000000000abcd"
+	expected = "swap_vault_last_received_cheque_000000000000000000000000000000000000abcd"
 	if vault.LastReceivedChequeKey(address) != expected {
 		t.Fatalf("wrong last received cheque key. wanted %s, got %s", expected, vault.LastReceivedChequeKey(address))
 	}

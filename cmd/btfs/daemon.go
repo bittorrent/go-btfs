@@ -44,6 +44,7 @@ import (
 	nodeMount "github.com/bittorrent/go-btfs/fuse/node"
 	"github.com/bittorrent/go-btfs/repo"
 	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
+	"github.com/bittorrent/go-btfs/reportstatus"
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 	"github.com/bittorrent/go-btfs/spin"
 	"github.com/bittorrent/go-btfs/transaction"
@@ -467,6 +468,13 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	_, err = chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
 	if err != nil {
 		fmt.Println("init settlement err: ", err)
+		return err
+	}
+
+	// init report status contract
+	err = reportstatus.Init(chainInfo.TransactionService, cfg, configRoot, chainCfg.StatusAddress, chainInfo.ChainID)
+	if err != nil {
+		fmt.Println("init report status, err: ", err)
 		return err
 	}
 

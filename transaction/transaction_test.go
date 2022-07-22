@@ -69,7 +69,7 @@ func TestTransactionSend(t *testing.T) {
 	recipient := common.HexToAddress("0xabcd")
 	txData := common.Hex2Bytes("0xabcdee")
 	value := big.NewInt(1)
-	suggestedGasPrice := big.NewInt(2)
+	suggestedGasPrice := big.NewInt(300000000000000) //gas price has been fixed to 300000000000000
 	estimatedGasLimit := uint64(3)
 	nonce := uint64(2)
 	chainID := big.NewInt(5)
@@ -389,7 +389,11 @@ func TestTransactionWaitForReceipt(t *testing.T) {
 				}, nil
 			}),
 		),
-		signermock.New(),
+		signermock.New(
+			signermock.WithEthereumAddressFunc(func() (common.Address, error) {
+				return common.Address{}, nil
+			}),
+		),
 		store,
 		chainID,
 		monitormock.New(

@@ -2,6 +2,7 @@ package mock
 
 import (
 	"crypto/ecdsa"
+	"errors"
 	"math/big"
 
 	"github.com/bittorrent/go-btfs/transaction/crypto"
@@ -11,33 +12,46 @@ import (
 )
 
 type signerMock struct {
-	signTx          func(transaction *types.Transaction, chainID *big.Int) (*types.Transaction, error)
-	signTypedData   func(*eip712.TypedData) ([]byte, error)
-	ethereumAddress func() (common.Address, error)
-	signFunc        func([]byte) ([]byte, error)
+	signTxFunc          func(transaction *types.Transaction, chainID *big.Int) (*types.Transaction, error)
+	signTypedDataFunc   func(*eip712.TypedData) ([]byte, error)
+	ethereumAddressFunc func() (common.Address, error)
+	signFuncFunc        func([]byte) ([]byte, error)
+	publicKeyFunc       func() (*ecdsa.PublicKey, error)
 }
 
 func (m *signerMock) EthereumAddress() (common.Address, error) {
-	if m.ethereumAddress != nil {
-		return m.ethereumAddress()
+	if m.ethereumAddressFunc != nil {
+		return m.ethereumAddressFunc()
 	}
-	return common.Address{}, nil
+	return common.Address{}, errors.New("signerMock.ethereumAddressFunc not implemented")
 }
 
 func (m *signerMock) Sign(data []byte) ([]byte, error) {
-	return m.signFunc(data)
+	if m.signFuncFunc != nil {
+		return m.signFuncFunc(data)
+	}
+	return nil, errors.New("signerMock.signFuncFunc not implemented")
 }
 
 func (m *signerMock) SignTx(transaction *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
-	return m.signTx(transaction, chainID)
+	if m.signTxFunc != nil {
+		return m.signTxFunc(transaction, chainID)
+	}
+	return nil, errors.New("signerMock.signTxFunc not implemented")
 }
 
-func (*signerMock) PublicKey() (*ecdsa.PublicKey, error) {
-	return nil, nil
+func (m *signerMock) PublicKey() (*ecdsa.PublicKey, error) {
+	if m.publicKeyFunc != nil {
+		return m.publicKeyFunc()
+	}
+	return nil, errors.New("signerMock.publicKeyFunc not implemented")
 }
 
 func (m *signerMock) SignTypedData(d *eip712.TypedData) ([]byte, error) {
-	return m.signTypedData(d)
+	if m.signTypedDataFunc != nil {
+		return m.signTypedDataFunc(d)
+	}
+	return nil, errors.New("signerMock.signTypedDataFunc not implemented")
 }
 
 func New(opts ...Option) crypto.Signer {
@@ -59,24 +73,30 @@ func (f optionFunc) apply(r *signerMock) { f(r) }
 
 func WithSignFunc(f func(data []byte) ([]byte, error)) Option {
 	return optionFunc(func(s *signerMock) {
-		s.signFunc = f
+		s.signFuncFunc = f
 	})
 }
 
 func WithSignTxFunc(f func(transaction *types.Transaction, chainID *big.Int) (*types.Transaction, error)) Option {
 	return optionFunc(func(s *signerMock) {
-		s.signTx = f
+		s.signTxFunc = f
 	})
 }
 
 func WithSignTypedDataFunc(f func(*eip712.TypedData) ([]byte, error)) Option {
 	return optionFunc(func(s *signerMock) {
-		s.signTypedData = f
+		s.signTypedDataFunc = f
 	})
 }
 
 func WithEthereumAddressFunc(f func() (common.Address, error)) Option {
 	return optionFunc(func(s *signerMock) {
-		s.ethereumAddress = f
+		s.ethereumAddressFunc = f
+	})
+}
+
+func WithPublicKeyFunc(f func() (*ecdsa.PublicKey, error)) Option {
+	return optionFunc(func(s *signerMock) {
+		s.publicKeyFunc = f
 	})
 }
