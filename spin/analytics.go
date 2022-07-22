@@ -43,6 +43,8 @@ const (
 	// HeartBeat is how often we send data to server, at the moment set to 60 Minutes
 	heartBeat = 60 * time.Minute
 
+	heartBeatOnline = 60 * time.Minute
+
 	// Expotentially delayed retries will be capped at this total time
 	maxRetryTotal = 10 * time.Minute
 
