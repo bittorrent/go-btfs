@@ -110,6 +110,7 @@ func (s *service) ReportStatus() (common.Hash, error) {
 	if err != nil {
 		return common.Hash{}, err
 	}
+	fmt.Println("... ReportStatus, txHash, err = ", txHash, err)
 	_, err = chain.SetReportStatusOK()
 	if err != nil {
 		return common.Hash{}, err
