@@ -26,7 +26,8 @@ var (
 )
 
 const (
-	ReportStatusTime = 60 * time.Second // 10 * time.Minute
+	ReportStatusTime = 10 * time.Minute
+	//ReportStatusTime = 10 * time.Second // 10 * time.Minute
 )
 
 func Init(transactionService transaction.Service, cfg *config.Config, configRoot string, statusAddress common.Address, chainId int64) error {
@@ -110,6 +111,7 @@ func (s *service) ReportStatus() (common.Hash, error) {
 	if err != nil {
 		return common.Hash{}, err
 	}
+	fmt.Println("... ReportStatus, txHash, err = ", txHash, err)
 	_, err = chain.SetReportStatusOK()
 	if err != nil {
 		return common.Hash{}, err
@@ -242,20 +244,17 @@ func cycleCheckReport() {
 		}
 		fmt.Printf("... CheckReportStatus report: %+v \n", report)
 
-		//now := time.Now()
-		//// report only 1 hour, and must after 10 hour.
-		//if (now.Unix()%86400) > report.ReportStatusSeconds &&
-		//	(now.Unix()%86400) < report.ReportStatusSeconds+3600 &&
-		//	now.Sub(report.LastReportTime) > 10*time.Hour {
-		//	err := serv.CheckReportStatus()
-		//	if err != nil {
-		//		continue
-		//	}
-		//}
+		now := time.Now()
+		nowUnixMod := now.Unix() % 86400
+		// report only 1 hour every, and must after 10 hour.
+		if nowUnixMod > report.ReportStatusSeconds &&
+			nowUnixMod < report.ReportStatusSeconds+3600 &&
+			now.Sub(report.LastReportTime) > 10*time.Hour {
 
-		err = serv.CheckReportStatus()
-		if err != nil {
-			continue
+			err = serv.CheckReportStatus()
+			if err != nil {
+				continue
+			}
 		}
 	}
 }
