@@ -40,7 +40,7 @@ func main() {
 	p.Env = append(os.Environ(), "IPFS_COVER_RET_FILE="+retFile.Name())
 
 	p.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: syscall.SIGTERM,
+		// Pdeathsig: syscall.SIGTERM,
 	}
 
 	sig := make(chan os.Signal, 10)
