@@ -4,7 +4,7 @@ package btfs
 var CurrentCommit string
 
 // CurrentVersionNumber is the current application's version literal
-const CurrentVersionNumber = "pre_2.2.0"
+const CurrentVersionNumber = "2.2.0-pre"
 
 const ApiVersion = "/go-btfs/" + CurrentVersionNumber + "/"
 
