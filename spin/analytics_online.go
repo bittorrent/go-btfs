@@ -160,8 +160,8 @@ func (dc *dcWrap) getPayloadOnline(btfsNode *core.IpfsNode) ([]byte, error) {
 }
 
 func (dc *dcWrap) collectionAgentOnline(node *core.IpfsNode) {
-	//tick := time.NewTicker(heartBeat)
-	tick := time.NewTicker(60 * time.Second)
+	tick := time.NewTicker(heartBeatOnline)
+	//tick := time.NewTicker(10 * time.Second)
 	defer tick.Stop()
 
 	// Force tick on immediate start
