@@ -3,9 +3,10 @@ package sessions
 import (
 	"context"
 	"fmt"
-	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 	"strings"
 	"time"
+
+	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"

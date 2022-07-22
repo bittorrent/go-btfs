@@ -12,15 +12,16 @@ import (
 	transactionmock "github.com/bittorrent/go-btfs/transaction/mock"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 var (
-	endPoint = "http://18.144.29.246:8110"
+	endPoint = "https://rpc.bittorrentchain.io"
 
-	SenderAdd = common.HexToAddress("0xA4E7663A031ca1f67eEa828E4795653504d38c6e")
-	erc20Add  = common.HexToAddress("0xD26c3d45a805a5f7809E27Bd18949d559e281900")
+	SenderAdd = common.HexToAddress("0x44721adf10BB3a76Ce9B456f53Ce9F652be9a2e6")
+	erc20Add  = common.HexToAddress("0x23181F21DEa5936e24163FFABa4Ea3B316B57f3C")
 
 	erc20ABI          = transaction.ParseABIUnchecked(conabi.Erc20ABI)
 	defaultPrivateKey = "e484c4373db5c55a9813e4abbb74a15edd794019b8db4365a876ed538622bcf9"
@@ -137,48 +138,47 @@ func TestBalanceOf(t *testing.T) {
 	}
 }
 
-//NOTE: unit test should not rely on the real outside RPC calls
-// func TestRealBalance(t *testing.T) {
-// 	backend, err := DialBackend()
+func TestRealBalance(t *testing.T) {
+	backend, err := DialBackend()
 
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	callData, err := erc20ABI.Pack("balanceOf", SenderAdd)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	callData, err := erc20ABI.Pack("balanceOf", SenderAdd)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	msg := ethereum.CallMsg{
-// 		From:     SenderAdd,
-// 		To:       &erc20Add,
-// 		Data:     callData,
-// 		GasPrice: big.NewInt(0),
-// 		Gas:      0,
-// 		Value:    big.NewInt(0),
-// 	}
-// 	data, err := backend.CallContract(context.Background(), msg, nil)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	msg := ethereum.CallMsg{
+		From:     SenderAdd,
+		To:       &erc20Add,
+		Data:     callData,
+		GasPrice: big.NewInt(0),
+		Gas:      0,
+		Value:    big.NewInt(0),
+	}
+	data, err := backend.CallContract(context.Background(), msg, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	results, err := erc20ABI.Unpack("balanceOf", data)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	results, err := erc20ABI.Unpack("balanceOf", data)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	if len(results) != 1 {
-// 		t.Fatal(err)
-// 	}
+	if len(results) != 1 {
+		t.Fatal(err)
+	}
 
-// 	balance, ok := abi.ConvertType(results[0], new(big.Int)).(*big.Int)
-// 	if !ok || balance == nil {
-// 		t.Fatal(err)
-// 	}
+	balance, ok := abi.ConvertType(results[0], new(big.Int)).(*big.Int)
+	if !ok || balance == nil {
+		t.Fatal(err)
+	}
 
-// 	t.Log("real balance is: ", balance)
-// }
+	t.Log("real balance is: ", balance)
+}
 
 func TestTransfer(t *testing.T) {
 	address := common.HexToAddress("0xabcd")
@@ -201,5 +201,77 @@ func TestTransfer(t *testing.T) {
 
 	if txHash != returnedTxHash {
 		t.Fatalf("returned wrong transaction hash. wanted %v, got %v", txHash, returnedTxHash)
+	}
+}
+
+func TestAllowance(t *testing.T) {
+	vaultAddress := common.HexToAddress("0xabcd")
+	issue := common.HexToAddress("01")
+	// value := big.NewInt(20)
+	txHash := common.HexToHash("0xdddd")
+	result := big.NewInt(1)
+
+	erc20 := erc20.New(
+		backendmock.New(),
+		transactionmock.New(
+			transactionmock.WithABICall(&erc20ABI, vaultAddress, result.FillBytes(make([]byte, 32)), "allowance", issue, vaultAddress),
+		),
+		vaultAddress,
+	)
+
+	num, err := erc20.Allowance(context.Background(), issue, vaultAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if num.Cmp(big.NewInt(1)) != 0 {
+		t.Fatalf("returned wrong transaction hash. wanted %v, got %v", txHash, num)
+	}
+}
+
+func TestApprove(t *testing.T) {
+	toAddress := common.HexToAddress("0xabcd")
+	value := big.NewInt(20)
+	txHash := common.HexToHash("0xdddd")
+
+	erc20 := erc20.New(
+		backendmock.New(),
+		transactionmock.New(
+			transactionmock.WithABISend(&erc20ABI, txHash, toAddress, big.NewInt(0), "approve", toAddress, value),
+		),
+		toAddress,
+	)
+
+	resultHashTx, err := erc20.Approve(context.Background(), toAddress, value)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if resultHashTx != txHash {
+		t.Fatalf("returned wrong transaction hash. wanted %v, got %v", txHash, resultHashTx)
+	}
+}
+
+func TestTransferFrom(t *testing.T) {
+	issue := common.HexToAddress("0xabcdfg")
+	vaultAddress := common.HexToAddress("0xabcd")
+	value := big.NewInt(20)
+	txHash := common.HexToHash("0xdddd")
+
+	erc20 := erc20.New(
+		backendmock.New(),
+		transactionmock.New(
+			transactionmock.WithABISend(&erc20ABI, txHash, vaultAddress, big.NewInt(0), "transferFrom", issue, vaultAddress, value),
+		),
+		vaultAddress,
+	)
+
+	resultHashTx, err := erc20.TransferFrom(context.Background(), issue, vaultAddress, value)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if resultHashTx != txHash {
+		t.Fatalf("returned wrong transaction hash. wanted %v, got %v", txHash, resultHashTx)
 	}
 }
