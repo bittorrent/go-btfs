@@ -26,8 +26,8 @@ var (
 )
 
 const (
-	ReportStatusTime = 10 * time.Minute
-	//ReportStatusTime = 60 * time.Second // 10 * time.Minute
+	//ReportStatusTime = 10 * time.Minute
+	ReportStatusTime = 60 * time.Second // 10 * time.Minute
 )
 
 func Init(transactionService transaction.Service, cfg *config.Config, configRoot string, statusAddress common.Address, chainId int64) error {
@@ -99,6 +99,7 @@ func (s *service) ReportStatus() (common.Hash, error) {
 		return common.Hash{}, err
 	}
 
+	s.statusAddress = common.HexToAddress("0x39EE9a950E52dE1B228C989B4D035f008d47DA77")
 	request := &transaction.TxRequest{
 		To:          &s.statusAddress,
 		Data:        callData,
@@ -277,17 +278,21 @@ func cycleCheckReport() {
 			continue
 		}
 
-		now := time.Now()
-		nowUnixMod := now.Unix() % 86400
-		// report only 1 hour every, and must after 10 hour.
-		if nowUnixMod > report.ReportStatusSeconds &&
-			nowUnixMod < report.ReportStatusSeconds+3600 &&
-			now.Sub(report.LastReportTime) > 10*time.Hour {
-
-			err = serv.CheckReportStatus()
-			if err != nil {
-				continue
-			}
+		err = serv.CheckReportStatus()
+		if err != nil {
+			continue
 		}
+		//now := time.Now()
+		//nowUnixMod := now.Unix() % 86400
+		//// report only 1 hour every, and must after 10 hour.
+		//if nowUnixMod > report.ReportStatusSeconds &&
+		//	nowUnixMod < report.ReportStatusSeconds+3600 &&
+		//	now.Sub(report.LastReportTime) > 10*time.Hour {
+		//
+		//	err = serv.CheckReportStatus()
+		//	if err != nil {
+		//		continue
+		//	}
+		//}
 	}
 }
