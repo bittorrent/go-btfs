@@ -151,8 +151,8 @@ var ReportListCmd = &cmds.Command{
 
 		s := list[From:To]
 		l := len(s)
-		for i,j := 0,l-1; i<j; i,j = i+1,j-1 {
-			s[i],s[j] = s[j], s[i]
+		for i, j := 0, l-1; i < j; i, j = i+1, j-1 {
+			s[i], s[j] = s[j], s[i]
 		}
 
 		return cmds.EmitOnce(res, &ReportListCmdRet{
