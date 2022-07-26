@@ -11,7 +11,7 @@ These are exactly what BTFS aims to clear up. Besides, underpinned by BTTC, BTFS
 
 ## BTFS 2.0 Architecture Diagram
 
-![Architecture Diagram](https://files.readme.io/af75286-.png)
+![Architecture Diagram](https://files.readme.io/a21e9fb--min.png)
 
 ## Table of Contents
 - [Faucet](#Faucet)
