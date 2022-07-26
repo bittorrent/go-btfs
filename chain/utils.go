@@ -202,6 +202,65 @@ func SetReportStatusOK() (*ReportStatusInfo, error) {
 	return &reportStatusInfo, nil
 }
 
+// GetReportStatus from leveldb
+var keyReportStatusList = "keyReportStatusList"
+
+type LevelDbReportStatusInfo struct {
+	Peer           string    `json:"peer"`
+	BttcAddress    string    `json:"bttc_addr"`
+	StatusContract string    `json:"status_contract"`
+	Nonce          uint32    `json:"nonce"`
+	TxHash         string    `json:"tx_hash"`
+	GasSpend       string    `json:"gas_spend"`
+	ReportTime     time.Time `json:"report_time"`
+	IncreaseNonce  uint32    `json:"increase_nonce"`
+}
+
+// SetReportStatusListOK store tx list
+func SetReportStatusListOK(r *LevelDbReportStatusInfo) ([]*LevelDbReportStatusInfo, error) {
+	init := false
+
+	rList := make([]*LevelDbReportStatusInfo, 0)
+	err := StateStore.Get(keyReportStatusList, &rList)
+	if err != nil {
+		if err.Error() == "storage: not found" {
+			init = true
+			// continue
+		} else {
+			return nil, err
+		}
+	}
+
+	if init {
+		r.IncreaseNonce = r.Nonce
+	} else {
+		r.IncreaseNonce = r.Nonce - rList[len(rList)-1].Nonce
+	}
+
+	rList = append(rList, r)
+	err = StateStore.Put(keyReportStatusList, rList)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("... ReportStatus, SetReportStatusListOK: ok! rList = ", rList)
+	return rList, nil
+}
+
+// GetReportStatusListOK store tx list
+func GetReportStatusListOK() ([]*LevelDbReportStatusInfo, error) {
+	rList := make([]*LevelDbReportStatusInfo, 0)
+	err := StateStore.Get(keyReportStatusList, &rList)
+	if err != nil {
+		if err.Error() == "storage: not found" {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+
+	return rList, nil
+}
+
 // GetLastOnline from leveldb
 var keyLastOnline = "keyLastOnline"
 
