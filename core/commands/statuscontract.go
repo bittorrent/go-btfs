@@ -16,9 +16,9 @@ import (
 
 var StatusContractCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Interact with vault services on BTFS.",
+		Tagline: "report status-contract cmd.",
 		ShortDescription: `
-Vault services include issue cheque to peer, receive cheque and store operations.`,
+report status-contract cmd, total cmd and list cmd.`,
 	},
 	Subcommands: map[string]*cmds.Command{
 		"total":      TotalCmd,
@@ -35,7 +35,7 @@ type TotalCmdRet struct {
 
 var TotalCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "report status contract total info.",
+		Tagline: "report status-contract total info, (total count, total gas spend, and contract address)",
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -99,7 +99,7 @@ type ReportListCmdRet struct {
 
 var ReportListCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "report status contract list.",
+		Tagline: "report status-contract list, and input from and limit to get its.",
 	},
 	RunTimeout: 5 * time.Minute,
 	Arguments: []cmds.Argument{
@@ -149,8 +149,14 @@ var ReportListCmd = &cmds.Command{
 		}
 		fmt.Println("From, To = ", From, To)
 
+		s := list[From:To]
+		l := len(s)
+		for i, j := 0, l-1; i < j; i, j = i+1, j-1 {
+			s[i], s[j] = s[j], s[i]
+		}
+
 		return cmds.EmitOnce(res, &ReportListCmdRet{
-			Records: list[From:To], //这里可能对。
+			Records: s,
 			Total:   len(list),
 			PeerId:  peerId,
 		})
