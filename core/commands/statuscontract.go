@@ -60,10 +60,10 @@ var TotalCmd = &cmds.Command{
 		for _, r := range list {
 			n := new(big.Int)
 			if len(r.GasSpend) <= 0 {
-				fmt.Println("r.GasSpend is zero. ")
+				//fmt.Println("r.GasSpend is zero. ")
 				continue
 			}
-			fmt.Println("r.GasSpend = ", r.GasSpend)
+			//fmt.Println("r.GasSpend = ", r.GasSpend)
 
 			n, ok := n.SetString(r.GasSpend, 10)
 			if !ok {
