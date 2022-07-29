@@ -23,6 +23,8 @@ report status-contract cmd, total cmd and list cmd.`,
 	Subcommands: map[string]*cmds.Command{
 		"total":      TotalCmd,
 		"reportlist": ReportListCmd,
+		"lastinfo":   LastInfoCmd,
+		"config":     StatusConfigCmd,
 	},
 }
 
@@ -58,10 +60,10 @@ var TotalCmd = &cmds.Command{
 		for _, r := range list {
 			n := new(big.Int)
 			if len(r.GasSpend) <= 0 {
-				fmt.Println("r.GasSpend is zero. ")
+				//fmt.Println("r.GasSpend is zero. ")
 				continue
 			}
-			fmt.Println("r.GasSpend = ", r.GasSpend)
+			//fmt.Println("r.GasSpend = ", r.GasSpend)
 
 			n, ok := n.SetString(r.GasSpend, 10)
 			if !ok {
@@ -164,6 +166,63 @@ var ReportListCmd = &cmds.Command{
 	Type: ReportListCmdRet{},
 	Encoders: cmds.EncoderMap{
 		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *ReportListCmdRet) error {
+			marshaled, err := json.MarshalIndent(out, "", "\t")
+			if err != nil {
+				return err
+			}
+			marshaled = append(marshaled, byte('\n'))
+			fmt.Fprintln(w, string(marshaled))
+			return nil
+		}),
+	},
+}
+
+var LastInfoCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "get reporting status-contract last info",
+	},
+	RunTimeout: 5 * time.Minute,
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		last, err := chain.GetLastOnline()
+		if err != nil {
+			return err
+		}
+		if last == nil {
+			return errors.New("not found. ")
+		}
+
+		return cmds.EmitOnce(res, last)
+	},
+	Type: chain.LastOnlineInfo{},
+	Encoders: cmds.EncoderMap{
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *chain.LastOnlineInfo) error {
+			marshaled, err := json.MarshalIndent(out, "", "\t")
+			if err != nil {
+				return err
+			}
+			marshaled = append(marshaled, byte('\n'))
+			fmt.Fprintln(w, string(marshaled))
+			return nil
+		}),
+	},
+}
+
+var StatusConfigCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "get reporting status-contract config. ",
+	},
+	RunTimeout: 5 * time.Minute,
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		rs, err := chain.GetReportStatus()
+		if err != nil {
+			return err
+		}
+
+		return cmds.EmitOnce(res, rs)
+	},
+	Type: chain.ReportStatusInfo{},
+	Encoders: cmds.EncoderMap{
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *chain.ReportStatusInfo) error {
 			marshaled, err := json.MarshalIndent(out, "", "\t")
 			if err != nil {
 				return err

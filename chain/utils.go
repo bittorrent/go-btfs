@@ -198,7 +198,7 @@ func SetReportStatusOK() (*ReportStatusInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("... ReportStatus, SetReportStatus: ok! ")
+	//fmt.Println("... ReportStatus, SetReportStatus: ok! ")
 	return &reportStatusInfo, nil
 }
 
@@ -242,7 +242,7 @@ func SetReportStatusListOK(r *LevelDbReportStatusInfo) ([]*LevelDbReportStatusIn
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("... ReportStatus, SetReportStatusListOK: ok! rList = ", rList)
+	//fmt.Println("... ReportStatus, SetReportStatusListOK: ok! rList = ", rList)
 	return rList, nil
 }
 
