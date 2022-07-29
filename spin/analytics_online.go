@@ -34,7 +34,7 @@ func (dc *dcWrap) doSendDataOnline(ctx context.Context, config *config.Config, s
 			chain.ErrStatus = nil
 		}
 
-		fmt.Printf("--- online, resp, SignedInfo = %+v, signature = %+v \n", resp.SignedInfo, resp.Signature)
+		//fmt.Printf("--- online, resp, SignedInfo = %+v, signature = %+v \n", resp.SignedInfo, resp.Signature)
 		if (resp.SignedInfo != nil) && len(resp.SignedInfo.Peer) > 0 {
 			onlineInfo := chain.LastOnlineInfo{
 				LastSignedInfo: onlinePb.SignedInfo{
@@ -79,7 +79,7 @@ func (dc *dcWrap) sendDataOnline(node *core.IpfsNode, config *config.Config) {
 	backoff.Retry(func() error {
 		err := dc.doSendDataOnline(node.Context(), config, sm)
 		if err != nil {
-			fmt.Printf("--- online, doSendDataOnline error = %+v \n", err)
+			//fmt.Printf("--- online, doSendDataOnline error = %+v \n", err)
 			log.Infof("failed： doSendDataOnline to online server: %+v ", err)
 		} else {
 			log.Debug("sent doSendDataOnline to online server")
@@ -154,7 +154,7 @@ func (dc *dcWrap) getPayloadOnline(btfsNode *core.IpfsNode) ([]byte, error) {
 		return nil, err
 	}
 
-	fmt.Printf("--- online, req,  LastSignedInfo:%+v, LastSignature:%+v, pn.LastTime:%+v \n", pn.LastSignedInfo, pn.LastSignature, pn.LastTime)
+	//fmt.Printf("--- online, req,  LastSignedInfo:%+v, LastSignature:%+v, pn.LastTime:%+v \n", pn.LastSignedInfo, pn.LastSignature, pn.LastTime)
 
 	return bytes, nil
 }
@@ -173,8 +173,8 @@ func (dc *dcWrap) collectionAgentOnline(node *core.IpfsNode) {
 		}
 
 		if isReportOnlineEnabled(cfg) {
-			fmt.Println("")
-			fmt.Println("--- collectionAgent, Online ---")
+			//fmt.Println("")
+			//fmt.Println("--- online agent ---")
 
 			dc.sendDataOnline(node, cfg)
 		}

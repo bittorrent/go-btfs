@@ -92,7 +92,7 @@ func (s *service) ReportStatus() (common.Hash, error) {
 	bttcAddress := common.HexToAddress(lastOnline.LastSignedInfo.BttcAddress)
 	signedTime := lastOnline.LastSignedInfo.SignedTime
 	signature, err := hex.DecodeString(strings.Replace(lastOnline.LastSignature, "0x", "", -1))
-	fmt.Printf("... ReportStatus, lastOnline = %+v \n", lastOnline)
+	//fmt.Printf("... ReportStatus, lastOnline = %+v \n", lastOnline)
 
 	callData, err := statusABI.Pack("reportStatus", peer, createTime, version, nonce, bttcAddress, signedTime, signature)
 	if err != nil {
@@ -110,7 +110,7 @@ func (s *service) ReportStatus() (common.Hash, error) {
 	if err != nil {
 		return common.Hash{}, err
 	}
-	fmt.Println("... ReportStatus, txHash, err = ", txHash, err)
+	//fmt.Println("... ReportStatus, txHash, err = ", txHash, err)
 
 	now := time.Now()
 	_, err = chain.SetReportStatusOK()
@@ -124,7 +124,7 @@ func (s *service) ReportStatus() (common.Hash, error) {
 	}
 	gasPrice := getGasPrice(request)
 	gasTotal := big.NewInt(1).Mul(gasPrice, big.NewInt(int64(stx.GasUsed)))
-	fmt.Println("... ReportStatus, gasPrice, stx.GasUsed, gasTotal = ", gasPrice.String(), stx.GasUsed, gasTotal.String())
+	//fmt.Println("... ReportStatus, gasPrice, stx.GasUsed, gasTotal = ", gasPrice.String(), stx.GasUsed, gasTotal.String())
 
 	r := &chain.LevelDbReportStatusInfo{
 		Peer:           peer,
@@ -268,11 +268,11 @@ func cycleCheckReport() {
 	// Force tick on immediate start
 	// CheckReport in the for loop
 	for ; true; <-tick.C {
-		fmt.Println("")
-		fmt.Println("... CheckReportStatus ...")
+		//fmt.Println("")
+		//fmt.Println("... ReportStatus, CheckReportStatus ...")
 
 		report, err := chain.GetReportStatus()
-		fmt.Printf("... CheckReportStatus report: %+v err:%+v \n", report, err)
+		//fmt.Printf("... ReportStatus, CheckReportStatus report: %+v err:%+v \n", report, err)
 		if err != nil {
 			continue
 		}
