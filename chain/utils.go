@@ -2,6 +2,7 @@ package chain
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -171,6 +172,10 @@ type ReportStatusInfo struct {
 }
 
 func GetReportStatus() (*ReportStatusInfo, error) {
+	if StateStore == nil {
+		return nil, errors.New("please start btfs node, at first! ")
+	}
+
 	var reportStatusInfo ReportStatusInfo
 	err := StateStore.Get(keyReportStatus, &reportStatusInfo)
 	if err != nil {
@@ -218,6 +223,10 @@ type LevelDbReportStatusInfo struct {
 
 // SetReportStatusListOK store tx list
 func SetReportStatusListOK(r *LevelDbReportStatusInfo) ([]*LevelDbReportStatusInfo, error) {
+	if StateStore == nil {
+		return nil, errors.New("please start btfs node, at first! ")
+	}
+
 	init := false
 
 	rList := make([]*LevelDbReportStatusInfo, 0)
@@ -248,6 +257,10 @@ func SetReportStatusListOK(r *LevelDbReportStatusInfo) ([]*LevelDbReportStatusIn
 
 // GetReportStatusListOK store tx list
 func GetReportStatusListOK() ([]*LevelDbReportStatusInfo, error) {
+	if StateStore == nil {
+		return nil, errors.New("please start btfs node, at first! ")
+	}
+
 	rList := make([]*LevelDbReportStatusInfo, 0)
 	err := StateStore.Get(keyReportStatusList, &rList)
 	if err != nil {
@@ -271,6 +284,10 @@ type LastOnlineInfo struct {
 }
 
 func GetLastOnline() (*LastOnlineInfo, error) {
+	if StateStore == nil {
+		return nil, errors.New("please start btfs node, at first! ")
+	}
+
 	var lastOnlineInfo LastOnlineInfo
 	err := StateStore.Get(keyLastOnline, &lastOnlineInfo)
 	if err != nil {
