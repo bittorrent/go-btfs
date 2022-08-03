@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
 	"math/big"
 	"strings"
 	"time"
+
+	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
 
 	config "github.com/TRON-US/go-btfs-config"
 	"github.com/bittorrent/go-btfs/chain"
@@ -139,15 +140,6 @@ func (s *service) ReportStatus() (common.Hash, error) {
 	if err != nil {
 		return common.Hash{}, err
 	}
-
-	// WaitForReceipt takes long time
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Errorf("ReportHeartStatus recovered:%+v", err)
-			}
-		}()
-	}()
 	return txHash, nil
 }
 
@@ -203,15 +195,6 @@ func (s *service) checkLastOnlineInfo(peerId, bttcAddr string) error {
 			return err
 		}
 	}
-
-	// WaitForReceipt takes long time
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Errorf("getStatus recovered:%+v", err)
-			}
-		}()
-	}()
 	return nil
 }
 
@@ -240,15 +223,6 @@ func (s *service) genHashExt(ctx context.Context) (common.Hash, error) {
 	if err != nil {
 		return common.Hash{}, err
 	}
-
-	// WaitForReceipt takes long time
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Errorf("genHashExt recovered:%+v", err)
-			}
-		}()
-	}()
 	return common.Hash{}, nil
 }
 
@@ -274,6 +248,7 @@ func cycleCheckReport() {
 		report, err := chain.GetReportStatus()
 		//fmt.Printf("... ReportStatus, CheckReportStatus report: %+v err:%+v \n", report, err)
 		if err != nil {
+			log.Errorf("GetReportStatus err:%+v", err)
 			continue
 		}
 
@@ -286,6 +261,7 @@ func cycleCheckReport() {
 
 			err = serv.CheckReportStatus()
 			if err != nil {
+				log.Errorf("CheckReportStatus err:%+v", err)
 				continue
 			}
 		}
