@@ -236,6 +236,7 @@ NOTE: For security reasons, this command will omit your private key. If you woul
 		defaultMap["Experimental.StorageHostEnabled"] = true
 		defaultMap["Experimental.ReportOnline"] = true
 		defaultMap["Experimental.ReportStatusContract"] = true
+		defaultMap["ChainInfo.Endpoint"] = "https://rpc.bt.io/"
 
 		for k, v := range defaultMap {
 			_, err = setConfig(r, k, v)
