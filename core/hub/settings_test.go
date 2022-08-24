@@ -2,6 +2,7 @@ package hub
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -14,6 +15,8 @@ func TestGetSettings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Printf("GetHostSettings, ns = %+v \n", ns)
+
 	defNs := &nodepb.Node_Settings{StoragePriceAsk: 125000, StorageTimeMin: 30, StoragePriceDefault: 125000}
 	if !reflect.DeepEqual(ns, defNs) {
 		t.Fatal("default settings not equal")
