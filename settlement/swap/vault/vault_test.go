@@ -194,7 +194,7 @@ func TestVaultIssue(t *testing.T) {
 	store := storemock.NewStateStore()
 	amount := big.NewInt(20)
 	amount2 := big.NewInt(30)
-	expectedCumulative := big.NewInt(50)
+	// expectedCumulative := big.NewInt(50)
 	sig := common.Hex2Bytes("0xffff")
 	chequeSigner := &chequeSignerMock{}
 
@@ -203,10 +203,13 @@ func TestVaultIssue(t *testing.T) {
 			transactionmock.WithABICallSequence(
 				transactionmock.ABICall(&vaultABI, address, big.NewInt(100).FillBytes(make([]byte, 32)), "totalbalance"),
 				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalPaidOut"),
+				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", beneficiary),
 				transactionmock.ABICall(&vaultABI, address, big.NewInt(100).FillBytes(make([]byte, 32)), "totalbalance"),
 				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalPaidOut"),
+				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", beneficiary),
 				transactionmock.ABICall(&vaultABI, address, big.NewInt(100).FillBytes(make([]byte, 32)), "totalbalance"),
 				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalPaidOut"),
+				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", ownerAdress),
 			),
 		),
 		address,
@@ -264,7 +267,7 @@ func TestVaultIssue(t *testing.T) {
 	expectedCheque = &vault.SignedCheque{
 		Cheque: vault.Cheque{
 			Beneficiary:      beneficiary,
-			CumulativePayout: expectedCumulative,
+			CumulativePayout: amount2,
 			Vault:            address,
 		},
 		Signature: sig,
