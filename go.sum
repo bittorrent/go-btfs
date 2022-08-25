@@ -89,8 +89,8 @@ github.com/TRON-US/go-btfs-api v0.3.0/go.mod h1:surmr8ztnpbVY7y2H7dbb7npNXfdaV0U
 github.com/TRON-US/go-btfs-chunker v0.3.0 h1:06/rAYKtC3BQRYVxMtEKvqFFHhSB+XKcqt3JZ0CjD4o=
 github.com/TRON-US/go-btfs-chunker v0.3.0/go.mod h1:m0xvt42kqLskWsLF6SQ51AA9cqPzWoweydOcDgSDX/U=
 github.com/TRON-US/go-btfs-config v0.6.0/go.mod h1:82nKCMRhsgY0I8DCasIUpSr6ZP9iHLsZJSMUxytMpEw=
-github.com/TRON-US/go-btfs-config v0.11.11-pre1 h1:/xBFbQcX03DE8mL5G8T71Bdk1bNu85y/Ei/XnZ0t4+g=
-github.com/TRON-US/go-btfs-config v0.11.11-pre1/go.mod h1:9y6osJENDCjulSNJjSSt1J8OK+ADRatBdYPXRDewbko=
+github.com/TRON-US/go-btfs-config v0.11.8 h1:eSuNp488lBv+dip35KKBHWDRO3Wnrwn7h7M/0e+r4ZE=
+github.com/TRON-US/go-btfs-config v0.11.8/go.mod h1:9y6osJENDCjulSNJjSSt1J8OK+ADRatBdYPXRDewbko=
 github.com/TRON-US/go-btfs-files v0.1.1/go.mod h1:tD2vOKLcLCDNMn9rrA27n2VbNpHdKewGzEguIFY+EJ0=
 github.com/TRON-US/go-btfs-files v0.2.0 h1:JZ+F0gX8iPmUf1OlrdOdsA8GMGxCHhwQ03jEWWEgVLE=
 github.com/TRON-US/go-btfs-files v0.2.0/go.mod h1:Qx+rTOIC0xl3ZkosGcEoB4hqExZmTONErPys8K5suEc=
@@ -1374,8 +1374,8 @@ github.com/tklauser/numcpus v0.2.2/go.mod h1:x3qojaO3uyYt0i56EW/VUYs7uBvdl2fkfZF
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tron-us/go-btfs-common v0.2.11/go.mod h1:9ND33JahGMg52sCC2/gO5DakLsd1Pg2lVe2CihW7lBE=
 github.com/tron-us/go-btfs-common v0.3.7/go.mod h1:FbYoo6ZrtnJH3TKdyJTGQrUP2rbwNVATQpxplwaYQ/c=
-github.com/tron-us/go-btfs-common v0.8.10-pre7 h1:06Pr1rgUPYy/aCcrQLkldb3APdoqW3f5japDXiEShVg=
-github.com/tron-us/go-btfs-common v0.8.10-pre7/go.mod h1:xnIFfbMRS5VsF948fBHPcYIeYGZkQgaJ6NIEGIPfYUs=
+github.com/tron-us/go-btfs-common v0.8.6 h1:IA1qxW0WSxAcYFJM3DG0DJIm4wptE4zueNHBQmY7dv8=
+github.com/tron-us/go-btfs-common v0.8.6/go.mod h1:xnIFfbMRS5VsF948fBHPcYIeYGZkQgaJ6NIEGIPfYUs=
 github.com/tron-us/go-common/v2 v2.0.5/go.mod h1:GiKX9noBLHotkZAU+7ET4h7N0DYWnm3OcGHOFJg1Q68=
 github.com/tron-us/go-common/v2 v2.1.9/go.mod h1:YIEJZF9Ph79g0zZWOvfNDtJhvO5OqSNPAb/TM1i+KvQ=
 github.com/tron-us/go-common/v2 v2.3.0 h1:bt7WYyOWG6NleHsBB1B/iR1m+mwe3JsaTv/HFbFgxYw=
