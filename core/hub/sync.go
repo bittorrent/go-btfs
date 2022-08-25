@@ -61,9 +61,10 @@ func QueryHosts(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb
 	err = grpc.HubQueryClient(config.Services.HubDomain).WithContext(ctx, func(ctx context.Context,
 		client hubpb.HubQueryServiceClient) error {
 		resp, err = client.GetHosts(ctx, &hubpb.HostsReq{
-			Id:      node.Identity.Pretty(),
-			Mode:    hrm,
-			Version: version.CurrentVersionNumber,
+			Id:         node.Identity.Pretty(),
+			Mode:       hrm,
+			Version:    version.CurrentVersionNumber,
+			NewVersion: hubpb.HubRouter_V2,
 		})
 		if err != nil {
 			return err
@@ -90,7 +91,8 @@ func QueryStats(ctx context.Context, node *core.IpfsNode) (*hubpb.StatsResp, err
 	err = grpc.HubQueryClient(config.Services.HubDomain).WithContext(ctx, func(ctx context.Context,
 		client hubpb.HubQueryServiceClient) error {
 		resp, err = client.GetStats(ctx, &hubpb.StatsReq{
-			Id: node.Identity.Pretty(),
+			Id:         node.Identity.Pretty(),
+			NewVersion: hubpb.HubRouter_V2,
 		})
 		if err != nil {
 			return err

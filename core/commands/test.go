@@ -74,7 +74,14 @@ var testHostsCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Println("get hosts: ", nodes)
+
+		fmt.Println("len(nodes) = ", len(nodes))
+		for i := range nodes {
+			fmt.Printf("nodes[%d] = %+v", i, nodes[i])
+			if i >= 5 {
+				break
+			}
+		}
 
 		return cmds.EmitOnce(res, &TestOutput{"get hosts ok"})
 	},
@@ -109,7 +116,6 @@ func getHosts(req *cmds.Request, env cmds.Environment) ([]*hubpb.Host, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return nodes, nil
 }
 
