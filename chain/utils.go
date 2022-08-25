@@ -232,7 +232,7 @@ func SetReportStatusListOK(r *LevelDbReportStatusInfo) ([]*LevelDbReportStatusIn
 	rList := make([]*LevelDbReportStatusInfo, 0)
 	err := StateStore.Get(keyReportStatusList, &rList)
 	if err != nil {
-		if err.Error() == "storage: not found" {
+		if errors.Is(err, storage.ErrNotFound) {
 			init = true
 			// continue
 		} else {
