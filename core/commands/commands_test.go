@@ -91,6 +91,7 @@ func TestCommands(t *testing.T) {
 		"/config",
 		"/config/edit",
 		"/config/replace",
+		"/config/reset",
 		"/config/show",
 		//"/config/profile",
 		//"/config/profile/apply",
