@@ -55,7 +55,7 @@ func (dc *dcWrap) doSendDataOnline(ctx context.Context, config *config.Config, s
 	})
 }
 
-func (dc *dcWrap) sendDataOnline(node *core.IpfsNode, config *config.Config) {
+func (dc *dcWrap) SendDataOnline(node *core.IpfsNode, config *config.Config) {
 	sm, errs, err := dc.doPrepDataOnline(node)
 	if errs == nil {
 		errs = make([]error, 0)
@@ -176,7 +176,7 @@ func (dc *dcWrap) collectionAgentOnline(node *core.IpfsNode) {
 			//fmt.Println("")
 			//fmt.Println("--- online agent ---")
 
-			dc.sendDataOnline(node, cfg)
+			dc.SendDataOnline(node, cfg)
 		}
 	}
 }

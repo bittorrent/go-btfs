@@ -161,6 +161,15 @@ func getGasPrice(request *transaction.TxRequest) *big.Int {
 	return gasPrice
 }
 
+func CheckReportStatus() error {
+	_, err := serv.ReportStatus()
+	if err != nil {
+		log.Errorf("ReportStatus err:%+v", err)
+		return err
+	}
+	return nil
+}
+
 // report heart status
 func (s *service) checkLastOnlineInfo(peerId, bttcAddr string) error {
 	callData, err := statusABI.Pack("getStatus", peerId)

@@ -36,6 +36,7 @@ type dcWrap struct {
 //Server URL for data collection
 var (
 	log = logging.Logger("spin")
+	DC  *dcWrap
 )
 
 // other constants
@@ -84,6 +85,7 @@ func Analytics(api iface.CoreAPI, cfgRoot string, node *core.IpfsNode, BTFSVersi
 	dc.api = api
 	dc.pn = new(nodepb.Node)
 	dc.config = configuration
+	DC = dc
 
 	if isAnalyticsEnabled(dc.config) {
 		if dc.config.Experimental.Analytics != dc.config.Experimental.StorageHostEnabled {
