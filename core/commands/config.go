@@ -64,6 +64,7 @@ Set the value of the 'Datastore.Path' key:
 	},
 	Subcommands: map[string]*cmds.Command{
 		"show":    configShowCmd,
+		"reset":   resetConfigCmd,
 		"edit":    configEditCmd,
 		"replace": configReplaceCmd,
 		//"profile":             configProfileCmd,
@@ -88,7 +89,7 @@ Set the value of the 'Datastore.Path' key:
 
 		// This is a temporary fix until we move the private key out of the config file
 		switch strings.ToLower(key) {
-		case "identity", "identity.privkey", "identity.mnemonic", "identity.peerid":
+		case "identity", "identity.privkey", "identity.hexprivkey", "identity.mnemonic":
 			return fmt.Errorf("cannot show or change %s through API", key)
 		default:
 		}
@@ -188,7 +189,7 @@ NOTE: For security reasons, this command will omit your private key. If you woul
 			return err
 		}
 
-		for _, k := range []string{config.PrivKeyTag, config.MnemonicTag} {
+		for _, k := range []string{config.PrivKeyTag, config.MnemonicTag, "HexPrivKey"} {
 			err = scrubValue(cfg, []string{config.IdentityTag, k})
 			if err != nil {
 				return err
@@ -196,6 +197,55 @@ NOTE: For security reasons, this command will omit your private key. If you woul
 		}
 
 		return cmds.EmitOnce(res, &cfg)
+	},
+	Encoders: cmds.EncoderMap{
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *map[string]interface{}) error {
+			buf, err := config.HumanOutput(out)
+			if err != nil {
+				return err
+			}
+			buf = append(buf, byte('\n'))
+			_, err = w.Write(buf)
+			return err
+		}),
+	},
+}
+
+var resetConfigCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "Output config file contents.",
+		ShortDescription: `
+NOTE: For security reasons, this command will omit your private key. If you would like to make a full backup of your config (private key included), you must copy the config file from your repo.
+`,
+	},
+	Type: map[string]interface{}{},
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		// var output *ConfigField
+
+		cfgRoot, err := cmdenv.GetConfigRoot(env)
+		if err != nil {
+			return err
+		}
+		r, err := fsrepo.Open(cfgRoot)
+		if err != nil {
+			return err
+		}
+		defer r.Close()
+		defaultMap := make(map[string]interface{})
+		defaultMap["Experimental.StorageClientEnabled"] = true
+		defaultMap["Experimental.StorageHostEnabled"] = true
+		defaultMap["Experimental.ReportOnline"] = true
+		defaultMap["Experimental.ReportStatusContract"] = true
+		defaultMap["ChainInfo.Endpoint"] = "https://rpc.bt.io/"
+
+		for k, v := range defaultMap {
+			_, err = setConfig(r, k, v)
+			if err != nil {
+				return err
+			}
+		}
+
+		return cmds.EmitOnce(res, defaultMap)
 	},
 	Encoders: cmds.EncoderMap{
 		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *map[string]interface{}) error {
