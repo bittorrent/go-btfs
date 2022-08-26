@@ -9,10 +9,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
-
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/reportstatus"
+	"github.com/bittorrent/go-btfs/spin"
 )
 
 var StatusContractCmd = &cmds.Command{
@@ -22,10 +23,12 @@ var StatusContractCmd = &cmds.Command{
 report status-contract cmd, total cmd and list cmd.`,
 	},
 	Subcommands: map[string]*cmds.Command{
-		"total":      TotalCmd,
-		"reportlist": ReportListCmd,
-		"lastinfo":   LastInfoCmd,
-		"config":     StatusConfigCmd,
+		"total":                  TotalCmd,
+		"reportlist":             ReportListCmd,
+		"lastinfo":               LastInfoCmd,
+		"config":                 StatusConfigCmd,
+		"report_online_server":   ReportOnlineServerCmd,
+		"report_status_contract": ReportStatusContractCmd,
 	},
 }
 
@@ -150,6 +153,7 @@ var ReportListCmd = &cmds.Command{
 				list = list[from:]
 			}
 		}
+
 		return cmds.EmitOnce(res, &ReportListCmdRet{
 			Records: list,
 			Total:   total,
@@ -224,5 +228,42 @@ var StatusConfigCmd = &cmds.Command{
 			fmt.Fprintln(w, string(marshaled))
 			return nil
 		}),
+	},
+}
+
+var ReportOnlineServerCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "report online server. ",
+	},
+	RunTimeout: 5 * time.Minute,
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		node, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+
+		cfg, err := cmdenv.GetConfig(env)
+		if err != nil {
+			return err
+		}
+
+		spin.DC.SendDataOnline(node, cfg)
+
+		return cmds.EmitOnce(res, "report online server ok!")
+	},
+}
+
+var ReportStatusContractCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "report status-contract. ",
+	},
+	RunTimeout: 5 * time.Minute,
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := reportstatus.CmdReportStatus()
+		if err != nil {
+			return err
+		}
+
+		return cmds.EmitOnce(res, "report status contract ok!")
 	},
 }
