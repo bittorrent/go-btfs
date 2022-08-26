@@ -30,14 +30,8 @@ const (
 	//ReportStatusTime = 60 * time.Second // 10 * time.Minute
 )
 
-func Init(transactionService transaction.Service, cfg *config.Config, configRoot string, statusAddress common.Address, chainId int64) error {
-	New(statusAddress, transactionService, cfg)
-
-	err := CheckExistLastOnline(cfg, configRoot, chainId)
-	if err != nil {
-		return err
-	}
-	return nil
+func Init(transactionService transaction.Service, cfg *config.Config, statusAddress common.Address) Service {
+	return New(statusAddress, transactionService, cfg)
 }
 
 func isReportStatusEnabled(cfg *config.Config) bool {
@@ -55,6 +49,9 @@ type Service interface {
 
 	// CheckReportStatus check report status heart info to statusContract
 	CheckReportStatus() error
+
+	// CheckLastOnlineInfo check last online info.
+	CheckLastOnlineInfo(peerId, bttcAddr string) error
 }
 
 func New(statusAddress common.Address, transactionService transaction.Service, cfg *config.Config) Service {
@@ -161,7 +158,7 @@ func getGasPrice(request *transaction.TxRequest) *big.Int {
 	return gasPrice
 }
 
-func CheckReportStatus() error {
+func CmdReportStatus() error {
 	_, err := serv.ReportStatus()
 	if err != nil {
 		log.Errorf("ReportStatus err:%+v", err)
@@ -170,8 +167,8 @@ func CheckReportStatus() error {
 	return nil
 }
 
-// report heart status
-func (s *service) checkLastOnlineInfo(peerId, bttcAddr string) error {
+// CheckLastOnlineInfo report heart status
+func (s *service) CheckLastOnlineInfo(peerId, bttcAddr string) error {
 	callData, err := statusABI.Pack("getStatus", peerId)
 	if err != nil {
 		return err

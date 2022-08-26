@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
-	"github.com/bittorrent/go-btfs/spin"
 	"io"
 	"math/big"
 	"strconv"
@@ -13,6 +11,9 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/reportstatus"
+	"github.com/bittorrent/go-btfs/spin"
 )
 
 var StatusContractCmd = &cmds.Command{
@@ -265,10 +266,10 @@ var ReportStatusContractCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		//err := reportstatus.CheckReportStatus()
-		//if err != nil {
-		//	return err
-		//}
+		err := reportstatus.CmdReportStatus()
+		if err != nil {
+			return err
+		}
 
 		return cmds.EmitOnce(res, "report status contract ok!")
 	},
