@@ -9,20 +9,20 @@ import (
 	"strconv"
 	"time"
 
-	cmds "github.com/bittorrent/go-btfs-cmds"
+	cmdss "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/reportstatus"
 	"github.com/bittorrent/go-btfs/spin"
 )
 
-var StatusContractCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+var StatusContractCmd = &cmdss.Command{
+	Helptext: cmdss.HelpText{
 		Tagline: "report status-contract cmd.",
 		ShortDescription: `
 report status-contract cmd, total cmd and list cmd.`,
 	},
-	Subcommands: map[string]*cmds.Command{
+	Subcommands: map[string]*cmdss.Command{
 		"total":                  TotalCmd,
 		"reportlist":             ReportListCmd,
 		"lastinfo":               LastInfoCmd,
@@ -39,12 +39,12 @@ type TotalCmdRet struct {
 	TotalGasSpend  string `json:"total_gas_spend"`
 }
 
-var TotalCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+var TotalCmd = &cmdss.Command{
+	Helptext: cmdss.HelpText{
 		Tagline: "report status-contract total info, (total count, total gas spend, and contract address)",
 	},
 	RunTimeout: 5 * time.Minute,
-	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+	Run: func(req *cmdss.Request, res cmdss.ResponseEmitter, env cmdss.Environment) error {
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
@@ -76,7 +76,7 @@ var TotalCmd = &cmds.Command{
 			totalGasSpend = totalGasSpend.Add(totalGasSpend, n)
 		}
 
-		return cmds.EmitOnce(res, &TotalCmdRet{
+		return cmdss.EmitOnce(res, &TotalCmdRet{
 			PeerId:         peerId,
 			StatusContract: list[len(list)-1].StatusContract,
 			TotalCount:     len(list),
@@ -84,8 +84,8 @@ var TotalCmd = &cmds.Command{
 		})
 	},
 	Type: TotalCmdRet{},
-	Encoders: cmds.EncoderMap{
-		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *TotalCmdRet) error {
+	Encoders: cmdss.EncoderMap{
+		cmdss.Text: cmdss.MakeTypedEncoder(func(req *cmdss.Request, w io.Writer, out *TotalCmdRet) error {
 			marshaled, err := json.MarshalIndent(out, "", "\t")
 			if err != nil {
 				return err
@@ -103,16 +103,16 @@ type ReportListCmdRet struct {
 	PeerId  string                           `json:"peer_id"`
 }
 
-var ReportListCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+var ReportListCmd = &cmdss.Command{
+	Helptext: cmdss.HelpText{
 		Tagline: "report status-contract list, and input from and limit to get its.",
 	},
 	RunTimeout: 5 * time.Minute,
-	Arguments: []cmds.Argument{
-		cmds.StringArg("from", true, false, "page offset"),
-		cmds.StringArg("limit", true, false, "page limit."),
+	Arguments: []cmdss.Argument{
+		cmdss.StringArg("from", true, false, "page offset"),
+		cmdss.StringArg("limit", true, false, "page limit."),
 	},
-	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+	Run: func(req *cmdss.Request, res cmdss.ResponseEmitter, env cmdss.Environment) error {
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
@@ -161,15 +161,15 @@ var ReportListCmd = &cmds.Command{
 			s[i], s[j] = s[j], s[i]
 		}
 
-		return cmds.EmitOnce(res, &ReportListCmdRet{
+		return cmdss.EmitOnce(res, &ReportListCmdRet{
 			Records: s,
 			Total:   len(list),
 			PeerId:  peerId,
 		})
 	},
 	Type: ReportListCmdRet{},
-	Encoders: cmds.EncoderMap{
-		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *ReportListCmdRet) error {
+	Encoders: cmdss.EncoderMap{
+		cmdss.Text: cmdss.MakeTypedEncoder(func(req *cmdss.Request, w io.Writer, out *ReportListCmdRet) error {
 			marshaled, err := json.MarshalIndent(out, "", "\t")
 			if err != nil {
 				return err
@@ -181,12 +181,12 @@ var ReportListCmd = &cmds.Command{
 	},
 }
 
-var LastInfoCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+var LastInfoCmd = &cmdss.Command{
+	Helptext: cmdss.HelpText{
 		Tagline: "get reporting status-contract last info",
 	},
 	RunTimeout: 5 * time.Minute,
-	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+	Run: func(req *cmdss.Request, res cmdss.ResponseEmitter, env cmdss.Environment) error {
 		last, err := chain.GetLastOnline()
 		if err != nil {
 			return err
@@ -195,11 +195,11 @@ var LastInfoCmd = &cmds.Command{
 			return errors.New("not found. ")
 		}
 
-		return cmds.EmitOnce(res, last)
+		return cmdss.EmitOnce(res, last)
 	},
 	Type: chain.LastOnlineInfo{},
-	Encoders: cmds.EncoderMap{
-		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *chain.LastOnlineInfo) error {
+	Encoders: cmdss.EncoderMap{
+		cmdss.Text: cmdss.MakeTypedEncoder(func(req *cmdss.Request, w io.Writer, out *chain.LastOnlineInfo) error {
 			marshaled, err := json.MarshalIndent(out, "", "\t")
 			if err != nil {
 				return err
@@ -211,22 +211,22 @@ var LastInfoCmd = &cmds.Command{
 	},
 }
 
-var StatusConfigCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+var StatusConfigCmd = &cmdss.Command{
+	Helptext: cmdss.HelpText{
 		Tagline: "get reporting status-contract config. ",
 	},
 	RunTimeout: 5 * time.Minute,
-	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+	Run: func(req *cmdss.Request, res cmdss.ResponseEmitter, env cmdss.Environment) error {
 		rs, err := chain.GetReportStatus()
 		if err != nil {
 			return err
 		}
 
-		return cmds.EmitOnce(res, rs)
+		return cmdss.EmitOnce(res, rs)
 	},
 	Type: chain.ReportStatusInfo{},
-	Encoders: cmds.EncoderMap{
-		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *chain.ReportStatusInfo) error {
+	Encoders: cmdss.EncoderMap{
+		cmdss.Text: cmdss.MakeTypedEncoder(func(req *cmdss.Request, w io.Writer, out *chain.ReportStatusInfo) error {
 			marshaled, err := json.MarshalIndent(out, "", "\t")
 			if err != nil {
 				return err
@@ -238,12 +238,12 @@ var StatusConfigCmd = &cmds.Command{
 	},
 }
 
-var ReportOnlineServerCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+var ReportOnlineServerCmd = &cmdss.Command{
+	Helptext: cmdss.HelpText{
 		Tagline: "report online server. ",
 	},
 	RunTimeout: 5 * time.Minute,
-	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+	Run: func(req *cmdss.Request, res cmdss.ResponseEmitter, env cmdss.Environment) error {
 		node, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
@@ -256,21 +256,21 @@ var ReportOnlineServerCmd = &cmds.Command{
 
 		spin.DC.SendDataOnline(node, cfg)
 
-		return cmds.EmitOnce(res, "report online server ok!")
+		return cmdss.EmitOnce(res, "report online server ok!")
 	},
 }
 
-var ReportStatusContractCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
+var ReportStatusContractCmd = &cmdss.Command{
+	Helptext: cmdss.HelpText{
 		Tagline: "report status-contract. ",
 	},
 	RunTimeout: 5 * time.Minute,
-	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+	Run: func(req *cmdss.Request, res cmdss.ResponseEmitter, env cmdss.Environment) error {
 		err := reportstatus.CmdReportStatus()
 		if err != nil {
 			return err
 		}
 
-		return cmds.EmitOnce(res, "report status contract ok!")
+		return cmdss.EmitOnce(res, "report status contract ok!")
 	},
 }
