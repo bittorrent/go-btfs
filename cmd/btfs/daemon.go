@@ -472,9 +472,10 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	}
 
 	// init report status contract
-	err = reportstatus.Init(chainInfo.TransactionService, cfg, configRoot, chainCfg.StatusAddress, chainInfo.ChainID)
+	reportStatusServ := reportstatus.Init(chainInfo.TransactionService, cfg, chainCfg.StatusAddress)
+	err = CheckExistLastOnlineReport(cfg, configRoot, chainid, reportStatusServ)
 	if err != nil {
-		fmt.Println("init report status, err: ", err)
+		fmt.Println("check report status, err: ", err)
 		return err
 	}
 
@@ -1306,4 +1307,43 @@ func doIfNeedUpgradeFactoryToV2(chainid int64, chainCfg *chainconfig.ChainConfig
 	}
 	fmt.Println("will re-deploy a vault contract for you")
 	return
+}
+
+// CheckExistLastOnlineReport sync conf and lastOnlineInfo
+func CheckExistLastOnlineReport(cfg *config.Config, configRoot string, chainId int64, reportStatusServ reportstatus.Service) error {
+	lastOnline, err := chain.GetLastOnline()
+	if err != nil {
+		return err
+	}
+
+	// if nil, set config online status config
+	if lastOnline == nil {
+		var reportOnline bool
+		var reportStatusContract bool
+		if cfg.Experimental.StorageHostEnabled {
+			reportOnline = true
+			reportStatusContract = true
+		}
+
+		var onlineServerDomain string
+		if chainId == 199 {
+			onlineServerDomain = config.DefaultServicesConfig().OnlineServerDomain
+		} else {
+			onlineServerDomain = config.DefaultServicesConfigTestnet().OnlineServerDomain
+		}
+
+		err = commands.SyncConfigOnlineCfg(configRoot, onlineServerDomain, reportOnline, reportStatusContract)
+		if err != nil {
+			return err
+		}
+	}
+
+	// if nil, set last online info
+	if lastOnline == nil {
+		err = reportStatusServ.CheckLastOnlineInfo(cfg.Identity.PeerID, cfg.Identity.BttcAddr)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
