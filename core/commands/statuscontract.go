@@ -11,7 +11,7 @@ import (
 
 	cmdss "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
-	cmdenvv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/reportstatus"
 	"github.com/bittorrent/go-btfs/spin"
 )
@@ -45,7 +45,7 @@ var TotalCmd = &cmdss.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmdss.Request, res cmdss.ResponseEmitter, env cmdss.Environment) error {
-		n, err := cmdenvv.GetNode(env)
+		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
 		}
@@ -113,7 +113,7 @@ var ReportListCmd = &cmdss.Command{
 		cmdss.StringArg("limit", true, false, "page limit."),
 	},
 	Run: func(req *cmdss.Request, res cmdss.ResponseEmitter, env cmdss.Environment) error {
-		n, err := cmdenvv.GetNode(env)
+		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
 		}
@@ -244,12 +244,12 @@ var ReportOnlineServerCmd = &cmdss.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmdss.Request, res cmdss.ResponseEmitter, env cmdss.Environment) error {
-		node, err := cmdenvv.GetNode(env)
+		node, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
 		}
 
-		cfg, err := cmdenvv.GetConfig(env)
+		cfg, err := cmdenv.GetConfig(env)
 		if err != nil {
 			return err
 		}
