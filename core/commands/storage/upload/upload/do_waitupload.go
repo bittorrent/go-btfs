@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"sync"
 	"time"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -136,11 +135,10 @@ func waitUpload(rss *sessions.RenterSession, offlineSigning bool, fsStatus *guar
 	}
 
 	// pay in cheque
-	var wg sync.WaitGroup
-	wg.Add(1)
 	if err := rss.To(sessions.RssToPayEvent); err != nil {
 		return err
 	}
+	var errC = make(chan error)
 	go func() {
 		err = func() error {
 			return payInCheque(rss)
@@ -149,10 +147,16 @@ func waitUpload(rss *sessions.RenterSession, offlineSigning bool, fsStatus *guar
 			fmt.Println("payInCheque error:", err)
 		}
 		fmt.Println("payInCheque done")
-		wg.Done()
+		errC <- err
 	}()
-	wg.Wait()
-
+	err = <-errC
+	if err != nil {
+		if fsmErr := rss.To(sessions.RssToErrorEvent); fsmErr != nil {
+			log.Errorf("fsm transfer error:%v", fsmErr)
+		}
+		log.Errorf("payInCheque error:%v", err)
+		return err
+	}
 	// Complete
 	if err := rss.To(sessions.RssToCompleteEvent); err != nil {
 		return err

@@ -157,14 +157,11 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 	} else {
 		lastCumulativePayout = lastReceivedCheque.CumulativePayout
 	}
-
-	// check this cheque is actually increasing in value
+	// check this cheque is actually increasing in value by local storage
 	amount := big.NewInt(0).Sub(cheque.CumulativePayout, lastCumulativePayout)
-
 	if amount.Cmp(big.NewInt(0)) <= 0 {
 		return nil, ErrChequeNotIncreasing
 	}
-
 	// blockchain calls below
 	contract := newVaultContract(cheque.Vault, s.transactionService)
 	// this does not change for the same vault
@@ -197,6 +194,12 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 
 	if balance.Cmp(big.NewInt(0).Sub(cheque.CumulativePayout, alreadyPaidOut)) < 0 {
 		return nil, ErrBouncingCheque
+	}
+
+	// check this cheque is actually increasing in value by blockchain in case of the host migrate to another machine
+	// https://github.com/bittorrent/go-btfs/issues/187
+	if cheque.CumulativePayout.Cmp(alreadyPaidOut) <= 0 {
+		return nil, ErrChequeNotIncreasing
 	}
 
 	// store the accepted cheque

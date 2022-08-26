@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	cmdss "github.com/bittorrent/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/reportstatus"
@@ -141,29 +141,22 @@ var ReportListCmd = &cmdss.Command{
 		if list == nil {
 			return nil
 		}
-		//
-		//from := 0
-		//limit := 10
-
-		From := len(list) - 1 - from - limit
-		if From <= 0 {
-			From = 0
+		total := len(list)
+		// order by time desc
+		for i, j := 0, total-1; i < j; i, j = i+1, j-1 {
+			list[i], list[j] = list[j], list[i]
 		}
-		To := len(list) - 1 - from
-		if To > len(list)-1 {
-			To = len(list) - 1
-		}
-		fmt.Println("From, To = ", From, To)
-
-		s := list[From:To]
-		l := len(s)
-		for i, j := 0, l-1; i < j; i, j = i+1, j-1 {
-			s[i], s[j] = s[j], s[i]
+		if from < total {
+			if (from + limit) <= len(list) {
+				list = list[from : from+limit]
+			} else {
+				list = list[from:]
+			}
 		}
 
-		return cmdss.EmitOnce(res, &ReportListCmdRet{
-			Records: s,
-			Total:   len(list),
+		return cmds.EmitOnce(res, &ReportListCmdRet{
+			Records: list,
+			Total:   total,
 			PeerId:  peerId,
 		})
 	},
