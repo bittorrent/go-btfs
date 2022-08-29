@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	config "github.com/TRON-US/go-btfs-config"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -306,4 +307,12 @@ func StoreOnline(lastOnlineInfo *LastOnlineInfo) error {
 	}
 
 	return nil
+}
+
+func GetOnlineServer(chainId int64) string {
+	if chainId == 199 {
+		return config.DefaultServicesConfig().OnlineServerDomain
+	} else {
+		return config.DefaultServicesConfigTestnet().OnlineServerDomain
+	}
 }
