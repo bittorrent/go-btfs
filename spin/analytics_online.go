@@ -22,7 +22,11 @@ func isReportOnlineEnabled(cfg *config.Config) bool {
 }
 
 func (dc *dcWrap) doSendDataOnline(ctx context.Context, config *config.Config, sm *onlinePb.ReqSignMetrics) error {
-	cb := cgrpc.OnlineClient(config.Services.OnlineServerDomain)
+	onlineService := config.Services.OnlineServerDomain
+	if len(onlineService) <= 0 {
+		onlineService = chain.GetOnlineServer(config.ChainInfo.ChainId)
+	}
+	cb := cgrpc.OnlineClient(onlineService)
 	return cb.WithContext(ctx, func(ctx context.Context, client onlinePb.OnlineServiceClient) error {
 		resp, err := client.UpdateSignMetrics(ctx, sm)
 		if err != nil {

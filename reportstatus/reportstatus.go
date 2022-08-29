@@ -8,13 +8,12 @@ import (
 	"strings"
 	"time"
 
-	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
-
 	config "github.com/TRON-US/go-btfs-config"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/reportstatus/abi"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/ethereum/go-ethereum/common"
+	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
 
 	logging "github.com/ipfs/go-log"
 )
@@ -24,6 +23,8 @@ var log = logging.Logger("report-status-contract:")
 var (
 	statusABI = transaction.ParseABIUnchecked(abi.StatusHeartABI)
 	serv      *service
+
+	startTime = time.Now()
 )
 
 const (
@@ -259,6 +260,10 @@ func cycleCheckReport() {
 		}
 
 		now := time.Now()
+		if now.Sub(startTime) < 2*time.Hour {
+			continue
+		}
+
 		nowUnixMod := now.Unix() % 86400
 		// report only 1 hour every, and must after 10 hour.
 		if nowUnixMod > report.ReportStatusSeconds &&
