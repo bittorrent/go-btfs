@@ -2,6 +2,7 @@ package stats
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"strconv"
 	"strings"
@@ -25,6 +26,7 @@ import (
 
 const (
 	localInfoOnlyOptionName = "local-only"
+	versionOptionName       = "version"
 )
 
 // Storage Stats
@@ -62,12 +64,12 @@ This command synchronize node stats from network(hub) to local node data store.`
 			return err
 		}
 
-		return SyncStats(req.Context, cfg, n, env)
+		return SyncStats(req.Context, cfg, n, env, true)
 	},
 }
 
-func SyncStats(ctx context.Context, cfg *config.Config, node *core.IpfsNode, env cmds.Environment) error {
-	sr, err := hub.QueryStats(ctx, node)
+func SyncStats(ctx context.Context, cfg *config.Config, node *core.IpfsNode, env cmds.Environment, v2 bool) error {
+	sr, err := hub.QueryStats(ctx, node, v2)
 	if err != nil {
 		return err
 	}
@@ -94,6 +96,34 @@ func SyncStats(ctx context.Context, cfg *config.Config, node *core.IpfsNode, env
 	return SaveHostStatsIntoDatastore(ctx, node, node.Identity.Pretty(), hs)
 }
 
+func GetNowStats(ctx context.Context, cfg *config.Config, node *core.IpfsNode, env cmds.Environment, V2 bool) (hs *nodepb.StorageStat_Host, err error) {
+	sr, err := hub.QueryStats(ctx, node, V2)
+	if err != nil {
+		return nil, err
+	}
+	stat, err := corerepo.RepoStat(ctx, node)
+	if err != nil {
+		return nil, err
+	}
+	cfgRoot, err := cmdenv.GetConfigRoot(env)
+	if err != nil {
+		return nil, err
+	}
+	du, err := disk.UsageWithContext(ctx, cfgRoot)
+	if err != nil {
+		return nil, err
+	}
+	hs = &nodepb.StorageStat_Host{
+		Online:               cfg.Experimental.StorageHostEnabled,
+		StorageUsed:          int64(stat.RepoSize),
+		StorageCap:           int64(stat.StorageMax),
+		StorageDiskTotal:     int64(du.Total),
+		StorageDiskAvailable: int64(du.Free),
+	}
+	hs.StorageStat_HostStats = sr.StorageStat_HostStats
+	return hs, nil
+}
+
 // sub-commands: btfs storage stats info
 var storageStatsInfoCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
@@ -104,6 +134,7 @@ This command get node stats in the network from the local node data store.`,
 	Arguments: []cmds.Argument{},
 	Options: []cmds.Option{
 		cmds.BoolOption(localInfoOnlyOptionName, "l", "Return only the locally available disk stats without querying/returning the network stats.").WithDefault(false),
+		cmds.IntOption(versionOptionName, "v", "Get new hub score level.").WithDefault(2),
 	},
 	RunTimeout: 30 * time.Second,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -117,15 +148,20 @@ This command get node stats in the network from the local node data store.`,
 			return err
 		}
 
-		local, _ := req.Options[localInfoOnlyOptionName].(bool)
-		var hs *nodepb.StorageStat_Host
-		if !local {
-			hs, err = GetHostStatsFromDatastore(req.Context, n, n.Identity.Pretty())
-			if err != nil {
-				return err
-			}
+		var v2Flag bool
+		v, _ := req.Options[versionOptionName].(int)
+		if v == 1 {
+			v2Flag = false
+		} else if v == 2 {
+			v2Flag = true
 		} else {
-			hs = &nodepb.StorageStat_Host{}
+			return errors.New("version should be 1 or 2, not other. ")
+		}
+
+		var hs *nodepb.StorageStat_Host
+		hs, err = GetNowStats(req.Context, cfg, n, env, v2Flag)
+		if err != nil {
+			return err
 		}
 
 		// Refresh latest repo stats

@@ -82,17 +82,23 @@ func QueryHosts(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb
 }
 
 // QueryStats queries the BTFS-Hub to retrieve the latest storage stats on this host.
-func QueryStats(ctx context.Context, node *core.IpfsNode) (*hubpb.StatsResp, error) {
+func QueryStats(ctx context.Context, node *core.IpfsNode, v2 bool) (*hubpb.StatsResp, error) {
 	config, err := node.Repo.Config()
 	if err != nil {
 		return nil, err
 	}
+
+	newVersion := hubpb.HubRouter_V2
+	if !v2 {
+		newVersion = hubpb.HubRouter_V1
+	}
+
 	var resp *hubpb.StatsResp
 	err = grpc.HubQueryClient(config.Services.HubDomain).WithContext(ctx, func(ctx context.Context,
 		client hubpb.HubQueryServiceClient) error {
 		resp, err = client.GetStats(ctx, &hubpb.StatsReq{
 			Id:         node.Identity.Pretty(),
-			NewVersion: hubpb.HubRouter_V2,
+			NewVersion: newVersion,
 		})
 		if err != nil {
 			return err
