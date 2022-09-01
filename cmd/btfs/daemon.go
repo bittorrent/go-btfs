@@ -479,7 +479,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		return err
 	}
 
-	err = CheckHubDomainConfig(cfg, configRoot, chainid, reportStatusServ)
+	err = CheckHubDomainConfig(cfg, configRoot, chainid)
 	if err != nil {
 		fmt.Println("check report status, err: ", err)
 		return err
@@ -1355,7 +1355,7 @@ func CheckExistLastOnlineReport(cfg *config.Config, configRoot string, chainId i
 }
 
 // CheckExistLastOnlineReport sync conf and lastOnlineInfo
-func CheckHubDomainConfig(cfg *config.Config, configRoot string, chainId int64, reportStatusServ reportstatus.Service) error {
+func CheckHubDomainConfig(cfg *config.Config, configRoot string, chainId int64) error {
 	var hubServerDomain string
 	if chainId == 199 {
 		hubServerDomain = config.DefaultServicesConfig().HubDomain
