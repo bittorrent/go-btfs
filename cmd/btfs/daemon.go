@@ -479,6 +479,12 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		return err
 	}
 
+	err = CheckHubDomainConfig(cfg, configRoot, chainid)
+	if err != nil {
+		fmt.Println("check report status, err: ", err)
+		return err
+	}
+
 	// init ip2location db
 	if err := bindata.Init(); err != nil {
 		// log init ip2location err
@@ -1345,5 +1351,24 @@ func CheckExistLastOnlineReport(cfg *config.Config, configRoot string, chainId i
 			return err
 		}
 	}
+	return nil
+}
+
+// CheckExistLastOnlineReport sync conf and lastOnlineInfo
+func CheckHubDomainConfig(cfg *config.Config, configRoot string, chainId int64) error {
+	var hubServerDomain string
+	if chainId == 199 {
+		hubServerDomain = config.DefaultServicesConfig().HubDomain
+	} else {
+		hubServerDomain = config.DefaultServicesConfigTestnet().HubDomain
+	}
+
+	if hubServerDomain != cfg.Services.HubDomain {
+		err := commands.SyncHubDomainConfig(configRoot, hubServerDomain)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
