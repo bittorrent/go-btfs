@@ -2,18 +2,14 @@ package hosts
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"math/rand"
-	"time"
 
-	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	"github.com/bittorrent/go-btfs/core/hub"
-	"github.com/pkg/errors"
-	"github.com/prometheus/common/log"
+
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
 
 	logging "github.com/ipfs/go-log"
@@ -112,7 +108,7 @@ Mode options include:` + hub.AllModeHelpText,
 		if err != nil {
 			return err
 		}
-		_, err = SyncHostsMixture(req.Context, n, mode)
+		_, err = SyncHosts(req.Context, n, mode)
 		return err
 	},
 }
@@ -127,41 +123,4 @@ func SyncHosts(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb.
 		return nil, err
 	}
 	return nodes, nil
-}
-
-func SyncHostsMixture(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb.Host, error) {
-	if !json.Valid([]byte(mode)) {
-		return SyncHosts(ctx, node, mode)
-	}
-	modes := map[string]int{}
-	if err := json.Unmarshal([]byte(mode), &modes); err != nil {
-		return nil, errors.Wrap(err, "invalid mode")
-	}
-	c := 0
-	preMixing := map[string][]*hubpb.Host{}
-	for k, v := range modes {
-		if hosts, err := SyncHosts(ctx, node, k); err != nil {
-			log.Error(err)
-			continue
-		} else {
-			preMixing[k] = hosts
-			c += v
-		}
-	}
-
-	result := make([]*hubpb.Host, 0)
-	for k, v := range preMixing {
-		r := modes[k] * 500 / c
-		if r > len(v) {
-			r = len(v)
-		}
-		result = append(result, v[0:r]...)
-	}
-
-	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(result), func(i, j int) { result[i], result[j] = result[j], result[i] })
-	if err := helper.SaveHostsIntoDatastore(ctx, node, mode, result); err != nil {
-		log.Error(err)
-	}
-	return result, nil
 }
