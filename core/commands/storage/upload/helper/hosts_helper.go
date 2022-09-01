@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	//	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 
@@ -36,10 +36,10 @@ type CustomizedHostsProvider struct {
 }
 
 func (p *CustomizedHostsProvider) NextValidHost() (string, error) {
-	//myPeerId, err := peer.IDB58Decode(p.cp.Cfg.Identity.PeerID)
-	//if err != nil {
-	//	return "", err
-	//}
+	myPeerId, err := peer.IDB58Decode(p.cp.Cfg.Identity.PeerID)
+	if err != nil {
+		return "", err
+	}
 
 	for true {
 		if index, err := p.AddIndex(); err == nil {
@@ -48,10 +48,10 @@ func (p *CustomizedHostsProvider) NextValidHost() (string, error) {
 				continue
 			}
 			// If my vault is not compatible with the host's one, skip
-			//isVaultCompatible, err := chain.SettleObject.Factory.IsVaultCompatibleBetween(p.cp.Ctx, myPeerId, id)
-			//if err != nil || !isVaultCompatible {
-			//	continue
-			//}
+			isVaultCompatible, err := chain.SettleObject.Factory.IsVaultCompatibleBetween(p.cp.Ctx, myPeerId, id)
+			if err != nil || !isVaultCompatible {
+				continue
+			}
 			if err := p.cp.Api.Swarm().Connect(p.cp.Ctx, peer.AddrInfo{ID: id}); err != nil {
 				p.hosts = append(p.hosts, p.hosts[index])
 				continue
@@ -169,10 +169,10 @@ func (p *HostsProvider) AddIndex() (int, error) {
 }
 
 func (p *HostsProvider) PickFromBackupHosts() (string, error) {
-	//myPeerId, err := peer.IDB58Decode(p.cp.Cfg.Identity.PeerID)
-	//if err != nil {
-	//		return "", err
-	//	}
+	myPeerId, err := peer.IDB58Decode(p.cp.Cfg.Identity.PeerID)
+	if err != nil {
+		return "", err
+	}
 
 	for true {
 		host, err := func() (string, error) {
@@ -196,10 +196,10 @@ func (p *HostsProvider) PickFromBackupHosts() (string, error) {
 			continue
 		}
 		// If my vault is not compatible with the host's one, skip
-		//isVaultCompatible, err := chain.SettleObject.Factory.IsVaultCompatibleBetween(p.ctx, myPeerId, id)
-		//if err != nil || !isVaultCompatible {
-		//	continue
-		//}
+		isVaultCompatible, err := chain.SettleObject.Factory.IsVaultCompatibleBetween(p.ctx, myPeerId, id)
+		if err != nil || !isVaultCompatible {
+			continue
+		}
 		if err := p.cp.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: id}); err != nil {
 			continue
 		}
@@ -227,10 +227,10 @@ func (p *HostsProvider) PickFromBackupHosts() (string, error) {
 }
 
 func (p *HostsProvider) NextValidHost() (string, error) {
-	//myPeerId, err := peer.IDB58Decode(p.cp.Cfg.Identity.PeerID)
-	//if err != nil {
-	//	return "", err
-	//}
+	myPeerId, err := peer.IDB58Decode(p.cp.Cfg.Identity.PeerID)
+	if err != nil {
+		return "", err
+	}
 
 	endOfBackup := false
 LOOP:
@@ -260,10 +260,10 @@ LOOP:
 				continue
 			}
 			// If my vault is not compatible with the host's one, skip
-			//isVaultCompatible, err := chain.SettleObject.Factory.IsVaultCompatibleBetween(p.ctx, myPeerId, id)
-			//if err != nil || !isVaultCompatible {
-			//	continue
-			//}
+			isVaultCompatible, err := chain.SettleObject.Factory.IsVaultCompatibleBetween(p.ctx, myPeerId, id)
+			if err != nil || !isVaultCompatible {
+				continue
+			}
 			ctx, _ := context.WithTimeout(p.ctx, 3*time.Second)
 			if err := p.cp.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: id}); err != nil {
 				p.Lock()
