@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain"
 	"math/big"
 	"strings"
 	"sync"
@@ -274,13 +275,36 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 	defer s.unreserveTotalIssued(amount)
 
 	var cumulativePayout *big.Int
-	// cumulativePayout should get from blockchain rather than local storage in case of the loss of the local storage.
-	// https://github.com/bittorrent/go-btfs/issues/187
-	alreadyPaidOut, err := s.contract.PaidOut(ctx, beneficiary)
+	lastCheque, err := s.LastCheque(beneficiary)
 	if err != nil {
-		return nil, err
+		if err != ErrNoCheque {
+			return nil, err
+		}
+		cumulativePayout = big.NewInt(0)
+	} else {
+		// 1.set last
+		cumulativePayout = lastCheque.CumulativePayout
+
+		// 2.get sum of send peer cheque
+		records, err := chain.SettleObject.SwapService.SendChequeRecordsByPeer("peer_id")
+		if err != nil {
+			return nil, err
+		}
+		var sendAmount = big.NewInt(0)
+		for _, v := range records {
+			sendAmount = new(big.Int).Add(sendAmount, v.Amount)
+		}
+
+		// 3.if send > last, set send.
+		if sendAmount.Cmp(lastCheque.CumulativePayout) > 0 {
+			cumulativePayout = sendAmount
+		}
+
+		fmt.Println("... issue, send cheque sendAmount, lastCheque.CumulativePayout, diff = ",
+			sendAmount,
+			lastCheque.CumulativePayout,
+			sendAmount.Cmp(lastCheque.CumulativePayout))
 	}
-	cumulativePayout = alreadyPaidOut
 
 	// increase cumulativePayout by amount
 	cumulativePayout = cumulativePayout.Add(cumulativePayout, amount)
