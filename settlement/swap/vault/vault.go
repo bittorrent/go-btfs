@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/bittorrent/go-btfs/chain"
 	"math/big"
 	"strings"
 	"sync"
@@ -286,7 +285,7 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 		cumulativePayout = lastCheque.CumulativePayout
 
 		// 2.get sum of send peer cheque
-		records, err := chain.SettleObject.SwapService.SendChequeRecordsByPeer("peer_id")
+		records, err := s.chequeStore.SendChequeRecordsByPeer(beneficiary)
 		if err != nil {
 			return nil, err
 		}
