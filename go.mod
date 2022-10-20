@@ -1,6 +1,6 @@
 module github.com/bittorrent/go-btfs
 
-go 1.19
+go 1.18
 
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
