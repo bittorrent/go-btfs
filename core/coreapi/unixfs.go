@@ -38,7 +38,7 @@ import (
 	dagtest "github.com/ipfs/go-merkledag/test"
 	"github.com/ipfs/go-path/resolver"
 	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/prometheus/common/log"
+	// "github.com/prometheus/common/log"
 )
 
 type UnixfsAPI CoreAPI
@@ -189,7 +189,7 @@ func (api *UnixfsAPI) Add(ctx context.Context, filesNode files.Node, opts ...opt
 				return nil, err
 			}
 		}
-		log.Infof("The file will be encrypted with pubkey: %s", settings.Pubkey)
+		// log.Infof("The file will be encrypted with pubkey: %s", settings.Pubkey)
 		switch f := filesNode.(type) {
 		case files.File:
 			bytes, err := ioutil.ReadAll(f)
