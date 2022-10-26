@@ -155,6 +155,9 @@ func CmdReportStatus() error {
 	_, err := serv.ReportStatus()
 	if err != nil {
 		log.Errorf("ReportStatus err:%+v", err)
+		if strings.Contains(err.Error(), "Invalid lastNonce") {
+			fmt.Println("It is currently recommended to restart a new node and import the private key.")
+		}
 		return err
 	}
 	return nil
@@ -237,6 +240,9 @@ func (s *service) CheckReportStatus() error {
 	_, err := s.ReportStatus()
 	if err != nil {
 		log.Errorf("ReportStatus err:%+v", err)
+		if strings.Contains(err.Error(), "Invalid lastNonce") {
+			fmt.Println("It is currently recommended to restart a new node and import the private key.")
+		}
 		return err
 	}
 	return nil
@@ -256,6 +262,10 @@ func cycleCheckReport() {
 		//fmt.Printf("... ReportStatus, CheckReportStatus report: %+v err:%+v \n", report, err)
 		if err != nil {
 			log.Errorf("GetReportStatus err:%+v", err)
+			if strings.Contains(err.Error(), "storage: not found") {
+				fmt.Println(`This error is generated when the node reports status for the first time because the local data is empty. The error will disappear after the number of reports >= 2.
+				This error can be ignored and does not need to be handled.`)
+			}
 			continue
 		}
 
