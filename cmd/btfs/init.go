@@ -86,6 +86,9 @@ environment variable:
 		cctx := env.(*oldcmds.Context)
 		daemonLocked, err := fsrepo.LockedByOtherProcess(cctx.ConfigRoot)
 		if err != nil {
+			fmt.Println(`What causes this error: there is already one daemon process running in background
+			Solution: kill it first and run btfs daemon again.
+			If the user has the need to start multiple nodes on the same machine, the configuration needs to be modified.`)
 			return err
 		}
 

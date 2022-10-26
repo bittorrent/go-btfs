@@ -332,6 +332,12 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	repo, err := fsrepo.Open(cctx.ConfigRoot)
 	switch err {
 	default:
+		if strings.Contains(err.Error(), "someone else has the lock") {
+			fmt.Println(`Error:Someone else has the lock;
+What causes this error: there is already one daemon process running in background
+Solution: kill it first and run btfs daemon again.
+If the user need to start multiple nodes on the same machine, the configuration needs to be modified to a new place.`)
+		}
 		return err
 	case nil:
 		break
@@ -468,6 +474,14 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	_, err = chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
 	if err != nil {
 		fmt.Println("init settlement err: ", err)
+		if strings.Contains(err.Error(), "insufficient funds") {
+			fmt.Println("Please recharge BTT to your address to solve this error")
+		}
+		if strings.Contains(err.Error(), "contract deployment failed") {
+			fmt.Println(`Solution1: It is recommended to check if the balance is sufficient. If the balance is low, it is recommended to top up.`)
+			fmt.Println(`Solution2: Suggest to redeploy.`)
+		}
+
 		return err
 	}
 
@@ -1063,7 +1077,7 @@ func serveHTTPRemoteApi(req *cmds.Request, cctx *oldcmds.Context) (<-chan error,
 	return errc, nil
 }
 
-//collects options and opens the fuse mountpoint
+// collects options and opens the fuse mountpoint
 func mountFuse(req *cmds.Request, cctx *oldcmds.Context) error {
 	cfg, err := cctx.GetConfig()
 	if err != nil {
