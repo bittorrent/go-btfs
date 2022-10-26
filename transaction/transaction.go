@@ -179,10 +179,10 @@ func (t *transactionService) Send(ctx context.Context, request *TxRequest) (txHa
 		return common.Hash{}, err
 	}
 
-	err = t.putNonce(nonce + 1)
-	if err != nil {
-		return common.Hash{}, err
-	}
+	//err = t.putNonce(nonce + 1)
+	//if err != nil {
+	//	return common.Hash{}, err
+	//}
 
 	txHash = signedTx.Hash()
 
@@ -331,22 +331,24 @@ func (t *transactionService) nextNonce(ctx context.Context) (uint64, error) {
 		return 0, err
 	}
 
-	var nonce uint64
-	err = t.store.Get(t.nonceKey(), &nonce)
-	if err != nil {
-		// If no nonce was found locally used whatever we get from the backend.
-		if errors.Is(err, storage.ErrNotFound) {
-			return onchainNonce, nil
-		}
-		return 0, err
-	}
+	return onchainNonce, nil
 
-	// If the nonce onchain is larger than what we have there were external
-	// transactions and we need to update our nonce.
-	if onchainNonce > nonce {
-		return onchainNonce, nil
-	}
-	return nonce, nil
+	//var nonce uint64
+	//err = t.store.Get(t.nonceKey(), &nonce)
+	//if err != nil {
+	//	// If no nonce was found locally used whatever we get from the backend.
+	//	if errors.Is(err, storage.ErrNotFound) {
+	//		return onchainNonce, nil
+	//	}
+	//	return 0, err
+	//}
+	//
+	//// If the nonce onchain is larger than what we have there were external
+	//// transactions and we need to update our nonce.
+	//if onchainNonce > nonce {
+	//	return onchainNonce, nil
+	//}
+	//return nonce, nil
 }
 
 func (t *transactionService) putNonce(nonce uint64) error {
