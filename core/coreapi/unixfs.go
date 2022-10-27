@@ -87,7 +87,7 @@ func (api *UnixfsAPI) Add(ctx context.Context, filesNode files.Node, opts ...opt
 	//}
 
 	if settings.NoCopy && !(cfg.Experimental.FilestoreEnabled || cfg.Experimental.UrlstoreEnabled) {
-		return nil, fmt.Errorf("either the filestore or the urlstore must be enabled to use nocopy, see: https://git.io/vNItf")
+		return nil, fmt.Errorf("either the filestore or the urlstore must be enabled to use nocopy")
 	}
 
 	addblockstore := api.blockstore
