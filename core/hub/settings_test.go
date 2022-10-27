@@ -10,7 +10,7 @@ import (
 )
 
 func TestGetSettings(t *testing.T) {
-	ns, err := GetHostSettings(context.Background(), "https://hub.btfs.io",
+	ns, err := GetHostSettings(context.Background(), "https://score.btfs.io",
 		"QmWJWGxKKaqZUW4xga2BCzT5FBtYDL8Cc5Q5jywd6xPt1g")
 	if err != nil {
 		t.Fatal(err)
