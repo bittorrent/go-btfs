@@ -1,3 +1,4 @@
+//go:build !nofuse
 // +build !nofuse
 
 package node
@@ -35,10 +36,6 @@ NOTE: Version 2.7.2 or higher required; prior versions are known to kernel panic
 It is recommended you install it from the OSXFUSE website:
 
 	http://osxfuse.github.io/
-
-For more help, see:
-
-	https://github.com/ipfs/go-ipfs/issues/177
 `
 
 // errStrNoFuseHeaders is included in the output of `go get <fuseVersionPkg>` if there
@@ -52,10 +49,6 @@ Please upgrade to the latest OSXFUSE version.
 It is recommended you install it from the OSXFUSE website:
 
 	http://osxfuse.github.io/
-
-For more help, see:
-
-	https://github.com/ipfs/go-ipfs/issues/177
 `
 
 type errNeedFuseVersion struct {
@@ -81,9 +74,7 @@ version you have by running:
 
 	btfs config --bool %s true
 
-[1]: https://github.com/ipfs/go-ipfs/issues/177
-[2]: https://github.com/ipfs/go-ipfs/pull/533
-[3]: %s
+[1]: %s
 `, fuseVersionPkg, dontCheckOSXFUSEConfigKey, me.cause)
 }
 
@@ -112,9 +103,7 @@ trying to run these checks with:
 
 	btfs config --bool %s true
 
-[1]: https://github.com/ipfs/go-ipfs/issues/177
-[2]: https://github.com/ipfs/go-ipfs/pull/533
-[3]: %s
+[1]: %s
 `
 
 var errStrFixConfig = `config key invalid: %s %v
