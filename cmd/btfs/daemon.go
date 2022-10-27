@@ -666,7 +666,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 
 	// BTFS functional test
 	if runStartupTest {
-		functest(cfg.Services.StatusServerDomain, cfg.Identity.PeerID, hValue)
+		functest(cfg.Services.OnlineServerDomain, cfg.Identity.PeerID, hValue)
 	}
 
 	// set Analytics flag if specified
@@ -1187,7 +1187,7 @@ func getBtfsBinaryPath() (string, error) {
 	return latestBtfsBinaryPath, nil
 }
 
-func functest(statusServerDomain, peerId, hValue string) {
+func functest(onlineServerDomain, peerId, hValue string) {
 	btfsBinaryPath, err := getBtfsBinaryPath()
 	if err != nil {
 		fmt.Printf("Get btfs path failed, BTFS daemon test skipped\n")
@@ -1195,7 +1195,7 @@ func functest(statusServerDomain, peerId, hValue string) {
 	}
 
 	// prepare functional test before start btfs daemon
-	ready_to_test := prepare_test(btfsBinaryPath, statusServerDomain, peerId, hValue)
+	ready_to_test := prepare_test(btfsBinaryPath, onlineServerDomain, peerId, hValue)
 	// start btfs functional test
 	if ready_to_test {
 		test_success := false
@@ -1204,7 +1204,7 @@ func functest(statusServerDomain, peerId, hValue string) {
 			err := get_functest(btfsBinaryPath)
 			if err != nil {
 				fmt.Printf("BTFS daemon get file test failed! Reason: %v\n", err)
-				SendError(err.Error(), statusServerDomain, peerId, hValue)
+				SendError(err.Error(), onlineServerDomain, peerId, hValue)
 			} else {
 				fmt.Printf("BTFS daemon get file test succeeded!\n")
 				test_success = true
@@ -1220,7 +1220,7 @@ func functest(statusServerDomain, peerId, hValue string) {
 		for i := 0; i < 2; i++ {
 			if err := add_functest(btfsBinaryPath, peerId); err != nil {
 				fmt.Printf("BTFS daemon add file test failed! Reason: %v\n", err)
-				SendError(err.Error(), statusServerDomain, peerId, hValue)
+				SendError(err.Error(), onlineServerDomain, peerId, hValue)
 			} else {
 				fmt.Printf("BTFS daemon add file test succeeded!\n")
 				test_success = true
