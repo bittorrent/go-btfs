@@ -218,15 +218,12 @@ func (t *transactionService) checkNextNonce(lastNonce uint64) {
 	defer cancel()
 
 	for true {
-		fmt.Println("check next nonce, it get next nonce.")
-
 		time.Sleep(time.Second)
 		nonce, err := t.nextNonce(ctx)
 		if err != nil {
 			return
 		}
 		if nonce > lastNonce {
-			fmt.Println("check next nonce, it get next nonce.")
 			return
 		}
 
@@ -236,8 +233,6 @@ func (t *transactionService) checkNextNonce(lastNonce uint64) {
 		default:
 		}
 	}
-
-	return
 }
 
 func (t *transactionService) waitForPendingTx(txHash common.Hash) {
