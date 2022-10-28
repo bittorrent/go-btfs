@@ -18,7 +18,10 @@ import (
 )
 
 var (
-	ErrInvalidFactory       = errors.New("not a valid factory contract")
+	ErrInvalidFactory = errors.New(`not a valid factory contract;
+	The correct way to upgrade:
+		1.Make sure the current version is version 1.6.0 (or other 1.x versions)
+		2.Refer to the official documentation to upgrade (https://docs.btfs.io/docs/tutorials-on-upgrading-btfs-v10-to-btfs-v20-mainnet) (Copy this link to open in your browser)`)
 	ErrNotDeployedByFactory = errors.New("vault not deployed by factory")
 	errDecodeABI            = errors.New("could not decode abi data")
 
@@ -283,7 +286,8 @@ func (c *factory) IsVaultCompatibleBetween(ctx context.Context, peerID1, peerID2
 	return
 }
 
-/*GetPeerVaultWithCache query peer's vault address deployed by this factory.
+/*
+GetPeerVaultWithCache query peer's vault address deployed by this factory.
 Return cached if cache exists, otherwise query from BTTC.
 */
 func (c *factory) GetPeerVaultWithCache(ctx context.Context, peerID peer.ID) (vault common.Address, err error) {
