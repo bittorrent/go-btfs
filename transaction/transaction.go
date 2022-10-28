@@ -218,7 +218,7 @@ func (t *transactionService) checkNextNonce(lastNonce uint64) {
 	defer cancel()
 
 	for true {
-		time.Sleep(time.Duration(time.Second) * 1)
+		//time.Sleep(time.Duration(time.Second) * 1)
 		nonce, err := t.nextNonce(ctx)
 		if err != nil {
 			return
@@ -226,6 +226,8 @@ func (t *transactionService) checkNextNonce(lastNonce uint64) {
 		if nonce > lastNonce {
 			return
 		}
+
+		fmt.Println("check next nonce ... lastNonce = ", lastNonce, time.Now())
 
 		select {
 		case <-ctx.Done():
