@@ -185,7 +185,7 @@ func (t *transactionService) Send(ctx context.Context, request *TxRequest) (txHa
 	}
 
 	// checkNextNonce
-	t.checkNextNonce(nonce)
+	//t.checkNextNonce(nonce)
 
 	txHash = signedTx.Hash()
 
