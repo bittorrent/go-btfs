@@ -218,7 +218,7 @@ func (t *transactionService) checkNextNonce(lastNonce uint64) {
 	defer cancel()
 
 	for true {
-		time.Sleep(time.Second)
+		time.Sleep(time.Duration(time.Second) * 1)
 		nonce, err := t.nextNonce(ctx)
 		if err != nil {
 			return
