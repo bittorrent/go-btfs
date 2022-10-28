@@ -184,6 +184,9 @@ func (t *transactionService) Send(ctx context.Context, request *TxRequest) (txHa
 	//	return common.Hash{}, err
 	//}
 
+	// checkNextNonce
+	t.checkNextNonce(nonce)
+
 	txHash = signedTx.Hash()
 
 	err = t.store.Put(storedTransactionKey(txHash), StoredTransaction{
@@ -208,6 +211,33 @@ func (t *transactionService) Send(ctx context.Context, request *TxRequest) (txHa
 	t.waitForPendingTx(txHash)
 
 	return signedTx.Hash(), nil
+}
+
+func (t *transactionService) checkNextNonce(lastNonce uint64) {
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*3)
+	defer cancel()
+
+	for true {
+		fmt.Println("check next nonce, it get next nonce.")
+
+		time.Sleep(time.Second)
+		nonce, err := t.nextNonce(ctx)
+		if err != nil {
+			return
+		}
+		if nonce > lastNonce {
+			fmt.Println("check next nonce, it get next nonce.")
+			return
+		}
+
+		select {
+		case <-ctx.Done():
+			fmt.Println("check next nonce, it does not get next nonce.")
+		default:
+		}
+	}
+
+	return
 }
 
 func (t *transactionService) waitForPendingTx(txHash common.Hash) {
