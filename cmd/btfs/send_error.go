@@ -17,7 +17,7 @@ type errorData struct {
 }
 
 // function to send error message to status server
-func SendError(errMsg, statusServerDomain, peerId, hVal string) error {
+func SendError(errMsg, onlineServerDomain, peerId, hVal string) error {
 	errData := new(errorData)
 	errData.ErrorStatus = errMsg
 	errData.PeerId = peerId
@@ -25,7 +25,7 @@ func SendError(errMsg, statusServerDomain, peerId, hVal string) error {
 	errDataMarshaled, err := json.Marshal(errData)
 
 	// reports to status server by making HTTP request
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", statusServerDomain, routeError), bytes.NewReader(errDataMarshaled))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", onlineServerDomain, routeError), bytes.NewReader(errDataMarshaled))
 	if err != nil {
 		return errors.New(fmt.Sprintf("failed to make new http request, reason: %v", err))
 	}
