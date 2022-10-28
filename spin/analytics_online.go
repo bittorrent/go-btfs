@@ -86,7 +86,7 @@ func (dc *dcWrap) SendDataOnline(node *core.IpfsNode, config *config.Config) {
 			//fmt.Printf("--- online, doSendDataOnline error = %+v \n", err)
 			log.Infof("failed： doSendDataOnline to online server: %+v ", err)
 		} else {
-			log.Debug("sent doSendDataOnline to online server")
+			log.Debug("sent OK, doSendDataOnline to online server")
 		}
 		return err
 	}, bo)

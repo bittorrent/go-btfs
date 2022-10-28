@@ -18,14 +18,14 @@ const (
 )
 
 // we need to delete the file for get test from last run
-func prepare_test(btfsBinaryPath, statusServerDomain, peerId, hValue string) bool {
+func prepare_test(btfsBinaryPath, onlineServerDomain, peerId, hValue string) bool {
 	cmd := exec.Command(btfsBinaryPath, "rm", testfile)
 	err := cmd.Start()
 
 	if err != nil {
 		errMsg := fmt.Sprintf("btfs rm failed with message: [%v]", err)
 		log.Errorf(errMsg)
-		SendError(errMsg, statusServerDomain, peerId, hValue)
+		SendError(errMsg, onlineServerDomain, peerId, hValue)
 		return false
 	} else {
 		log.Info("btfs test preparation succeed\n")

@@ -35,7 +35,7 @@ else
     btfs config Services.EscrowDomain escrow-service:50051
     btfs config Services.GuardDomain guard-interceptor-service:50051
     btfs config Services.HubDomain query-service:50051
-    btfs config Services.StatusServerDomain status-grpc-service:50051
+    btfs config Services.OnlineServerDomain online-grpc-service:50051
     btfs config --bool Experimental.DisableAutoUpdate true
   fi
   if [ "$BTFS_ENV" == "dev" ] || [ "$BTFS_ENV" == "staging" ]; then
