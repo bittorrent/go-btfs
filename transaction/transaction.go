@@ -179,10 +179,10 @@ func (t *transactionService) Send(ctx context.Context, request *TxRequest) (txHa
 		return common.Hash{}, err
 	}
 
-	//err = t.putNonce(nonce + 1)
-	//if err != nil {
-	//	return common.Hash{}, err
-	//}
+	err = t.putNonce(nonce + 1)
+	if err != nil {
+		return common.Hash{}, err
+	}
 
 	// checkNextNonce
 	t.checkNextNonce(nonce)
@@ -218,7 +218,7 @@ func (t *transactionService) checkNextNonce(lastNonce uint64) {
 	defer cancel()
 
 	for true {
-		//time.Sleep(time.Duration(time.Second) * 1)
+		time.Sleep(time.Duration(time.Second) * 1)
 		nonce, err := t.nextNonce(ctx)
 		if err != nil {
 			return
