@@ -140,6 +140,13 @@ require (
 )
 
 require (
+	github.com/anacrolix/missinggo v1.3.0 // indirect
+	github.com/anacrolix/missinggo/v2 v2.7.0 // indirect
+	github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8 // indirect
+	github.com/huandu/xstrings v1.3.2 // indirect
+)
+
+require (
 	github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9 // indirect
 	github.com/FactomProject/basen v0.0.0-20150613233007-fe3947df716e // indirect
 	github.com/FactomProject/btcutilecc v0.0.0-20130527213604-d3a63a5752ec // indirect
@@ -148,6 +155,7 @@ require (
 	github.com/Stebalien/go-bitfield v0.0.1 // indirect
 	github.com/VictoriaMetrics/fastcache v1.5.7 // indirect
 	github.com/alexbrainman/goissue34681 v0.0.0-20191006012335-3fc7a47baff5 // indirect
+	github.com/anacrolix/torrent v1.47.0
 	github.com/andybalholm/brotli v0.0.0-20190621154722-5f990b63d2d6 // indirect
 	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
