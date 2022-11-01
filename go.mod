@@ -140,6 +140,8 @@ require (
 )
 
 require (
+	github.com/anacrolix/dht/v2 v2.19.0 // indirect
+	github.com/anacrolix/log v0.13.2-0.20220711050817-613cb738ef30 // indirect
 	github.com/anacrolix/missinggo v1.3.0 // indirect
 	github.com/anacrolix/missinggo/v2 v2.7.0 // indirect
 	github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8 // indirect

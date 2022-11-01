@@ -1,12 +1,17 @@
 package commands
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
+	"os"
 	"strings"
 
+	"github.com/anacrolix/torrent/bencode"
 	"github.com/anacrolix/torrent/metainfo"
+	"github.com/anacrolix/torrent/tracker/udp"
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	cid "github.com/ipfs/go-cid"
 	mbase "github.com/multiformats/go-multibase"
@@ -14,12 +19,12 @@ import (
 
 var bittorrentCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Convert and discover properties of CIDs",
+		Tagline: "A tool command to integrate with bittorrent net(support bittorrent seed or a magnet URI scheme).",
 	},
 	Subcommands: map[string]*cmds.Command{
 		"metainfo": metainfoBTCmd,
-		"scrape":   downloadBTCmd,
-		"bencode":  downloadBTCmd,
+		"scrape":   scrapeBTCmd,
+		"bencode":  bencodeBTCmd,
 		"download": downloadBTCmd,
 		"serve":    downloadBTCmd,
 	},
@@ -28,16 +33,10 @@ var bittorrentCmd = &cmds.Command{
 
 var metainfoBTCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline:          "Download a bittorrent file from the bittorrent seed or a magnet URL.",
-		ShortDescription: "Download a bittorrent file from the bittorrent seed or a magnet URL.",
+		Tagline: "Print the metainfo of a bittorrent file from a bittorrent seed file.",
 	},
 	Arguments: []cmds.Argument{
-		// cmds.FileArg("path", true, true, "The path to a file in which you want to get metainfo.").EnableRecursive().EnableStdin(),
-		cmds.StringArg("path", true, true, "The path to a bittorrent file in which you want to get metainfo.").EnableStdin(),
-	},
-	Options: []cmds.Option{
-		cmds.StringOption(cidFormatOptionName, "Printf style format string.").WithDefault("%s"),
-		cmds.StringOption(cidVersionOptionName, "CID version to convert to."),
+		cmds.StringArg("path", true, true, "The path to a bittorrent file in which you want to get metainfo."),
 	},
 	Run: func(req *cmds.Request, resp cmds.ResponseEmitter, env cmds.Environment) error {
 		btFilePath := req.Arguments[0]
@@ -65,7 +64,96 @@ var metainfoBTCmd = &cmds.Command{
 		if len(mi.Nodes) > 0 {
 			d["Nodes"] = mi.Nodes
 		}
+		// d["PieceHashes"] = func() (ret []string) {
+		// 	for i := range iter.N(info.NumPieces()) {
+		// 		ret = append(ret, hex.EncodeToString(info.Pieces[i*20:(i+1)*20]))
+		// 	}
+		// 	return
+		// }()
 		return resp.Emit(d)
+	},
+	Encoders: cmds.EncoderMap{
+		cmds.Text: cmds.MakeEncoder(func(req *cmds.Request, w io.Writer, out interface{}) error {
+			marshaled, err := json.MarshalIndent(out, "", "	")
+			if err != nil {
+				return err
+			}
+			marshaled = append(marshaled, byte('\n'))
+			fmt.Fprintln(w, string(marshaled))
+			return nil
+		}),
+	},
+}
+
+var scrapeBTCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "Fetch swarm metrics for info-hashes from tracker.",
+	},
+	Arguments: []cmds.Argument{
+		cmds.StringArg("tracker-url", true, false, "The tracker url."),
+		cmds.StringArg("info-hash", true, true, "The path to a bittorrent file in which you want to get metainfo."),
+	},
+	Run: func(req *cmds.Request, resp cmds.ResponseEmitter, env cmds.Environment) error {
+		tracker := req.Arguments[0]
+
+		trackerUrl, err := url.Parse(tracker)
+		if err != nil {
+			return fmt.Errorf("parsing tracker url: %w", err)
+		}
+		cc, err := udp.NewConnClient(udp.NewConnClientOpts{
+			Network: trackerUrl.Scheme,
+			Host:    trackerUrl.Host,
+		})
+		if err != nil {
+			return fmt.Errorf("creating new udp tracker conn client: %w", err)
+		}
+		defer cc.Close()
+		var ihs []udp.InfoHash
+		for _, hashStr := range req.Arguments[1:] {
+			ih := metainfo.NewHashFromHex(hashStr)
+			ihs = append(ihs, ih)
+		}
+		scrapeOut, err := cc.Client.Scrape(context.TODO(), ihs)
+		if err != nil {
+			return fmt.Errorf("scraping: %w", err)
+		}
+		return resp.Emit(scrapeOut)
+	},
+	Encoders: cmds.EncoderMap{
+		cmds.Text: cmds.MakeEncoder(func(req *cmds.Request, w io.Writer, out interface{}) error {
+			marshaled, err := json.MarshalIndent(out, "", "	")
+			if err != nil {
+				return err
+			}
+			marshaled = append(marshaled, byte('\n'))
+			fmt.Fprintln(w, string(marshaled))
+			return nil
+		}),
+	},
+}
+
+var bencodeBTCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "Print the bencoded info person-friendly of a bittorrent file from a bittorrent seed file.",
+	},
+	Arguments: []cmds.Argument{
+		cmds.StringArg("path", true, true, "The path to a bittorrent file in which bencoded data stored."),
+	},
+	Run: func(req *cmds.Request, resp cmds.ResponseEmitter, env cmds.Environment) error {
+		btFilePath := req.Arguments[0]
+		f, err := os.Open(btFilePath)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		d := bencode.NewDecoder(f)
+		var v interface{}
+		err = d.Decode(&v)
+		if err != nil {
+			return fmt.Errorf("decoding message : %w", err)
+		}
+		resp.Emit(v)
+		return nil
 	},
 	Encoders: cmds.EncoderMap{
 		cmds.Text: cmds.MakeEncoder(func(req *cmds.Request, w io.Writer, out interface{}) error {
