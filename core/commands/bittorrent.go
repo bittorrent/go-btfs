@@ -7,14 +7,14 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"strings"
+	"os/signal"
+	"syscall"
 
+	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/bencode"
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/anacrolix/torrent/tracker/udp"
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	cid "github.com/ipfs/go-cid"
-	mbase "github.com/multiformats/go-multibase"
 )
 
 var bittorrentCmd = &cmds.Command{
@@ -174,70 +174,48 @@ var downloadBTCmd = &cmds.Command{
 		LongDescription: "Download a bittorrent file from the bittorrent seed or a magnet URL.",
 	},
 	Arguments: []cmds.Argument{
-		cmds.StringArg("cid", true, true, "Cids to format.").EnableStdin(),
+		cmds.StringArg("magnet uri", false, false, "Magnet uri if your seed is coming from magnet."),
 	},
 	Options: []cmds.Option{
-		cmds.StringOption(cidFormatOptionName, "Printf style format string.").WithDefault("%s"),
-		cmds.StringOption(cidVersionOptionName, "CID version to convert to."),
-		cmds.StringOption(cidCodecOptionName, "CID codec to convert to."),
-		cmds.StringOption(cidMultibaseOptionName, "Multibase to display CID in."),
+		cmds.StringOption("t", "Bittorrent seed file."),
 	},
 	Run: func(req *cmds.Request, resp cmds.ResponseEmitter, env cmds.Environment) error {
-		fmtStr, _ := req.Options[cidFormatOptionName].(string)
-		verStr, _ := req.Options[cidVersionOptionName].(string)
-		codecStr, _ := req.Options[cidCodecOptionName].(string)
-		baseStr, _ := req.Options[cidMultibaseOptionName].(string)
+		magnet := req.Arguments[0]
+		btFilePath, _ := req.Options["t"].(string)
+		clientConfig := torrent.NewDefaultClientConfig()
 
-		opts := cidFormatOpts{}
+		_, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer cancel()
 
-		if strings.IndexByte(fmtStr, '%') == -1 {
-			return fmt.Errorf("invalid format string: %s", fmtStr)
+		client, err := torrent.NewClient(clientConfig)
+		if err != nil {
+			return fmt.Errorf("creating client: %w", err)
 		}
-		opts.fmtStr = fmtStr
-
-		if codecStr != "" {
-			codec, ok := cid.Codecs[codecStr]
-			if !ok {
-				return fmt.Errorf("unknown IPLD codec: %s", codecStr)
-			}
-			opts.newCodec = codec
-		} // otherwise, leave it as 0 (not a valid IPLD codec)
-
-		switch verStr {
-		case "":
-			// noop
-		case "0":
-			if opts.newCodec != 0 && opts.newCodec != cid.DagProtobuf {
-				return fmt.Errorf("cannot convert to CIDv0 with any codec other than DagPB")
-			}
-			opts.verConv = toCidV0
-		case "1":
-			opts.verConv = toCidV1
-		default:
-			return fmt.Errorf("invalid cid version: %s", verStr)
-		}
-
-		if baseStr != "" {
-			encoder, err := mbase.EncoderByName(baseStr)
+		defer client.Close()
+		var t *torrent.Torrent
+		if btFilePath != "" {
+			metaInfo, err := metainfo.LoadFromFile(btFilePath)
 			if err != nil {
-				return err
+				return fmt.Errorf("error loading torrent file %s: %w", btFilePath, err)
 			}
-			opts.newBase = encoder.Encoding()
+			t, err = client.AddTorrent(metaInfo)
+			if err != nil {
+				return fmt.Errorf("adding torrent: %w", err)
+			}
+		} else if magnet != "" {
+			t, err = client.AddMagnet(magnet)
+			if err != nil {
+				return fmt.Errorf("error adding magnet: %w", err)
+			}
 		} else {
-			opts.newBase = mbase.Encoding(-1)
+			return fmt.Errorf("your must provide a magnet uri or a torrent file path")
 		}
-
-		return emitCids(req, resp, opts)
+		go func() {
+			client.WriteStatus(os.Stdout)
+		}()
+		<-t.GotInfo()
+		t.DownloadAll()
+		client.WaitAll()
+		return nil
 	},
-	PostRun: cmds.PostRunMap{
-		cmds.CLI: streamResult(func(v interface{}, out io.Writer) nonFatalError {
-			r := v.(*CidFormatRes)
-			if r.ErrorMsg != "" {
-				return nonFatalError(fmt.Sprintf("%s: %s", r.CidStr, r.ErrorMsg))
-			}
-			fmt.Fprintf(out, "%s\n", r.Formatted)
-			return ""
-		}),
-	},
-	Type: CidFormatRes{},
 }
