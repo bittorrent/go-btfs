@@ -114,7 +114,7 @@ func (s *service) ReportStatus() (common.Hash, error) {
 	if err != nil {
 		return common.Hash{}, err
 	}
-	fmt.Println("... a.ReportStatus-send, txHash, err = ", txHash, err)
+	fmt.Println("... a.ReportStatus-send, txHash, msg = ", txHash, err)
 
 	// 3.wait for receipt, until ok or timeout
 	stx, err := s.transactionService.WaitForReceipt(ctx, txHash)
