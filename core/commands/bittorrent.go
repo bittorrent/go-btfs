@@ -1,20 +1,23 @@
 package commands
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
 	"os"
-	"os/signal"
-	"syscall"
+	"os/exec"
+	"strings"
+	"time"
 
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/bencode"
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/anacrolix/torrent/tracker/udp"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	humanize "github.com/dustin/go-humanize"
 )
 
 var bittorrentCmd = &cmds.Command{
@@ -183,10 +186,6 @@ var downloadBTCmd = &cmds.Command{
 		magnet := req.Arguments[0]
 		btFilePath, _ := req.Options["t"].(string)
 		clientConfig := torrent.NewDefaultClientConfig()
-
-		_, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-		defer cancel()
-
 		client, err := torrent.NewClient(clientConfig)
 		if err != nil {
 			return fmt.Errorf("creating client: %w", err)
@@ -210,12 +209,105 @@ var downloadBTCmd = &cmds.Command{
 		} else {
 			return fmt.Errorf("your must provide a magnet uri or a torrent file path")
 		}
-		go func() {
-			client.WriteStatus(os.Stdout)
-		}()
-		<-t.GotInfo()
+		select {
+		case <-t.GotInfo():
+			fmt.Println("Got metainfo done.Begin to download files...")
+		case <-time.After(5 * time.Minute):
+			log.Error("Get metainfo timeout,exceed two minutes,we can't find the metainfo for this torrent.")
+			return fmt.Errorf("get metainfo timeout")
+		}
 		t.DownloadAll()
-		client.WaitAll()
+		// print the progress of the download.
+		fmt.Printf("This torrent needs storage space about: %s\n", humanize.Bytes(uint64(t.Length())))
+		torrentBar(t, false)
+		isCompleted := client.WaitAll()
+		if !isCompleted {
+			log.Error("download error because of the closed of the client")
+			return fmt.Errorf("download error because of the closed of the client")
+		}
+		fmt.Println("Download finished.")
+
+		btfsBinaryPath := "btfs"
+		cmd := exec.Command(btfsBinaryPath, "add", "-r", t.Name())
+
+		go func() {
+			time.Sleep(10 * time.Minute)
+			_, err := os.FindProcess(int(cmd.Process.Pid))
+			if err != nil {
+				log.Info("process already finished\n")
+			} else {
+				err := cmd.Process.Kill()
+				if err != nil {
+					if !strings.Contains(err.Error(), "process already finished") {
+						log.Errorf("cannot kill process: [%v] \n", err)
+					}
+				}
+			}
+		}()
+		var errbuf bytes.Buffer
+		out, err := cmd.Output()
+		if err != nil {
+			return fmt.Errorf("btfs add [%s] failed: [%v], [%s]", t.Name(), err, errbuf.String())
+		}
+		s := strings.Split(string(out), " ")
+		if len(s) < 2 {
+			return fmt.Errorf("btfs add test failed: invalid add result[%s]", string(out))
+		}
+		fmt.Println("out: ", string(out))
 		return nil
 	},
+}
+
+func torrentBar(t *torrent.Torrent, pieceStates bool) {
+	go func() {
+		start := time.Now()
+		if t.Info() == nil {
+			fmt.Printf("%v: getting torrent info for %q\n", time.Since(start), t.Name())
+			<-t.GotInfo()
+		}
+		lastStats := t.Stats()
+		var lastLine string
+		interval := 10 * time.Second
+		tick := time.NewTicker(interval)
+		for range tick.C {
+			var completedPieces, partialPieces int
+			psrs := t.PieceStateRuns()
+			for _, r := range psrs {
+				if r.Complete {
+					completedPieces += r.Length
+				}
+				if r.Partial {
+					partialPieces += r.Length
+				}
+			}
+			stats := t.Stats()
+			byteRate := int64(time.Second)
+			byteRate *= stats.BytesReadUsefulData.Int64() - lastStats.BytesReadUsefulData.Int64()
+			byteRate /= int64(interval)
+			line := fmt.Sprintf(
+				"%v: downloading %q: %s/%s, %d/%d pieces completed (%d partial): %v/s\n",
+				time.Since(start),
+				t.Name(),
+				humanize.Bytes(uint64(t.BytesCompleted())),
+				humanize.Bytes(uint64(t.Length())),
+				completedPieces,
+				t.NumPieces(),
+				partialPieces,
+				humanize.Bytes(uint64(byteRate)),
+			)
+			if line != lastLine {
+				lastLine = line
+				fmt.Println(line)
+			}
+			if pieceStates {
+				fmt.Println(psrs)
+			}
+			lastStats = stats
+			if t.Complete.Bool() {
+				fmt.Println("下载完成！！！")
+				tick.Stop()
+				return
+			}
+		}
+	}()
 }
