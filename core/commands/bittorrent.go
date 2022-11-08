@@ -213,7 +213,7 @@ var downloadBTCmd = &cmds.Command{
 		case <-t.GotInfo():
 			fmt.Println("Got metainfo done.Begin to download files...")
 		case <-time.After(5 * time.Minute):
-			log.Error("Get metainfo timeout,exceed two minutes,we can't find the metainfo for this torrent.")
+			log.Error("Get metainfo timeout,exceed two minutes, we can't find the metainfo for this torrent.")
 			return fmt.Errorf("get metainfo timeout")
 		}
 		t.DownloadAll()
@@ -242,6 +242,13 @@ var downloadBTCmd = &cmds.Command{
 						log.Errorf("cannot kill process: [%v] \n", err)
 					}
 				}
+			}
+		}()
+		// No matter what, delete the files after the download completed.
+		defer func() {
+			err := os.RemoveAll(t.Name())
+			if err != nil {
+				log.Errorf("cannot remove the downloaded files: [%s], [%v] \n", t.Name(), err)
 			}
 		}()
 		var errbuf bytes.Buffer
