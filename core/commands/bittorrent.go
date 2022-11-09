@@ -42,15 +42,43 @@ var metainfoBTCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Print the metainfo of a bittorrent file from a bittorrent seed file.",
 	},
-	Arguments: []cmds.Argument{
-		cmds.StringArg("path", true, true, "The path to a bittorrent file in which you want to get metainfo."),
+	Options: []cmds.Option{
+		cmds.StringOption("t", "Bittorrent seed file."),
+		cmds.StringOption("m", "Magnet uri."),
 	},
 	Run: func(req *cmds.Request, resp cmds.ResponseEmitter, env cmds.Environment) error {
-		btFilePath := req.Arguments[0]
-		mi, err := metainfo.LoadFromFile(btFilePath)
-		if err != nil {
-			return err
+		btFilePath, _ := req.Options["t"].(string)
+		magnetUri, _ := req.Options["m"].(string)
+		var mi *metainfo.MetaInfo
+		var err error
+		if btFilePath != "" {
+			mi, err = metainfo.LoadFromFile(btFilePath)
+			if err != nil {
+				return fmt.Errorf("LoadFromFile bittorrent seed file: %w", err)
+			}
+		} else if magnetUri != "" {
+			clientConfig := torrent.NewDefaultClientConfig()
+			clientConfig.ListenPort = 0
+			client, err := torrent.NewClient(clientConfig)
+			if err != nil {
+				return fmt.Errorf("creating client: %w", err)
+			}
+			defer client.Close()
+			t, err := client.AddMagnet(magnetUri)
+			if err != nil {
+				return fmt.Errorf("client.AddMagnet: %w", err)
+			}
+			select {
+			case <-t.GotInfo():
+			case <-time.After(5 * time.Minute):
+				return fmt.Errorf("get magnet from bt network timeout, may be this seed cannot find")
+			}
+			m := t.Metainfo()
+			mi = &m
+		} else {
+			return fmt.Errorf("you must specify a -t to represent the path of a bt seed file or -m to represent a magnet uri")
 		}
+
 		info, err := mi.UnmarshalInfo()
 		if err != nil {
 			return fmt.Errorf("error unmarshalling info: %s", err)
@@ -96,13 +124,28 @@ var scrapeBTCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Fetch swarm metrics for info-hashes from tracker.",
 	},
-	Arguments: []cmds.Argument{
-		cmds.StringArg("tracker-url", true, false, "The tracker url."),
-		cmds.StringArg("info-hash", true, true, "The path to a bittorrent file in which you want to get metainfo."),
+	Options: []cmds.Option{
+		cmds.StringOption("t", "The tracker url."),
+		cmds.StringOption("i", "the hash list of a file or piece which is separated by commas"),
 	},
 	Run: func(req *cmds.Request, resp cmds.ResponseEmitter, env cmds.Environment) error {
-		tracker := req.Arguments[0]
-
+		tracker, _ := req.Options["t"].(string)
+		if tracker == "" {
+			return fmt.Errorf("tracker(-t) must be specified")
+		}
+		hashListStr, _ := req.Options["i"].(string)
+		if hashListStr == "" {
+			return fmt.Errorf("hash list(-i) must be specified and is separated by commas")
+		}
+		hashList := strings.Split(hashListStr, ",")
+		var ihs []udp.InfoHash
+		for _, hashStr := range hashList {
+			if len(hashStr) != 2*metainfo.HashSize {
+				return fmt.Errorf("hash info must be %d characters", 2*metainfo.HashSize)
+			}
+			ih := metainfo.NewHashFromHex(hashStr)
+			ihs = append(ihs, ih)
+		}
 		trackerUrl, err := url.Parse(tracker)
 		if err != nil {
 			return fmt.Errorf("parsing tracker url: %w", err)
@@ -115,12 +158,9 @@ var scrapeBTCmd = &cmds.Command{
 			return fmt.Errorf("creating new udp tracker conn client: %w", err)
 		}
 		defer cc.Close()
-		var ihs []udp.InfoHash
-		for _, hashStr := range req.Arguments[1:] {
-			ih := metainfo.NewHashFromHex(hashStr)
-			ihs = append(ihs, ih)
-		}
-		scrapeOut, err := cc.Client.Scrape(context.TODO(), ihs)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+		scrapeOut, err := cc.Client.Scrape(ctx, ihs)
 		if err != nil {
 			return fmt.Errorf("scraping: %w", err)
 		}
@@ -177,8 +217,7 @@ var bencodeBTCmd = &cmds.Command{
 
 var downloadBTCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline:         "Download a bittorrent file from the bittorrent seed or a magnet URL.",
-		LongDescription: "Download a bittorrent file from the bittorrent seed or a magnet URL.",
+		Tagline: "Download a bittorrent file from the bittorrent seed or a magnet URL.",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("magnet uri", false, false, "Magnet uri if your seed is coming from magnet."),
@@ -275,9 +314,6 @@ var serveBTCmd = &cmds.Command{
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("path", true, true, "the paths of some files that you want to serve as seeds"),
-	},
-	Options: []cmds.Option{
-		// cmds.StringOption("t", "Bittorrent seed file."),
 	},
 	Run: func(req *cmds.Request, resp cmds.ResponseEmitter, env cmds.Environment) error {
 		filePaths := req.Arguments
