@@ -3,20 +3,24 @@ package commands
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/bencode"
 	"github.com/anacrolix/torrent/metainfo"
+	"github.com/anacrolix/torrent/storage"
 	"github.com/anacrolix/torrent/tracker/udp"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	"github.com/bradfitz/iter"
 	humanize "github.com/dustin/go-humanize"
 )
 
@@ -29,7 +33,7 @@ var bittorrentCmd = &cmds.Command{
 		"scrape":   scrapeBTCmd,
 		"bencode":  bencodeBTCmd,
 		"download": downloadBTCmd,
-		"serve":    downloadBTCmd,
+		"serve":    serveBTCmd,
 	},
 	Extra: CreateCmdExtras(SetDoesNotUseRepo(true)),
 }
@@ -67,12 +71,12 @@ var metainfoBTCmd = &cmds.Command{
 		if len(mi.Nodes) > 0 {
 			d["Nodes"] = mi.Nodes
 		}
-		// d["PieceHashes"] = func() (ret []string) {
-		// 	for i := range iter.N(info.NumPieces()) {
-		// 		ret = append(ret, hex.EncodeToString(info.Pieces[i*20:(i+1)*20]))
-		// 	}
-		// 	return
-		// }()
+		d["PieceHashes"] = func() (ret []string) {
+			for i := range iter.N(info.NumPieces()) {
+				ret = append(ret, hex.EncodeToString(info.Pieces[i*20:(i+1)*20]))
+			}
+			return
+		}()
 		return resp.Emit(d)
 	},
 	Encoders: cmds.EncoderMap{
@@ -186,6 +190,7 @@ var downloadBTCmd = &cmds.Command{
 		magnet := req.Arguments[0]
 		btFilePath, _ := req.Options["t"].(string)
 		clientConfig := torrent.NewDefaultClientConfig()
+		clientConfig.ListenPort = 0
 		client, err := torrent.NewClient(clientConfig)
 		if err != nil {
 			return fmt.Errorf("creating client: %w", err)
@@ -225,7 +230,6 @@ var downloadBTCmd = &cmds.Command{
 			log.Error("download error because of the closed of the client")
 			return fmt.Errorf("download error because of the closed of the client")
 		}
-		fmt.Println("Download finished.")
 
 		btfsBinaryPath := "btfs"
 		cmd := exec.Command(btfsBinaryPath, "add", "-r", t.Name())
@@ -260,8 +264,87 @@ var downloadBTCmd = &cmds.Command{
 		if len(s) < 2 {
 			return fmt.Errorf("btfs add test failed: invalid add result[%s]", string(out))
 		}
-		fmt.Println("out: ", string(out))
+		fmt.Println(string(out))
 		return nil
+	},
+}
+var serveBTCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline:         "Download a bittorrent file from the bittorrent seed or a magnet URL.",
+		LongDescription: "Download a bittorrent file from the bittorrent seed or a magnet URL.",
+	},
+	Arguments: []cmds.Argument{
+		cmds.StringArg("path", true, true, "the paths of some files that you want to serve as seeds"),
+	},
+	Options: []cmds.Option{
+		// cmds.StringOption("t", "Bittorrent seed file."),
+	},
+	Run: func(req *cmds.Request, resp cmds.ResponseEmitter, env cmds.Environment) error {
+		filePaths := req.Arguments
+		if len(filePaths) == 0 {
+			return fmt.Errorf("you must provide the paths of some files that you want to serve as seeds")
+		}
+		cfg := torrent.NewDefaultClientConfig()
+		cfg.ListenPort = 0
+		cfg.Seed = true
+		cl, err := torrent.NewClient(cfg)
+		if err != nil {
+			return fmt.Errorf("new torrent client: %w", err)
+		}
+		defer cl.Close()
+		for _, filePath := range filePaths {
+			totalLength, err := totalLength(filePath)
+			if err != nil {
+				return fmt.Errorf("calculating total length of %q: %v", filePath, err)
+			}
+			pieceLength := metainfo.ChoosePieceLength(totalLength)
+			info := metainfo.Info{
+				PieceLength: pieceLength,
+			}
+			err = info.BuildFromFilePath(filePath)
+			if err != nil {
+				return fmt.Errorf("building info from path %q: %w", filePath, err)
+			}
+			for _, fi := range info.Files {
+				fmt.Printf("added %q\n", fi.Path)
+			}
+			mi := metainfo.MetaInfo{
+				InfoBytes: bencode.MustMarshal(info),
+			}
+			pc, err := storage.NewDefaultPieceCompletionForDir(".")
+			if err != nil {
+				return fmt.Errorf("new piece completion: %w", err)
+			}
+			defer pc.Close()
+			ih := mi.HashInfoBytes()
+			to, _ := cl.AddTorrentOpt(torrent.AddTorrentOpts{
+				InfoHash: ih,
+				Storage: storage.NewFileOpts(storage.NewFileClientOpts{
+					ClientBaseDir: filePath,
+					FilePathMaker: func(opts storage.FilePathMakerOpts) string {
+						return filepath.Join(opts.File.Path...)
+					},
+					TorrentDirMaker: nil,
+					PieceCompletion: pc,
+				}),
+			})
+			defer to.Drop()
+			err = to.MergeSpec(&torrent.TorrentSpec{
+				InfoBytes: mi.InfoBytes,
+				Trackers: [][]string{{
+					`wss://tracker.btorrent.xyz`,
+					`wss://tracker.openwebtorrent.com`,
+					"http://p4p.arenabg.com:1337/announce",
+					"udp://tracker.opentrackr.org:1337/announce",
+					"udp://tracker.openbittorrent.com:6969/announce",
+				}},
+			})
+			if err != nil {
+				return fmt.Errorf("setting trackers: %w", err)
+			}
+			fmt.Printf("%v: %v\n", to, to.Metainfo().Magnet(&ih, &info))
+		}
+		select {}
 	},
 }
 
@@ -311,10 +394,24 @@ func torrentBar(t *torrent.Torrent, pieceStates bool) {
 			}
 			lastStats = stats
 			if t.Complete.Bool() {
-				fmt.Println("下载完成！！！")
+				fmt.Println("Download completed!!!")
 				tick.Stop()
 				return
 			}
 		}
 	}()
+}
+
+func totalLength(path string) (totalLength int64, err error) {
+	err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		totalLength += info.Size()
+		return nil
+	})
+	if err != nil {
+		return 0, fmt.Errorf("walking path, %w", err)
+	}
+	return totalLength, nil
 }
