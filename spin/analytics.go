@@ -4,26 +4,21 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"strings"
 	"time"
 
-	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 
 	config "github.com/TRON-US/go-btfs-config"
 	iface "github.com/TRON-US/interface-go-btfs-core"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
-	pb "github.com/tron-us/go-btfs-common/protos/status"
-	cgrpc "github.com/tron-us/go-btfs-common/utils/grpc"
-
 	"github.com/alecthomas/units"
-	"github.com/cenkalti/backoff/v4"
 	"github.com/gogo/protobuf/proto"
 	"github.com/ipfs/go-bitswap"
 	logging "github.com/ipfs/go-log"
 	ic "github.com/libp2p/go-libp2p-crypto"
 	"github.com/shirou/gopsutil/v3/cpu"
+	nodepb "github.com/tron-us/go-btfs-common/protos/node"
+	pb "github.com/tron-us/go-btfs-common/protos/status"
 )
 
 type dcWrap struct {
@@ -133,7 +128,7 @@ func Analytics(api iface.CoreAPI, cfgRoot string, node *core.IpfsNode, BTFSVersi
 	}
 
 	dc.setRoles()
-	go dc.collectionAgent(node)
+	//go dc.collectionAgent(node)
 	go dc.collectionAgentOnline(node)
 }
 
@@ -221,37 +216,37 @@ func (dc *dcWrap) update(node *core.IpfsNode) []error {
 	return res
 }
 
-func (dc *dcWrap) sendData(node *core.IpfsNode, config *config.Config) {
-	sm, errs, err := dc.doPrepData(node)
-	if errs == nil {
-		errs = make([]error, 0)
-	}
-	var sb strings.Builder
-	if err != nil {
-		errs = append(errs, err)
-	}
-	for _, err := range errs {
-		sb.WriteString(err.Error())
-		sb.WriteRune('\n')
-	}
-	log.Debug(sb.String())
-	// If complete prep failure we return
-	if err != nil {
-		return
-	}
-
-	bo := backoff.NewExponentialBackOff()
-	bo.MaxElapsedTime = maxRetryTotal
-	backoff.Retry(func() error {
-		err := dc.doSendData(node.Context(), config, sm)
-		if err != nil {
-			log.Infof("failed to send data to status server: ", err)
-		} else {
-			log.Debug("sent analytics to status server")
-		}
-		return err
-	}, bo)
-}
+//func (dc *dcWrap) sendData(node *core.IpfsNode, config *config.Config) {
+//	sm, errs, err := dc.doPrepData(node)
+//	if errs == nil {
+//		errs = make([]error, 0)
+//	}
+//	var sb strings.Builder
+//	if err != nil {
+//		errs = append(errs, err)
+//	}
+//	for _, err := range errs {
+//		sb.WriteString(err.Error())
+//		sb.WriteRune('\n')
+//	}
+//	log.Debug(sb.String())
+//	// If complete prep failure we return
+//	if err != nil {
+//		return
+//	}
+//
+//	bo := backoff.NewExponentialBackOff()
+//	bo.MaxElapsedTime = maxRetryTotal
+//	backoff.Retry(func() error {
+//		err := dc.doSendData(node.Context(), config, sm)
+//		if err != nil {
+//			log.Infof("failed to send data to status server: ", err)
+//		} else {
+//			log.Debug("sent analytics to status server")
+//		}
+//		return err
+//	}, bo)
+//}
 
 // doPrepData gathers the latest analytics and returns (signed object, list of reporting errors, failure)
 func (dc *dcWrap) doPrepData(btfsNode *core.IpfsNode) (*pb.SignedMetrics, []error, error) {
@@ -281,20 +276,20 @@ func (dc *dcWrap) doPrepData(btfsNode *core.IpfsNode) (*pb.SignedMetrics, []erro
 	return sm, errs, nil
 }
 
-func (dc *dcWrap) doSendData(ctx context.Context, config *config.Config, sm *pb.SignedMetrics) error {
-	cb := cgrpc.StatusClient(config.Services.StatusServerDomain)
-	return cb.WithContext(ctx, func(ctx context.Context, client pb.StatusServiceClient) error {
-		_, err := client.UpdateMetricsAndDiscovery(ctx, sm)
-		if err != nil {
-			chain.CodeStatus = chain.ConstCodeError
-			chain.ErrStatus = err
-		} else {
-			chain.CodeStatus = chain.ConstCodeSuccess
-			chain.ErrStatus = nil
-		}
-		return err
-	})
-}
+//func (dc *dcWrap) doSendData(ctx context.Context, config *config.Config, sm *pb.SignedMetrics) error {
+//	cb := cgrpc.StatusClient(config.Services.StatusServerDomain)
+//	return cb.WithContext(ctx, func(ctx context.Context, client pb.StatusServiceClient) error {
+//		_, err := client.UpdateMetricsAndDiscovery(ctx, sm)
+//		if err != nil {
+//			chain.CodeStatus = chain.ConstCodeError
+//			chain.ErrStatus = err
+//		} else {
+//			chain.CodeStatus = chain.ConstCodeSuccess
+//			chain.ErrStatus = nil
+//		}
+//		return err
+//	})
+//}
 
 func (dc *dcWrap) getPayload(btfsNode *core.IpfsNode) ([]byte, error) {
 	dn, err := dc.getDiscoveryNodes()
@@ -336,20 +331,20 @@ func (dc *dcWrap) getDiscoveryNodes() ([]*nodepb.DiscoveryNode, error) {
 	return ns, nil
 }
 
-func (dc *dcWrap) collectionAgent(node *core.IpfsNode) {
-	tick := time.NewTicker(heartBeat)
-	defer tick.Stop()
-	// Force tick on immediate start
-	// make the configuration available in the for loop
-	for ; true; <-tick.C {
-		config, err := dc.node.Repo.Config()
-		if err != nil {
-			continue
-		}
-		// check config for explicit consent to data collect
-		// consent can be changed without reinitializing data collection
-		if isAnalyticsEnabled(config) {
-			dc.sendData(node, config)
-		}
-	}
-}
+//func (dc *dcWrap) collectionAgent(node *core.IpfsNode) {
+//	tick := time.NewTicker(heartBeat)
+//	defer tick.Stop()
+//	// Force tick on immediate start
+//	// make the configuration available in the for loop
+//	for ; true; <-tick.C {
+//		config, err := dc.node.Repo.Config()
+//		if err != nil {
+//			continue
+//		}
+//		// check config for explicit consent to data collect
+//		// consent can be changed without reinitializing data collection
+//		if isAnalyticsEnabled(config) {
+//			dc.sendData(node, config)
+//		}
+//	}
+//}

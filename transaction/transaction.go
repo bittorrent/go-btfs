@@ -184,6 +184,9 @@ func (t *transactionService) Send(ctx context.Context, request *TxRequest) (txHa
 		return common.Hash{}, err
 	}
 
+	// checkNextNonce
+	//t.checkNextNonce(nonce)
+
 	txHash = signedTx.Hash()
 
 	err = t.store.Put(storedTransactionKey(txHash), StoredTransaction{
@@ -208,6 +211,30 @@ func (t *transactionService) Send(ctx context.Context, request *TxRequest) (txHa
 	t.waitForPendingTx(txHash)
 
 	return signedTx.Hash(), nil
+}
+
+func (t *transactionService) checkNextNonce(lastNonce uint64) {
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*3)
+	defer cancel()
+
+	for true {
+		time.Sleep(time.Duration(time.Second) * 1)
+		nonce, err := t.nextNonce(ctx)
+		if err != nil {
+			return
+		}
+		if nonce > lastNonce {
+			return
+		}
+
+		fmt.Println("check next nonce ... lastNonce = ", lastNonce, time.Now())
+
+		select {
+		case <-ctx.Done():
+			fmt.Println("check next nonce, it does not get next nonce.")
+		default:
+		}
+	}
 }
 
 func (t *transactionService) waitForPendingTx(txHash common.Hash) {
@@ -331,22 +358,24 @@ func (t *transactionService) nextNonce(ctx context.Context) (uint64, error) {
 		return 0, err
 	}
 
-	var nonce uint64
-	err = t.store.Get(t.nonceKey(), &nonce)
-	if err != nil {
-		// If no nonce was found locally used whatever we get from the backend.
-		if errors.Is(err, storage.ErrNotFound) {
-			return onchainNonce, nil
-		}
-		return 0, err
-	}
+	return onchainNonce, nil
 
-	// If the nonce onchain is larger than what we have there were external
-	// transactions and we need to update our nonce.
-	if onchainNonce > nonce {
-		return onchainNonce, nil
-	}
-	return nonce, nil
+	//var nonce uint64
+	//err = t.store.Get(t.nonceKey(), &nonce)
+	//if err != nil {
+	//	// If no nonce was found locally used whatever we get from the backend.
+	//	if errors.Is(err, storage.ErrNotFound) {
+	//		return onchainNonce, nil
+	//	}
+	//	return 0, err
+	//}
+	//
+	//// If the nonce onchain is larger than what we have there were external
+	//// transactions and we need to update our nonce.
+	//if onchainNonce > nonce {
+	//	return onchainNonce, nil
+	//}
+	//return nonce, nil
 }
 
 func (t *transactionService) putNonce(nonce uint64) error {

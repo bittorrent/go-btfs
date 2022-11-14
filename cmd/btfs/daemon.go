@@ -332,6 +332,12 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	repo, err := fsrepo.Open(cctx.ConfigRoot)
 	switch err {
 	default:
+		if strings.Contains(err.Error(), "someone else has the lock") {
+			fmt.Println(`Error:Someone else has the lock;
+What causes this error: there is already one daemon process running in background
+Solution: kill it first and run btfs daemon again.
+If the user need to start multiple nodes on the same machine, the configuration needs to be modified to a new place.`)
+		}
 		return err
 	case nil:
 		break
@@ -468,6 +474,14 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 	_, err = chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
 	if err != nil {
 		fmt.Println("init settlement err: ", err)
+		if strings.Contains(err.Error(), "insufficient funds") {
+			fmt.Println("Please recharge BTT to your address to solve this error")
+		}
+		if strings.Contains(err.Error(), "contract deployment failed") {
+			fmt.Println(`Solution1: It is recommended to check if the balance is sufficient. If the balance is low, it is recommended to top up.`)
+			fmt.Println(`Solution2: Suggest to redeploy.`)
+		}
+
 		return err
 	}
 
@@ -666,7 +680,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 
 	// BTFS functional test
 	if runStartupTest {
-		functest(cfg.Services.StatusServerDomain, cfg.Identity.PeerID, hValue)
+		functest(cfg.Services.OnlineServerDomain, cfg.Identity.PeerID, hValue)
 	}
 
 	// set Analytics flag if specified
@@ -1063,7 +1077,7 @@ func serveHTTPRemoteApi(req *cmds.Request, cctx *oldcmds.Context) (<-chan error,
 	return errc, nil
 }
 
-//collects options and opens the fuse mountpoint
+// collects options and opens the fuse mountpoint
 func mountFuse(req *cmds.Request, cctx *oldcmds.Context) error {
 	cfg, err := cctx.GetConfig()
 	if err != nil {
@@ -1187,7 +1201,7 @@ func getBtfsBinaryPath() (string, error) {
 	return latestBtfsBinaryPath, nil
 }
 
-func functest(statusServerDomain, peerId, hValue string) {
+func functest(onlineServerDomain, peerId, hValue string) {
 	btfsBinaryPath, err := getBtfsBinaryPath()
 	if err != nil {
 		fmt.Printf("Get btfs path failed, BTFS daemon test skipped\n")
@@ -1195,7 +1209,7 @@ func functest(statusServerDomain, peerId, hValue string) {
 	}
 
 	// prepare functional test before start btfs daemon
-	ready_to_test := prepare_test(btfsBinaryPath, statusServerDomain, peerId, hValue)
+	ready_to_test := prepare_test(btfsBinaryPath, onlineServerDomain, peerId, hValue)
 	// start btfs functional test
 	if ready_to_test {
 		test_success := false
@@ -1204,7 +1218,7 @@ func functest(statusServerDomain, peerId, hValue string) {
 			err := get_functest(btfsBinaryPath)
 			if err != nil {
 				fmt.Printf("BTFS daemon get file test failed! Reason: %v\n", err)
-				SendError(err.Error(), statusServerDomain, peerId, hValue)
+				SendError(err.Error(), onlineServerDomain, peerId, hValue)
 			} else {
 				fmt.Printf("BTFS daemon get file test succeeded!\n")
 				test_success = true
@@ -1220,7 +1234,7 @@ func functest(statusServerDomain, peerId, hValue string) {
 		for i := 0; i < 2; i++ {
 			if err := add_functest(btfsBinaryPath, peerId); err != nil {
 				fmt.Printf("BTFS daemon add file test failed! Reason: %v\n", err)
-				SendError(err.Error(), statusServerDomain, peerId, hValue)
+				SendError(err.Error(), onlineServerDomain, peerId, hValue)
 			} else {
 				fmt.Printf("BTFS daemon add file test succeeded!\n")
 				test_success = true

@@ -87,7 +87,11 @@ func (api *UnixfsAPI) Add(ctx context.Context, filesNode files.Node, opts ...opt
 	//}
 
 	if settings.NoCopy && !(cfg.Experimental.FilestoreEnabled || cfg.Experimental.UrlstoreEnabled) {
-		return nil, fmt.Errorf("either the filestore or the urlstore must be enabled to use nocopy, see: https://git.io/vNItf")
+		return nil, fmt.Errorf(`either the filestore or the urlstore must be enabled to use nocopy
+		How to enable:
+		1.btfs config --json Experimental.FilestoreEnabled true
+		2.Then restart your BTFS node to reload your config.
+		3.Finally, when adding files with btfs add, pass the --nocopy flag to use the filestore instead of copying the files into your local BTFS repo.`)
 	}
 
 	addblockstore := api.blockstore

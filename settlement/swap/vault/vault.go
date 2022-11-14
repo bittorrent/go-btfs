@@ -274,13 +274,15 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 	defer s.unreserveTotalIssued(amount)
 
 	var cumulativePayout *big.Int
-	// cumulativePayout should get from blockchain rather than local storage in case of the loss of the local storage.
-	// https://github.com/bittorrent/go-btfs/issues/187
-	alreadyPaidOut, err := s.contract.PaidOut(ctx, beneficiary)
+	lastCheque, err := s.LastCheque(beneficiary)
 	if err != nil {
-		return nil, err
+		if err != ErrNoCheque {
+			return nil, err
+		}
+		cumulativePayout = big.NewInt(0)
+	} else {
+		cumulativePayout = lastCheque.CumulativePayout
 	}
-	cumulativePayout = alreadyPaidOut
 
 	// increase cumulativePayout by amount
 	cumulativePayout = cumulativePayout.Add(cumulativePayout, amount)
