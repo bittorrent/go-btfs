@@ -34,9 +34,11 @@ const (
 	customizedPayoutOptionName       = "customize-payout"
 	customizedPayoutPeriodOptionName = "customize-payout-period"
 	copyName                         = "copy"
+	TokenTypeName                    = "token-type"
 
 	defaultRepFactor     = 3
 	defaultStorageLength = 30
+	defaultTokenTypeName = "WBTT"
 
 	uploadPriceOptionName   = "price"
 	storageLengthOptionName = "storage-length"
@@ -104,6 +106,7 @@ Use status command to check for completion:
 		cmds.BoolOption(customizedPayoutOptionName, "Enable file storage customized payout schedule.").WithDefault(false),
 		cmds.IntOption(customizedPayoutPeriodOptionName, "Period of customized payout schedule.").WithDefault(1),
 		cmds.IntOption(copyName, "copy num of file hash.").WithDefault(0),
+		cmds.StringOption(TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 	},
 	RunTimeout: 15 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -141,6 +144,10 @@ Use status command to check for completion:
 		var fileSize int64
 		var shardSize int64
 
+		// token: parse token argument
+		token := req.Options[TokenTypeName].(string)
+		fmt.Println("... use token = ", token)
+
 		fileHash := req.Arguments[0]
 		shardHashes, fileSize, shardSize, err = helper.GetShardHashes(ctxParams, fileHash)
 		if len(shardHashes) == 0 && fileSize == -1 && shardSize == -1 &&
@@ -154,7 +161,6 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
-
 		_, storageLength, err := helper.GetPriceAndMinStorageLength(ctxParams)
 		if err != nil {
 			return err
@@ -164,12 +170,16 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
+
+		// token: get new price
+		//priceObj, err := chain.SettleObject.OracleService.CurrentPrice(token)
 		priceObj, err := chain.SettleObject.OracleService.CurrentPrice()
 		if err != nil {
 			return err
 		}
 		price := priceObj.Int64()
 
+		// sync hosts from hub hosts.
 		if !ctxParams.Cfg.Experimental.HostsSyncEnabled {
 			_ = SyncHosts(ctxParams)
 		}
@@ -186,7 +196,7 @@ Use status command to check for completion:
 				hp = helper.GetCustomizedHostsProvider(ctxParams, hostIDs)
 			}
 		}
-		rss, err := sessions.GetRenterSession(ctxParams, ssId, fileHash, shardHashes)
+		rss, err := sessions.GetRenterSessionWithToken(ctxParams, ssId, fileHash, shardHashes, token)
 		if err != nil {
 			return err
 		}
@@ -208,7 +218,7 @@ Use status command to check for completion:
 		for i, _ := range rss.ShardHashes {
 			shardIndexes = append(shardIndexes, i)
 		}
-		UploadShard(rss, hp, price, shardSize, storageLength, offlineSigning, renterId, fileSize, shardIndexes, nil)
+		UploadShard(rss, hp, price, token, shardSize, storageLength, offlineSigning, renterId, fileSize, shardIndexes, nil)
 		seRes := &Res{
 			ID: ssId,
 		}
