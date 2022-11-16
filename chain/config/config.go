@@ -33,7 +33,8 @@ var (
 	bttcTestOracleAddress       = common.HexToAddress("0xb2C746a9C81564bEF8382e885AF11e73De4a9E15")
 	bttcTestBatchAddress        = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	bttcTestVaultLogicAddressV1 = common.HexToAddress("0x212324b18255593AdE87597Fa37C2c582aD72d24")
-	bttcTestVaultLogicAddress   = common.HexToAddress("0x73bcbE03999913dB7229FD5dC485cf23247c58B5") // https://testnet.bttcscan.com/address/0x73bcbE03999913dB7229FD5dC485cf23247c58B5
+	bttcTestVaultLogicAddressV2 = common.HexToAddress("0x73bcbE03999913dB7229FD5dC485cf23247c58B5") // https://testnet.bttcscan.com/address/0x73bcbE03999913dB7229FD5dC485cf23247c58B5
+	bttcTestVaultLogicAddress   = common.HexToAddress("0xB749AD79f35Edb85653879A8439A79c1bC67016a") // https://testnet.bttcscan.com/address/0x73bcbE03999913dB7229FD5dC485cf23247c58B5
 	bttcTestStatusAddress       = common.HexToAddress("0x38d1fF2C2e9744273E4531FA4608eB6432c1F26A")
 
 	bttcFactoryAddressV1    = common.HexToAddress("0x9AF4bEc1A30BeC47756Ecef4cf43B91592121bC9")
@@ -41,6 +42,7 @@ var (
 	bttcOracleAddress       = common.HexToAddress("0x0064d80C42b6E2cE3aC92eaD445B3D83C510c7AA")
 	bttcBatchAddress        = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	bttcVaultLogicAddressV1 = common.HexToAddress("0x102dbCe01394C4a44Da3a1DF1De418e3fC225077") // https://bttcscan.com/address/0x102dbce01394c4a44da3a1df1de418e3fc225077
+	bttcVaultLogicAddressV2 = common.HexToAddress("0x11a91B7270ea000768F7A2C543547e832b5cb031") // https://bttcscan.com/address/0x11a91B7270ea000768F7A2C543547e832b5cb031
 	bttcVaultLogicAddress   = common.HexToAddress("0x11a91B7270ea000768F7A2C543547e832b5cb031") // https://bttcscan.com/address/0x11a91B7270ea000768F7A2C543547e832b5cb031
 	bttcStatusAddress       = common.HexToAddress("0x6DBAd4Bd16C15AE6dDEaA640626e5A3E151F02fC")
 
@@ -145,9 +147,9 @@ func InitChainConfig(
 		if len(cfg.ChainInfo.CurrentFactory) <= 0 {
 			return nil, errors.New("CurrentFactory is None in config file")
 		}
-		if len(cfg.ChainInfo.PriceOracleAddress) <= 0 {
-			return nil, errors.New("PriceOracleAddress is None in config file")
-		}
+		//if len(cfg.ChainInfo.PriceOracleAddress) <= 0 {
+		//	return nil, errors.New("PriceOracleAddress is None in config file")
+		//}
 		if len(cfg.ChainInfo.Endpoint) <= 0 {
 			return nil, errors.New("Endpoint is None in config file")
 		}
@@ -160,7 +162,7 @@ func InitChainConfig(
 
 	if stored {
 		chainconfig.CurrentFactory = common.HexToAddress(cfg.ChainInfo.CurrentFactory)
-		chainconfig.PriceOracleAddress = common.HexToAddress(cfg.ChainInfo.PriceOracleAddress)
+		//chainconfig.PriceOracleAddress = common.HexToAddress(cfg.ChainInfo.PriceOracleAddress)
 		chainconfig.Endpoint = cfg.ChainInfo.Endpoint
 	}
 
