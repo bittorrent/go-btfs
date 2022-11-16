@@ -14,6 +14,7 @@ var SendChequeCmd = &cmds.Command{
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("peer-id", true, false, "deposit amount."),
+		cmds.StringArg("token", true, false, "token"),
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -21,8 +22,11 @@ var SendChequeCmd = &cmds.Command{
 		peer_id := req.Arguments[0]
 		fmt.Println("SendChequeCmd peer_id = ", peer_id)
 
+		token := req.Arguments[1]
+		fmt.Printf("... token:%+v\n", token)
+
 		if len(peer_id) > 0 {
-			chequeTmp, err := chain.SettleObject.SwapService.LastSendCheque(peer_id)
+			chequeTmp, err := chain.SettleObject.SwapService.LastSendCheque(peer_id, token)
 			if err != nil {
 				return err
 			}

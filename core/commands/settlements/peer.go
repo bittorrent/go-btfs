@@ -18,12 +18,16 @@ var PeerSettlementCmd = &cmds.Command{
 	RunTimeout: 5 * time.Minute,
 	Arguments: []cmds.Argument{
 		cmds.StringArg("peer-id", true, false, "Peer id."),
+		cmds.StringArg("token", true, false, "token"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		peerID := req.Arguments[0]
 		peerexists := false
 
-		received, err := chain.SettleObject.SwapService.TotalReceived(peerID)
+		token := req.Arguments[1]
+		fmt.Printf("... token:%+v\n", token)
+
+		received, err := chain.SettleObject.SwapService.TotalReceived(peerID, token)
 		if err != nil {
 			if !errors.Is(err, settlement.ErrPeerNoSettlements) {
 				return err
@@ -36,7 +40,7 @@ var PeerSettlementCmd = &cmds.Command{
 			peerexists = true
 		}
 
-		sent, err := chain.SettleObject.SwapService.TotalSent(peerID)
+		sent, err := chain.SettleObject.SwapService.TotalSent(peerID, token)
 		if err != nil {
 			if !errors.Is(err, settlement.ErrPeerNoSettlements) {
 				return err

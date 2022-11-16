@@ -2,6 +2,7 @@ package settlement
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -28,12 +29,18 @@ var ListSettlementCmd = &cmds.Command{
 		Tagline: "list all settlements.",
 	},
 	RunTimeout: 5 * time.Minute,
+	Arguments: []cmds.Argument{
+		cmds.StringArg("token", true, false, "token"),
+	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		settlementsSent, err := chain.SettleObject.SwapService.SettlementsSent()
+		token := req.Arguments[0]
+		fmt.Printf("... token:%+v\n", token)
+
+		settlementsSent, err := chain.SettleObject.SwapService.SettlementsSent(token)
 		if err != nil {
 			return err
 		}
-		settlementsReceived, err := chain.SettleObject.SwapService.SettlementsReceived()
+		settlementsReceived, err := chain.SettleObject.SwapService.SettlementsReceived(token)
 		if err != nil {
 			return err
 		}
@@ -66,7 +73,7 @@ var ListSettlementCmd = &cmds.Command{
 				}
 			}
 			totalReceived.Add(b, totalReceived)
-			if has, err := chain.SettleObject.SwapService.HasCashoutAction(context.Background(), a); err == nil && has {
+			if has, err := chain.SettleObject.SwapService.HasCashoutAction(context.Background(), a, token); err == nil && has {
 				totalReceivedCashed.Add(b, totalReceivedCashed)
 			}
 		}
@@ -77,7 +84,7 @@ var ListSettlementCmd = &cmds.Command{
 			i++
 		}
 
-		totalPaidOut, err := chain.SettleObject.VaultService.TotalPaidOut(context.Background())
+		totalPaidOut, err := chain.SettleObject.VaultService.TotalPaidOut(context.Background(), token)
 		if err != nil {
 			return err
 		}

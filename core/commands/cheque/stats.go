@@ -27,7 +27,9 @@ var ChequeStatsCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "List cheque(s) received from peers.",
 	},
-
+	Arguments: []cmds.Argument{
+		cmds.StringArg("token", true, false, "token"),
+	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		cs := chequeStats{
 			TotalIssued:                big.NewInt(0),
@@ -36,49 +38,53 @@ var ChequeStatsCmd = &cmds.Command{
 			TotalReceivedUncashed:      big.NewInt(0),
 			TotalReceivedDailyUncashed: big.NewInt(0),
 		}
-		issued, err := chain.SettleObject.VaultService.TotalIssued()
+
+		token := req.Arguments[0]
+		fmt.Printf("... token:%+v\n", token)
+
+		issued, err := chain.SettleObject.VaultService.TotalIssued(token)
 		if err != nil {
 			return err
 		}
 		cs.TotalIssued = issued
 
-		issuedCount, err := chain.SettleObject.VaultService.TotalIssuedCount()
+		issuedCount, err := chain.SettleObject.VaultService.TotalIssuedCount(token)
 		if err != nil {
 			return err
 		}
 		cs.TotalIssuedCount = issuedCount
 
-		paidOut, err := chain.SettleObject.VaultService.TotalPaidOut(context.Background())
+		paidOut, err := chain.SettleObject.VaultService.TotalPaidOut(context.Background(), token)
 		if err != nil {
 			return err
 		}
 		cs.TotalIssuedCashed = paidOut
 
-		received, err := chain.SettleObject.VaultService.TotalReceived()
+		received, err := chain.SettleObject.VaultService.TotalReceived(token)
 		if err != nil {
 			return err
 		}
 		cs.TotalReceived = received
 
-		cashed, err := chain.SettleObject.VaultService.TotalReceivedCashed()
+		cashed, err := chain.SettleObject.VaultService.TotalReceivedCashed(token)
 		if err != nil {
 			return err
 		}
 		cs.TotalReceivedUncashed.Sub(cs.TotalReceived, cashed)
 
-		count, err := chain.SettleObject.VaultService.TotalReceivedCount()
+		count, err := chain.SettleObject.VaultService.TotalReceivedCount(token)
 		if err != nil {
 			return err
 		}
 		cs.TotalReceivedCount = count
 
-		receivedCount, err := chain.SettleObject.VaultService.TotalReceivedCashedCount()
+		receivedCount, err := chain.SettleObject.VaultService.TotalReceivedCashedCount(token)
 		if err != nil {
 			return err
 		}
 		cs.TotalReceivedCashedCount = receivedCount
 
-		dailyReceived, err := chain.SettleObject.VaultService.TotalDailyReceived()
+		dailyReceived, err := chain.SettleObject.VaultService.TotalDailyReceived(token)
 		if err != nil {
 			return err
 		}

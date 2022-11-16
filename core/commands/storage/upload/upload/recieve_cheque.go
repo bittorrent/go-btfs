@@ -21,6 +21,7 @@ var StorageUploadChequeCmd = &cmds.Command{
 		cmds.StringArg("encoded-cheque", true, false, "encoded-cheque from peer-id."),
 		cmds.StringArg("amount", true, false, "amount"),
 		cmds.StringArg("contract-id", false, false, "contract-id."),
+		cmds.StringArg("token", true, false, "token"),
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -44,10 +45,12 @@ var StorageUploadChequeCmd = &cmds.Command{
 
 		encodedCheque := req.Arguments[0]
 		contractId := req.Arguments[2]
-		fmt.Printf("receive cheque, requestPid:%s contractId:%+v,encodedCheque:%+v \n", requestPid.String(), contractId, encodedCheque)
+		token := req.Arguments[3]
+		fmt.Printf("receive cheque, requestPid:%s contractId:%+v,encodedCheque:%+v token:%+v\n",
+			requestPid.String(), contractId, encodedCheque, token)
 
 		// decode and deal the cheque
-		err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price)
+		err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price, token)
 		if err != nil {
 			fmt.Println("receive cheque, swapprotocol.SwapProtocol.Handler, error:", err)
 			return err

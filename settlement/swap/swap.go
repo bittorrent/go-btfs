@@ -42,7 +42,7 @@ type Interface interface {
 	// ReceivedChequeRecordsCount
 	ReceivedChequeRecordsCount() (int, error)
 
-	// LastReceivedCheque returns the last received cheque for the peer
+	// LastSendCheque returns the last received cheque for the peer
 	LastSendCheque(peer string) (*vault.SignedCheque, error)
 	// LastSendCheques returns the list of last send cheques for this peer
 	LastSendCheques() (map[string]*vault.SignedCheque, error)
@@ -55,7 +55,15 @@ type Interface interface {
 	CashCheque(ctx context.Context, peer string) (common.Hash, error)
 	// CashoutStatus gets the status of the latest cashout transaction for the peers vault
 	CashoutStatus(ctx context.Context, peer string) (*vault.CashoutStatus, error)
+	// HasCashoutAction
 	HasCashoutAction(ctx context.Context, peer string) (bool, error)
+}
+
+func addToken(s string, token string) string {
+	if token == "WBTT" {
+		return s
+	}
+	return fmt.Sprintf("%s_%s", s, token)
 }
 
 // Service is the implementation of the swap settlement layer.
@@ -92,7 +100,7 @@ func (s *Service) GetProtocols() swapprotocol.Interface {
 }
 
 // ReceiveCheque is called by the swap protocol if a cheque is received.
-func (s *Service) ReceiveCheque(ctx context.Context, peer string, cheque *vault.SignedCheque, price *big.Int) (err error) {
+func (s *Service) ReceiveCheque(ctx context.Context, peer string, cheque *vault.SignedCheque, price *big.Int, token string) (err error) {
 	// check this is the same vault for this peer as previously
 	expectedVault, known, err := s.addressbook.Vault(peer)
 	if err != nil {
@@ -105,7 +113,7 @@ func (s *Service) ReceiveCheque(ctx context.Context, peer string, cheque *vault.
 
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	receivedAmount, err := s.chequeStore.ReceiveCheque(ctx, cheque, price)
+	receivedAmount, err := s.chequeStore.ReceiveCheque(ctx, cheque, price, token)
 	if err != nil {
 		s.metrics.ChequesRejected.Inc()
 		return fmt.Errorf("rejecting cheque: %w", err)
@@ -123,36 +131,36 @@ func (s *Service) ReceiveCheque(ctx context.Context, peer string, cheque *vault.
 	s.metrics.ChequesReceived.Inc()
 
 	// total received count
-	totalReceivedCount, err := s.vault.TotalReceivedCount()
+	totalReceivedCount, err := s.vault.TotalReceivedCount(token)
 	if err != nil {
 		return err
 	}
 	totalReceivedCount = totalReceivedCount + 1
-	err = s.store.Put(statestore.TotalReceivedCountKey, totalReceivedCount)
+	err = s.store.Put(addToken(statestore.TotalReceivedCountKey, token), totalReceivedCount)
 	if err != nil {
 		return err
 	}
 
 	// totalReceived
-	totalReceived, err := s.vault.TotalReceived()
+	totalReceived, err := s.vault.TotalReceived(token)
 	if err != nil {
 		return err
 	}
 	totalReceived = totalReceived.Add(totalReceived, receivedAmount)
-	err = s.store.Put(statestore.TotalReceivedKey, totalReceived)
+	err = s.store.Put(addToken(statestore.TotalReceivedKey, token), totalReceived)
 	if err != nil {
 		return err
 	}
 
-	return s.accounting.NotifyPaymentReceived(peer, receivedAmount)
+	return s.accounting.NotifyPaymentReceived(peer, receivedAmount, token)
 }
 
 // Pay initiates a payment to the given peer
-func (s *Service) Pay(ctx context.Context, peer string, amount *big.Int, contractId string) {
+func (s *Service) Pay(ctx context.Context, peer string, amount *big.Int, contractId, token string) {
 	var err error
 	defer func() {
 		if err != nil {
-			s.accounting.NotifyPaymentSent(peer, amount, err)
+			s.accounting.NotifyPaymentSent(peer, amount, err, token)
 		}
 	}()
 
@@ -166,7 +174,7 @@ func (s *Service) Pay(ctx context.Context, peer string, amount *big.Int, contrac
 			return
 		}
 	*/
-	balance, err := s.proto.EmitCheque(ctx, peer, amount, contractId, s.vault.Issue)
+	balance, err := s.proto.EmitCheque(ctx, peer, amount, contractId, token, s.vault.Issue)
 
 	if err != nil {
 		return
@@ -174,7 +182,7 @@ func (s *Service) Pay(ctx context.Context, peer string, amount *big.Int, contrac
 
 	bal, _ := big.NewFloat(0).SetInt(balance).Float64()
 	s.metrics.AvailableBalance.Set(bal)
-	s.accounting.NotifyPaymentSent(peer, amount, nil)
+	s.accounting.NotifyPaymentSent(peer, amount, nil, token)
 	amountFloat, _ := big.NewFloat(0).SetInt(amount).Float64()
 	s.metrics.TotalSent.Add(amountFloat)
 	s.metrics.ChequesSent.Inc()
@@ -185,7 +193,7 @@ func (s *Service) SetAccounting(accounting settlement.Accounting) {
 }
 
 // TotalSent returns the total amount sent to a peer
-func (s *Service) TotalSent(peer string) (totalSent *big.Int, err error) {
+func (s *Service) TotalSent(peer string, token string) (totalSent *big.Int, err error) {
 	beneficiary, known, err := s.addressbook.Beneficiary(peer)
 	if err != nil {
 		return nil, err
@@ -193,7 +201,7 @@ func (s *Service) TotalSent(peer string) (totalSent *big.Int, err error) {
 	if !known {
 		return nil, settlement.ErrPeerNoSettlements
 	}
-	cheque, err := s.vault.LastCheque(beneficiary)
+	cheque, err := s.vault.LastCheque(beneficiary, token)
 	if err != nil {
 		if err == vault.ErrNoCheque {
 			return nil, settlement.ErrPeerNoSettlements
@@ -204,7 +212,7 @@ func (s *Service) TotalSent(peer string) (totalSent *big.Int, err error) {
 }
 
 // TotalReceived returns the total amount received from a peer
-func (s *Service) TotalReceived(peer string) (totalReceived *big.Int, err error) {
+func (s *Service) TotalReceived(peer string, token string) (totalReceived *big.Int, err error) {
 	vaultAddress, known, err := s.addressbook.Vault(peer)
 	if err != nil {
 		return nil, err
@@ -213,7 +221,7 @@ func (s *Service) TotalReceived(peer string) (totalReceived *big.Int, err error)
 		return nil, settlement.ErrPeerNoSettlements
 	}
 
-	cheque, err := s.chequeStore.LastReceivedCheque(vaultAddress)
+	cheque, err := s.chequeStore.LastReceivedCheque(vaultAddress, token)
 	if err != nil {
 		if err == vault.ErrNoCheque {
 			return nil, settlement.ErrPeerNoSettlements
@@ -224,9 +232,9 @@ func (s *Service) TotalReceived(peer string) (totalReceived *big.Int, err error)
 }
 
 // SettlementsSent returns sent settlements for each individual known peer
-func (s *Service) SettlementsSent() (map[string]*big.Int, error) {
+func (s *Service) SettlementsSent(token string) (map[string]*big.Int, error) {
 	result := make(map[string]*big.Int)
-	cheques, err := s.vault.LastCheques()
+	cheques, err := s.vault.LastCheques(token)
 	if err != nil {
 		return nil, err
 	}
@@ -246,9 +254,9 @@ func (s *Service) SettlementsSent() (map[string]*big.Int, error) {
 }
 
 // SettlementsReceived returns received settlements for each individual known peer.
-func (s *Service) SettlementsReceived() (map[string]*big.Int, error) {
+func (s *Service) SettlementsReceived(token string) (map[string]*big.Int, error) {
 	result := make(map[string]*big.Int)
-	cheques, err := s.chequeStore.LastReceivedCheques()
+	cheques, err := s.chequeStore.LastReceivedCheques(token)
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +305,7 @@ func (s *Service) SettlementsReceived() (map[string]*big.Int, error) {
 //}
 
 // LastReceivedCheque returns the last received cheque for the peer
-func (s *Service) LastReceivedCheque(peer string) (*vault.SignedCheque, error) {
+func (s *Service) LastReceivedCheque(peer string, token string) (*vault.SignedCheque, error) {
 
 	common, known, err := s.addressbook.Vault(peer)
 
@@ -309,12 +317,12 @@ func (s *Service) LastReceivedCheque(peer string) (*vault.SignedCheque, error) {
 		return nil, vault.ErrNoCheque
 	}
 
-	return s.chequeStore.LastReceivedCheque(common)
+	return s.chequeStore.LastReceivedCheque(common, token)
 }
 
 // LastReceivedCheques returns map[peer]cheque
-func (s *Service) LastReceivedCheques() (map[string]*vault.SignedCheque, error) {
-	lastcheques, err := s.chequeStore.LastReceivedCheques()
+func (s *Service) LastReceivedCheques(token string) (map[string]*vault.SignedCheque, error) {
+	lastcheques, err := s.chequeStore.LastReceivedCheques(token)
 	if err != nil {
 		return nil, err
 	}
@@ -332,7 +340,7 @@ func (s *Service) LastReceivedCheques() (map[string]*vault.SignedCheque, error) 
 }
 
 // LastReceivedCheque returns the last received cheque for the peer
-func (s *Service) ReceivedChequeRecordsByPeer(peer string) ([]vault.ChequeRecord, error) {
+func (s *Service) ReceivedChequeRecordsByPeer(peer string, token string) ([]vault.ChequeRecord, error) {
 	common, known, err := s.addressbook.Vault(peer)
 	if err != nil {
 		return nil, err
@@ -342,19 +350,19 @@ func (s *Service) ReceivedChequeRecordsByPeer(peer string) ([]vault.ChequeRecord
 		return nil, vault.ErrNoCheque
 	}
 
-	return s.chequeStore.ReceivedChequeRecordsByPeer(common)
+	return s.chequeStore.ReceivedChequeRecordsByPeer(common, token)
 }
 
 // ReceivedChequeRecordsAll returns the last received cheque for the peer
-func (s *Service) ReceivedChequeRecordsAll() ([]vault.ChequeRecord, error) {
-	mp, err := s.chequeStore.ReceivedChequeRecordsAll()
+func (s *Service) ReceivedChequeRecordsAll(token string) ([]vault.ChequeRecord, error) {
+	mp, err := s.chequeStore.ReceivedChequeRecordsAll(token)
 	if err != nil {
 		return nil, err
 	}
 
 	records := make([]vault.ChequeRecord, 0)
 	for comm, _ := range mp {
-		l, err := s.chequeStore.ReceivedChequeRecordsByPeer(comm)
+		l, err := s.chequeStore.ReceivedChequeRecordsByPeer(comm, token)
 		if err != nil {
 			return nil, err
 		}
@@ -368,15 +376,15 @@ func (s *Service) ReceivedChequeRecordsAll() ([]vault.ChequeRecord, error) {
 }
 
 // ReceivedChequeRecordsCount returns the last received cheque for the peer
-func (s *Service) ReceivedChequeRecordsCount() (int, error) {
-	mp, err := s.chequeStore.ReceivedChequeRecordsAll()
+func (s *Service) ReceivedChequeRecordsCount(token string) (int, error) {
+	mp, err := s.chequeStore.ReceivedChequeRecordsAll(token)
 	if err != nil {
 		return 0, err
 	}
 
 	count := 0
 	for comm, _ := range mp {
-		l, err := s.chequeStore.ReceivedChequeRecordsByPeer(comm)
+		l, err := s.chequeStore.ReceivedChequeRecordsByPeer(comm, token)
 		if err != nil {
 			return 0, err
 		}
@@ -388,7 +396,7 @@ func (s *Service) ReceivedChequeRecordsCount() (int, error) {
 }
 
 // LastReceivedCheque returns the last received cheque for the peer
-func (s *Service) LastSendCheque(peer string) (*vault.SignedCheque, error) {
+func (s *Service) LastSendCheque(peer string, token string) (*vault.SignedCheque, error) {
 	comm, known, err := s.addressbook.Vault(peer)
 	if err != nil {
 		return nil, err
@@ -398,12 +406,12 @@ func (s *Service) LastSendCheque(peer string) (*vault.SignedCheque, error) {
 		return nil, vault.ErrNoCheque
 	}
 
-	return s.vault.LastCheque(comm)
+	return s.vault.LastCheque(comm, token)
 }
 
 // LastReceivedCheques returns the list of last received cheques for all peers
-func (s *Service) LastSendCheques() (map[string]*vault.SignedCheque, error) {
-	lastcheques, err := s.vault.LastCheques()
+func (s *Service) LastSendCheques(token string) (map[string]*vault.SignedCheque, error) {
+	lastcheques, err := s.vault.LastCheques(token)
 	if err != nil {
 		return nil, err
 	}
@@ -421,7 +429,7 @@ func (s *Service) LastSendCheques() (map[string]*vault.SignedCheque, error) {
 }
 
 // SendChequeRecordsByPeer returns the last received cheque for the peer
-func (s *Service) SendChequeRecordsByPeer(peer string) ([]vault.ChequeRecord, error) {
+func (s *Service) SendChequeRecordsByPeer(peer string, token string) ([]vault.ChequeRecord, error) {
 	common, known, err := s.addressbook.Beneficiary(peer)
 	if err != nil {
 		return nil, err
@@ -431,19 +439,19 @@ func (s *Service) SendChequeRecordsByPeer(peer string) ([]vault.ChequeRecord, er
 		return nil, vault.ErrNoCheque
 	}
 
-	return s.chequeStore.SendChequeRecordsByPeer(common)
+	return s.chequeStore.SendChequeRecordsByPeer(common, token)
 }
 
 // SendChequeRecordsAll returns the last received cheque for all peer
-func (s *Service) SendChequeRecordsAll() ([]vault.ChequeRecord, error) {
-	mp, err := s.chequeStore.SendChequeRecordsAll()
+func (s *Service) SendChequeRecordsAll(token string) ([]vault.ChequeRecord, error) {
+	mp, err := s.chequeStore.SendChequeRecordsAll(token)
 	if err != nil {
 		return nil, err
 	}
 
 	records := make([]vault.ChequeRecord, 0)
 	for comm, _ := range mp {
-		l, err := s.chequeStore.SendChequeRecordsByPeer(comm)
+		l, err := s.chequeStore.SendChequeRecordsByPeer(comm, token)
 		if err != nil {
 			return nil, err
 		}
@@ -457,7 +465,7 @@ func (s *Service) SendChequeRecordsAll() ([]vault.ChequeRecord, error) {
 }
 
 // CashCheque sends a cashing transaction for the last cheque of the peer
-func (s *Service) CashCheque(ctx context.Context, peer string) (common.Hash, error) {
+func (s *Service) CashCheque(ctx context.Context, peer string, token string) (common.Hash, error) {
 	vaultAddress, known, err := s.addressbook.Vault(peer)
 	if err != nil {
 		return common.Hash{}, err
@@ -465,11 +473,11 @@ func (s *Service) CashCheque(ctx context.Context, peer string) (common.Hash, err
 	if !known {
 		return common.Hash{}, vault.ErrNoCheque
 	}
-	return s.cashout.CashCheque(ctx, vaultAddress, s.vault.Address())
+	return s.cashout.CashCheque(ctx, vaultAddress, s.vault.Address(), token)
 }
 
 // CashoutStatus gets the status of the latest cashout transaction for the peers vault
-func (s *Service) CashoutStatus(ctx context.Context, peer string) (*vault.CashoutStatus, error) {
+func (s *Service) CashoutStatus(ctx context.Context, peer string, token string) (*vault.CashoutStatus, error) {
 	vaultAddress, known, err := s.addressbook.Vault(peer)
 	if err != nil {
 		return nil, err
@@ -477,15 +485,15 @@ func (s *Service) CashoutStatus(ctx context.Context, peer string) (*vault.Cashou
 	if !known {
 		return nil, vault.ErrNoCheque
 	}
-	return s.cashout.CashoutStatus(ctx, vaultAddress)
+	return s.cashout.CashoutStatus(ctx, vaultAddress, token)
 }
 
 func (s *Service) GetChainid() int64 {
 	return s.chainID
 }
 
-func (s *Service) Settle(toPeer string, paymentAmount *big.Int, contractId string) error {
-	return s.accounting.Settle(toPeer, paymentAmount, contractId)
+func (s *Service) Settle(toPeer string, paymentAmount *big.Int, contractId, token string) error {
+	return s.accounting.Settle(toPeer, paymentAmount, contractId, token)
 }
 
 func (s *Service) PutBeneficiary(peer string, beneficiary common.Address) (common.Address, error) {
@@ -517,7 +525,7 @@ func (s *Service) BeneficiaryPeer(beneficiary common.Address) (peer string, know
 	return s.addressbook.BeneficiaryPeer(beneficiary)
 }
 
-func (s *Service) HasCashoutAction(ctx context.Context, peer string) (bool, error) {
+func (s *Service) HasCashoutAction(ctx context.Context, peer string, token string) (bool, error) {
 	vault, known, err := s.addressbook.Vault(peer)
 	if err != nil {
 		return false, err
@@ -525,5 +533,5 @@ func (s *Service) HasCashoutAction(ctx context.Context, peer string) (bool, erro
 	if !known {
 		return false, fmt.Errorf("unkonw peer")
 	}
-	return s.cashout.HasCashoutAction(ctx, vault)
+	return s.cashout.HasCashoutAction(ctx, vault, token)
 }

@@ -1,6 +1,7 @@
 package cheque
 
 import (
+	"fmt"
 	"math/big"
 	"time"
 
@@ -27,13 +28,16 @@ var ChequeCashStatusCmd = &cmds.Command{
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("peer-id", true, false, "Peer id tobe cashed."),
+		cmds.StringArg("token", true, false, "token"),
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 
 		// get the peer id
 		peerID := req.Arguments[0]
-		cashStatus, err := chain.SettleObject.SwapService.CashoutStatus(req.Context, peerID)
+		token := req.Arguments[1]
+		fmt.Printf("... peerID:%+v, token:%+v\n", peerID, token)
+		cashStatus, err := chain.SettleObject.SwapService.CashoutStatus(req.Context, peerID, token)
 		if err != nil {
 			return err
 		}

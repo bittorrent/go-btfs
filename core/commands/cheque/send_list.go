@@ -12,12 +12,16 @@ var ListSendChequesCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "List cheque(s) send to peers.",
 	},
-
+	Arguments: []cmds.Argument{
+		cmds.StringArg("token", true, false, "token"),
+	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		token := req.Arguments[0]
+		fmt.Printf("... token:%+v\n", token)
 
 		listRet := ListChequeRet{}
 		listRet.Cheques = make([]cheque, 0, 0)
-		cheques, err := chain.SettleObject.SwapService.LastSendCheques()
+		cheques, err := chain.SettleObject.SwapService.LastSendCheques(token)
 
 		if err != nil {
 			return err

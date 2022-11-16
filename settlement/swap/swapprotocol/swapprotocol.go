@@ -45,20 +45,20 @@ var (
 
 type SendChequeFunc vault.SendChequeFunc
 
-type IssueFunc func(ctx context.Context, beneficiary common.Address, amount *big.Int, sendChequeFunc vault.SendChequeFunc) (*big.Int, error)
+type IssueFunc func(ctx context.Context, beneficiary common.Address, amount *big.Int, token string, sendChequeFunc vault.SendChequeFunc) (*big.Int, error)
 
 // (context.Context, common.Address, *big.Int, vault.SendChequeFunc) (*big.Int, error)
 
 // Interface is the main interface to send messages over swap protocol.
 type Interface interface {
 	// EmitCheque sends a signed cheque to a peer.
-	EmitCheque(ctx context.Context, peer string, amount *big.Int, contractId string, issue IssueFunc) (balance *big.Int, err error)
+	EmitCheque(ctx context.Context, peer string, amount *big.Int, contractId, token string, issue IssueFunc) (balance *big.Int, err error)
 }
 
 // Swap is the interface the settlement layer should implement to receive cheques.
 type Swap interface {
 	// ReceiveCheque is called by the swap protocol if a cheque is received.
-	ReceiveCheque(ctx context.Context, peer string, cheque *vault.SignedCheque, price *big.Int) error
+	ReceiveCheque(ctx context.Context, peer string, cheque *vault.SignedCheque, price *big.Int, token string) error
 	GetChainid() int64
 	PutBeneficiary(peer string, beneficiary common.Address) (common.Address, error)
 	Beneficiary(peer string) (beneficiary common.Address, known bool, err error)
@@ -103,7 +103,7 @@ func (s *Service) SetSwap(swap Swap) {
 	s.swap = swap
 }
 
-func (s *Service) Handler(ctx context.Context, requestPid string, encodedCheque string, price *big.Int) (err error) {
+func (s *Service) Handler(ctx context.Context, requestPid string, encodedCheque string, price *big.Int, token string) (err error) {
 	var signedCheque *vault.SignedCheque
 	err = json.Unmarshal([]byte(encodedCheque), &signedCheque)
 	if err != nil {
@@ -111,11 +111,11 @@ func (s *Service) Handler(ctx context.Context, requestPid string, encodedCheque 
 	}
 
 	// signature validation
-	return s.swap.ReceiveCheque(ctx, requestPid, signedCheque, price)
+	return s.swap.ReceiveCheque(ctx, requestPid, signedCheque, price, token)
 }
 
 // InitiateCheque attempts to send a cheque to a peer.
-func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, contractId string, issue IssueFunc) (balance *big.Int, err error) {
+func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, contractId, token string, issue IssueFunc) (balance *big.Int, err error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
@@ -191,7 +191,7 @@ func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, 
 	fmt.Println("send cheque: /p2p/handshake ok, ", common.BytesToAddress(handshakeInfo.Beneficiary))
 
 	// issue cheque call with provided callback for sending cheque to finish transaction
-	balance, err = issue(ctx, common.BytesToAddress(handshakeInfo.Beneficiary), sentAmount, func(cheque *vault.SignedCheque) error {
+	balance, err = issue(ctx, common.BytesToAddress(handshakeInfo.Beneficiary), sentAmount, token, func(cheque *vault.SignedCheque) error {
 		// for simplicity we use json marshaller. can be replaced by a binary encoding in the future.
 		encodedCheque, err := json.Marshal(cheque)
 		if err != nil {

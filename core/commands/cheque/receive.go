@@ -16,16 +16,18 @@ var ReceiveChequeCmd = &cmds.Command{
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("peer-id", true, false, "deposit amount."),
+		cmds.StringArg("token", true, false, "token"),
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 
 		var record cheque
 		peer_id := req.Arguments[0]
-		fmt.Println("ReceiveChequeCmd peer_id = ", peer_id)
+		token := req.Arguments[1]
+		fmt.Printf("ReceiveChequeCmd peer_id:%+v, token:%+v\n", peer_id, token)
 
 		if len(peer_id) > 0 {
-			chequeTmp, err := chain.SettleObject.SwapService.LastReceivedCheque(peer_id)
+			chequeTmp, err := chain.SettleObject.SwapService.LastReceivedCheque(peer_id, token)
 			if err != nil {
 				return err
 			}
@@ -35,7 +37,7 @@ var ReceiveChequeCmd = &cmds.Command{
 			record.Payout = chequeTmp.CumulativePayout
 			record.PeerID = peer_id
 
-			cashStatus, err := chain.SettleObject.CashoutService.CashoutStatus(context.Background(), chequeTmp.Vault)
+			cashStatus, err := chain.SettleObject.CashoutService.CashoutStatus(context.Background(), chequeTmp.Vault, token)
 			if err != nil {
 				return err
 			}

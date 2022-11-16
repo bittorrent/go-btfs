@@ -19,6 +19,7 @@ var ListReceiveChequeCmd = &cmds.Command{
 	Arguments: []cmds.Argument{
 		cmds.StringArg("offset", true, false, "page offset"),
 		cmds.StringArg("limit", true, false, "page limit."),
+		cmds.StringArg("token", true, false, "token"),
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -30,9 +31,11 @@ var ListReceiveChequeCmd = &cmds.Command{
 		if err != nil {
 			return fmt.Errorf("parse limit:%v failed", req.Arguments[1])
 		}
+		token := req.Arguments[2]
+		fmt.Printf("... token:%+v\n", token)
 
 		var listRet ListChequeRet
-		cheques, err := chain.SettleObject.SwapService.LastReceivedCheques()
+		cheques, err := chain.SettleObject.SwapService.LastReceivedCheques(token)
 		if err != nil {
 			return err
 		}
@@ -60,7 +63,7 @@ var ListReceiveChequeCmd = &cmds.Command{
 			record.Vault = v.Vault.String()
 			record.Payout = v.CumulativePayout
 
-			cashStatus, err := chain.SettleObject.CashoutService.CashoutStatus(context.Background(), v.Vault)
+			cashStatus, err := chain.SettleObject.CashoutService.CashoutStatus(context.Background(), v.Vault, token)
 			if err != nil {
 				return err
 			}

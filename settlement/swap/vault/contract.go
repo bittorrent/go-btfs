@@ -66,6 +66,29 @@ func (c *vaultContract) TotalBalance(ctx context.Context) (*big.Int, error) {
 	return abi.ConvertType(results[0], new(big.Int)).(*big.Int), nil
 }
 
+// TotalBalanceOf returns the token balance of the vault.
+func (c *vaultContract) TotalBalanceOf(ctx context.Context, token string) (*big.Int, error) {
+	callData, err := vaultABI.Pack("totalbalance")
+	if err != nil {
+		return nil, err
+	}
+
+	output, err := c.transactionService.Call(ctx, &transaction.TxRequest{
+		To:   &c.address,
+		Data: callData,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	results, err := vaultABI.Unpack("totalbalance", output)
+	if err != nil {
+		return nil, err
+	}
+
+	return abi.ConvertType(results[0], new(big.Int)).(*big.Int), nil
+}
+
 // LiquidBalance returns the token balance of the vault sub stake amount
 func (c *vaultContract) LiquidBalance(ctx context.Context) (*big.Int, error) {
 	callData, err := vaultABI.Pack("liquidBalance")
@@ -111,7 +134,51 @@ func (c *vaultContract) PaidOut(ctx context.Context, address common.Address) (*b
 	return abi.ConvertType(results[0], new(big.Int)).(*big.Int), nil
 }
 
+func (c *vaultContract) PaidOutOf(ctx context.Context, address common.Address, token string) (*big.Int, error) {
+	callData, err := vaultABI.Pack("paidOut", address)
+	if err != nil {
+		return nil, err
+	}
+
+	output, err := c.transactionService.Call(ctx, &transaction.TxRequest{
+		To:   &c.address,
+		Data: callData,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	results, err := vaultABI.Unpack("paidOut", output)
+	if err != nil {
+		return nil, err
+	}
+
+	return abi.ConvertType(results[0], new(big.Int)).(*big.Int), nil
+}
+
 func (c *vaultContract) TotalPaidOut(ctx context.Context) (*big.Int, error) {
+	callData, err := vaultABI.Pack("totalPaidOut")
+	if err != nil {
+		return nil, err
+	}
+
+	output, err := c.transactionService.Call(ctx, &transaction.TxRequest{
+		To:   &c.address,
+		Data: callData,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	results, err := vaultABI.Unpack("totalPaidOut", output)
+	if err != nil {
+		return nil, err
+	}
+
+	return abi.ConvertType(results[0], new(big.Int)).(*big.Int), nil
+}
+
+func (c *vaultContract) TotalPaidOutOf(ctx context.Context, token string) (*big.Int, error) {
 	callData, err := vaultABI.Pack("totalPaidOut")
 	if err != nil {
 		return nil, err
@@ -151,6 +218,23 @@ func (c *vaultContract) SetReceiver(ctx context.Context, newReceiver common.Addr
 }
 
 func (c *vaultContract) Deposit(ctx context.Context, amount *big.Int) (common.Hash, error) {
+	callData, err := vaultABI.Pack("deposit", amount)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	hash, err := c.transactionService.Send(ctx, &transaction.TxRequest{
+		To:   &c.address,
+		Data: callData,
+	})
+	if err != nil {
+		return hash, err
+	}
+
+	return hash, nil
+}
+
+func (c *vaultContract) DepositOf(ctx context.Context, amount *big.Int, token string) (common.Hash, error) {
 	callData, err := vaultABI.Pack("deposit", amount)
 	if err != nil {
 		return common.Hash{}, err

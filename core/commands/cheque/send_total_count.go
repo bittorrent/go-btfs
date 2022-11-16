@@ -16,10 +16,14 @@ var SendChequesCountCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "send cheque(s) count",
 	},
-
+	Arguments: []cmds.Argument{
+		cmds.StringArg("token", true, false, "token"),
+	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		count, err := chain.SettleObject.VaultService.TotalIssuedCount()
+		token := req.Arguments[0]
+		fmt.Printf("... token:%+v\n", token)
 
+		count, err := chain.SettleObject.VaultService.TotalIssuedCount(token)
 		if err != nil {
 			return err
 		}

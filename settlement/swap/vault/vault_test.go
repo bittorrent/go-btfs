@@ -56,7 +56,7 @@ func TestVaultBalance(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	returnedBalance, err := vaultService.TotalBalance(context.Background())
+	returnedBalance, err := vaultService.TotalBalance(context.Background(), _token)
 	if err != nil {
 		t.Fatal(err)
 	}

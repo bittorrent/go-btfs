@@ -59,7 +59,7 @@ func checkAvailableBalance(ctx context.Context, amount int64, token string) erro
 
 	// token: get available balance of token.
 	//AvailableBalance, err := chain.SettleObject.VaultService.AvailableBalance(ctx, token)
-	AvailableBalance, err := chain.SettleObject.VaultService.AvailableBalance(ctx)
+	AvailableBalance, err := chain.SettleObject.VaultService.AvailableBalance(ctx, token)
 	if err != nil {
 		return err
 	}

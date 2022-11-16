@@ -22,6 +22,7 @@ var VaultWithdrawCmd = &cmds.Command{
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("amount", true, false, "withdraw amount."),
+		cmds.StringArg("token", true, false, "token"),
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -30,7 +31,11 @@ var VaultWithdrawCmd = &cmds.Command{
 		if !ok {
 			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[0])
 		}
-		hash, err := chain.SettleObject.VaultService.Withdraw(context.Background(), amount)
+
+		token := req.Arguments[1]
+		fmt.Printf("... token:%+v\n", token)
+
+		hash, err := chain.SettleObject.VaultService.Withdraw(context.Background(), amount, token)
 		if err != nil {
 			return err
 		}

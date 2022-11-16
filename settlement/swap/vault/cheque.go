@@ -13,12 +13,14 @@ import (
 
 // Cheque represents a cheque for a SimpleSwap vault
 type Cheque struct {
+	Token            common.Address
 	Vault            common.Address
 	Beneficiary      common.Address
 	CumulativePayout *big.Int
 }
 
 type ChequeRecord struct {
+	Token       common.Address
 	Vault       common.Address
 	Beneficiary common.Address
 	Amount      *big.Int
@@ -102,6 +104,7 @@ func eip712DataForCheque(cheque *Cheque, chainID int64) *eip712.TypedData {
 		Domain: vaultDomain(chainID),
 		Types:  ChequeTypes,
 		Message: eip712.TypedDataMessage{
+			"Token":            cheque.Token.Hex(),
 			"vault":            cheque.Vault.Hex(),
 			"beneficiary":      cheque.Beneficiary.Hex(),
 			"cumulativePayout": cheque.CumulativePayout.String(),
@@ -116,10 +119,13 @@ func (s *chequeSigner) Sign(cheque *Cheque) ([]byte, error) {
 }
 
 func (cheque *Cheque) String() string {
-	return fmt.Sprintf("Contract: %x Beneficiary: %x CumulativePayout: %v", cheque.Vault, cheque.Beneficiary, cheque.CumulativePayout)
+	return fmt.Sprintf("Token: %x Contract: %x Beneficiary: %x CumulativePayout: %v", cheque.Token, cheque.Vault, cheque.Beneficiary, cheque.CumulativePayout)
 }
 
 func (cheque *Cheque) Equal(other *Cheque) bool {
+	if cheque.Token != other.Token {
+		return false
+	}
 	if cheque.Beneficiary != other.Beneficiary {
 		return false
 	}

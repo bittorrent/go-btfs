@@ -23,6 +23,7 @@ var ChequeReceiveHistoryListCmd = &cmds.Command{
 	Arguments: []cmds.Argument{
 		cmds.StringArg("from", true, false, "page offset"),
 		cmds.StringArg("limit", true, false, "page limit."),
+		cmds.StringArg("token", true, false, "token"),
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -42,8 +43,11 @@ var ChequeReceiveHistoryListCmd = &cmds.Command{
 			return fmt.Errorf("invalid limit: %d", limit)
 		}
 
+		token := req.Arguments[2]
+		fmt.Printf("... token:%+v\n", token)
+
 		var listRet chequeReceivedHistoryListRet
-		records, err := chain.SettleObject.SwapService.ReceivedChequeRecordsAll()
+		records, err := chain.SettleObject.SwapService.ReceivedChequeRecordsAll(token)
 		if err != nil {
 			return err
 		}

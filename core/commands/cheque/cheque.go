@@ -107,13 +107,16 @@ var CashChequeCmd = &cmds.Command{
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("peer-id", true, false, "Peer id tobe cashed."),
+		cmds.StringArg("token", true, false, "token"),
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 
 		// get the peer id
 		peerID := req.Arguments[0]
-		tx_hash, err := chain.SettleObject.SwapService.CashCheque(req.Context, peerID)
+		token := req.Arguments[1]
+		fmt.Printf("... token:%+v\n", token)
+		tx_hash, err := chain.SettleObject.SwapService.CashCheque(req.Context, peerID, token)
 		if err != nil {
 			return err
 		}

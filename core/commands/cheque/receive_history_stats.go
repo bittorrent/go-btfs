@@ -20,11 +20,16 @@ var ChequeReceiveHistoryStatsCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Display the received cheques from peer.",
 	},
-
+	Arguments: []cmds.Argument{
+		cmds.StringArg("token", true, false, "token"),
+	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		token := req.Arguments[0]
+		fmt.Printf("... token:%+v\n", token)
+
 		// now only return 30days cheque received stats
 		const receivedStatsDuration = 30
-		stats, err := chain.SettleObject.ChequeStore.ReceivedStatsHistory(receivedStatsDuration)
+		stats, err := chain.SettleObject.ChequeStore.ReceivedStatsHistory(receivedStatsDuration, token)
 		if err != nil {
 			return err
 		}

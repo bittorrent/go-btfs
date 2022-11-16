@@ -561,7 +561,7 @@ func TestCashout(t *testing.T) {
 		nil,
 	)
 
-	returnedHash, err := swapService.CashCheque(context.Background(), peer)
+	returnedHash, err := swapService.CashCheque(context.Background(), peer, _token)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -606,7 +606,7 @@ func TestCashoutStatus(t *testing.T) {
 		nil,
 	)
 
-	returnedStatus, err := swapService.CashoutStatus(context.Background(), peer)
+	returnedStatus, err := swapService.CashoutStatus(context.Background(), peer, _token)
 	if err != nil {
 		t.Fatal(err)
 	}

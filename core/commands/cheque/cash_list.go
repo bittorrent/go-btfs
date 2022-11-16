@@ -34,6 +34,7 @@ var ChequeCashListCmd = &cmds.Command{
 	Arguments: []cmds.Argument{
 		cmds.StringArg("from", true, false, "page offset"),
 		cmds.StringArg("limit", true, false, "page limit."),
+		cmds.StringArg("token", true, false, "token"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		from, err := strconv.Atoi(req.Arguments[0])
@@ -51,7 +52,10 @@ var ChequeCashListCmd = &cmds.Command{
 			return fmt.Errorf("invalid limit: %d", limit)
 		}
 
-		results, err := chain.SettleObject.CashoutService.CashoutResults()
+		token := req.Arguments[2]
+		fmt.Printf("... token:%+v\n", token)
+
+		results, err := chain.SettleObject.CashoutService.CashoutResults(token)
 		if err != nil {
 			return err
 		}

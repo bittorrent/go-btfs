@@ -15,6 +15,7 @@ var ChequeSendHistoryPeerCmd = &cmds.Command{
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("peer-id", true, false, "The peer id of cheques send."),
+		cmds.StringArg("token", true, false, "token"),
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -23,7 +24,10 @@ var ChequeSendHistoryPeerCmd = &cmds.Command{
 		peer_id := req.Arguments[0]
 		fmt.Println("ChequeReceiveHistoryPeerCmd peer_id = ", peer_id)
 
-		records, err := chain.SettleObject.SwapService.SendChequeRecordsByPeer(peer_id)
+		token := req.Arguments[1]
+		fmt.Printf("... token:%+v\n", token)
+
+		records, err := chain.SettleObject.SwapService.SendChequeRecordsByPeer(peer_id, token)
 		if err != nil {
 			return err
 		}

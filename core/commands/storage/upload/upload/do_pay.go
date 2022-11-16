@@ -22,7 +22,7 @@ func payInCheque(rss *sessions.RenterSession) error {
 
 		// token: get real amount
 		//realAmount, err := getRealAmount(c.SignedGuardContract.Amount)
-		realAmount, err := getRealAmount(c.SignedGuardContract.Amount)
+		realAmount, err := getRealAmount(c.SignedGuardContract.Amount, rss.Token)
 		if err != nil {
 			return err
 		}
@@ -31,7 +31,7 @@ func payInCheque(rss *sessions.RenterSession) error {
 		contractId := c.SignedGuardContract.ContractId
 		fmt.Printf("send cheque: paying...  host:%v, amount:%v, contractId:%v. \n", host, realAmount.String(), contractId)
 
-		err = chain.SettleObject.SwapService.Settle(host, realAmount, contractId)
+		err = chain.SettleObject.SwapService.Settle(host, realAmount, contractId, rss.Token)
 		if err != nil {
 			return err
 		}
