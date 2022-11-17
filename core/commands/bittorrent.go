@@ -309,8 +309,8 @@ var downloadBTCmd = &cmds.Command{
 }
 var serveBTCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline:         "Download a bittorrent file from the bittorrent seed or a magnet URL.",
-		LongDescription: "Download a bittorrent file from the bittorrent seed or a magnet URL.",
+		Tagline:         "Serve as a bittorrent client with the specified files.",
+		LongDescription: "Serve as a bittorrent client with the specified files.",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("path", true, true, "the paths of some files that you want to serve as seeds"),
