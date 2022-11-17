@@ -47,13 +47,13 @@ func (c *vaultContractMuti) Issuer(ctx context.Context) (common.Address, error) 
 	return *abi.ConvertType(results[0], new(common.Address)).(*common.Address), nil
 }
 
-// TotalBalance returns the token balance of the vault.
+// TotalBalance returns the token balance of the vault.(new)
 func (c *vaultContractMuti) TotalBalance(ctx context.Context, token string) (*big.Int, error) {
 	if IsWbtt(token) {
 		return c.contractWBTT.TotalBalance(ctx)
 	}
 
-	callData, err := vaultABINew.Pack("totalbalance")
+	callData, err := vaultABINew.Pack("totalbalanceOf", token)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (c *vaultContractMuti) TotalBalance(ctx context.Context, token string) (*bi
 		return nil, err
 	}
 
-	results, err := vaultABINew.Unpack("totalbalance", output)
+	results, err := vaultABINew.Unpack("totalbalanceOf", output)
 	if err != nil {
 		return nil, err
 	}
@@ -97,12 +97,13 @@ func (c *vaultContractMuti) LiquidBalance(ctx context.Context) (*big.Int, error)
 	return abi.ConvertType(results[0], new(big.Int)).(*big.Int), nil
 }
 
+// PaidOut (new)
 func (c *vaultContractMuti) PaidOut(ctx context.Context, address common.Address, token string) (*big.Int, error) {
 	if IsWbtt(token) {
 		return c.contractWBTT.TotalBalance(ctx)
 	}
 
-	callData, err := vaultABINew.Pack("paidOut", address)
+	callData, err := vaultABINew.Pack("multiTokensPaidOut", token, address)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +116,7 @@ func (c *vaultContractMuti) PaidOut(ctx context.Context, address common.Address,
 		return nil, err
 	}
 
-	results, err := vaultABINew.Unpack("paidOut", output)
+	results, err := vaultABINew.Unpack("multiTokensPaidOut", output)
 	if err != nil {
 		return nil, err
 	}
@@ -123,12 +124,13 @@ func (c *vaultContractMuti) PaidOut(ctx context.Context, address common.Address,
 	return abi.ConvertType(results[0], new(big.Int)).(*big.Int), nil
 }
 
+// TotalPaidOut (new)
 func (c *vaultContractMuti) TotalPaidOut(ctx context.Context, token string) (*big.Int, error) {
 	if IsWbtt(token) {
 		return c.contractWBTT.TotalBalance(ctx)
 	}
 
-	callData, err := vaultABINew.Pack("totalPaidOut")
+	callData, err := vaultABINew.Pack("multiTokensTotalPaidOut", token)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +143,7 @@ func (c *vaultContractMuti) TotalPaidOut(ctx context.Context, token string) (*bi
 		return nil, err
 	}
 
-	results, err := vaultABINew.Unpack("totalPaidOut", output)
+	results, err := vaultABINew.Unpack("multiTokensTotalPaidOut", output)
 	if err != nil {
 		return nil, err
 	}
@@ -167,12 +169,13 @@ func (c *vaultContractMuti) SetReceiver(ctx context.Context, newReceiver common.
 	return hash, nil
 }
 
+// Deposit (new)
 func (c *vaultContractMuti) Deposit(ctx context.Context, amount *big.Int, token string) (common.Hash, error) {
 	if IsWbtt(token) {
 		return c.contractWBTT.Deposit(ctx, amount)
 	}
 
-	callData, err := vaultABINew.Pack("deposit", amount)
+	callData, err := vaultABINew.Pack("multiTokenDeposit", token, amount)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -188,12 +191,13 @@ func (c *vaultContractMuti) Deposit(ctx context.Context, amount *big.Int, token 
 	return hash, nil
 }
 
+// Withdraw (new)
 func (c *vaultContractMuti) Withdraw(ctx context.Context, amount *big.Int, token string) (common.Hash, error) {
 	if IsWbtt(token) {
 		return c.contractWBTT.Withdraw(ctx, amount)
 	}
 
-	callData, err := vaultABINew.Pack("withdraw", amount)
+	callData, err := vaultABINew.Pack("multiTokenWithdraw", token, amount)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -202,7 +206,7 @@ func (c *vaultContractMuti) Withdraw(ctx context.Context, amount *big.Int, token
 		To:          &c.address,
 		Data:        callData,
 		Value:       big.NewInt(0),
-		Description: fmt.Sprintf("vault withdrawal of %d [%s]", amount, token),
+		Description: fmt.Sprintf("vault multi withdraw of %d [%s]", amount, token),
 	})
 	if err != nil {
 		return hash, err
@@ -236,12 +240,13 @@ func (c *vaultContractMuti) UpgradeTo(ctx context.Context, newImpl common.Addres
 	return
 }
 
+// _CashChequeMuti (new)
 func _CashChequeMuti(ctx context.Context, vault, recipient common.Address, cheque *SignedCheque, tS transaction.Service, token string) (common.Hash, error) {
 	if IsWbtt(token) {
 		return _CashCheque(ctx, vault, recipient, cheque, tS)
 	}
 
-	callData, err := vaultABINew.Pack("cashChequeBeneficiary", recipient, cheque.CumulativePayout, cheque.Signature)
+	callData, err := vaultABINew.Pack("multiTokenCashChequeBeneficiary", token, recipient, cheque.CumulativePayout, cheque.Signature)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -249,7 +254,7 @@ func _CashChequeMuti(ctx context.Context, vault, recipient common.Address, chequ
 		To:          &vault,
 		Data:        callData,
 		Value:       big.NewInt(0),
-		Description: "cheque cashout",
+		Description: "cheque muti cashout",
 	}
 
 	txHash, err := tS.Send(ctx, request)
@@ -260,12 +265,13 @@ func _CashChequeMuti(ctx context.Context, vault, recipient common.Address, chequ
 	return txHash, nil
 }
 
+// _PaidOutMuti (new)
 func _PaidOutMuti(ctx context.Context, vault, beneficiary common.Address, tS transaction.Service, token string) (*big.Int, error) {
 	if IsWbtt(token) {
 		return _PaidOut(ctx, vault, beneficiary, tS)
 	}
-	
-	callData, err := vaultABINew.Pack("paidOut", beneficiary)
+
+	callData, err := vaultABINew.Pack("multiTokensPaidOut", token, beneficiary)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +284,7 @@ func _PaidOutMuti(ctx context.Context, vault, beneficiary common.Address, tS tra
 		return nil, err
 	}
 
-	results, err := vaultABINew.Unpack("paidOut", output)
+	results, err := vaultABINew.Unpack("multiTokensPaidOut", output)
 	if err != nil {
 		return nil, err
 	}

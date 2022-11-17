@@ -94,6 +94,10 @@ type mutiChequeCashedEvent struct {
 	CallerPayout     *big.Int
 }
 
+type mutiChequeBouncedEvent struct {
+	Token common.Address
+}
+
 // NewCashoutService creates a new CashoutService
 func NewCashoutService(
 	store storage.StateStorer,
@@ -414,7 +418,7 @@ func (s *cashoutService) parseCashChequeBeneficiaryReceiptMuti(vaultAddress comm
 	}
 
 	var mtCashedEvent mutiChequeCashedEvent
-	err := transaction.FindSingleEvent(&vaultABINew, receipt, vaultAddress, mtChequeCashedEventType, &mtCashedEvent)
+	err := transaction.FindSingleEvent(&vaultABINew, receipt, vaultAddress, mutiChequeCashedEventType, &mtCashedEvent)
 	if err != nil {
 		return nil, err
 	}
@@ -426,7 +430,8 @@ func (s *cashoutService) parseCashChequeBeneficiaryReceiptMuti(vaultAddress comm
 	result.CumulativePayout = mtCashedEvent.CumulativePayout
 	result.Recipient = mtCashedEvent.Recipient
 
-	err = transaction.FindSingleEvent(&vaultABINew, receipt, vaultAddress, chequeBouncedEventType, nil)
+	//var mtBouncedEvent mutiChequeBouncedEvent
+	err = transaction.FindSingleEvent(&vaultABINew, receipt, vaultAddress, mutiChequeBouncedEventType, nil)
 	if err == nil {
 		result.Bounced = true
 	} else if !errors.Is(err, transaction.ErrEventNotFound) {

@@ -31,11 +31,12 @@ var (
 	// ErrInsufficientFunds is the error when the vault has not enough free funds for a user action
 	ErrInsufficientFunds = errors.New("insufficient token balance")
 
-	vaultABI                = transaction.ParseABIUnchecked(conabi.VaultABI)
-	vaultABINew             = transaction.ParseABIUnchecked(conabi.VaultABINew)
-	chequeCashedEventType   = vaultABINew.Events["ChequeCashed"]
-	mtChequeCashedEventType = vaultABINew.Events["MultiTokenChequeCashed"]
-	chequeBouncedEventType  = vaultABINew.Events["ChequeBounced"]
+	vaultABI                   = transaction.ParseABIUnchecked(conabi.VaultABI)
+	vaultABINew                = transaction.ParseABIUnchecked(conabi.MutiVaultABI)
+	chequeCashedEventType      = vaultABI.Events["ChequeCashed"]
+	mutiChequeCashedEventType  = vaultABINew.Events["MultiTokenChequeCashed"]
+	chequeBouncedEventType     = vaultABI.Events["ChequeBounced"]
+	mutiChequeBouncedEventType = vaultABINew.Events["MultiTokenChequeBounced"]
 )
 
 // Service is the main interface for interacting with the nodes vault.
