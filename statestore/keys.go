@@ -28,6 +28,9 @@ func addToken(s string, token string) string {
 	}
 	return fmt.Sprintf("%s_%s", s, token)
 }
+func IsWbtt(token string) bool {
+	return token == "WBTT"
+}
 
 func PeerReceivedUncashRecordsCountKey(vault common.Address, token string) string {
 	return fmt.Sprintf("%s%s", addToken(PeerReceivedUncashRecordsCountKeyPrefix, token), vault.String())

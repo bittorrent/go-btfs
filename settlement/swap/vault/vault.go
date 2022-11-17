@@ -13,7 +13,6 @@ import (
 	"github.com/bittorrent/go-btfs/statestore"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/transaction/storage"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -32,9 +31,11 @@ var (
 	// ErrInsufficientFunds is the error when the vault has not enough free funds for a user action
 	ErrInsufficientFunds = errors.New("insufficient token balance")
 
-	vaultABI               = transaction.ParseABIUnchecked(conabi.VaultABI)
-	chequeCashedEventType  = vaultABI.Events["ChequeCashed"]
-	chequeBouncedEventType = vaultABI.Events["ChequeBounced"]
+	vaultABI                = transaction.ParseABIUnchecked(conabi.VaultABI)
+	vaultABINew             = transaction.ParseABIUnchecked(conabi.VaultABINew)
+	chequeCashedEventType   = vaultABINew.Events["ChequeCashed"]
+	mtChequeCashedEventType = vaultABINew.Events["MultiTokenChequeCashed"]
+	chequeBouncedEventType  = vaultABINew.Events["ChequeBounced"]
 )
 
 // Service is the main interface for interacting with the nodes vault.
@@ -56,7 +57,7 @@ type Service interface {
 	TotalReceivedCashed(token string) (*big.Int, error)
 	TotalDailyReceived(token string) (*big.Int, error)
 	TotalDailyReceivedCashed(token string) (*big.Int, error)
-	// LiquidBalance returns the token balance of the vault sub stake amount.
+	// LiquidBalance returns the token balance of the vault sub stake amount. (not use)
 	LiquidBalance(ctx context.Context) (*big.Int, error)
 	// AvailableBalance returns the token balance of the vault which is not yet used for uncashed cheques.
 	AvailableBalance(ctx context.Context, token string) (*big.Int, error)
@@ -68,8 +69,6 @@ type Service interface {
 	LastCheque(beneficiary common.Address, token string) (*SignedCheque, error)
 	// LastCheques returns the last cheques we issued for all beneficiaries.
 	LastCheques(token string) (map[common.Address]*SignedCheque, error)
-	// GetWithdrawTime returns the time can withdraw
-	GetWithdrawTime(ctx context.Context) (*big.Int, error)
 	// WbttBalanceOf retrieve the addr balance
 	WBTTBalanceOf(ctx context.Context, addr common.Address) (*big.Int, error)
 	// BTTBalanceOf retrieve the btt balance of addr
@@ -88,13 +87,16 @@ func addToken(s string, token string) string {
 	}
 	return fmt.Sprintf("%s_%s", s, token)
 }
+func IsWbtt(token string) bool {
+	return token == "WBTT"
+}
 
 type service struct {
 	lock               sync.Mutex
 	transactionService transaction.Service
 
 	address      common.Address
-	contract     *vaultContract
+	contract     *vaultContractMuti
 	ownerAddress common.Address
 
 	erc20Service erc20.Service
@@ -112,7 +114,7 @@ func New(transactionService transaction.Service, address, ownerAddress common.Ad
 	return &service{
 		transactionService: transactionService,
 		address:            address,
-		contract:           newVaultContract(address, transactionService),
+		contract:           newVaultContractMuti(address, transactionService),
 		ownerAddress:       ownerAddress,
 		erc20Service:       erc20Service,
 		store:              store,
@@ -140,7 +142,7 @@ func (s *service) Deposit(ctx context.Context, amount *big.Int, token string) (h
 		return common.Hash{}, ErrInsufficientFunds
 	}
 
-	return s.contract.DepositOf(ctx, amount, token)
+	return s.contract.Deposit(ctx, amount, token)
 }
 
 // Deposit starts depositing erc20 token into the vault. This returns once the transactions has been broadcast.
@@ -160,10 +162,10 @@ func (s *service) CheckBalance(amount *big.Int) (err error) {
 
 // Balance returns the token balance of the vault.
 func (s *service) TotalBalance(ctx context.Context, token string) (*big.Int, error) {
-	return s.contract.TotalBalanceOf(ctx, token)
+	return s.contract.TotalBalance(ctx, token)
 }
 
-// LiquidBalance returns the token balance of the vault sub stake amount.
+// LiquidBalance returns the token balance of the vault sub stake amount.(not use)
 func (s *service) LiquidBalance(ctx context.Context) (*big.Int, error) {
 	return s.contract.LiquidBalance(ctx)
 }
@@ -180,7 +182,7 @@ func (s *service) AvailableBalance(ctx context.Context, token string) (*big.Int,
 		return nil, err
 	}
 
-	totalPaidOut, err := s.contract.TotalPaidOutOf(ctx, token)
+	totalPaidOut, err := s.contract.TotalPaidOut(ctx, token)
 	if err != nil {
 		return nil, err
 	}
@@ -509,6 +511,39 @@ func (s *service) LastCheques(token string) (map[common.Address]*SignedCheque, e
 	return result, nil
 }
 
+// OLD
+//func (s *service) Withdraw(ctx context.Context, amount *big.Int, token string) (hash common.Hash, err error) {
+//	availableBalance, err := s.AvailableBalance(ctx, token)
+//	if err != nil {
+//		return common.Hash{}, err
+//	}
+//
+//	// check we can afford this so we don't waste gas and don't risk bouncing cheques
+//	if availableBalance.Cmp(amount) < 0 {
+//		return common.Hash{}, ErrInsufficientFunds
+//	}
+//
+//	callData, err := vaultABINew.Pack("withdraw", amount)
+//	if err != nil {
+//		return common.Hash{}, err
+//	}
+//
+//	request := &transaction.TxRequest{
+//		To:          &s.address,
+//		Data:        callData,
+//		Value:       big.NewInt(0),
+//		Description: fmt.Sprintf("vault withdrawal of %d WBTT", amount),
+//	}
+//
+//	txHash, err := s.transactionService.Send(ctx, request)
+//	if err != nil {
+//		return common.Hash{}, err
+//	}
+//
+//	return txHash, nil
+//}
+
+// Withdraw (2.3.0)
 func (s *service) Withdraw(ctx context.Context, amount *big.Int, token string) (hash common.Hash, err error) {
 	availableBalance, err := s.AvailableBalance(ctx, token)
 	if err != nil {
@@ -520,55 +555,7 @@ func (s *service) Withdraw(ctx context.Context, amount *big.Int, token string) (
 		return common.Hash{}, ErrInsufficientFunds
 	}
 
-	callData, err := vaultABI.Pack("withdraw", amount)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	request := &transaction.TxRequest{
-		To:          &s.address,
-		Data:        callData,
-		Value:       big.NewInt(0),
-		Description: fmt.Sprintf("vault withdrawal of %d WBTT", amount),
-	}
-
-	txHash, err := s.transactionService.Send(ctx, request)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	return txHash, nil
-}
-
-func (s *service) GetWithdrawTime(ctx context.Context) (*big.Int, error) {
-	callData, err := vaultABI.Pack("withdrawTime")
-	if err != nil {
-		return nil, err
-	}
-
-	output, err := s.transactionService.Call(ctx, &transaction.TxRequest{
-		To:   &s.address,
-		Data: callData,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	results, err := vaultABI.Unpack("withdrawTime", output)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(results) != 1 {
-		return nil, errDecodeABI
-	}
-
-	time, ok := abi.ConvertType(results[0], new(big.Int)).(*big.Int)
-	if !ok || time == nil {
-		return nil, errDecodeABI
-	}
-
-	return time, nil
+	return s.contract.Withdraw(ctx, amount, token)
 }
 
 func (s *service) WBTTBalanceOf(ctx context.Context, addr common.Address) (*big.Int, error) {
@@ -579,7 +566,7 @@ func (s *service) BTTBalanceOf(ctx context.Context, address common.Address, bloc
 	return s.transactionService.BttBalanceAt(ctx, address, block)
 }
 func (s *service) TotalPaidOut(ctx context.Context, token string) (*big.Int, error) {
-	return s.contract.TotalPaidOutOf(ctx, token)
+	return s.contract.TotalPaidOut(ctx, token)
 }
 
 // UpgradeTo will upgrade vault implementation to `newVaultImpl`

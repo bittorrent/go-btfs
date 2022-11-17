@@ -10,20 +10,23 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type vaultContract struct {
+type vaultContractMuti struct {
 	address            common.Address
 	transactionService transaction.Service
+	contractWBTT       *vaultContract
 }
 
-func newVaultContract(address common.Address, transactionService transaction.Service) *vaultContract {
-	return &vaultContract{
+func newVaultContractMuti(address common.Address, transactionService transaction.Service) *vaultContractMuti {
+	return &vaultContractMuti{
 		address:            address,
 		transactionService: transactionService,
+		contractWBTT:       newVaultContract(address, transactionService),
 	}
 }
 
-func (c *vaultContract) Issuer(ctx context.Context) (common.Address, error) {
-	callData, err := vaultABI.Pack("issuer")
+// Issuer (all the same)
+func (c *vaultContractMuti) Issuer(ctx context.Context) (common.Address, error) {
+	callData, err := vaultABINew.Pack("issuer")
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -36,7 +39,7 @@ func (c *vaultContract) Issuer(ctx context.Context) (common.Address, error) {
 		return common.Address{}, err
 	}
 
-	results, err := vaultABI.Unpack("issuer", output)
+	results, err := vaultABINew.Unpack("issuer", output)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -45,8 +48,12 @@ func (c *vaultContract) Issuer(ctx context.Context) (common.Address, error) {
 }
 
 // TotalBalance returns the token balance of the vault.
-func (c *vaultContract) TotalBalance(ctx context.Context) (*big.Int, error) {
-	callData, err := vaultABI.Pack("totalbalance")
+func (c *vaultContractMuti) TotalBalance(ctx context.Context, token string) (*big.Int, error) {
+	if IsWbtt(token) {
+		return c.contractWBTT.TotalBalance(ctx)
+	}
+
+	callData, err := vaultABINew.Pack("totalbalance")
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +66,7 @@ func (c *vaultContract) TotalBalance(ctx context.Context) (*big.Int, error) {
 		return nil, err
 	}
 
-	results, err := vaultABI.Unpack("totalbalance", output)
+	results, err := vaultABINew.Unpack("totalbalance", output)
 	if err != nil {
 		return nil, err
 	}
@@ -67,9 +74,9 @@ func (c *vaultContract) TotalBalance(ctx context.Context) (*big.Int, error) {
 	return abi.ConvertType(results[0], new(big.Int)).(*big.Int), nil
 }
 
-// LiquidBalance returns the token balance of the vault sub stake amount
-func (c *vaultContract) LiquidBalance(ctx context.Context) (*big.Int, error) {
-	callData, err := vaultABI.Pack("liquidBalance")
+// LiquidBalance returns the token balance of the vault sub stake amount (not use)
+func (c *vaultContractMuti) LiquidBalance(ctx context.Context) (*big.Int, error) {
+	callData, err := vaultABINew.Pack("liquidBalance")
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +89,7 @@ func (c *vaultContract) LiquidBalance(ctx context.Context) (*big.Int, error) {
 		return nil, err
 	}
 
-	results, err := vaultABI.Unpack("liquidBalance", output)
+	results, err := vaultABINew.Unpack("liquidBalance", output)
 	if err != nil {
 		return nil, err
 	}
@@ -90,8 +97,12 @@ func (c *vaultContract) LiquidBalance(ctx context.Context) (*big.Int, error) {
 	return abi.ConvertType(results[0], new(big.Int)).(*big.Int), nil
 }
 
-func (c *vaultContract) PaidOut(ctx context.Context, address common.Address) (*big.Int, error) {
-	callData, err := vaultABI.Pack("paidOut", address)
+func (c *vaultContractMuti) PaidOut(ctx context.Context, address common.Address, token string) (*big.Int, error) {
+	if IsWbtt(token) {
+		return c.contractWBTT.TotalBalance(ctx)
+	}
+
+	callData, err := vaultABINew.Pack("paidOut", address)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +115,7 @@ func (c *vaultContract) PaidOut(ctx context.Context, address common.Address) (*b
 		return nil, err
 	}
 
-	results, err := vaultABI.Unpack("paidOut", output)
+	results, err := vaultABINew.Unpack("paidOut", output)
 	if err != nil {
 		return nil, err
 	}
@@ -112,8 +123,12 @@ func (c *vaultContract) PaidOut(ctx context.Context, address common.Address) (*b
 	return abi.ConvertType(results[0], new(big.Int)).(*big.Int), nil
 }
 
-func (c *vaultContract) TotalPaidOut(ctx context.Context) (*big.Int, error) {
-	callData, err := vaultABI.Pack("totalPaidOut")
+func (c *vaultContractMuti) TotalPaidOut(ctx context.Context, token string) (*big.Int, error) {
+	if IsWbtt(token) {
+		return c.contractWBTT.TotalBalance(ctx)
+	}
+
+	callData, err := vaultABINew.Pack("totalPaidOut")
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +141,7 @@ func (c *vaultContract) TotalPaidOut(ctx context.Context) (*big.Int, error) {
 		return nil, err
 	}
 
-	results, err := vaultABI.Unpack("totalPaidOut", output)
+	results, err := vaultABINew.Unpack("totalPaidOut", output)
 	if err != nil {
 		return nil, err
 	}
@@ -134,8 +149,9 @@ func (c *vaultContract) TotalPaidOut(ctx context.Context) (*big.Int, error) {
 	return abi.ConvertType(results[0], new(big.Int)).(*big.Int), nil
 }
 
-func (c *vaultContract) SetReceiver(ctx context.Context, newReceiver common.Address) (common.Hash, error) {
-	callData, err := vaultABI.Pack("setReciever", newReceiver)
+// SetReceiver (not use)
+func (c *vaultContractMuti) SetReceiver(ctx context.Context, newReceiver common.Address) (common.Hash, error) {
+	callData, err := vaultABINew.Pack("setReciever", newReceiver)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -151,8 +167,12 @@ func (c *vaultContract) SetReceiver(ctx context.Context, newReceiver common.Addr
 	return hash, nil
 }
 
-func (c *vaultContract) Deposit(ctx context.Context, amount *big.Int) (common.Hash, error) {
-	callData, err := vaultABI.Pack("deposit", amount)
+func (c *vaultContractMuti) Deposit(ctx context.Context, amount *big.Int, token string) (common.Hash, error) {
+	if IsWbtt(token) {
+		return c.contractWBTT.Deposit(ctx, amount)
+	}
+
+	callData, err := vaultABINew.Pack("deposit", amount)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -168,9 +188,32 @@ func (c *vaultContract) Deposit(ctx context.Context, amount *big.Int) (common.Ha
 	return hash, nil
 }
 
-// UpgradeTo will upgrade the vault impl to `newImpl`
-func (c *vaultContract) UpgradeTo(ctx context.Context, newImpl common.Address) (err error) {
-	callData, err := vaultABI.Pack("upgradeTo", newImpl)
+func (c *vaultContractMuti) Withdraw(ctx context.Context, amount *big.Int, token string) (common.Hash, error) {
+	if IsWbtt(token) {
+		return c.contractWBTT.Withdraw(ctx, amount)
+	}
+
+	callData, err := vaultABINew.Pack("withdraw", amount)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	hash, err := c.transactionService.Send(ctx, &transaction.TxRequest{
+		To:          &c.address,
+		Data:        callData,
+		Value:       big.NewInt(0),
+		Description: fmt.Sprintf("vault withdrawal of %d [%s]", amount, token),
+	})
+	if err != nil {
+		return hash, err
+	}
+
+	return hash, nil
+}
+
+// UpgradeTo will upgrade the vault impl to `newImpl` (all the same)
+func (c *vaultContractMuti) UpgradeTo(ctx context.Context, newImpl common.Address) (err error) {
+	callData, err := vaultABINew.Pack("upgradeTo", newImpl)
 	if err != nil {
 		return
 	}
@@ -193,52 +236,12 @@ func (c *vaultContract) UpgradeTo(ctx context.Context, newImpl common.Address) (
 	return
 }
 
-func (c *vaultContract) Withdraw(ctx context.Context, amount *big.Int) (common.Hash, error) {
-	callData, err := vaultABI.Pack("withdraw", amount)
-	if err != nil {
-		return common.Hash{}, err
+func _CashChequeMuti(ctx context.Context, vault, recipient common.Address, cheque *SignedCheque, tS transaction.Service, token string) (common.Hash, error) {
+	if IsWbtt(token) {
+		return _CashCheque(ctx, vault, recipient, cheque, tS)
 	}
 
-	hash, err := c.transactionService.Send(ctx, &transaction.TxRequest{
-		To:          &c.address,
-		Data:        callData,
-		Value:       big.NewInt(0),
-		Description: fmt.Sprintf("vault withdrawal of %d WBTT", amount),
-	})
-	if err != nil {
-		return hash, err
-	}
-
-	return hash, nil
-}
-
-// GetVaultImpl queries the vault implementation used for the proxy
-func GetVaultImpl(ctx context.Context, vault common.Address, trxSvc transaction.Service) (vaultImpl common.Address, err error) {
-	callData, err := vaultABI.Pack("implementation")
-	if err != nil {
-		return
-	}
-
-	output, err := trxSvc.Call(ctx, &transaction.TxRequest{
-		To:   &vault,
-		Data: callData,
-	})
-	if err != nil {
-		return
-	}
-
-	results, err := vaultABI.Unpack("implementation", output)
-	if err != nil {
-		return
-	}
-
-	vaultImpl = *abi.ConvertType(results[0], new(common.Address)).(*common.Address)
-	return
-}
-
-func _CashCheque(ctx context.Context, vault, recipient common.Address, cheque *SignedCheque, tS transaction.Service) (common.Hash, error) {
-
-	callData, err := vaultABI.Pack("cashChequeBeneficiary", recipient, cheque.CumulativePayout, cheque.Signature)
+	callData, err := vaultABINew.Pack("cashChequeBeneficiary", recipient, cheque.CumulativePayout, cheque.Signature)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -257,7 +260,11 @@ func _CashCheque(ctx context.Context, vault, recipient common.Address, cheque *S
 	return txHash, nil
 }
 
-func _PaidOut(ctx context.Context, vault, beneficiary common.Address, tS transaction.Service) (*big.Int, error) {
+func _PaidOutMuti(ctx context.Context, vault, beneficiary common.Address, tS transaction.Service, token string) (*big.Int, error) {
+	if IsWbtt(token) {
+		return _PaidOut(ctx, vault, beneficiary, tS)
+	}
+	
 	callData, err := vaultABINew.Pack("paidOut", beneficiary)
 	if err != nil {
 		return nil, err

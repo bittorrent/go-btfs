@@ -65,6 +65,9 @@ func addToken(s string, token string) string {
 	}
 	return fmt.Sprintf("%s_%s", s, token)
 }
+func IsWbtt(token string) bool {
+	return token == "WBTT"
+}
 
 // Service is the implementation of the swap settlement layer.
 type Service struct {

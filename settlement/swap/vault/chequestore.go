@@ -168,7 +168,7 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 		return nil, ErrChequeNotIncreasing
 	}
 	// blockchain calls below
-	contract := newVaultContract(cheque.Vault, s.transactionService)
+	contract := newVaultContractMuti(cheque.Vault, s.transactionService)
 	// this does not change for the same vault
 	expectedIssuer, err := contract.Issuer(ctx)
 	if err != nil {
@@ -187,12 +187,12 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 
 	// basic balance check
 	// could be omitted as it is not particularly useful
-	balance, err := contract.TotalBalanceOf(ctx, token)
+	balance, err := contract.TotalBalance(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 
-	alreadyPaidOut, err := contract.PaidOutOf(ctx, s.beneficiary, token)
+	alreadyPaidOut, err := contract.PaidOut(ctx, s.beneficiary, token)
 	if err != nil {
 		return nil, err
 	}

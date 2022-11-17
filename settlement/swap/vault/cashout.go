@@ -11,7 +11,6 @@ import (
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -86,6 +85,15 @@ type chequeCashedEvent struct {
 	CallerPayout     *big.Int
 }
 
+type mutiChequeCashedEvent struct {
+	Beneficiary      common.Address
+	Recipient        common.Address
+	Caller           common.Address
+	TotalPayout      *big.Int
+	CumulativePayout *big.Int
+	CallerPayout     *big.Int
+}
+
 // NewCashoutService creates a new CashoutService
 func NewCashoutService(
 	store storage.StateStorer,
@@ -106,36 +114,43 @@ func cashoutActionKey(vault common.Address, token string) string {
 	return addToken(fmt.Sprintf("swap_cashout_%x", vault), token)
 }
 
-func (s *cashoutService) paidOut(ctx context.Context, vault, beneficiary common.Address) (*big.Int, error) {
-	callData, err := vaultABI.Pack("paidOut", beneficiary)
-	if err != nil {
-		return nil, err
-	}
+// paidOut (dropped 2.3.0)
+//func (s *cashoutService) paidOut(ctx context.Context, vault, beneficiary common.Address) (*big.Int, error) {
+//	callData, err := vaultABI.Pack("paidOut", beneficiary)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	output, err := s.transactionService.Call(ctx, &transaction.TxRequest{
+//		To:   &vault,
+//		Data: callData,
+//	})
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	results, err := vaultABI.Unpack("paidOut", output)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	if len(results) != 1 {
+//		return nil, errDecodeABI
+//	}
+//
+//	paidOut, ok := abi.ConvertType(results[0], new(big.Int)).(*big.Int)
+//	if !ok || paidOut == nil {
+//		return nil, errDecodeABI
+//	}
+//
+//	return paidOut, nil
+//}
 
-	output, err := s.transactionService.Call(ctx, &transaction.TxRequest{
-		To:   &vault,
-		Data: callData,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	results, err := vaultABI.Unpack("paidOut", output)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(results) != 1 {
-		return nil, errDecodeABI
-	}
-
-	paidOut, ok := abi.ConvertType(results[0], new(big.Int)).(*big.Int)
-	if !ok || paidOut == nil {
-		return nil, errDecodeABI
-	}
-
-	return paidOut, nil
+// paidOutMuti (2.3.0 import)
+func (s *cashoutService) paidOutMuti(ctx context.Context, vault, beneficiary common.Address, token string) (*big.Int, error) {
+	return _PaidOutMuti(ctx, vault, beneficiary, s.transactionService, token)
 }
+
 func (s *cashoutService) CashoutResults(token string) ([]CashOutResult, error) {
 	result := make([]CashOutResult, 0, 0)
 	err := s.store.Iterate(statestore.CashoutResultPrefixKey(token), func(key, val []byte) (stop bool, err error) {
@@ -160,18 +175,24 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 		return common.Hash{}, err
 	}
 
-	callData, err := vaultABI.Pack("cashChequeBeneficiary", recipient, cheque.CumulativePayout, cheque.Signature)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	request := &transaction.TxRequest{
-		To:          &vault,
-		Data:        callData,
-		Value:       big.NewInt(0),
-		Description: "cheque cashout",
-	}
+	//callData, err := vaultABI.Pack("cashChequeBeneficiary", recipient, cheque.CumulativePayout, cheque.Signature)
+	//if err != nil {
+	//	return common.Hash{}, err
+	//}
+	//request := &transaction.TxRequest{
+	//	To:          &vault,
+	//	Data:        callData,
+	//	Value:       big.NewInt(0),
+	//	Description: "cheque cashout",
+	//}
+	//
+	//txHash, err := s.transactionService.Send(ctx, request)
+	//if err != nil {
+	//	return common.Hash{}, err
+	//}
 
-	txHash, err := s.transactionService.Send(ctx, request)
+	// 2.3.0 import
+	txHash, err := _CashChequeMuti(ctx, vault, recipient, cheque, s.transactionService, token)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -320,7 +341,7 @@ func (s *cashoutService) CashoutStatus(ctx context.Context, vaultAddress common.
 	if receipt.Status == types.ReceiptStatusFailed {
 		// if a tx failed (should be almost impossible in practice) we no longer have the necessary information to compute uncashed locally
 		// assume there are no pending transactions and that the on-chain paidOut is the last cashout action
-		paidOut, err := s.paidOut(ctx, vaultAddress, cheque.Beneficiary)
+		paidOut, err := s.paidOutMuti(ctx, vaultAddress, cheque.Beneficiary, token)
 		if err != nil {
 			return nil, err
 		}
@@ -336,7 +357,7 @@ func (s *cashoutService) CashoutStatus(ctx context.Context, vaultAddress common.
 		}, nil
 	}
 
-	result, err := s.parseCashChequeBeneficiaryReceipt(vaultAddress, receipt)
+	result, err := s.parseCashChequeBeneficiaryReceiptMuti(vaultAddress, receipt, token)
 	if err != nil {
 		return nil, err
 	}
@@ -373,6 +394,39 @@ func (s *cashoutService) parseCashChequeBeneficiaryReceipt(vaultAddress common.A
 	result.Recipient = cashedEvent.Recipient
 
 	err = transaction.FindSingleEvent(&vaultABI, receipt, vaultAddress, chequeBouncedEventType, nil)
+	if err == nil {
+		result.Bounced = true
+	} else if !errors.Is(err, transaction.ErrEventNotFound) {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// parseCashChequeBeneficiaryReceiptMuti processes the receipt from a CashChequeBeneficiary transaction
+func (s *cashoutService) parseCashChequeBeneficiaryReceiptMuti(vaultAddress common.Address, receipt *types.Receipt, token string) (*CashChequeResult, error) {
+	if IsWbtt(token) {
+		return s.parseCashChequeBeneficiaryReceipt(vaultAddress, receipt)
+	}
+
+	result := &CashChequeResult{
+		Bounced: false,
+	}
+
+	var mtCashedEvent mutiChequeCashedEvent
+	err := transaction.FindSingleEvent(&vaultABINew, receipt, vaultAddress, mtChequeCashedEventType, &mtCashedEvent)
+	if err != nil {
+		return nil, err
+	}
+
+	result.Beneficiary = mtCashedEvent.Beneficiary
+	result.Caller = mtCashedEvent.Caller
+	result.CallerPayout = mtCashedEvent.CallerPayout
+	result.TotalPayout = mtCashedEvent.TotalPayout
+	result.CumulativePayout = mtCashedEvent.CumulativePayout
+	result.Recipient = mtCashedEvent.Recipient
+
+	err = transaction.FindSingleEvent(&vaultABINew, receipt, vaultAddress, chequeBouncedEventType, nil)
 	if err == nil {
 		result.Bounced = true
 	} else if !errors.Is(err, transaction.ErrEventNotFound) {
