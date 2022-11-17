@@ -175,7 +175,7 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 		return nil, err
 	}
 
-	// verify the cheque signature
+	// verify the cheque signature, (cheque contains token)
 	issuer, err := s.recoverChequeFunc(cheque, s.chaindID)
 	if err != nil {
 		return nil, err
@@ -267,12 +267,8 @@ func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int, t
 		*/
 	}
 
-	var tokenAddress common.Address
-	//tokenAddress = f(token)
-
 	//stroe cheque record with the key: historyReceivedChequeKey(index)
 	chequeRecord := ChequeRecord{
-		tokenAddress,
 		vault,
 		s.beneficiary,
 		amount,
@@ -535,12 +531,8 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 		*/
 	}
 
-	var tokenAddress common.Address
-	//tokenAddress = f(token)
-
 	//stroe cheque record with the key: historySendChequeKey(index)
 	chequeRecord := ChequeRecord{
-		tokenAddress,
 		vault,
 		beneficiary,
 		amount,

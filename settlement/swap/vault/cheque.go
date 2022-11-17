@@ -20,7 +20,6 @@ type Cheque struct {
 }
 
 type ChequeRecord struct {
-	Token       common.Address
 	Vault       common.Address
 	Beneficiary common.Address
 	Amount      *big.Int
@@ -79,6 +78,28 @@ var ChequeTypes = eip712.Types{
 	},
 }
 
+var MutiChequeTypes = eip712.Types{
+	"EIP712Domain": eip712.EIP712DomainType,
+	"MultiTokenCheque": []eip712.Type{
+		{
+			Name: "token",
+			Type: "address",
+		},
+		{
+			Name: "vault",
+			Type: "address",
+		},
+		{
+			Name: "beneficiary",
+			Type: "address",
+		},
+		{
+			Name: "cumulativePayout",
+			Type: "uint256",
+		},
+	},
+}
+
 // ChequeSigner signs cheque
 type ChequeSigner interface {
 	// Sign signs a cheque
@@ -100,16 +121,29 @@ func NewChequeSigner(signer crypto.Signer, chainID int64) ChequeSigner {
 
 // eip712DataForCheque converts a cheque into the correct TypedData structure.
 func eip712DataForCheque(cheque *Cheque, chainID int64) *eip712.TypedData {
+	if IsWbtt(cheque.Token) {
+		return &eip712.TypedData{
+			Domain: vaultDomain(chainID),
+			Types:  ChequeTypes,
+			Message: eip712.TypedDataMessage{
+				"vault":            cheque.Vault.Hex(),
+				"beneficiary":      cheque.Beneficiary.Hex(),
+				"cumulativePayout": cheque.CumulativePayout.String(),
+			},
+			PrimaryType: "Cheque",
+		}
+	}
+
 	return &eip712.TypedData{
 		Domain: vaultDomain(chainID),
-		Types:  ChequeTypes,
+		Types:  MutiChequeTypes,
 		Message: eip712.TypedDataMessage{
-			"Token":            cheque.Token.Hex(),
+			"token":            cheque.Token,
 			"vault":            cheque.Vault.Hex(),
 			"beneficiary":      cheque.Beneficiary.Hex(),
 			"cumulativePayout": cheque.CumulativePayout.String(),
 		},
-		PrimaryType: "Cheque",
+		PrimaryType: "MultiTokenCheque",
 	}
 }
 
@@ -123,9 +157,6 @@ func (cheque *Cheque) String() string {
 }
 
 func (cheque *Cheque) Equal(other *Cheque) bool {
-	if cheque.Token != other.Token {
-		return false
-	}
 	if cheque.Beneficiary != other.Beneficiary {
 		return false
 	}

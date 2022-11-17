@@ -313,10 +313,10 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 
 	// create and sign the new cheque
 	cheque := Cheque{
+		Token:            tokenAddr,
 		Vault:            s.address,
 		CumulativePayout: cumulativePayout,
 		Beneficiary:      beneficiary,
-		Token:            tokenAddr,
 	}
 
 	sig, err := s.chequeSigner.Sign(&Cheque{
