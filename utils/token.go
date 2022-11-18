@@ -11,9 +11,11 @@ var MpTokenAddr map[string]common.Address
 var MpTokenStr map[common.Address]string
 
 func init() {
+	MpTokenAddr = make(map[string]common.Address)
 	MpTokenAddr["WBTT"] = common.HexToAddress(WBTTHex)
 	MpTokenAddr["TRX"] = common.HexToAddress(TRXHex)
 
+	MpTokenStr = make(map[common.Address]string)
 	MpTokenStr[common.HexToAddress(WBTTHex)] = "WBTT"
 	MpTokenStr[common.HexToAddress(TRXHex)] = "TRX"
 }
