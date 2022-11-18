@@ -1,7 +1,9 @@
 package cheque
 
 import (
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -20,8 +22,12 @@ var ReceiveChequesCountCmd = &cmds.Command{
 		cmds.StringArg("token", true, false, "token"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		token := req.Arguments[0]
-		fmt.Printf("... token:%+v\n", token)
+		tokenStr := req.Arguments[0]
+		fmt.Printf("... token:%+v\n", tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
 
 		count, err := chain.SettleObject.SwapService.ReceivedChequeRecordsCount(token)
 		if err != nil {

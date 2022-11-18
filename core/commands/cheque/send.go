@@ -1,7 +1,9 @@
 package cheque
 
 import (
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -22,8 +24,12 @@ var SendChequeCmd = &cmds.Command{
 		peer_id := req.Arguments[0]
 		fmt.Println("SendChequeCmd peer_id = ", peer_id)
 
-		token := req.Arguments[1]
-		fmt.Printf("... token:%+v\n", token)
+		tokenStr := req.Arguments[1]
+		fmt.Printf("... token:%+v\n", tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
 
 		if len(peer_id) > 0 {
 			chequeTmp, err := chain.SettleObject.SwapService.LastSendCheque(peer_id, token)

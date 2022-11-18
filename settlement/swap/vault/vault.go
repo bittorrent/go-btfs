@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 	"strings"
 	"sync"
@@ -42,54 +43,44 @@ var (
 // Service is the main interface for interacting with the nodes vault.
 type Service interface {
 	// Deposit starts depositing erc20 token into the vault. This returns once the transactions has been broadcast.
-	Deposit(ctx context.Context, amount *big.Int, token string) (hash common.Hash, err error)
+	Deposit(ctx context.Context, amount *big.Int, token common.Address) (hash common.Hash, err error)
 	// Withdraw starts withdrawing erc20 token from the vault. This returns once the transactions has been broadcast.
-	Withdraw(ctx context.Context, amount *big.Int, token string) (hash common.Hash, err error)
+	Withdraw(ctx context.Context, amount *big.Int, token common.Address) (hash common.Hash, err error)
 	// WaitForDeposit waits for the deposit transaction to confirm and verifies the result.
 	WaitForDeposit(ctx context.Context, txHash common.Hash) error
 	// TotalBalance returns the token balance of the vault.
-	TotalBalance(ctx context.Context, token string) (*big.Int, error)
+	TotalBalance(ctx context.Context, token common.Address) (*big.Int, error)
 	// TotalIssuedCount returns total issued count of the vault.
-	TotalIssuedCount(token string) (int, error)
-	TotalIssued(token string) (*big.Int, error)
-	TotalReceivedCount(token string) (int, error)
-	TotalReceivedCashedCount(token string) (int, error)
-	TotalReceived(token string) (*big.Int, error)
-	TotalReceivedCashed(token string) (*big.Int, error)
-	TotalDailyReceived(token string) (*big.Int, error)
-	TotalDailyReceivedCashed(token string) (*big.Int, error)
+	TotalIssuedCount(token common.Address) (int, error)
+	TotalIssued(token common.Address) (*big.Int, error)
+	TotalReceivedCount(token common.Address) (int, error)
+	TotalReceivedCashedCount(token common.Address) (int, error)
+	TotalReceived(token common.Address) (*big.Int, error)
+	TotalReceivedCashed(token common.Address) (*big.Int, error)
+	TotalDailyReceived(token common.Address) (*big.Int, error)
+	TotalDailyReceivedCashed(token common.Address) (*big.Int, error)
 	// LiquidBalance returns the token balance of the vault sub stake amount. (not use)
 	LiquidBalance(ctx context.Context) (*big.Int, error)
 	// AvailableBalance returns the token balance of the vault which is not yet used for uncashed cheques.
-	AvailableBalance(ctx context.Context, token string) (*big.Int, error)
+	AvailableBalance(ctx context.Context, token common.Address) (*big.Int, error)
 	// Address returns the address of the used vault contract.
 	Address() common.Address
 	// Issue a new cheque for the beneficiary with an cumulativePayout amount higher than the last.
-	Issue(ctx context.Context, beneficiary common.Address, amount *big.Int, token string, sendChequeFunc SendChequeFunc) (*big.Int, error)
+	Issue(ctx context.Context, beneficiary common.Address, amount *big.Int, token common.Address, sendChequeFunc SendChequeFunc) (*big.Int, error)
 	// LastCheque returns the last cheque we issued for the beneficiary.
-	LastCheque(beneficiary common.Address, token string) (*SignedCheque, error)
+	LastCheque(beneficiary common.Address, token common.Address) (*SignedCheque, error)
 	// LastCheques returns the last cheques we issued for all beneficiaries.
-	LastCheques(token string) (map[common.Address]*SignedCheque, error)
+	LastCheques(token common.Address) (map[common.Address]*SignedCheque, error)
 	// WbttBalanceOf retrieve the addr balance
 	WBTTBalanceOf(ctx context.Context, addr common.Address) (*big.Int, error)
 	// BTTBalanceOf retrieve the btt balance of addr
 	BTTBalanceOf(ctx context.Context, address common.Address, block *big.Int) (*big.Int, error)
 	// TotalPaidOut return total pay out of the vault
-	TotalPaidOut(ctx context.Context, token string) (*big.Int, error)
+	TotalPaidOut(ctx context.Context, token common.Address) (*big.Int, error)
 	// CheckBalance
 	CheckBalance(amount *big.Int) (err error)
 	// UpgradeTo will upgrade vault implementation to `newVaultImpl`
 	UpgradeTo(ctx context.Context, newVaultImpl common.Address) (old, new common.Address, err error)
-}
-
-func addToken(s string, token string) string {
-	if token == "WBTT" {
-		return s
-	}
-	return fmt.Sprintf("%s_%s", s, token)
-}
-func IsWbtt(token string) bool {
-	return token == "WBTT"
 }
 
 type service struct {
@@ -132,7 +123,7 @@ func (s *service) Address() common.Address {
 }
 
 // Deposit starts depositing erc20 token into the vault. This returns once the transactions has been broadcast.
-func (s *service) Deposit(ctx context.Context, amount *big.Int, token string) (hash common.Hash, err error) {
+func (s *service) Deposit(ctx context.Context, amount *big.Int, token common.Address) (hash common.Hash, err error) {
 	balance, err := s.erc20Service.BalanceOf(ctx, s.ownerAddress)
 	if err != nil {
 		return common.Hash{}, err
@@ -162,7 +153,7 @@ func (s *service) CheckBalance(amount *big.Int) (err error) {
 }
 
 // Balance returns the token balance of the vault.
-func (s *service) TotalBalance(ctx context.Context, token string) (*big.Int, error) {
+func (s *service) TotalBalance(ctx context.Context, token common.Address) (*big.Int, error) {
 	return s.contract.TotalBalance(ctx, token)
 }
 
@@ -172,7 +163,7 @@ func (s *service) LiquidBalance(ctx context.Context) (*big.Int, error) {
 }
 
 // AvailableBalance returns the token balance of the vault which is not yet used for uncashed cheques.
-func (s *service) AvailableBalance(ctx context.Context, token string) (*big.Int, error) {
+func (s *service) AvailableBalance(ctx context.Context, token common.Address) (*big.Int, error) {
 	totalIssued, err := s.totalIssued(token)
 	if err != nil {
 		return nil, err
@@ -196,7 +187,7 @@ func (s *service) AvailableBalance(ctx context.Context, token string) (*big.Int,
 }
 
 // total send cheque count.  returns the token balance of the vault which is not yet used for uncashed cheques.
-func (s *service) TotalIssuedCount(token string) (int, error) {
+func (s *service) TotalIssuedCount(token common.Address) (int, error) {
 	totalIssuedCount, err := s.totalIssuedCount(token)
 	if err != nil {
 		return 0, err
@@ -205,32 +196,32 @@ func (s *service) TotalIssuedCount(token string) (int, error) {
 	return totalIssuedCount, nil
 }
 
-func (s *service) TotalIssued(token string) (*big.Int, error) {
+func (s *service) TotalIssued(token common.Address) (*big.Int, error) {
 	return s.totalIssued(token)
 }
 
 // total recevied cheque count.
-func (s *service) TotalReceivedCount(token string) (int, error) {
+func (s *service) TotalReceivedCount(token common.Address) (int, error) {
 	return s.totalReceivedCount(token)
 }
 
-func (s *service) TotalReceivedCashedCount(token string) (int, error) {
+func (s *service) TotalReceivedCashedCount(token common.Address) (int, error) {
 	return s.totalReceivedCashedCount(token)
 }
 
-func (s *service) TotalReceived(token string) (*big.Int, error) {
+func (s *service) TotalReceived(token common.Address) (*big.Int, error) {
 	return s.totalReceived(token)
 }
 
-func (s *service) TotalReceivedCashed(token string) (*big.Int, error) {
+func (s *service) TotalReceivedCashed(token common.Address) (*big.Int, error) {
 	return s.totalReceivedCashed(token)
 }
 
-func (s *service) TotalDailyReceived(token string) (*big.Int, error) {
+func (s *service) TotalDailyReceived(token common.Address) (*big.Int, error) {
 	return s.totalDailyReceived(token)
 }
 
-func (s *service) TotalDailyReceivedCashed(token string) (*big.Int, error) {
+func (s *service) TotalDailyReceivedCashed(token common.Address) (*big.Int, error) {
 	return s.totalDailyReceivedCashed(token)
 }
 
@@ -249,42 +240,44 @@ func (s *service) WaitForDeposit(ctx context.Context, txHash common.Hash) error 
 }
 
 // lastIssuedChequeKey computes the key where to store the last cheque for a beneficiary.
-func lastIssuedChequeKey(beneficiary common.Address, token string) string {
-	return fmt.Sprintf("%s%x", addToken(lastIssuedChequeKeyPrefix, token), beneficiary)
+func lastIssuedChequeKey(beneficiary common.Address, token common.Address) string {
+	return fmt.Sprintf("%s%x", tokencfg.AddToken(lastIssuedChequeKeyPrefix, token), beneficiary)
 }
 
-func (s *service) reserveTotalIssued(ctx context.Context, amount *big.Int, token string) (*big.Int, error) {
+func (s *service) reserveTotalIssued(ctx context.Context, amount *big.Int, token common.Address) (*big.Int, error) {
 	availableBalance, err := s.AvailableBalance(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 
-	_, ok := s.mpTotalIssuedReserved[token]
+	tokenString := token.String()
+	_, ok := s.mpTotalIssuedReserved[tokenString]
 	if !ok {
-		s.mpTotalIssuedReserved[token] = big.NewInt(0)
+		s.mpTotalIssuedReserved[tokenString] = big.NewInt(0)
 	}
 
-	if amount.Cmp(big.NewInt(0).Sub(availableBalance, s.mpTotalIssuedReserved[token])) > 0 {
+	if amount.Cmp(big.NewInt(0).Sub(availableBalance, s.mpTotalIssuedReserved[tokenString])) > 0 {
 		return nil, ErrOutOfFunds
 	}
 
-	s.mpTotalIssuedReserved[token] = s.mpTotalIssuedReserved[token].Add(s.mpTotalIssuedReserved[token], amount)
+	s.mpTotalIssuedReserved[tokenString] = s.mpTotalIssuedReserved[tokenString].Add(s.mpTotalIssuedReserved[tokenString], amount)
 	return big.NewInt(0).Sub(availableBalance, amount), nil
 }
 
-func (s *service) unreserveTotalIssued(amount *big.Int, token string) {
-	_, ok := s.mpTotalIssuedReserved[token]
+func (s *service) unreserveTotalIssued(amount *big.Int, token common.Address) {
+	tokenString := token.String()
+	_, ok := s.mpTotalIssuedReserved[tokenString]
 	if !ok {
-		s.mpTotalIssuedReserved[token] = big.NewInt(0)
+		s.mpTotalIssuedReserved[tokenString] = big.NewInt(0)
 	}
-	s.mpTotalIssuedReserved[token] = s.mpTotalIssuedReserved[token].Sub(s.mpTotalIssuedReserved[token], amount)
+	s.mpTotalIssuedReserved[tokenString] = s.mpTotalIssuedReserved[tokenString].Sub(s.mpTotalIssuedReserved[tokenString], amount)
 }
 
 // Issue issues a new cheque and passes it to sendChequeFunc.
 // The cheque is considered sent and saved when sendChequeFunc succeeds.
 // The available balance which is available after sending the cheque is passed
 // to the caller for it to be communicated over metrics.
-func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount *big.Int, token string, sendChequeFunc SendChequeFunc) (*big.Int, error) {
+func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount *big.Int, token common.Address, sendChequeFunc SendChequeFunc) (*big.Int, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -355,7 +348,7 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 		return nil, err
 	}
 	totalIssuedCount = totalIssuedCount + 1
-	err = s.store.Put(addToken(totalIssuedCountKey, token), totalIssuedCount)
+	err = s.store.Put(tokencfg.AddToken(totalIssuedCountKey, token), totalIssuedCount)
 	if err != nil {
 		return nil, err
 	}
@@ -366,12 +359,12 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 		return nil, err
 	}
 	totalIssued = totalIssued.Add(totalIssued, amount)
-	return availableBalance, s.store.Put(addToken(totalIssuedKey, token), totalIssued)
+	return availableBalance, s.store.Put(tokencfg.AddToken(totalIssuedKey, token), totalIssued)
 }
 
 // returns the total amount in cheques issued so far
-func (s *service) totalIssued(token string) (totalIssued *big.Int, err error) {
-	err = s.store.Get(addToken(totalIssuedKey, token), &totalIssued)
+func (s *service) totalIssued(token common.Address) (totalIssued *big.Int, err error) {
+	err = s.store.Get(tokencfg.AddToken(totalIssuedKey, token), &totalIssued)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return nil, err
@@ -382,8 +375,8 @@ func (s *service) totalIssued(token string) (totalIssued *big.Int, err error) {
 }
 
 // returns the total count in cheques issued so far
-func (s *service) totalIssuedCount(token string) (totalIssuedCount int, err error) {
-	err = s.store.Get(addToken(totalIssuedCountKey, token), &totalIssuedCount)
+func (s *service) totalIssuedCount(token common.Address) (totalIssuedCount int, err error) {
+	err = s.store.Get(tokencfg.AddToken(totalIssuedCountKey, token), &totalIssuedCount)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return 0, err
@@ -394,8 +387,8 @@ func (s *service) totalIssuedCount(token string) (totalIssuedCount int, err erro
 }
 
 // returns the total amount in cheques recieved so far
-func (s *service) totalReceived(token string) (totalReceived *big.Int, err error) {
-	err = s.store.Get(addToken(statestore.TotalReceivedKey, token), &totalReceived)
+func (s *service) totalReceived(token common.Address) (totalReceived *big.Int, err error) {
+	err = s.store.Get(tokencfg.AddToken(statestore.TotalReceivedKey, token), &totalReceived)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return nil, err
@@ -405,8 +398,8 @@ func (s *service) totalReceived(token string) (totalReceived *big.Int, err error
 	return totalReceived, nil
 }
 
-func (s *service) totalReceivedCashed(token string) (totalReceived *big.Int, err error) {
-	err = s.store.Get(addToken(statestore.TotalReceivedCashedKey, token), &totalReceived)
+func (s *service) totalReceivedCashed(token common.Address) (totalReceived *big.Int, err error) {
+	err = s.store.Get(tokencfg.AddToken(statestore.TotalReceivedCashedKey, token), &totalReceived)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return nil, err
@@ -417,7 +410,7 @@ func (s *service) totalReceivedCashed(token string) (totalReceived *big.Int, err
 }
 
 // returns the total amount in cheques recieved so far
-func (s *service) totalDailyReceived(token string) (totalReceived *big.Int, err error) {
+func (s *service) totalDailyReceived(token common.Address) (totalReceived *big.Int, err error) {
 	var stat DailyReceivedStats
 	err = s.store.Get(statestore.GetTodayTotalDailyReceivedKey(token), &stat)
 	if err != nil {
@@ -429,7 +422,7 @@ func (s *service) totalDailyReceived(token string) (totalReceived *big.Int, err 
 	return stat.Amount, nil
 }
 
-func (s *service) totalDailyReceivedCashed(token string) (totalReceived *big.Int, err error) {
+func (s *service) totalDailyReceivedCashed(token common.Address) (totalReceived *big.Int, err error) {
 	err = s.store.Get(statestore.GetTodayTotalDailyReceivedCashedKey(token), &totalReceived)
 	if err != nil {
 		if err != storage.ErrNotFound {
@@ -441,8 +434,8 @@ func (s *service) totalDailyReceivedCashed(token string) (totalReceived *big.Int
 }
 
 // returns the total count in cheques recieved so far
-func (s *service) totalReceivedCount(token string) (totalReceivedCount int, err error) {
-	err = s.store.Get(addToken(statestore.TotalReceivedCountKey, token), &totalReceivedCount)
+func (s *service) totalReceivedCount(token common.Address) (totalReceivedCount int, err error) {
+	err = s.store.Get(tokencfg.AddToken(statestore.TotalReceivedCountKey, token), &totalReceivedCount)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return 0, err
@@ -452,8 +445,8 @@ func (s *service) totalReceivedCount(token string) (totalReceivedCount int, err 
 	return totalReceivedCount, nil
 }
 
-func (s *service) totalReceivedCashedCount(token string) (totalReceivedCount int, err error) {
-	err = s.store.Get(addToken(statestore.TotalReceivedCashedCountKey, token), &totalReceivedCount)
+func (s *service) totalReceivedCashedCount(token common.Address) (totalReceivedCount int, err error) {
+	err = s.store.Get(tokencfg.AddToken(statestore.TotalReceivedCashedCountKey, token), &totalReceivedCount)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return 0, err
@@ -464,7 +457,7 @@ func (s *service) totalReceivedCashedCount(token string) (totalReceivedCount int
 }
 
 // LastCheque returns the last cheque we issued for the beneficiary.
-func (s *service) LastCheque(beneficiary common.Address, token string) (*SignedCheque, error) {
+func (s *service) LastCheque(beneficiary common.Address, token common.Address) (*SignedCheque, error) {
 	var lastCheque *SignedCheque
 	err := s.store.Get(lastIssuedChequeKey(beneficiary, token), &lastCheque)
 	if err != nil {
@@ -486,11 +479,11 @@ func keyBeneficiary(key []byte, prefix string) (beneficiary common.Address, err 
 	return common.HexToAddress(split[1]), nil
 }
 
-// LastCheque returns the last cheques for all beneficiaries.
-func (s *service) LastCheques(token string) (map[common.Address]*SignedCheque, error) {
+// LastCheques returns the last cheques for all beneficiaries.
+func (s *service) LastCheques(token common.Address) (map[common.Address]*SignedCheque, error) {
 	result := make(map[common.Address]*SignedCheque)
-	err := s.store.Iterate(addToken(lastIssuedChequeKeyPrefix, token), func(key, val []byte) (stop bool, err error) {
-		addr, err := keyBeneficiary(key, addToken(lastIssuedChequeKeyPrefix, token))
+	err := s.store.Iterate(tokencfg.AddToken(lastIssuedChequeKeyPrefix, token), func(key, val []byte) (stop bool, err error) {
+		addr, err := keyBeneficiary(key, tokencfg.AddToken(lastIssuedChequeKeyPrefix, token))
 		if err != nil {
 			return false, fmt.Errorf("parse address from key: %s: %w", string(key), err)
 		}
@@ -513,7 +506,7 @@ func (s *service) LastCheques(token string) (map[common.Address]*SignedCheque, e
 }
 
 // OLD
-//func (s *service) Withdraw(ctx context.Context, amount *big.Int, token string) (hash common.Hash, err error) {
+//func (s *service) Withdraw(ctx context.Context, amount *big.Int, token common.Address) (hash common.Hash, err error) {
 //	availableBalance, err := s.AvailableBalance(ctx, token)
 //	if err != nil {
 //		return common.Hash{}, err
@@ -545,7 +538,7 @@ func (s *service) LastCheques(token string) (map[common.Address]*SignedCheque, e
 //}
 
 // Withdraw (2.3.0)
-func (s *service) Withdraw(ctx context.Context, amount *big.Int, token string) (hash common.Hash, err error) {
+func (s *service) Withdraw(ctx context.Context, amount *big.Int, token common.Address) (hash common.Hash, err error) {
 	availableBalance, err := s.AvailableBalance(ctx, token)
 	if err != nil {
 		return common.Hash{}, err
@@ -566,7 +559,7 @@ func (s *service) WBTTBalanceOf(ctx context.Context, addr common.Address) (*big.
 func (s *service) BTTBalanceOf(ctx context.Context, address common.Address, block *big.Int) (*big.Int, error) {
 	return s.transactionService.BttBalanceAt(ctx, address, block)
 }
-func (s *service) TotalPaidOut(ctx context.Context, token string) (*big.Int, error) {
+func (s *service) TotalPaidOut(ctx context.Context, token common.Address) (*big.Int, error) {
 	return s.contract.TotalPaidOut(ctx, token)
 }
 

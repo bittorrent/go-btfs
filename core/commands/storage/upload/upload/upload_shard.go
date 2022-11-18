@@ -2,8 +2,8 @@ package upload
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"github.com/ethereum/go-ethereum/common"
 	"time"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -14,7 +14,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
-func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price int64, token string, shardSize int64,
+func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price int64, token common.Address, shardSize int64,
 	storageLength int,
 	offlineSigning bool, renterId peer.ID, fileSize int64, shardIndexes []int, rp *RepairParams) error {
 
@@ -58,29 +58,29 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 				}
 
 				// token: check host tokens
-				{
-					ctx, _ := context.WithTimeout(rss.Ctx, 30*time.Second)
-					output, err := remote.P2PCall(ctx, rss.CtxParams.N, rss.CtxParams.Api, hostPid, "/storage/upload/check_tokens")
-					if err != nil {
-						return nil
-					}
-					var recvTokens []string
-					err = json.Unmarshal(output, &recvTokens)
-					if err != nil {
-						return err
-					}
-
-					ok := false
-					for _, k := range recvTokens {
-						if token == k {
-							ok = true
-						}
-					}
-					if !ok {
-						cannot++
-						return nil
-					}
-				}
+				//{
+				//	ctx, _ := context.WithTimeout(rss.Ctx, 30*time.Second)
+				//	output, err := remote.P2PCall(ctx, rss.CtxParams.N, rss.CtxParams.Api, hostPid, "/storage/upload/check_tokens")
+				//	if err != nil {
+				//		return nil
+				//	}
+				//	var recvTokens []string
+				//	err = json.Unmarshal(output, &recvTokens)
+				//	if err != nil {
+				//		return err
+				//	}
+				//
+				//	ok := false
+				//	for _, k := range recvTokens {
+				//		if token == k {
+				//			ok = true
+				//		}
+				//	}
+				//	if !ok {
+				//		cannot++
+				//		return nil
+				//	}
+				//}
 				pass++
 
 				// TotalPay

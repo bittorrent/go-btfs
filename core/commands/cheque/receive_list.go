@@ -1,7 +1,9 @@
 package cheque
 
 import (
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 	"math/big"
 	"strconv"
@@ -31,8 +33,12 @@ var ListReceiveChequeCmd = &cmds.Command{
 		if err != nil {
 			return fmt.Errorf("parse limit:%v failed", req.Arguments[1])
 		}
-		token := req.Arguments[2]
-		fmt.Printf("... token:%+v\n", token)
+		tokenStr := req.Arguments[2]
+		fmt.Printf("... token:%+v\n", tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
 
 		var listRet ListChequeRet
 		cheques, err := chain.SettleObject.SwapService.LastReceivedCheques(token)

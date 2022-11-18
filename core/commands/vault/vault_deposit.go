@@ -1,7 +1,9 @@
 package vault
 
 import (
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 	"math/big"
 	"time"
@@ -32,8 +34,12 @@ var VaultDepositCmd = &cmds.Command{
 			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[0])
 		}
 
-		token := req.Arguments[1]
-		fmt.Printf("... token:%+v\n", token)
+		tokenStr := req.Arguments[1]
+		fmt.Printf("... token:%+v\n", tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
 
 		hash, err := chain.SettleObject.VaultService.Deposit(context.Background(), amount, token)
 		if err != nil {

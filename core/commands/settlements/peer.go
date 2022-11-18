@@ -3,6 +3,7 @@ package settlement
 import (
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 	"time"
 
@@ -24,8 +25,12 @@ var PeerSettlementCmd = &cmds.Command{
 		peerID := req.Arguments[0]
 		peerexists := false
 
-		token := req.Arguments[1]
-		fmt.Printf("... token:%+v\n", token)
+		tokenStr := req.Arguments[1]
+		fmt.Printf("... token:%+v\n", tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
 
 		received, err := chain.SettleObject.SwapService.TotalReceived(peerID, token)
 		if err != nil {

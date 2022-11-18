@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"strconv"
 	"strings"
 	"time"
@@ -38,7 +39,6 @@ const (
 
 	defaultRepFactor     = 3
 	defaultStorageLength = 30
-	defaultTokenTypeName = "WBTT"
 
 	uploadPriceOptionName   = "price"
 	storageLengthOptionName = "storage-length"
@@ -145,8 +145,12 @@ Use status command to check for completion:
 		var shardSize int64
 
 		// token: parse token argument
-		token := req.Options[TokenTypeName].(string)
-		fmt.Println("... use token = ", token)
+		tokenStr := req.Options[TokenTypeName].(string)
+		fmt.Println("... use token = ", tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
 
 		fileHash := req.Arguments[0]
 		shardHashes, fileSize, shardSize, err = helper.GetShardHashes(ctxParams, fileHash)

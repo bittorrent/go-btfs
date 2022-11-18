@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 	"time"
 
@@ -23,11 +24,11 @@ var (
 // CashoutService is the service responsible for managing cashout actions
 type CashoutService interface {
 	// CashCheque sends a cashing transaction for the last cheque of the vault
-	CashCheque(ctx context.Context, vault, recipient common.Address, token string) (common.Hash, error)
+	CashCheque(ctx context.Context, vault, recipient common.Address, token common.Address) (common.Hash, error)
 	// CashoutStatus gets the status of the latest cashout transaction for the vault
-	CashoutStatus(ctx context.Context, vaultAddress common.Address, token string) (*CashoutStatus, error)
-	HasCashoutAction(ctx context.Context, peer common.Address, token string) (bool, error)
-	CashoutResults(token string) ([]CashOutResult, error)
+	CashoutStatus(ctx context.Context, vaultAddress common.Address, token common.Address) (*CashoutStatus, error)
+	HasCashoutAction(ctx context.Context, peer common.Address, token common.Address) (bool, error)
+	CashoutResults(token common.Address) ([]CashOutResult, error)
 }
 
 type cashoutService struct {
@@ -114,8 +115,8 @@ func NewCashoutService(
 }
 
 // cashoutActionKey computes the store key for the last cashout action for the vault
-func cashoutActionKey(vault common.Address, token string) string {
-	return addToken(fmt.Sprintf("swap_cashout_%x", vault), token)
+func cashoutActionKey(vault common.Address, token common.Address) string {
+	return tokencfg.AddToken(fmt.Sprintf("swap_cashout_%x", vault), token)
 }
 
 // paidOut (dropped 2.3.0)
@@ -151,11 +152,11 @@ func cashoutActionKey(vault common.Address, token string) string {
 //}
 
 // paidOutMuti (2.3.0 import)
-func (s *cashoutService) paidOutMuti(ctx context.Context, vault, beneficiary common.Address, token string) (*big.Int, error) {
+func (s *cashoutService) paidOutMuti(ctx context.Context, vault, beneficiary common.Address, token common.Address) (*big.Int, error) {
 	return _PaidOutMuti(ctx, vault, beneficiary, s.transactionService, token)
 }
 
-func (s *cashoutService) CashoutResults(token string) ([]CashOutResult, error) {
+func (s *cashoutService) CashoutResults(token common.Address) ([]CashOutResult, error) {
 	result := make([]CashOutResult, 0, 0)
 	err := s.store.Iterate(statestore.CashoutResultPrefixKey(token), func(key, val []byte) (stop bool, err error) {
 		cashOutResult := CashOutResult{}
@@ -173,7 +174,7 @@ func (s *cashoutService) CashoutResults(token string) ([]CashOutResult, error) {
 }
 
 // CashCheque sends a cashout transaction for the last cheque of the vault
-func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common.Address, token string) (common.Hash, error) {
+func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common.Address, token common.Address) (common.Hash, error) {
 	cheque, err := s.chequeStore.LastReceivedCheque(vault, token)
 	if err != nil {
 		return common.Hash{}, err
@@ -221,7 +222,7 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 	return txHash, nil
 }
 
-func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Address, txHash common.Hash, cheque *SignedCheque, token string) error {
+func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Address, txHash common.Hash, cheque *SignedCheque, token common.Address) error {
 	cashResult := CashOutResult{
 		TxHash:   txHash,
 		Vault:    vault,
@@ -250,9 +251,9 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 			}
 			cashResult.Amount = totalPaidOut
 			totalReceivedCashed := big.NewInt(0)
-			if err = s.store.Get(addToken(statestore.TotalReceivedCashedKey, token), &totalReceivedCashed); err == nil || err == storage.ErrNotFound {
+			if err = s.store.Get(tokencfg.AddToken(statestore.TotalReceivedCashedKey, token), &totalReceivedCashed); err == nil || err == storage.ErrNotFound {
 				totalReceivedCashed = totalReceivedCashed.Add(totalReceivedCashed, totalPaidOut)
-				err := s.store.Put(addToken(statestore.TotalReceivedCashedKey, token), totalReceivedCashed)
+				err := s.store.Put(tokencfg.AddToken(statestore.TotalReceivedCashedKey, token), totalReceivedCashed)
 				if err != nil {
 					log.Infof("CashOutStats:put totalReceivedCashdKey err:%+v", err)
 				}
@@ -274,9 +275,9 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 				log.Infof("CashOutStats:put totalReceivedCountCashed err:%+v", err)
 			} else {
 				cashedCount := 0
-				err := s.store.Get(addToken(statestore.TotalReceivedCashedCountKey, token), &cashedCount)
+				err := s.store.Get(tokencfg.AddToken(statestore.TotalReceivedCashedCountKey, token), &cashedCount)
 				if err == nil || err == storage.ErrNotFound {
-					err := s.store.Put(addToken(statestore.TotalReceivedCashedCountKey, token), cashedCount+uncashed)
+					err := s.store.Put(tokencfg.AddToken(statestore.TotalReceivedCashedCountKey, token), cashedCount+uncashed)
 					if err != nil {
 						log.Infof("CashOutStats:put totalReceivedCashedConuntKey err:%+v", err)
 					} else {
@@ -297,7 +298,7 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 }
 
 // CashoutStatus gets the status of the latest cashout transaction for the vault
-func (s *cashoutService) CashoutStatus(ctx context.Context, vaultAddress common.Address, token string) (*CashoutStatus, error) {
+func (s *cashoutService) CashoutStatus(ctx context.Context, vaultAddress common.Address, token common.Address) (*CashoutStatus, error) {
 	cheque, err := s.chequeStore.LastReceivedCheque(vaultAddress, token)
 	if err != nil {
 		return nil, err
@@ -408,8 +409,8 @@ func (s *cashoutService) parseCashChequeBeneficiaryReceipt(vaultAddress common.A
 }
 
 // parseCashChequeBeneficiaryReceiptMuti processes the receipt from a CashChequeBeneficiary transaction
-func (s *cashoutService) parseCashChequeBeneficiaryReceiptMuti(vaultAddress common.Address, receipt *types.Receipt, token string) (*CashChequeResult, error) {
-	if IsWbtt(token) {
+func (s *cashoutService) parseCashChequeBeneficiaryReceiptMuti(vaultAddress common.Address, receipt *types.Receipt, token common.Address) (*CashChequeResult, error) {
+	if tokencfg.IsWBTT(token) {
 		return s.parseCashChequeBeneficiaryReceipt(vaultAddress, receipt)
 	}
 
@@ -467,7 +468,7 @@ func (r *CashChequeResult) Equal(o *CashChequeResult) bool {
 	return true
 }
 
-func (s *cashoutService) HasCashoutAction(ctx context.Context, peer common.Address, token string) (bool, error) {
+func (s *cashoutService) HasCashoutAction(ctx context.Context, peer common.Address, token common.Address) (bool, error) {
 	var action cashoutAction
 	err := s.store.Get(cashoutActionKey(peer, token), &action)
 

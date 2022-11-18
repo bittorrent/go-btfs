@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"regexp"
 	"strings"
 	"time"
@@ -84,7 +85,7 @@ type RenterSession struct {
 	CtxParams   *uh.ContextParams
 	Ctx         context.Context
 	Cancel      context.CancelFunc
-	Token       string
+	Token       common.Address
 }
 
 func GetRenterSession(ctxParams *uh.ContextParams, ssId string, hash string, shardHashes []string) (*RenterSession,
@@ -126,7 +127,7 @@ func GetRenterSession(ctxParams *uh.ContextParams, ssId string, hash string, sha
 	return rs, nil
 }
 
-func GetRenterSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash string, shardHashes []string, token string) (*RenterSession,
+func GetRenterSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash string, shardHashes []string, token common.Address) (*RenterSession,
 	error) {
 	k := fmt.Sprintf(RenterSessionInMemKey, ctxParams.N.Identity.Pretty(), ssId)
 	var rs *RenterSession

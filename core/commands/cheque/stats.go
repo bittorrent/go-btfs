@@ -2,7 +2,9 @@ package cheque
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 	"math/big"
 
@@ -39,8 +41,12 @@ var ChequeStatsCmd = &cmds.Command{
 			TotalReceivedDailyUncashed: big.NewInt(0),
 		}
 
-		token := req.Arguments[0]
-		fmt.Printf("... token:%+v\n", token)
+		tokenStr := req.Arguments[0]
+		fmt.Printf("... token:%+v\n", tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
 
 		issued, err := chain.SettleObject.VaultService.TotalIssued(token)
 		if err != nil {

@@ -2,6 +2,7 @@ package upload
 
 import (
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 	"time"
 
@@ -41,7 +42,7 @@ func payInCheque(rss *sessions.RenterSession) error {
 	return nil
 }
 
-func getRealAmount(amount int64, token string) (*big.Int, error) {
+func getRealAmount(amount int64, token common.Address) (*big.Int, error) {
 	// token: get rate of token
 	//rateObj, err := chain.SettleObject.OracleService.CurrentRate(token)
 

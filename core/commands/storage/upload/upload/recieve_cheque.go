@@ -2,7 +2,9 @@ package upload
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 	"time"
 
@@ -45,9 +47,13 @@ var StorageUploadChequeCmd = &cmds.Command{
 
 		encodedCheque := req.Arguments[0]
 		contractId := req.Arguments[2]
-		token := req.Arguments[3]
+		tokenStr := req.Arguments[3]
 		fmt.Printf("receive cheque, requestPid:%s contractId:%+v,encodedCheque:%+v token:%+v\n",
-			requestPid.String(), contractId, encodedCheque, token)
+			requestPid.String(), contractId, encodedCheque, tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
 
 		// decode and deal the cheque
 		err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price, token)

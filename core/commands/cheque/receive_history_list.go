@@ -2,7 +2,9 @@ package cheque
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 	"sort"
 	"strconv"
@@ -43,8 +45,12 @@ var ChequeReceiveHistoryListCmd = &cmds.Command{
 			return fmt.Errorf("invalid limit: %d", limit)
 		}
 
-		token := req.Arguments[2]
-		fmt.Printf("... token:%+v\n", token)
+		tokenStr := req.Arguments[2]
+		fmt.Printf("... token:%+v\n", tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
 
 		var listRet chequeReceivedHistoryListRet
 		records, err := chain.SettleObject.SwapService.ReceivedChequeRecordsAll(token)

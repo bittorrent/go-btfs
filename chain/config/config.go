@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 
 	cfg "github.com/TRON-US/go-btfs-config"
 	"github.com/ethereum/go-ethereum/common"
@@ -81,6 +82,8 @@ type ChainConfig struct {
 }
 
 func GetChainConfig(chainID int64) (*ChainConfig, bool) {
+	tokencfg.InitToken(chainID, bttcTestChainID, bttcChainID)
+
 	var cfg ChainConfig
 	switch chainID {
 	case ethChainID:

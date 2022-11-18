@@ -3,6 +3,7 @@ package vault
 import (
 	"bytes"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 
 	"github.com/bittorrent/go-btfs/transaction/crypto"
@@ -121,7 +122,7 @@ func NewChequeSigner(signer crypto.Signer, chainID int64) ChequeSigner {
 
 // eip712DataForCheque converts a cheque into the correct TypedData structure.
 func eip712DataForCheque(cheque *Cheque, chainID int64) *eip712.TypedData {
-	if IsWbtt(cheque.Token) {
+	if tokencfg.IsWBTT(cheque.Token) {
 		return &eip712.TypedData{
 			Domain: vaultDomain(chainID),
 			Types:  ChequeTypes,

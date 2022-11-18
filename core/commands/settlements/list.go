@@ -2,7 +2,9 @@ package settlement
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 	"time"
 
@@ -33,8 +35,13 @@ var ListSettlementCmd = &cmds.Command{
 		cmds.StringArg("token", true, false, "token"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		token := req.Arguments[0]
-		fmt.Printf("... token:%+v\n", token)
+		tokenStr := req.Arguments[0]
+		fmt.Printf("... token:%+v\n", tokenStr)
+
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
 
 		settlementsSent, err := chain.SettleObject.SwapService.SettlementsSent(token)
 		if err != nil {

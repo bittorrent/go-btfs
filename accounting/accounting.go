@@ -9,6 +9,7 @@ package accounting
 import (
 	"context"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 	"sync"
 	"time"
@@ -20,7 +21,7 @@ import (
 var log = logging.Logger("accounting")
 
 // PayFunc is the function used for async monetary settlement
-type PayFunc func(context.Context, string, *big.Int, string, string)
+type PayFunc func(context.Context, string, *big.Int, string, common.Address)
 
 // accountingPeer holds all in-memory accounting information for one peer.
 type accountingPeer struct {
@@ -70,7 +71,7 @@ func (a *Accounting) Close() error {
 }
 
 // Settle to a peer. The lock on the accountingPeer must be held when called.
-func (a *Accounting) Settle(toPeer string, paymentAmount *big.Int, contractId, token string) error {
+func (a *Accounting) Settle(toPeer string, paymentAmount *big.Int, contractId string, token common.Address) error {
 	if paymentAmount.Cmp(a.minimumPayment) >= 0 {
 		a.wg.Add(1)
 		go a.payFunction(context.Background(), toPeer, paymentAmount, contractId, token)
@@ -97,7 +98,7 @@ func (a *Accounting) getAccountingPeer(peer string) *accountingPeer {
 }
 
 // NotifyPaymentSent is triggered by async monetary settlement to update our balance and remove it's price from the shadow reserve
-func (a *Accounting) NotifyPaymentSent(peer string, amount *big.Int, receivedError error, token string) {
+func (a *Accounting) NotifyPaymentSent(peer string, amount *big.Int, receivedError error, token common.Address) {
 	defer a.wg.Done()
 	accountingPeer := a.getAccountingPeer(peer)
 
@@ -114,7 +115,7 @@ func (a *Accounting) NotifyPaymentSent(peer string, amount *big.Int, receivedErr
 }
 
 // NotifyPayment is called by Settlement when we receive a payment.
-func (a *Accounting) NotifyPaymentReceived(peer string, amount *big.Int, token string) error {
+func (a *Accounting) NotifyPaymentReceived(peer string, amount *big.Int, token common.Address) error {
 	accountingPeer := a.getAccountingPeer(peer)
 
 	accountingPeer.lock.Lock()

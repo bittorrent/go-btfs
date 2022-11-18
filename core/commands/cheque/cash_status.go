@@ -1,7 +1,9 @@
 package cheque
 
 import (
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 	"time"
 
@@ -35,8 +37,13 @@ var ChequeCashStatusCmd = &cmds.Command{
 
 		// get the peer id
 		peerID := req.Arguments[0]
-		token := req.Arguments[1]
-		fmt.Printf("... peerID:%+v, token:%+v\n", peerID, token)
+		tokenStr := req.Arguments[1]
+		fmt.Printf("... peerID:%+v, token:%+v\n", peerID, tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
+
 		cashStatus, err := chain.SettleObject.SwapService.CashoutStatus(req.Context, peerID, token)
 		if err != nil {
 			return err

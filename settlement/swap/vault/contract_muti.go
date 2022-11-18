@@ -3,6 +3,7 @@ package vault
 import (
 	"context"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 
 	"github.com/bittorrent/go-btfs/transaction"
@@ -48,8 +49,8 @@ func (c *vaultContractMuti) Issuer(ctx context.Context) (common.Address, error) 
 }
 
 // TotalBalance returns the token balance of the vault.(new)
-func (c *vaultContractMuti) TotalBalance(ctx context.Context, token string) (*big.Int, error) {
-	if IsWbtt(token) {
+func (c *vaultContractMuti) TotalBalance(ctx context.Context, token common.Address) (*big.Int, error) {
+	if tokencfg.IsWBTT(token) {
 		return c.contractWBTT.TotalBalance(ctx)
 	}
 
@@ -98,8 +99,8 @@ func (c *vaultContractMuti) LiquidBalance(ctx context.Context) (*big.Int, error)
 }
 
 // PaidOut (new)
-func (c *vaultContractMuti) PaidOut(ctx context.Context, address common.Address, token string) (*big.Int, error) {
-	if IsWbtt(token) {
+func (c *vaultContractMuti) PaidOut(ctx context.Context, address common.Address, token common.Address) (*big.Int, error) {
+	if tokencfg.IsWBTT(token) {
 		return c.contractWBTT.TotalBalance(ctx)
 	}
 
@@ -125,8 +126,8 @@ func (c *vaultContractMuti) PaidOut(ctx context.Context, address common.Address,
 }
 
 // TotalPaidOut (new)
-func (c *vaultContractMuti) TotalPaidOut(ctx context.Context, token string) (*big.Int, error) {
-	if IsWbtt(token) {
+func (c *vaultContractMuti) TotalPaidOut(ctx context.Context, token common.Address) (*big.Int, error) {
+	if tokencfg.IsWBTT(token) {
 		return c.contractWBTT.TotalBalance(ctx)
 	}
 
@@ -170,8 +171,8 @@ func (c *vaultContractMuti) SetReceiver(ctx context.Context, newReceiver common.
 }
 
 // Deposit (new)
-func (c *vaultContractMuti) Deposit(ctx context.Context, amount *big.Int, token string) (common.Hash, error) {
-	if IsWbtt(token) {
+func (c *vaultContractMuti) Deposit(ctx context.Context, amount *big.Int, token common.Address) (common.Hash, error) {
+	if tokencfg.IsWBTT(token) {
 		return c.contractWBTT.Deposit(ctx, amount)
 	}
 
@@ -192,8 +193,8 @@ func (c *vaultContractMuti) Deposit(ctx context.Context, amount *big.Int, token 
 }
 
 // Withdraw (new)
-func (c *vaultContractMuti) Withdraw(ctx context.Context, amount *big.Int, token string) (common.Hash, error) {
-	if IsWbtt(token) {
+func (c *vaultContractMuti) Withdraw(ctx context.Context, amount *big.Int, token common.Address) (common.Hash, error) {
+	if tokencfg.IsWBTT(token) {
 		return c.contractWBTT.Withdraw(ctx, amount)
 	}
 
@@ -241,8 +242,8 @@ func (c *vaultContractMuti) UpgradeTo(ctx context.Context, newImpl common.Addres
 }
 
 // _CashChequeMuti (new)
-func _CashChequeMuti(ctx context.Context, vault, recipient common.Address, cheque *SignedCheque, tS transaction.Service, token string) (common.Hash, error) {
-	if IsWbtt(token) {
+func _CashChequeMuti(ctx context.Context, vault, recipient common.Address, cheque *SignedCheque, tS transaction.Service, token common.Address) (common.Hash, error) {
+	if tokencfg.IsWBTT(token) {
 		return _CashCheque(ctx, vault, recipient, cheque, tS)
 	}
 
@@ -266,8 +267,8 @@ func _CashChequeMuti(ctx context.Context, vault, recipient common.Address, chequ
 }
 
 // _PaidOutMuti (new)
-func _PaidOutMuti(ctx context.Context, vault, beneficiary common.Address, tS transaction.Service, token string) (*big.Int, error) {
-	if IsWbtt(token) {
+func _PaidOutMuti(ctx context.Context, vault, beneficiary common.Address, tS transaction.Service, token common.Address) (*big.Int, error) {
+	if tokencfg.IsWBTT(token) {
 		return _PaidOut(ctx, vault, beneficiary, tS)
 	}
 
