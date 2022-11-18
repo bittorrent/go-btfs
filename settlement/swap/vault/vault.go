@@ -281,9 +281,6 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	var tokenAddr common.Address
-	// tokenAddr = getTokenAddr(token)
-
 	availableBalance, err := s.reserveTotalIssued(ctx, amount, token)
 	if err != nil {
 		return nil, err
@@ -306,14 +303,14 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 
 	// create and sign the new cheque
 	cheque := Cheque{
-		Token:            tokenAddr,
+		Token:            token,
 		Vault:            s.address,
 		CumulativePayout: cumulativePayout,
 		Beneficiary:      beneficiary,
 	}
 
 	sig, err := s.chequeSigner.Sign(&Cheque{
-		Token:            tokenAddr,
+		Token:            token,
 		Vault:            s.address,
 		CumulativePayout: cumulativePayout,
 		Beneficiary:      beneficiary,

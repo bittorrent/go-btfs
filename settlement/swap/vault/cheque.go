@@ -123,6 +123,7 @@ func NewChequeSigner(signer crypto.Signer, chainID int64) ChequeSigner {
 // eip712DataForCheque converts a cheque into the correct TypedData structure.
 func eip712DataForCheque(cheque *Cheque, chainID int64) *eip712.TypedData {
 	if tokencfg.IsWBTT(cheque.Token) {
+		fmt.Println("muti token: wbtt sign.", cheque.Token.String())
 		return &eip712.TypedData{
 			Domain: vaultDomain(chainID),
 			Types:  ChequeTypes,
@@ -135,6 +136,7 @@ func eip712DataForCheque(cheque *Cheque, chainID int64) *eip712.TypedData {
 		}
 	}
 
+	fmt.Println("muti token: other token sign.", cheque.Token.String())
 	return &eip712.TypedData{
 		Domain: vaultDomain(chainID),
 		Types:  MutiChequeTypes,

@@ -90,8 +90,8 @@ func (c *vaultContract) LiquidBalance(ctx context.Context) (*big.Int, error) {
 	return abi.ConvertType(results[0], new(big.Int)).(*big.Int), nil
 }
 
-func (c *vaultContract) PaidOut(ctx context.Context, address common.Address) (*big.Int, error) {
-	callData, err := vaultABI.Pack("paidOut", address)
+func (c *vaultContract) PaidOut(ctx context.Context, beneficiary common.Address) (*big.Int, error) {
+	callData, err := vaultABI.Pack("paidOut", beneficiary)
 	if err != nil {
 		return nil, err
 	}

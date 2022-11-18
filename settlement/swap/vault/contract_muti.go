@@ -99,12 +99,12 @@ func (c *vaultContractMuti) LiquidBalance(ctx context.Context) (*big.Int, error)
 }
 
 // PaidOut (new)
-func (c *vaultContractMuti) PaidOut(ctx context.Context, address common.Address, token common.Address) (*big.Int, error) {
+func (c *vaultContractMuti) PaidOut(ctx context.Context, beneficiary common.Address, token common.Address) (*big.Int, error) {
 	if tokencfg.IsWBTT(token) {
-		return c.contractWBTT.TotalBalance(ctx)
+		return c.contractWBTT.PaidOut(ctx, beneficiary)
 	}
 
-	callData, err := vaultABINew.Pack("multiTokensPaidOut", token, address)
+	callData, err := vaultABINew.Pack("multiTokensPaidOut", token, beneficiary)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (c *vaultContractMuti) PaidOut(ctx context.Context, address common.Address,
 // TotalPaidOut (new)
 func (c *vaultContractMuti) TotalPaidOut(ctx context.Context, token common.Address) (*big.Int, error) {
 	if tokencfg.IsWBTT(token) {
-		return c.contractWBTT.TotalBalance(ctx)
+		return c.contractWBTT.TotalPaidOut(ctx)
 	}
 
 	callData, err := vaultABINew.Pack("multiTokensTotalPaidOut", token)

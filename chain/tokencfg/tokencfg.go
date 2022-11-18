@@ -27,7 +27,7 @@ func InitToken(chainID, bttcTestChainID, bttcChainID int64) {
 		MpTokenAddr["WBTT"] = common.HexToAddress(bttcTestTokenWBTTHex)
 		MpTokenAddr["TRX"] = common.HexToAddress(bttcTestTokenTRXHex)
 
-		MpTokenStr[common.HexToAddress(bttcTestTokenTRXHex)] = "WBTT"
+		MpTokenStr[common.HexToAddress(bttcTestTokenWBTTHex)] = "WBTT"
 		MpTokenStr[common.HexToAddress(bttcTestTokenTRXHex)] = "TRX"
 
 	case bttcChainID:

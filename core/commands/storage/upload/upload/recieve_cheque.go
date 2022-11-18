@@ -27,6 +27,8 @@ var StorageUploadChequeCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		fmt.Printf("receive cheque ...\n")
+
 		ctxParams, err := uh.ExtractContextParams(req, env)
 		if err != nil {
 			return err

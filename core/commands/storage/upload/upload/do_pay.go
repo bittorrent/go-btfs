@@ -30,7 +30,7 @@ func payInCheque(rss *sessions.RenterSession) error {
 
 		host := c.SignedGuardContract.HostPid
 		contractId := c.SignedGuardContract.ContractId
-		fmt.Printf("send cheque: paying...  host:%v, amount:%v, contractId:%v. \n", host, realAmount.String(), contractId)
+		fmt.Printf("send cheque: paying...  host:%v, amount:%v, contractId:%v, token:%v. \n", host, realAmount.String(), contractId, rss.Token.String())
 
 		err = chain.SettleObject.SwapService.Settle(host, realAmount, contractId, rss.Token)
 		if err != nil {

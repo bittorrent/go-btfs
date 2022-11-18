@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 	"sync"
 	"time"
@@ -129,7 +130,7 @@ func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, 
 
 	// call P2PCall to get beneficiary address
 	handshakeInfo := &pb.Handshake{}
-	log.Infof("get handshakeInfo from peer %v (%v)", peerhostPid)
+	log.Infof("get handshakeInfo from peer %v (%v)", peerhostPid, token.String())
 	var wg sync.WaitGroup
 	times := 0
 	wg.Add(1)
@@ -188,7 +189,7 @@ func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, 
 		return nil, ErrGetBeneficiary
 	}
 
-	fmt.Println("send cheque: /p2p/handshake ok, ", common.BytesToAddress(handshakeInfo.Beneficiary))
+	fmt.Println("send cheque: /p2p/handshake ok, ", common.BytesToAddress(handshakeInfo.Beneficiary), token.String())
 
 	// issue cheque call with provided callback for sending cheque to finish transaction
 	balance, err = issue(ctx, common.BytesToAddress(handshakeInfo.Beneficiary), sentAmount, token, func(cheque *vault.SignedCheque) error {
@@ -222,12 +223,14 @@ func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, 
 						return err
 					}
 
-					//fmt.Println("begin send cheque: /storage/upload/cheque, hostPid, contractId = ", hostPid, contractId)
+					fmt.Println("begin send cheque: /storage/upload/cheque, hostPid, contractId, token = ", hostPid, contractId, token.String(), token.Hex(), tokencfg.MpTokenStr[token])
+
 					//send cheque
 					_, err = remote.P2PCall(ctx, node, coreApi, hostPid, "/storage/upload/cheque",
 						encodedCheque,
 						price,
 						contractId,
+						tokencfg.MpTokenStr[token],
 					)
 					if err != nil {
 						fmt.Printf("end send cheque: /storage/upload/cheque, hostPid:%+v, encodedCheque:%+v,price:%+v,contractId:%+v, err:%+v \n",
