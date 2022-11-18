@@ -43,11 +43,8 @@ func payInCheque(rss *sessions.RenterSession) error {
 }
 
 func getRealAmount(amount int64, token common.Address) (*big.Int, error) {
-	// token: get rate of token
-	//rateObj, err := chain.SettleObject.OracleService.CurrentRate(token)
-
-	//this is old price's rate [Compatible with older versions]
-	rateObj, err := chain.SettleObject.OracleService.CurrentRate()
+	//this is price's rate [Compatible with older versions]
+	rateObj, err := chain.SettleObject.OracleService.CurrentRate(token)
 	if err != nil {
 		return nil, err
 	}

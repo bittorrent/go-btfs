@@ -7,6 +7,7 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -442,6 +443,8 @@ If the user need to start multiple nodes on the same machine, the configuration 
 			return
 		}
 	}
+
+	tokencfg.InitToken(chainid)
 
 	//endpoint
 	chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000),

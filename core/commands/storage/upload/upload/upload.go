@@ -170,14 +170,14 @@ Use status command to check for completion:
 			return err
 		}
 		// CheckNewPrice, get latest price when upload.
-		_, err = chain.SettleObject.OracleService.CheckNewPrice()
+		_, err = chain.SettleObject.OracleService.CheckNewPrice(token)
 		if err != nil {
 			return err
 		}
 
 		// token: get new price
 		//priceObj, err := chain.SettleObject.OracleService.CurrentPrice(token)
-		priceObj, err := chain.SettleObject.OracleService.CurrentPrice()
+		priceObj, err := chain.SettleObject.OracleService.CurrentPrice(token)
 		if err != nil {
 			return err
 		}

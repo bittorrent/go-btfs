@@ -85,7 +85,7 @@ var StorePriceCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		totalPrice, err := chain.SettleObject.OracleService.CheckNewPrice()
+		totalPrice, err := chain.SettleObject.OracleService.CheckNewPrice(tokencfg.GetWbttToken())
 		if err != nil {
 			return err
 		}

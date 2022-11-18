@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 	"math/big"
 	"strings"
@@ -195,7 +196,7 @@ func InitSettlement(
 	)
 
 	if err != nil {
-		return nil, errors.New("init swap service error")
+		return nil, errors.New("init swap service error , " + err.Error())
 	}
 
 	accounting.SetPayFunc(swapService.Pay)
@@ -336,7 +337,7 @@ func initSwap(
 	}
 
 	priceOracle := priceoracle.New(currentPriceOracleAddress, transactionService)
-	_, err := priceOracle.CheckNewPrice() // CheckNewPrice when node starts
+	_, err := priceOracle.CheckNewPrice(tokencfg.GetWbttToken()) // CheckNewPrice when node starts
 	if err != nil {
 		return nil, nil, err
 	}
