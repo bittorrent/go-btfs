@@ -237,6 +237,7 @@ func GetVaultImpl(ctx context.Context, vault common.Address, trxSvc transaction.
 }
 
 func _CashCheque(ctx context.Context, vault, recipient common.Address, cheque *SignedCheque, tS transaction.Service) (common.Hash, error) {
+	fmt.Println("_CashCheque ", vault, recipient, cheque.CumulativePayout, cheque.Signature)
 
 	callData, err := vaultABI.Pack("cashChequeBeneficiary", recipient, cheque.CumulativePayout, cheque.Signature)
 	if err != nil {

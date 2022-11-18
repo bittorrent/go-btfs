@@ -1,6 +1,6 @@
 package abi
 
-const MutiVaultABI = `[
+const MutiVaultABI2 = `[
 	{
 		"anonymous": false,
 		"inputs": [

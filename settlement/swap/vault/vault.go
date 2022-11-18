@@ -33,7 +33,7 @@ var (
 	ErrInsufficientFunds = errors.New("insufficient token balance")
 
 	vaultABI                   = transaction.ParseABIUnchecked(conabi.VaultABI)
-	vaultABINew                = transaction.ParseABIUnchecked(conabi.MutiVaultABI)
+	vaultABINew                = transaction.ParseABIUnchecked(conabi.MutiVaultABI2)
 	chequeCashedEventType      = vaultABI.Events["ChequeCashed"]
 	mutiChequeCashedEventType  = vaultABINew.Events["MultiTokenChequeCashed"]
 	chequeBouncedEventType     = vaultABI.Events["ChequeBounced"]

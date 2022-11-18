@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/status-im/keycard-go/hexutils"
 	"math/big"
 	"time"
 
@@ -179,6 +180,8 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 	if err != nil {
 		return common.Hash{}, err
 	}
+
+	fmt.Println("_CashCheque ", vault, recipient, cheque.CumulativePayout, hexutils.BytesToHex(cheque.Signature))
 
 	//callData, err := vaultABI.Pack("cashChequeBeneficiary", recipient, cheque.CumulativePayout, cheque.Signature)
 	//if err != nil {
