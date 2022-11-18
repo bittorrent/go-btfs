@@ -16,6 +16,11 @@ const (
 var MpTokenAddr map[string]common.Address
 var MpTokenStr map[common.Address]string
 
+func init() {
+	MpTokenAddr = make(map[string]common.Address)
+	MpTokenStr = make(map[common.Address]string)
+}
+
 func InitToken(chainID, bttcTestChainID, bttcChainID int64) {
 	switch chainID {
 	case bttcTestChainID:
