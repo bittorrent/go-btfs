@@ -19,13 +19,15 @@ var PeerSettlementCmd = &cmds.Command{
 	RunTimeout: 5 * time.Minute,
 	Arguments: []cmds.Argument{
 		cmds.StringArg("peer-id", true, false, "Peer id."),
-		cmds.StringArg("token", true, false, "token"),
+	},
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		peerID := req.Arguments[0]
 		peerexists := false
 
-		tokenStr := req.Arguments[1]
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
 		fmt.Printf("... token:%+v\n", tokenStr)
 		token, bl := tokencfg.MpTokenAddr[tokenStr]
 		if !bl {

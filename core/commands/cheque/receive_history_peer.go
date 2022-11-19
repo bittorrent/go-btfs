@@ -17,16 +17,17 @@ var ChequeReceiveHistoryPeerCmd = &cmds.Command{
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("peer-id", true, false, "The peer id of cheques received."),
-		cmds.StringArg("token", true, false, "token"),
 	},
-
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 
 		var listRet ChequeRecords
 		peer_id := req.Arguments[0]
 		fmt.Println("ChequeReceiveHistoryPeerCmd peer_id = ", peer_id)
 
-		tokenStr := req.Arguments[2]
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
 		fmt.Printf("... token:%+v\n", tokenStr)
 		token, bl := tokencfg.MpTokenAddr[tokenStr]
 		if !bl {

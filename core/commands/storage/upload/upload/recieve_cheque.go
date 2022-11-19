@@ -23,9 +23,11 @@ var StorageUploadChequeCmd = &cmds.Command{
 		cmds.StringArg("encoded-cheque", true, false, "encoded-cheque from peer-id."),
 		cmds.StringArg("amount", true, false, "amount"),
 		cmds.StringArg("contract-id", false, false, "contract-id."),
-		cmds.StringArg("token", true, false, "token"),
 	},
 	RunTimeout: 5 * time.Minute,
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		fmt.Printf("receive cheque ...\n")
 
@@ -49,7 +51,7 @@ var StorageUploadChequeCmd = &cmds.Command{
 
 		encodedCheque := req.Arguments[0]
 		contractId := req.Arguments[2]
-		tokenStr := req.Arguments[3]
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
 		fmt.Printf("receive cheque, requestPid:%s contractId:%+v,encodedCheque:%+v token:%+v\n",
 			requestPid.String(), contractId, encodedCheque, tokenStr)
 		token, bl := tokencfg.MpTokenAddr[tokenStr]

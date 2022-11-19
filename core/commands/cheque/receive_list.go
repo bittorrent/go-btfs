@@ -21,9 +21,10 @@ var ListReceiveChequeCmd = &cmds.Command{
 	Arguments: []cmds.Argument{
 		cmds.StringArg("offset", true, false, "page offset"),
 		cmds.StringArg("limit", true, false, "page limit."),
-		cmds.StringArg("token", true, false, "token"),
 	},
-
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		offset, err := strconv.Atoi(req.Arguments[0])
 		if err != nil {
@@ -33,7 +34,7 @@ var ListReceiveChequeCmd = &cmds.Command{
 		if err != nil {
 			return fmt.Errorf("parse limit:%v failed", req.Arguments[1])
 		}
-		tokenStr := req.Arguments[2]
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
 		fmt.Printf("... token:%+v\n", tokenStr)
 		token, bl := tokencfg.MpTokenAddr[tokenStr]
 		if !bl {

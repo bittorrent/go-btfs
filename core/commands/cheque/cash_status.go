@@ -30,14 +30,16 @@ var ChequeCashStatusCmd = &cmds.Command{
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("peer-id", true, false, "Peer id tobe cashed."),
-		cmds.StringArg("token", true, false, "token"),
+	},
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 
 		// get the peer id
 		peerID := req.Arguments[0]
-		tokenStr := req.Arguments[1]
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
 		fmt.Printf("... peerID:%+v, token:%+v\n", peerID, tokenStr)
 		token, bl := tokencfg.MpTokenAddr[tokenStr]
 		if !bl {

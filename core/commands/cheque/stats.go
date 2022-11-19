@@ -29,8 +29,8 @@ var ChequeStatsCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "List cheque(s) received from peers.",
 	},
-	Arguments: []cmds.Argument{
-		cmds.StringArg("token", true, false, "token"),
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		cs := chequeStats{

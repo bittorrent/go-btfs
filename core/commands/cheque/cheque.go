@@ -83,9 +83,20 @@ var StorePriceCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Get btfs store price.",
 	},
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		totalPrice, err := chain.SettleObject.OracleService.CheckNewPrice(tokencfg.GetWbttToken())
+		// token: parse token option
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
+		fmt.Println("... use token = ", tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
+
+		totalPrice, err := chain.SettleObject.OracleService.CheckNewPrice(token)
 		if err != nil {
 			return err
 		}
@@ -109,14 +120,16 @@ var CashChequeCmd = &cmds.Command{
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("peer-id", true, false, "Peer id tobe cashed."),
-		cmds.StringArg("token", true, false, "token"),
+	},
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 
 		// get the peer id
 		peerID := req.Arguments[0]
-		tokenStr := req.Arguments[1]
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
 		fmt.Printf("... token:%+v\n", tokenStr)
 		token, bl := tokencfg.MpTokenAddr[tokenStr]
 		if !bl {

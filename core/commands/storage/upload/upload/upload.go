@@ -35,7 +35,6 @@ const (
 	customizedPayoutOptionName       = "customize-payout"
 	customizedPayoutPeriodOptionName = "customize-payout-period"
 	copyName                         = "copy"
-	TokenTypeName                    = "token-type"
 
 	defaultRepFactor     = 3
 	defaultStorageLength = 30
@@ -106,7 +105,7 @@ Use status command to check for completion:
 		cmds.BoolOption(customizedPayoutOptionName, "Enable file storage customized payout schedule.").WithDefault(false),
 		cmds.IntOption(customizedPayoutPeriodOptionName, "Period of customized payout schedule.").WithDefault(1),
 		cmds.IntOption(copyName, "copy num of file hash.").WithDefault(0),
-		cmds.StringOption(TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 	},
 	RunTimeout: 15 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -145,7 +144,7 @@ Use status command to check for completion:
 		var shardSize int64
 
 		// token: parse token argument
-		tokenStr := req.Options[TokenTypeName].(string)
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
 		fmt.Println("... use token = ", tokenStr)
 		token, bl := tokencfg.MpTokenAddr[tokenStr]
 		if !bl {

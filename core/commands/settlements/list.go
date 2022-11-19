@@ -31,11 +31,11 @@ var ListSettlementCmd = &cmds.Command{
 		Tagline: "list all settlements.",
 	},
 	RunTimeout: 5 * time.Minute,
-	Arguments: []cmds.Argument{
-		cmds.StringArg("token", true, false, "token"),
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		tokenStr := req.Arguments[0]
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
 		fmt.Printf("... token:%+v\n", tokenStr)
 
 		token, bl := tokencfg.MpTokenAddr[tokenStr]

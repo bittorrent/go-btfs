@@ -6,6 +6,8 @@ import (
 )
 
 const (
+	TokenTypeName = "token-type"
+
 	bttcTestTokenWBTTHex = "0x107742eb846b86ceaaf7528d5c85cddcad3e409a"
 	bttcTestTokenTRXHex  = "0x8e009872b8a6d469939139be5e3bbd99a731212f"
 
