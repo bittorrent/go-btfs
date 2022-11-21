@@ -3,6 +3,8 @@ package upload
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/ethereum/go-ethereum/common"
 	"time"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -25,7 +27,12 @@ var StorageUploadCheckTokensCmd = &cmds.Command{
 			return fmt.Errorf("storage host api not enabled")
 		}
 
-		tokens := []string{"WBTT", "TRX"}
+		tokens := make([]common.Address, 0)
+		for _, v := range tokencfg.MpTokenAddr {
+			tokens = append(tokens, v)
+		}
+
+		fmt.Println("receive check tokens, ", tokens)
 		output, err := json.Marshal(tokens)
 		if err != nil {
 			return err
