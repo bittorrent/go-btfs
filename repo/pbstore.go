@@ -9,7 +9,7 @@ import (
 )
 
 func Get(d datastore.Datastore, k string, m proto.Message) (proto.Message, error) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	v, err := d.Get(ctx, datastore.NewKey(k))
 	if err != nil {
 		return nil, err
@@ -26,6 +26,6 @@ func Put(d datastore.Datastore, k string, v proto.Message) error {
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	ctx := context.TODO()
 	return d.Put(ctx, datastore.NewKey(k), bytes)
 }

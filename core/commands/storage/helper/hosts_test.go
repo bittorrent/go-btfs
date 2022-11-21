@@ -62,12 +62,12 @@ func TestHostStorageConfigPutGet(t *testing.T) {
 		BandwidthLimit:    999,
 		CollateralStake:   1000,
 	}
-	ctx := context.Background()
+	ctx := context.TODO()
 	err := PutHostStorageConfig(ctx, node, ns)
 	if err != nil {
 		t.Fatal(err)
 	}
-	stored, err := GetHostStorageConfig(context.Background(), node)
+	stored, err := GetHostStorageConfig(ctx, node)
 	if err != nil {
 		t.Fatal(err)
 	}

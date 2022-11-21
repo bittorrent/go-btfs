@@ -249,7 +249,7 @@ func listByArgs(res cmds.ResponseEmitter, fs *filestore.Filestore, args []string
 			}
 			continue
 		}
-		ctx := context.Background()
+		ctx := context.TODO()
 		r := filestore.Verify(ctx, fs, c)
 		if err := res.Emit(r); err != nil {
 			return err

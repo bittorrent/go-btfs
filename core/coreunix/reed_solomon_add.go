@@ -46,7 +46,7 @@ func NewReedSolomonAdder(adder *Adder) (*ReedSolomonAdder, error) {
 
 // AddAllAndPin adds the given request's files and pin them.
 func (rsadder *ReedSolomonAdder) AddAllAndPin(file files.Node) (ipld.Node, error) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	if rsadder.Pin {
 		rsadder.unlocker = rsadder.gcLocker.PinLock(ctx)
 	}

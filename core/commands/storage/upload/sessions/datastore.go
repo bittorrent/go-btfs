@@ -11,7 +11,7 @@ import (
 )
 
 func Batch(d ds.Datastore, keys []string, vals []proto.Message) error {
-	ctx := context.Background()
+	ctx := context.TODO()
 	batch := ds.NewBasicBatch(d)
 	for i, k := range keys {
 		if vals[i] == nil {
@@ -28,7 +28,7 @@ func Batch(d ds.Datastore, keys []string, vals []proto.Message) error {
 }
 
 func Save(d ds.Datastore, key string, val proto.Message) error {
-	ctx := context.Background()
+	ctx := context.TODO()
 	bytes, err := proto.Marshal(val)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func Save(d ds.Datastore, key string, val proto.Message) error {
 }
 
 func Get(d ds.Datastore, key string, m proto.Message) error {
-	ctx := context.Background()
+	ctx := context.TODO()
 	bytes, err := d.Get(ctx, ds.NewKey(key))
 	if err != nil {
 		return err
@@ -46,13 +46,13 @@ func Get(d ds.Datastore, key string, m proto.Message) error {
 }
 
 func Remove(d ds.Datastore, key string) error {
-	ctx := context.Background()
+	ctx := context.TODO()
 	return d.Delete(ctx, ds.NewKey(key))
 }
 
 func List(d ds.Datastore, prefix string, substrInKey ...string) ([][]byte, error) {
 	vs := make([][]byte, 0)
-	ctx := context.Background()
+	ctx := context.TODO()
 	results, err := d.Query(ctx, query.Query{
 		Prefix:  prefix,
 		Filters: []query.Filter{},
@@ -75,7 +75,7 @@ func List(d ds.Datastore, prefix string, substrInKey ...string) ([][]byte, error
 
 func ListKeys(d ds.Datastore, prefix string, substrInKey ...string) ([]string, error) {
 	ks := make([]string, 0)
-	ctx := context.Background()
+	ctx := context.TODO()
 	results, err := d.Query(ctx, query.Query{
 		Prefix:   prefix,
 		Filters:  []query.Filter{},
