@@ -80,6 +80,7 @@ Use status command to check for completion:
 	},
 	Subcommands: map[string]*cmds.Command{
 		"init":              StorageUploadInitCmd,
+		"supporttokens":     StorageUploadSupportTokensCmd,
 		"cheque":            StorageUploadChequeCmd,
 		"recvcontract":      StorageUploadRecvContractCmd,
 		"status":            StorageUploadStatusCmd,

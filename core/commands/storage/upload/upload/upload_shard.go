@@ -2,8 +2,11 @@ package upload
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/ethereum/go-ethereum/common"
+	"reflect"
 	"time"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -57,31 +60,40 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 					return err
 				}
 
-				// token: check host tokens
-				//{
-				//	ctx, _ := context.WithTimeout(rss.Ctx, 30*time.Second)
-				//	output, err := remote.P2PCall(ctx, rss.CtxParams.N, rss.CtxParams.Api, hostPid, "/storage/upload/check_tokens")
-				//	if err != nil {
-				//		return nil
-				//	}
-				//	var recvTokens []string
-				//	err = json.Unmarshal(output, &recvTokens)
-				//	if err != nil {
-				//		return err
-				//	}
-				//
-				//	ok := false
-				//	for _, k := range recvTokens {
-				//		if token == k {
-				//			ok = true
-				//		}
-				//	}
-				//	if !ok {
-				//		cannot++
-				//		return nil
-				//	}
-				//}
+				//token: check host tokens
+				{
+					ctx, _ := context.WithTimeout(rss.Ctx, 60*time.Second)
+					output, err := remote.P2PCall(ctx, rss.CtxParams.N, rss.CtxParams.Api, hostPid, "/storage/upload/supporttokens")
+					if err != nil {
+						return nil
+					}
+
+					fmt.Println("1 get from supporttokens,", string(output), reflect.TypeOf(output))
+					//return nil
+
+					var mpToken map[string]common.Address
+					err = json.Unmarshal(output, &mpToken)
+					fmt.Println("1.2 get from supporttokens, err = ", err)
+					if err != nil {
+						return err
+					}
+
+					fmt.Println("2 get from supporttokens, mpToken = ", mpToken)
+
+					ok := false
+					for _, v := range mpToken {
+						if token == v {
+							ok = true
+						}
+					}
+					if !ok {
+						cannot++
+						return nil
+					}
+				}
 				pass++
+
+				fmt.Println("3 get from supporttokens .... continue ")
 
 				// TotalPay
 				contractId := helper.NewContractID(rss.SsId)
