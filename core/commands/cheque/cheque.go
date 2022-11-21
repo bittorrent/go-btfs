@@ -73,6 +73,7 @@ Vault services include issue cheque to peer, receive cheque and store operations
 		"receive-history-stats": ChequeReceiveHistoryStatsCmd,
 		"receive-total-count":   ReceiveChequesCountCmd,
 		"stats":                 ChequeStatsCmd,
+		"stats-all":             ChequeStatsAllCmd,
 
 		"chaininfo":  ChequeChainInfoCmd,
 		"bttbalance": ChequeBttBalanceCmd,
