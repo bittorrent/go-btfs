@@ -5,9 +5,10 @@ import (
 
 	files "github.com/TRON-US/go-btfs-files"
 
+	"testing"
+
 	"github.com/TRON-US/interface-go-btfs-core/options"
 	"github.com/stretchr/testify/assert"
-	"testing"
 
 	testutil "github.com/libp2p/go-libp2p-testing/net"
 )

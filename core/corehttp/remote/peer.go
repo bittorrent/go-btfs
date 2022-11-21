@@ -8,7 +8,7 @@ import (
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	cmdsHttp "github.com/bittorrent/go-btfs-cmds/http"
 
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -25,7 +25,7 @@ func GetStreamRequestRemotePeerID(req *cmds.Request, node *core.IpfsNode) (peer.
 // FindPeer decodes a string-based peer id and tries to find it in the current routing
 // table (if not connected, will retry).
 func FindPeer(ctx context.Context, n *core.IpfsNode, pid string) (*peer.AddrInfo, error) {
-	id, err := peer.IDB58Decode(pid)
+	id, err := peer.Decode(pid)
 	if err != nil {
 		return nil, err
 	}

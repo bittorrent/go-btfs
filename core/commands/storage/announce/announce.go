@@ -184,7 +184,7 @@ $ btfs storage announce --host-storage-price=1000000`,
 			ns.ChallengePriceCustomized = cpc
 		}
 
-		err = helper.PutHostStorageConfig(n, ns)
+		err = helper.PutHostStorageConfig(req.Context, n, ns)
 		if err != nil {
 			return err
 		}

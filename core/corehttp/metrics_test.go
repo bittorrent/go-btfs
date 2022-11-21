@@ -7,9 +7,9 @@ import (
 
 	core "github.com/bittorrent/go-btfs/core"
 
-	inet "github.com/libp2p/go-libp2p-core/network"
-	swarmt "github.com/libp2p/go-libp2p-swarm/testing"
+	inet "github.com/libp2p/go-libp2p/core/network"
 	bhost "github.com/libp2p/go-libp2p/p2p/host/basic"
+	swarmt "github.com/libp2p/go-libp2p/p2p/net/swarm/testing"
 )
 
 // This test is based on go-libp2p/p2p/net/swarm.TestConnectednessCorrect
@@ -19,8 +19,12 @@ func TestPeersTotal(t *testing.T) {
 	ctx := context.Background()
 
 	hosts := make([]*bhost.BasicHost, 4)
+	var err error
 	for i := 0; i < 4; i++ {
-		hosts[i] = bhost.New(swarmt.GenSwarm(t, ctx))
+		hosts[i], err = bhost.NewHost(swarmt.GenSwarm(t), nil)
+		if err != nil {
+			t.Fatalf("Failed to dial: %s", err)
+		}
 	}
 
 	dial := func(a, b inet.Network) {

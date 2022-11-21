@@ -5,11 +5,11 @@ import (
 	"time"
 
 	tec "github.com/jbenet/go-temp-err-catcher"
-	net "github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p-core/protocol"
+	net "github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/protocol"
 	ma "github.com/multiformats/go-multiaddr"
-	"github.com/multiformats/go-multiaddr/net"
+	manet "github.com/multiformats/go-multiaddr/net"
 )
 
 // localListener manet streams and proxies them to libp2p services

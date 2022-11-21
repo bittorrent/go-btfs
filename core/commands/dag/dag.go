@@ -24,7 +24,7 @@ import (
 	mdag "github.com/ipfs/go-merkledag"
 	traverse "github.com/ipfs/go-merkledag/traverse"
 	ipfspath "github.com/ipfs/go-path"
-	gocar "github.com/ipld/go-car"
+	gocarv2 "github.com/ipld/go-car/v2"
 	mh "github.com/multiformats/go-multihash"
 
 	//gipfree "github.com/ipld/go-ipld-prime/impl/free"
@@ -220,11 +220,7 @@ var DagResolveCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Resolve ipld block",
 		ShortDescription: `
-<<<<<<< HEAD
 'btfs dag resolve' fetches a dag node from btfs, prints it's address and remaining path.
-=======
-'ipfs dag resolve' fetches a dag node from ipfs, prints its address and remaining path.
->>>>>>> 56a8b012e7975c66f9d4a86be7659adc8eae14bb
 `,
 	},
 	Arguments: []cmds.Argument{
@@ -342,8 +338,9 @@ Maximum supported CAR version: 1
 		// This is especially important for use cases like dagger:
 		//    ipfs dag import $( ... | ipfs-dagger --stdout=carfifos )
 		//
-		unlocker := node.Blockstore.PinLock()
-		defer unlocker.Unlock()
+		ctx := req.Context
+		unlocker := node.Blockstore.PinLock(ctx)
+		defer unlocker.Unlock(ctx)
 
 		doPinRoots, _ := req.Options[pinRootsOptionName].(bool)
 
@@ -387,11 +384,11 @@ Maximum supported CAR version: 1
 
 				ret := RootMeta{Cid: c}
 
-				if block, err := node.Blockstore.Get(c); err != nil {
+				if block, err := node.Blockstore.Get(ctx, c); err != nil {
 					ret.PinErrorMsg = err.Error()
 				} else if nd, err := ipld.Decode(block); err != nil {
 					ret.PinErrorMsg = err.Error()
-				} else if err := node.Pinning.Pin(req.Context, nd, true, 0); err != nil {
+				} else if err := node.Pinning.Pin(req.Context, nd, true); err != nil {
 					ret.PinErrorMsg = err.Error()
 				} else if err := node.Pinning.Flush(req.Context); err != nil {
 					ret.PinErrorMsg = err.Error()
@@ -474,17 +471,17 @@ func importWorker(req *cmds.Request, re cmds.ResponseEmitter, api iface.CoreAPI,
 		err := func() error {
 			defer file.Close()
 
-			car, err := gocar.NewCarReader(file)
+			car, err := gocarv2.NewBlockReader(file)
 			if err != nil {
 				return err
 			}
 
 			// Be explicit here, until the spec is finished
-			if car.Header.Version != 1 {
+			if car.Version != 1 {
 				return errors.New("only car files version 1 supported at present")
 			}
 
-			for _, c := range car.Header.Roots {
+			for _, c := range car.Roots {
 				roots[c] = struct{}{}
 			}
 
@@ -544,79 +541,7 @@ The output of blocks happens in strict DAG-traversal, first-seen, order.
 	Options: []cmds.Option{
 		cmds.BoolOption(progressOptionName, "p", "Display progress on CLI. Defaults to true when STDERR is a TTY."),
 	},
-	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-
-		c, err := cid.Decode(req.Arguments[0])
-		if err != nil {
-			return fmt.Errorf(
-				"unable to parse root specification (currently only bare CIDs are supported): %s",
-				err,
-			)
-		}
-
-		node, err := cmdenv.GetNode(env)
-		if err != nil {
-			return err
-		}
-
-		// Code disabled until descent-issue in go-ipld-prime is fixed
-		// https://github.com/ribasushi/gip-muddle-up
-		//
-		// sb := gipselectorbuilder.NewSelectorSpecBuilder(gipfree.NodeBuilder())
-		// car := gocar.NewSelectiveCar(
-		// 	req.Context,
-		// 	<needs to be fixed to take format.NodeGetter as well>,
-		// 	[]gocar.Dag{gocar.Dag{
-		// 		Root: c,
-		// 		Selector: sb.ExploreRecursive(
-		// 			gipselector.RecursionLimitNone(),
-		// 			sb.ExploreAll(sb.ExploreRecursiveEdge()),
-		// 		).Node(),
-		// 	}},
-		// )
-		// ...
-		// if err := car.Write(pipeW); err != nil {}
-
-		pipeR, pipeW := io.Pipe()
-
-		errCh := make(chan error, 2) // we only report the 1st error
-		go func() {
-			defer func() {
-				if err := pipeW.Close(); err != nil {
-					errCh <- fmt.Errorf("stream flush failed: %s", err)
-				}
-				close(errCh)
-			}()
-
-			if err := gocar.WriteCar(
-				req.Context,
-				mdag.NewSession(
-					req.Context,
-					node.DAG,
-				),
-				[]cid.Cid{c},
-				pipeW,
-			); err != nil {
-				errCh <- err
-			}
-		}()
-
-		if err := res.Emit(pipeR); err != nil {
-			pipeR.Close() // ignore the error if any
-			return err
-		}
-
-		err = <-errCh
-
-		// minimal user friendliness
-		if err != nil &&
-			!node.IsOnline &&
-			err == ipld.ErrNotFound {
-			err = fmt.Errorf("%s (currently offline, perhaps retry after attaching to the network)", err)
-		}
-
-		return err
-	},
+	Run: dagExport,
 	PostRun: cmds.PostRunMap{
 		cmds.CLI: func(res cmds.Response, re cmds.ResponseEmitter) error {
 

@@ -7,9 +7,9 @@ import (
 
 	config "github.com/TRON-US/go-btfs-config"
 	"github.com/libp2p/go-libp2p"
-	smux "github.com/libp2p/go-libp2p-core/mux"
-	mplex "github.com/libp2p/go-libp2p-mplex"
-	yamux "github.com/libp2p/go-libp2p-yamux"
+	smux "github.com/libp2p/go-libp2p/core/network"
+	mplex "github.com/libp2p/go-libp2p/p2p/muxer/mplex"
+	yamux "github.com/libp2p/go-libp2p/p2p/muxer/yamux"
 )
 
 func yamuxTransport() smux.Multiplexer {

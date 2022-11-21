@@ -7,7 +7,6 @@ import (
 	"github.com/bittorrent/go-btfs/core/node/helpers"
 	"github.com/bittorrent/go-btfs/repo"
 
-	"github.com/TRON-US/go-btfs-pinner"
 	"github.com/TRON-US/go-mfs"
 	"github.com/TRON-US/go-unixfs"
 	"github.com/ipfs/go-bitswap"
@@ -16,13 +15,14 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-filestore"
-	"github.com/ipfs/go-ipfs-blockstore"
-	"github.com/ipfs/go-ipfs-exchange-interface"
-	"github.com/ipfs/go-ipfs-exchange-offline"
-	"github.com/ipfs/go-ipld-format"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	exchange "github.com/ipfs/go-ipfs-exchange-interface"
+	pin "github.com/ipfs/go-ipfs-pinner"
+	"github.com/ipfs/go-ipfs-pinner/dspinner"
+	format "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-merkledag"
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/routing"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/routing"
 	"go.uber.org/fx"
 )
 
@@ -41,25 +41,22 @@ func BlockService(lc fx.Lifecycle, bs blockstore.Blockstore, rem exchange.Interf
 
 // Pinning creates new pinner which tells GC which blocks should be kept
 func Pinning(bstore blockstore.Blockstore, ds format.DAGService, repo repo.Repo) (pin.Pinner, error) {
-	internalDag := merkledag.NewDAGService(blockservice.New(bstore, offline.Exchange(bstore)))
+	// internalDag := merkledag.NewDAGService(blockservice.New(bstore, offline.Exchange(bstore)))
 	rootDS := repo.Datastore()
-
-	syncFn := func() error {
-		if err := rootDS.Sync(blockstore.BlockPrefix); err != nil {
+	// ctx := context.Background()
+	syncFn := func(ctx context.Context) error {
+		if err := rootDS.Sync(ctx, blockstore.BlockPrefix); err != nil {
 			return err
 		}
-		return rootDS.Sync(filestore.FilestorePrefix)
+		return rootDS.Sync(ctx, filestore.FilestorePrefix)
 	}
 	syncDs := &syncDagService{ds, syncFn}
-	syncInternalDag := &syncDagService{internalDag, syncFn}
 
-	pinning, err := pin.LoadPinner(rootDS, syncDs, syncInternalDag)
+	ctx := context.TODO()
+
+	pinning, err := dspinner.New(ctx, rootDS, syncDs)
 	if err != nil {
-		// TODO: we should move towards only running 'NewPinner' explicitly on
-		// node init instead of implicitly here as a result of the pinner keys
-		// not being found in the datastore.
-		// this is kinda sketchy and could cause data loss
-		pinning = pin.NewPinner(rootDS, syncDs, syncInternalDag)
+		return nil, err
 	}
 
 	return pinning, nil
@@ -73,11 +70,11 @@ var (
 // syncDagService is used by the Pinner to ensure data gets persisted to the underlying datastore
 type syncDagService struct {
 	format.DAGService
-	syncFn func() error
+	syncFn func(ctx context.Context) error
 }
 
-func (s *syncDagService) Sync() error {
-	return s.syncFn()
+func (s *syncDagService) Sync(ctx context.Context) error {
+	return s.syncFn(ctx)
 }
 
 func (s *syncDagService) Session(ctx context.Context) format.NodeGetter {
@@ -109,21 +106,21 @@ func Files(mctx helpers.MetricsCtx, lc fx.Lifecycle, repo repo.Repo, dag format.
 	dsk := datastore.NewKey("/local/filesroot")
 	pf := func(ctx context.Context, c cid.Cid) error {
 		rootDS := repo.Datastore()
-		if err := rootDS.Sync(blockstore.BlockPrefix); err != nil {
+		if err := rootDS.Sync(ctx, blockstore.BlockPrefix); err != nil {
 			return err
 		}
-		if err := rootDS.Sync(filestore.FilestorePrefix); err != nil {
+		if err := rootDS.Sync(ctx, filestore.FilestorePrefix); err != nil {
 			return err
 		}
 
-		if err := rootDS.Put(dsk, c.Bytes()); err != nil {
+		if err := rootDS.Put(ctx, dsk, c.Bytes()); err != nil {
 			return err
 		}
-		return rootDS.Sync(dsk)
+		return rootDS.Sync(ctx, dsk)
 	}
 
 	var nd *merkledag.ProtoNode
-	val, err := repo.Datastore().Get(dsk)
+	val, err := repo.Datastore().Get(mctx, dsk)
 	ctx := helpers.LifecycleCtx(mctx, lc)
 
 	switch {

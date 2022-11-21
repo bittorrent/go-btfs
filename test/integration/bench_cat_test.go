@@ -15,8 +15,8 @@ import (
 	"github.com/bittorrent/go-btfs/thirdparty/unit"
 
 	files "github.com/TRON-US/go-btfs-files"
-	peer "github.com/libp2p/go-libp2p-core/peer"
 	testutil "github.com/libp2p/go-libp2p-testing/net"
+	peer "github.com/libp2p/go-libp2p/core/peer"
 	mocknet "github.com/libp2p/go-libp2p/p2p/net/mock"
 )
 

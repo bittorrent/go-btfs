@@ -2,6 +2,7 @@ package coreunix
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -9,7 +10,8 @@ import (
 
 	"container/list"
 	"encoding/json"
-	"github.com/TRON-US/go-btfs-files"
+
+	files "github.com/TRON-US/go-btfs-files"
 	"github.com/TRON-US/go-unixfs"
 	uio "github.com/TRON-US/go-unixfs/io"
 	ipld "github.com/ipfs/go-ipld-format"
@@ -44,12 +46,13 @@ func NewReedSolomonAdder(adder *Adder) (*ReedSolomonAdder, error) {
 
 // AddAllAndPin adds the given request's files and pin them.
 func (rsadder *ReedSolomonAdder) AddAllAndPin(file files.Node) (ipld.Node, error) {
+	ctx := context.Background()
 	if rsadder.Pin {
-		rsadder.unlocker = rsadder.gcLocker.PinLock()
+		rsadder.unlocker = rsadder.gcLocker.PinLock(ctx)
 	}
 	defer func() {
 		if rsadder.unlocker != nil {
-			rsadder.unlocker.Unlock()
+			rsadder.unlocker.Unlock(ctx)
 		}
 	}()
 

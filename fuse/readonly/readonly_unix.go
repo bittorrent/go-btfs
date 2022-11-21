@@ -159,7 +159,7 @@ func (s *Node) Lookup(ctx context.Context, name string) (fs.Node, error) {
 
 	nd, err := s.Ipfs.DAG.Get(ctx, link.Cid)
 	switch err {
-	case ipld.ErrNotFound:
+	case ipld.ErrNotFound{}:
 	default:
 		log.Errorf("fuse lookup %q: %s", name, err)
 		return nil, err

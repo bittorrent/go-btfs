@@ -36,7 +36,7 @@ func GetHostsFromDatastore(ctx context.Context, node *core.IpfsNode, mode string
 
 	// get host list from storage
 	rds := node.Repo.Datastore()
-	qr, err := rds.Query(query.Query{
+	qr, err := rds.Query(ctx, query.Query{
 		Prefix: HostStorePrefix + mp,
 		Orders: []query.Order{query.OrderByKey{}},
 	})
@@ -65,9 +65,9 @@ func GetHostsFromDatastore(ctx context.Context, node *core.IpfsNode, mode string
 }
 
 // GetHostStorageConfigForPeer retrieves locally saved info about peer (including self)
-func GetHostStorageConfigForPeer(node *core.IpfsNode, peerID string) (*nodepb.Node_Settings, error) {
+func GetHostStorageConfigForPeer(ctx context.Context, node *core.IpfsNode, peerID string) (*nodepb.Node_Settings, error) {
 	rds := node.Repo.Datastore()
-	b, err := rds.Get(GetHostStorageKey(peerID))
+	b, err := rds.Get(ctx, GetHostStorageKey(peerID))
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func GetHostStorageConfig(ctx context.Context, node *core.IpfsNode) (*nodepb.Nod
 // If syncHub is on, force a sync from Hub to retrieve latest information.
 func GetHostStorageConfigHelper(ctx context.Context, node *core.IpfsNode,
 	syncHub bool) (*nodepb.Node_Settings, error) {
-	ns, err := GetHostStorageConfigForPeer(node, node.Identity.Pretty())
+	ns, err := GetHostStorageConfigForPeer(ctx, node, node.Identity.Pretty())
 	if err != nil && err != ds.ErrNotFound {
 		return nil, fmt.Errorf("cannot get current host storage settings: %s", err.Error())
 	}
@@ -115,7 +115,7 @@ func GetHostStorageConfigHelper(ctx context.Context, node *core.IpfsNode,
 	} else {
 		ns = hns
 	}
-	err = PutHostStorageConfig(node, ns)
+	err = PutHostStorageConfig(ctx, node, ns)
 	if err != nil {
 		return nil, err
 	}
@@ -123,13 +123,13 @@ func GetHostStorageConfigHelper(ctx context.Context, node *core.IpfsNode,
 }
 
 // PutHostStorageConfig saves an updated storage storage config.
-func PutHostStorageConfig(node *core.IpfsNode, ns *nodepb.Node_Settings) error {
+func PutHostStorageConfig(ctx context.Context, node *core.IpfsNode, ns *nodepb.Node_Settings) error {
 	rds := node.Repo.Datastore()
 	b, err := ns.Marshal()
 	if err != nil {
 		return fmt.Errorf("cannot put current host storage settings: %s", err.Error())
 	}
-	return rds.Put(GetHostStorageKey(node.Identity.Pretty()), b)
+	return rds.Put(ctx, GetHostStorageKey(node.Identity.Pretty()), b)
 }
 
 func GetHostStorageKey(pid string) ds.Key {
@@ -153,7 +153,7 @@ func SaveHostsIntoDatastore(ctx context.Context, node *core.IpfsNode, mode strin
 
 	// Dumb strategy right now: remove all existing and add the new ones
 	// TODO: Update by timestamp and only overwrite updated
-	qr, err := rds.Query(query.Query{Prefix: HostStorePrefix + mp})
+	qr, err := rds.Query(ctx, query.Query{Prefix: HostStorePrefix + mp})
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func SaveHostsIntoDatastore(ctx context.Context, node *core.IpfsNode, mode strin
 		if r.Error != nil {
 			return r.Error
 		}
-		err := rds.Delete(NewKeyHelper(r.Entry.Key))
+		err := rds.Delete(ctx, NewKeyHelper(r.Entry.Key))
 		if err != nil {
 			return err
 		}
@@ -173,7 +173,7 @@ func SaveHostsIntoDatastore(ctx context.Context, node *core.IpfsNode, mode strin
 		if err != nil {
 			return err
 		}
-		err = rds.Put(NewKeyHelper(HostStorePrefix, mp, "/", fmt.Sprintf("%04d", i), "/", ni.NodeId), b)
+		err = rds.Put(ctx, NewKeyHelper(HostStorePrefix, mp, "/", fmt.Sprintf("%04d", i), "/", ni.NodeId), b)
 		if err != nil {
 			return err
 		}

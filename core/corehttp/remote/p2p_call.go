@@ -13,8 +13,8 @@ import (
 
 	iface "github.com/TRON-US/interface-go-btfs-core"
 
-	"github.com/libp2p/go-libp2p-core/peer"
 	p2phttp "github.com/libp2p/go-libp2p-http"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 type P2PRemoteCall struct {

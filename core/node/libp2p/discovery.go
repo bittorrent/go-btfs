@@ -6,9 +6,9 @@ import (
 
 	"github.com/bittorrent/go-btfs/core/node/helpers"
 
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p/p2p/discovery"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/peer"
+	discovery "github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 	"go.uber.org/fx"
 )
 
@@ -41,12 +41,13 @@ func SetupDiscovery(mdns bool, mdnsInterval int) func(helpers.MetricsCtx, fx.Lif
 			if mdnsInterval == 0 {
 				mdnsInterval = 5
 			}
-			service, err := discovery.NewMdnsService(helpers.LifecycleCtx(mctx, lc), host, time.Duration(mdnsInterval)*time.Second, discovery.ServiceTag)
-			if err != nil {
-				log.Error("mdns error: ", err)
-				return nil
-			}
-			service.RegisterNotifee(handler)
+			service := discovery.NewMdnsService(host, discovery.ServiceName, handler)
+			service.Start()
+			// if err != nil {
+			// 	log.Error("mdns error: ", err)
+			// 	return nil
+			// }
+			// service.RegisterNotifee(handler)
 		}
 		return nil
 	}

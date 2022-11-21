@@ -28,7 +28,7 @@ import (
 	dag "github.com/ipfs/go-merkledag"
 	path "github.com/ipfs/go-path"
 	"github.com/ipfs/go-path/resolver"
-	routing "github.com/libp2p/go-libp2p-core/routing"
+	routing "github.com/libp2p/go-libp2p/core/routing"
 )
 
 const (

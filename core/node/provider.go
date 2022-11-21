@@ -8,12 +8,12 @@ import (
 	"github.com/bittorrent/go-btfs/core/node/helpers"
 	"github.com/bittorrent/go-btfs/repo"
 
-	"github.com/TRON-US/go-btfs-pinner"
-	"github.com/ipfs/go-ipfs-provider"
+	"github.com/ipfs/go-fetcher"
+	pin "github.com/ipfs/go-ipfs-pinner"
+	provider "github.com/ipfs/go-ipfs-provider"
 	q "github.com/ipfs/go-ipfs-provider/queue"
 	"github.com/ipfs/go-ipfs-provider/simple"
-	ipld "github.com/ipfs/go-ipld-format"
-	"github.com/libp2p/go-libp2p-core/routing"
+	"github.com/libp2p/go-libp2p/core/routing"
 	"go.uber.org/fx"
 )
 
@@ -120,7 +120,12 @@ func SimpleProviders(reprovideStrategy string, reprovideInterval string) fx.Opti
 }
 
 func pinnedProviderStrategy(onlyRoots bool) interface{} {
-	return func(pinner pin.Pinner, dag ipld.DAGService) simple.KeyChanFunc {
-		return simple.NewPinnedProvider(onlyRoots, pinner, dag)
+	type input struct {
+		fx.In
+		Pinner      pin.Pinner
+		IPLDFetcher fetcher.Factory `name:"ipldFetcher"`
+	}
+	return func(in input) simple.KeyChanFunc {
+		return simple.NewPinnedProvider(onlyRoots, in.Pinner, in.IPLDFetcher)
 	}
 }

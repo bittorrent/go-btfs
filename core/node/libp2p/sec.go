@@ -3,9 +3,9 @@ package libp2p
 import (
 	config "github.com/TRON-US/go-btfs-config"
 	"github.com/libp2p/go-libp2p"
-	noise "github.com/libp2p/go-libp2p-noise"
-	secio "github.com/libp2p/go-libp2p-secio"
-	tls "github.com/libp2p/go-libp2p-tls"
+	tls "github.com/libp2p/go-libp2p/p2p/security/tls"
+	"github.com/libp2p/go-libp2p/p2p/security/noise"
+	secio "github.com/libp2p/go-libp2p/p2p/security/tls"
 )
 
 func Security(enabled bool, tptConfig config.Transports) interface{} {

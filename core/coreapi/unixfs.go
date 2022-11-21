@@ -37,7 +37,7 @@ import (
 	dag "github.com/ipfs/go-merkledag"
 	dagtest "github.com/ipfs/go-merkledag/test"
 	"github.com/ipfs/go-path/resolver"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 	// "github.com/prometheus/common/log"
 )
 
@@ -128,10 +128,10 @@ func (api *UnixfsAPI) Add(ctx context.Context, filesNode files.Node, opts ...opt
 			DAGService: dserv,
 			syncFn: func() error {
 				ds := api.repo.Datastore()
-				if err := ds.Sync(bstore.BlockPrefix); err != nil {
+				if err := ds.Sync(ctx, bstore.BlockPrefix); err != nil {
 					return err
 				}
-				return ds.Sync(filestore.FilestorePrefix)
+				return ds.Sync(ctx, filestore.FilestorePrefix)
 			},
 		}
 	}
@@ -280,7 +280,7 @@ func notSupport(f interface{}) error {
 }
 
 func peerId2pubkey(peerId string) (string, error) {
-	id, err := peer.IDB58Decode(peerId)
+	id, err := peer.Decode(peerId)
 	if err != nil {
 		return "", err
 	}
@@ -289,7 +289,7 @@ func peerId2pubkey(peerId string) (string, error) {
 		return "", err
 	}
 
-	bytes, err := publicKey.Bytes()
+	bytes, err := publicKey.Raw()
 	if err != nil {
 		return "", err
 	}
@@ -468,7 +468,7 @@ func (api *UnixfsAPI) getPrivateKey(input string) (string, error) {
 	var bytes []byte
 	var err error
 	if privKey == "" {
-		bytes, err = api.privateKey.Bytes()
+		bytes, err = api.privateKey.Raw()
 		if err != nil {
 			return "", err
 		}

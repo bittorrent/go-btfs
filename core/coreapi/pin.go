@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	pin "github.com/TRON-US/go-btfs-pinner"
 	coreiface "github.com/TRON-US/interface-go-btfs-core"
 	caopts "github.com/TRON-US/interface-go-btfs-core/options"
 	"github.com/TRON-US/interface-go-btfs-core/path"
+	pin "github.com/ipfs/go-ipfs-pinner"
 
 	bserv "github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
@@ -28,19 +28,9 @@ func (api *PinAPI) Add(ctx context.Context, p path.Path, opts ...caopts.PinAddOp
 		return err
 	}
 
-	defer api.blockstore.PinLock().Unlock()
+	defer api.blockstore.PinLock(ctx).Unlock(ctx)
 
-	var expir uint64
-	// Explicit expiration overwrites duration count
-	if settings.Expiration != 0 {
-		expir = settings.Expiration
-	} else {
-		expir, err = pin.ExpiresAtWithUnitAndCount(pin.DefaultDurationUnit, settings.DurationCount)
-		if err != nil {
-			return err
-		}
-	}
-	err = api.pinning.Pin(ctx, dagNode, settings.Recursive, expir)
+	err = api.pinning.Pin(ctx, dagNode, settings.Recursive)
 	if err != nil {
 		return fmt.Errorf("pin: %s", err)
 	}
@@ -100,17 +90,7 @@ func (api *PinAPI) Rm(ctx context.Context, p path.Path, opts ...caopts.PinRmOpti
 
 	// Note: after unpin the pin sets are flushed to the blockstore, so we need
 	// to take a lock to prevent a concurrent garbage collection
-	defer api.blockstore.PinLock().Unlock()
-
-	// If host has pinned the stored file with unexpired live contract
-	// We can only remove it if a manual --force is passed
-	exp, err := api.pinning.HasExpiration(ctx, rp.Cid())
-	if err != nil {
-		return err
-	}
-	if exp && !settings.Force {
-		return fmt.Errorf("pin cannot be removed due to constraint: has not expired")
-	}
+	defer api.blockstore.PinLock(ctx).Unlock(ctx)
 
 	if err = api.pinning.Unpin(ctx, rp.Cid(), settings.Recursive); err != nil {
 		return err
@@ -135,7 +115,7 @@ func (api *PinAPI) Update(ctx context.Context, from path.Path, to path.Path, opt
 		return err
 	}
 
-	defer api.blockstore.PinLock().Unlock()
+	defer api.blockstore.PinLock(ctx).Unlock(ctx)
 
 	err = api.pinning.Update(ctx, fp.Cid(), tp.Cid(), settings.Unpin)
 	if err != nil {

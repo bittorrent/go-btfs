@@ -95,8 +95,9 @@ func TestAddMultipleGCLive(t *testing.T) {
 
 	// This for loop waits for the above goroutine with gc.GC()
 	// to request GC lock - to prevent a race condition encountered at BTFS-1724.
+	ctx := context.Background()
 	for {
-		if !adder.GcLocker().GCRequested() {
+		if !adder.GcLocker().GCRequested(ctx) {
 			time.Sleep(time.Millisecond * 100)
 		} else {
 			break
@@ -344,22 +345,23 @@ func TestAddWPosInfoAndRawLeafs(t *testing.T) {
 
 type testBlockstore struct {
 	blockstore.GCBlockstore
+	ctx                  context.Context
 	expectedPath         string
 	t                    *testing.T
 	countAtOffsetZero    int
 	countAtOffsetNonZero int
 }
 
-func (bs *testBlockstore) Put(block blocks.Block) error {
+func (bs *testBlockstore) Put(ctx context.Context, block blocks.Block) error {
 	bs.CheckForPosInfo(block)
-	return bs.GCBlockstore.Put(block)
+	return bs.GCBlockstore.Put(ctx, block)
 }
 
-func (bs *testBlockstore) PutMany(blocks []blocks.Block) error {
+func (bs *testBlockstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
 	for _, blk := range blocks {
 		bs.CheckForPosInfo(blk)
 	}
-	return bs.GCBlockstore.PutMany(blocks)
+	return bs.GCBlockstore.PutMany(ctx, blocks)
 }
 
 func (bs *testBlockstore) CheckForPosInfo(block blocks.Block) {

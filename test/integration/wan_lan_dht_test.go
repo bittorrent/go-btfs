@@ -15,9 +15,9 @@ import (
 	libp2p2 "github.com/bittorrent/go-btfs/core/node/libp2p"
 	"github.com/ipfs/go-cid"
 
-	corenet "github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peerstore"
 	testutil "github.com/libp2p/go-libp2p-testing/net"
+	corenet "github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peerstore"
 	mocknet "github.com/libp2p/go-libp2p/p2p/net/mock"
 
 	ma "github.com/multiformats/go-multiaddr"

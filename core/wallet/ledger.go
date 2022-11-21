@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -43,8 +44,8 @@ func list(ds datastore.Datastore) ([]*walletpb.ChannelState, error) {
 	return states, nil
 }
 
-func rm(ds datastore.Datastore, channelId int64) error {
-	return ds.Delete(datastore.NewKey(k(channelId)))
+func rm(ctx context.Context, ds datastore.Datastore, channelId int64) error {
+	return ds.Delete(ctx, datastore.NewKey(k(channelId)))
 }
 
 func k(channelId int64) string {

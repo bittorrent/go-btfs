@@ -2,8 +2,9 @@
 // This means the channel is encrypted (and MACed).
 // It is meant to exercise the spipe package.
 // Usage:
-//    seccat [<local address>] <remote address>
-//    seccat -l <local address>
+//
+//	seccat [<local address>] <remote address>
+//	seccat -l <local address>
 //
 // Address format is: [host]:port
 package main
@@ -19,11 +20,11 @@ import (
 	"syscall"
 
 	logging "github.com/ipfs/go-log"
-	ci "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	pstore "github.com/libp2p/go-libp2p-core/peerstore"
-	pstoremem "github.com/libp2p/go-libp2p-peerstore/pstoremem"
-	secio "github.com/libp2p/go-libp2p-secio"
+	ci "github.com/libp2p/go-libp2p/core/crypto"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	pstore "github.com/libp2p/go-libp2p/core/peerstore"
+	pstoremem "github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoremem"
+	secio "github.com/libp2p/go-libp2p/p2p/security/noise"
 )
 
 var verbose = false
@@ -127,7 +128,10 @@ func setupPeer(a args) (peer.ID, pstore.Peerstore, error) {
 		return "", nil, err
 	}
 
-	ps := pstoremem.NewPeerstore()
+	ps, err := pstoremem.NewPeerstore()
+	if err != nil {
+		return "", nil, err
+	}
 	err = ps.AddPrivKey(p, sk)
 	if err != nil {
 		return "", nil, err
@@ -158,7 +162,7 @@ func connect(args args) error {
 	}
 
 	// log everything that goes through conn
-	rwc := &logConn{n: "conn", Conn: conn}
+	// rwc := &logConn{n: "conn", Conn: conn}
 
 	// OK, let's setup the channel.
 	sk := ps.PrivKey(p)
@@ -166,7 +170,7 @@ func connect(args args) error {
 	if err != nil {
 		return err
 	}
-	sconn, err := sg.SecureInbound(context.TODO(), rwc)
+	sconn, err := sg.SecureInbound(context.TODO(), conn, p)
 	if err != nil {
 		return err
 	}

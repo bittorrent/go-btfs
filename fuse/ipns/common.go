@@ -8,7 +8,7 @@ import (
 
 	ft "github.com/TRON-US/go-unixfs"
 	path "github.com/ipfs/go-path"
-	ci "github.com/libp2p/go-libp2p-core/crypto"
+	ci "github.com/libp2p/go-libp2p/core/crypto"
 )
 
 // InitializeKeyspace sets the ipns record for the given key to
@@ -19,7 +19,7 @@ func InitializeKeyspace(n *core.IpfsNode, key ci.PrivKey) error {
 
 	emptyDir := ft.EmptyDirNode()
 
-	err := n.Pinning.Pin(ctx, emptyDir, false, 0)
+	err := n.Pinning.Pin(ctx, emptyDir, false)
 	if err != nil {
 		return err
 	}

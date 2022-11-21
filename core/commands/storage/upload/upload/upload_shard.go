@@ -10,7 +10,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price int64, shardSize int64,
@@ -83,7 +83,7 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 					}
 				}
 
-				hostPid, err := peer.IDB58Decode(host)
+				hostPid, err := peer.Decode(host)
 				if err != nil {
 					log.Errorf("shard %s decodes host_pid error: %s", h, err.Error())
 					return err

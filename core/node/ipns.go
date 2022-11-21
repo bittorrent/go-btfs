@@ -9,11 +9,11 @@ import (
 	"github.com/bittorrent/go-btfs/repo"
 
 	"github.com/TRON-US/go-btns"
-	"github.com/ipfs/go-ipfs-util"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/peerstore"
-	"github.com/libp2p/go-libp2p-core/routing"
-	"github.com/libp2p/go-libp2p-record"
+	util "github.com/ipfs/go-ipfs-util"
+	record "github.com/libp2p/go-libp2p-record"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/peerstore"
+	"github.com/libp2p/go-libp2p/core/routing"
 )
 
 const DefaultIpnsCacheSize = 128

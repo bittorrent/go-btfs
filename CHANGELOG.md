@@ -194,8 +194,8 @@ The scripts in https://github.com/ipfs/go-ipfs-example-plugin have been updated 
 - github.com/ipfs/go-path (v0.0.7 -> v0.0.8):
   - ResolveToLastNode no longer fetches nodes it does not need ([ipfs/go-path#30](https://github.com/ipfs/go-path/pull/30))
   - doc: add a lead maintainer
-- github.com/ipfs/interface-go-ipfs-core (v0.3.0 -> v0.4.0):
-  - Add ID formatting functions, used by various IPFS cli commands ([ipfs/interface-go-ipfs-core#65](https://github.com/ipfs/interface-go-ipfs-core/pull/65))
+- github.com/TRON-US/interface-go-btfs-core (v0.3.0 -> v0.4.0):
+  - Add ID formatting functions, used by various IPFS cli commands ([ipfs/interface-go-ipfs-core#65](https://github.com/TRON-US/interface-go-btfs-core/pull/65))
 - github.com/ipld/go-car (v0.1.0 -> v0.1.1-0.20200429200904-c222d793c339):
   - Update go-ipld-prime to the era of NodeAssembler. ([ipld/go-car#31](https://github.com/ipld/go-car/pull/31))
   - fix: update the cli tool's car dep ([ipld/go-car#30](https://github.com/ipld/go-car/pull/30))
@@ -728,13 +728,13 @@ Use-cases:
   - test: add Directory.ListNames test ([ipfs/go-mfs#81](https://github.com/ipfs/go-mfs/pull/81))
   - doc: add a lead maintainer
   - Update README.md with newer travis badge ([ipfs/go-mfs#78](https://github.com/ipfs/go-mfs/pull/78))
-- github.com/ipfs/interface-go-ipfs-core (v0.2.7 -> v0.3.0):
-  - add Pin.IsPinned(..) ([ipfs/interface-go-ipfs-core#50](https://github.com/ipfs/interface-go-ipfs-core/pull/50))
+- github.com/TRON-US/interface-go-btfs-core (v0.2.7 -> v0.3.0):
+  - add Pin.IsPinned(..) ([ipfs/interface-go-ipfs-core#50](https://github.com/TRON-US/interface-go-btfs-core/pull/50))
   - Add autocomment configuration
   - Add standard issue template
-  - extra time for dht spin-up ([ipfs/interface-go-ipfs-core#61](https://github.com/ipfs/interface-go-ipfs-core/pull/61))
-  - feat: make the CoreAPI expose a streaming pin interface ([ipfs/interface-go-ipfs-core#49](https://github.com/ipfs/interface-go-ipfs-core/pull/49))
-  - test: fail early on err to avoid an unrelated panic ([ipfs/interface-go-ipfs-core#57](https://github.com/ipfs/interface-go-ipfs-core/pull/57))
+  - extra time for dht spin-up ([ipfs/interface-go-ipfs-core#61](https://github.com/TRON-US/interface-go-btfs-core/pull/61))
+  - feat: make the CoreAPI expose a streaming pin interface ([ipfs/interface-go-ipfs-core#49](https://github.com/TRON-US/interface-go-btfs-core/pull/49))
+  - test: fail early on err to avoid an unrelated panic ([ipfs/interface-go-ipfs-core#57](https://github.com/TRON-US/interface-go-btfs-core/pull/57))
 - github.com/jbenet/go-is-domain (v1.0.3 -> v1.0.5):
   - Add OpenNIC domains to extended TLDs. ([jbenet/go-is-domain#15](https://github.com/jbenet/go-is-domain/pull/15))
   - feat: add .crypto and .zil from UnstoppableDomains ([jbenet/go-is-domain#17](https://github.com/jbenet/go-is-domain/pull/17))
@@ -1936,15 +1936,15 @@ As usual, this release contains several Windows specific fixes and improvements:
   - fix: return the correct error from RemoveChild ([ipfs/go-unixfs#76](https://github.com/ipfs/go-unixfs/pull/76))
   - update the the last go-merkledag ([ipfs/go-unixfs#75](https://github.com/ipfs/go-unixfs/pull/75))
   - fix: enumerate children ([ipfs/go-unixfs#74](https://github.com/ipfs/go-unixfs/pull/74))
-- github.com/ipfs/interface-go-ipfs-core (v0.0.8 -> v0.2.7):
-  - Add pin ls tests for indirect pin traversal and pin type precedence ([ipfs/interface-go-ipfs-core#47](https://github.com/ipfs/interface-go-ipfs-core/pull/47))
-  - fix(test): fix a flaky pubsub test ([ipfs/interface-go-ipfs-core#45](https://github.com/ipfs/interface-go-ipfs-core/pull/45))
-  - README: stub ([ipfs/interface-go-ipfs-core#44](https://github.com/ipfs/interface-go-ipfs-core/pull/44))
-  - test: test ReadAt if implemented ([ipfs/interface-go-ipfs-core#43](https://github.com/ipfs/interface-go-ipfs-core/pull/43))
-  - test: fix put with hash test ([ipfs/interface-go-ipfs-core#41](https://github.com/ipfs/interface-go-ipfs-core/pull/41))
-  - Bump go-libp2p-core, up test key size to 2048 ([ipfs/interface-go-ipfs-core#39](https://github.com/ipfs/interface-go-ipfs-core/pull/39))
-  - migrate to go-libp2p-core. ([ipfs/interface-go-ipfs-core#35](https://github.com/ipfs/interface-go-ipfs-core/pull/35))
-  - tests: expose TestSuite ([ipfs/interface-go-ipfs-core#34](https://github.com/ipfs/interface-go-ipfs-core/pull/34))
+- github.com/TRON-US/interface-go-btfs-core (v0.0.8 -> v0.2.7):
+  - Add pin ls tests for indirect pin traversal and pin type precedence ([ipfs/interface-go-ipfs-core#47](https://github.com/TRON-US/interface-go-btfs-core/pull/47))
+  - fix(test): fix a flaky pubsub test ([ipfs/interface-go-ipfs-core#45](https://github.com/TRON-US/interface-go-btfs-core/pull/45))
+  - README: stub ([ipfs/interface-go-ipfs-core#44](https://github.com/TRON-US/interface-go-btfs-core/pull/44))
+  - test: test ReadAt if implemented ([ipfs/interface-go-ipfs-core#43](https://github.com/TRON-US/interface-go-btfs-core/pull/43))
+  - test: fix put with hash test ([ipfs/interface-go-ipfs-core#41](https://github.com/TRON-US/interface-go-btfs-core/pull/41))
+  - Bump go-libp2p-core, up test key size to 2048 ([ipfs/interface-go-ipfs-core#39](https://github.com/TRON-US/interface-go-btfs-core/pull/39))
+  - migrate to go-libp2p-core. ([ipfs/interface-go-ipfs-core#35](https://github.com/TRON-US/interface-go-btfs-core/pull/35))
+  - tests: expose TestSuite ([ipfs/interface-go-ipfs-core#34](https://github.com/TRON-US/interface-go-btfs-core/pull/34))
 - github.com/libp2p/go-libp2p (v0.0.32 -> v0.8.2):
   - fix: keep observed addrs alive as long as their associated connections are alive ([libp2p/go-libp2p#899](https://github.com/libp2p/go-libp2p/pull/899))
   - fix: refactor logic for identifying connections ([libp2p/go-libp2p#898](https://github.com/libp2p/go-libp2p/pull/898))
@@ -2961,11 +2961,11 @@ go versions during builds.
   - include the path in path errors ([ipfs/go-path#28](https://github.com/ipfs/go-path/pull/28))
 - github.com/ipfs/go-unixfs (v0.0.4 -> v0.0.6):
   - chore: remove URL field ([ipfs/go-unixfs#72](https://github.com/ipfs/go-unixfs/pull/72))
-- github.com/ipfs/interface-go-ipfs-core (v0.0.6 -> v0.0.8):
-  - switch to base32 cidv1 by default ([ipfs/interface-go-ipfs-core#29](https://github.com/ipfs/interface-go-ipfs-core/pull/29))
-  - path: drop error from ParsePath ([ipfs/interface-go-ipfs-core#22](https://github.com/ipfs/interface-go-ipfs-core/pull/22))
-  - tests: fix a bunch of small test lints/issues ([ipfs/interface-go-ipfs-core#28](https://github.com/ipfs/interface-go-ipfs-core/pull/28))
-  - Update Pin.RmRecursive docs to clarify shared indirect pins are not removed ([ipfs/interface-go-ipfs-core#26](https://github.com/ipfs/interface-go-ipfs-core/pull/26))
+- github.com/TRON-US/interface-go-btfs-core (v0.0.6 -> v0.0.8):
+  - switch to base32 cidv1 by default ([ipfs/interface-go-ipfs-core#29](https://github.com/TRON-US/interface-go-btfs-core/pull/29))
+  - path: drop error from ParsePath ([ipfs/interface-go-ipfs-core#22](https://github.com/TRON-US/interface-go-btfs-core/pull/22))
+  - tests: fix a bunch of small test lints/issues ([ipfs/interface-go-ipfs-core#28](https://github.com/TRON-US/interface-go-btfs-core/pull/28))
+  - Update Pin.RmRecursive docs to clarify shared indirect pins are not removed ([ipfs/interface-go-ipfs-core#26](https://github.com/TRON-US/interface-go-btfs-core/pull/26))
 - github.com/libp2p/go-buffer-pool (v0.0.1 -> v0.0.2):
   - feat: add buffered writer ([libp2p/go-buffer-pool#9](https://github.com/libp2p/go-buffer-pool/pull/9))
 - github.com/libp2p/go-conn-security-multistream (v0.0.1 -> v0.0.2):
@@ -3449,12 +3449,12 @@ earlier on start.
 - github.com/ipfs/go-mfs:
   - Return node from FlushPath ([ipfs/go-mfs#72](https://github.com/ipfs/go-mfs/pull/72))
   - Wire up context to FlushPath ([ipfs/go-mfs#70](https://github.com/ipfs/go-mfs/pull/70))
-- github.com/ipfs/interface-go-ipfs-core:
-  - don't close the top-level addr ([ipfs/interface-go-ipfs-core#25](https://github.com/ipfs/interface-go-ipfs-core/pull/25))
-  - fix a bunch of small test "bugs" ([ipfs/interface-go-ipfs-core#24](https://github.com/ipfs/interface-go-ipfs-core/pull/24))
-  - remove Wrap ([ipfs/interface-go-ipfs-core#21](https://github.com/ipfs/interface-go-ipfs-core/pull/21))
-  - Unixfs.Wrap Fixes ([ipfs/interface-go-ipfs-core#10](https://github.com/ipfs/interface-go-ipfs-core/pull/10))
-  - tweak the Ls interface ([ipfs/interface-go-ipfs-core#14](https://github.com/ipfs/interface-go-ipfs-core/pull/14))
+- github.com/TRON-US/interface-go-btfs-core:
+  - don't close the top-level addr ([ipfs/interface-go-ipfs-core#25](https://github.com/TRON-US/interface-go-btfs-core/pull/25))
+  - fix a bunch of small test "bugs" ([ipfs/interface-go-ipfs-core#24](https://github.com/TRON-US/interface-go-btfs-core/pull/24))
+  - remove Wrap ([ipfs/interface-go-ipfs-core#21](https://github.com/TRON-US/interface-go-btfs-core/pull/21))
+  - Unixfs.Wrap Fixes ([ipfs/interface-go-ipfs-core#10](https://github.com/TRON-US/interface-go-btfs-core/pull/10))
+  - tweak the Ls interface ([ipfs/interface-go-ipfs-core#14](https://github.com/TRON-US/interface-go-btfs-core/pull/14))
 - github.com/libp2p/go-buffer-pool:
   - Enable tests ([libp2p/go-buffer-pool#6](https://github.com/libp2p/go-buffer-pool/pull/6))
 - github.com/libp2p/go-flow-metrics:
@@ -3814,7 +3814,7 @@ The next steps are:
    go-ipfs as a library.
 
 [ipfs/go-ipfs#4498]: https://github.com/ipfs/go-ipfs/issues/4498
-[ipfs/interface-go-ipfs-core]: https://github.com/ipfs/interface-go-ipfs-core
+[ipfs/interface-go-ipfs-core]: https://github.com/TRON-US/interface-go-btfs-core
 [ipfs/go-ipfs-http-client]: https://github.com/ipfs/go-ipfs-http-client
 [ipfs/go-ipfs-api]: https://github.com/ipfs/go-ipfs-http-client
 [daemon-plugin]: https://github.com/ipfs/go-ipfs/blob/master/docs/plugins.md#daemon

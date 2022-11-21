@@ -6,21 +6,13 @@ import (
 	config "github.com/TRON-US/go-btfs-config"
 
 	libp2p "github.com/libp2p/go-libp2p"
-	metrics "github.com/libp2p/go-libp2p-core/metrics"
+	metrics "github.com/libp2p/go-libp2p/core/metrics"
 
-	// libp2pquic "github.com/libp2p/go-libp2p-quic-transport"
-	tcp "github.com/libp2p/go-tcp-transport"
-	websocket "github.com/libp2p/go-ws-transport"
-
+	quic "github.com/libp2p/go-libp2p/p2p/transport/quic"
+	tcp "github.com/libp2p/go-libp2p/p2p/transport/tcp"
+	websocket "github.com/libp2p/go-libp2p/p2p/transport/websocket"
 	"go.uber.org/fx"
 )
-
-// See https://github.com/ipfs/go-ipfs/issues/7526 and
-// https://github.com/lucas-clemente/quic-go/releases/tag/v0.17.3.
-// TODO: remove this once the network has upgraded to > v0.6.0.
-func init() {
-	// quic.RetireBugBackwardsCompatibilityMode = true
-}
 
 func Transports(tptConfig config.Transports) interface{} {
 	return func(pnet struct {
@@ -30,7 +22,8 @@ func Transports(tptConfig config.Transports) interface{} {
 		privateNetworkEnabled := pnet.Fprint != nil
 
 		if tptConfig.Network.TCP.WithDefault(true) {
-			opts.Opts = append(opts.Opts, libp2p.Transport(tcp.NewTCPTransport))
+			// TODO(9290): Make WithMetrics configurable
+			opts.Opts = append(opts.Opts, libp2p.Transport(tcp.NewTCPTransport, tcp.WithMetrics()))
 		}
 
 		if tptConfig.Network.Websocket.WithDefault(true) {
@@ -46,7 +39,8 @@ func Transports(tptConfig config.Transports) interface{} {
 						"Please disable Swarm.Transports.Network.QUIC.",
 				)
 			}
-			// opts.Opts = append(opts.Opts, libp2p.Transport(libp2pquic.NewTransport))
+			// TODO(9290): Make WithMetrics configurable
+			opts.Opts = append(opts.Opts, libp2p.Transport(quic.NewTransport, quic.WithMetrics()))
 		}
 
 		return opts, nil

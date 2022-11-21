@@ -13,9 +13,9 @@ import (
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	mockrouting "github.com/ipfs/go-ipfs-routing/mock"
 	"github.com/ipfs/go-path"
-	ci "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
 	testutil "github.com/libp2p/go-libp2p-testing/net"
+	ci "github.com/libp2p/go-libp2p/core/crypto"
+	peer "github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -95,7 +95,7 @@ func testNamekeyPublisher(t *testing.T, keyType int, expectedErr error, expected
 
 	// Also check datastore for completeness
 	key := dshelp.NewKeyFromBinary([]byte(namekey))
-	exists, err := dstore.Has(key)
+	exists, err := dstore.Has(ctx, key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,7 +150,7 @@ type checkSyncDS struct {
 	syncKeys map[ds.Key]struct{}
 }
 
-func (d *checkSyncDS) Sync(prefix ds.Key) error {
+func (d *checkSyncDS) Sync(ctx context.Context, prefix ds.Key) error {
 	d.syncKeys[prefix] = struct{}{}
-	return d.Datastore.Sync(prefix)
+	return d.Datastore.Sync(ctx, prefix)
 }

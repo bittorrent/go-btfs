@@ -7,13 +7,13 @@ import (
 
 	"github.com/bittorrent/go-btfs/core/node/helpers"
 
-	host "github.com/libp2p/go-libp2p-core/host"
-	routing "github.com/libp2p/go-libp2p-core/routing"
 	ddht "github.com/libp2p/go-libp2p-kad-dht/dual"
-	"github.com/libp2p/go-libp2p-pubsub"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	namesys "github.com/libp2p/go-libp2p-pubsub-router"
 	record "github.com/libp2p/go-libp2p-record"
 	routinghelpers "github.com/libp2p/go-libp2p-routing-helpers"
+	host "github.com/libp2p/go-libp2p/core/host"
+	routing "github.com/libp2p/go-libp2p/core/routing"
 	"go.uber.org/fx"
 )
 

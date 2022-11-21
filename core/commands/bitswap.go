@@ -12,7 +12,7 @@ import (
 	bitswap "github.com/ipfs/go-bitswap"
 	decision "github.com/ipfs/go-bitswap/decision"
 	cidutil "github.com/ipfs/go-cidutil"
-	peer "github.com/libp2p/go-libp2p-core/peer"
+	peer "github.com/libp2p/go-libp2p/core/peer"
 )
 
 var BitswapCmd = &cmds.Command{

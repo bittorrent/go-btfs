@@ -6,7 +6,7 @@ import (
 	"github.com/bittorrent/go-btfs/namesys"
 
 	ipns "github.com/TRON-US/go-btns"
-	"github.com/libp2p/go-libp2p-core/test"
+	"github.com/libp2p/go-libp2p/core/test"
 )
 
 func TestKeyTranslation(t *testing.T) {

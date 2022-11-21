@@ -20,8 +20,8 @@ import (
 	icore "github.com/TRON-US/interface-go-btfs-core"
 	icorepath "github.com/TRON-US/interface-go-btfs-core/path"
 	libp2p "github.com/bittorrent/go-btfs/core/node/libp2p"
-	"github.com/libp2p/go-libp2p-core/peer"
-	peerstore "github.com/libp2p/go-libp2p-peerstore"
+	"github.com/libp2p/go-libp2p/core/peer"
+	peerstore "github.com/libp2p/go-libp2p/p2p/host/peerstore"
 	ma "github.com/multiformats/go-multiaddr"
 )
 

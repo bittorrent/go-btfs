@@ -10,8 +10,7 @@ import (
 	"strconv"
 
 	chunker "github.com/TRON-US/go-btfs-chunker"
-	"github.com/TRON-US/go-btfs-files"
-	"github.com/TRON-US/go-btfs-pinner"
+	files "github.com/TRON-US/go-btfs-files"
 	"github.com/TRON-US/go-mfs"
 	"github.com/TRON-US/go-unixfs"
 	"github.com/TRON-US/go-unixfs/importer/balanced"
@@ -23,7 +22,8 @@ import (
 	"github.com/TRON-US/interface-go-btfs-core/path"
 	"github.com/ipfs/go-cid"
 	bstore "github.com/ipfs/go-ipfs-blockstore"
-	"github.com/ipfs/go-ipfs-posinfo"
+	pin "github.com/ipfs/go-ipfs-pinner"
+	posinfo "github.com/ipfs/go-ipfs-posinfo"
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log"
 	dag "github.com/ipfs/go-merkledag"
@@ -275,12 +275,7 @@ func (adder *Adder) PinRoot(root ipld.Node) error {
 		}
 		adder.tempRoot = rnk
 	}
-
-	dur, err := pin.ExpiresAtWithUnitAndCount(pin.DefaultDurationUnit, adder.PinDuration)
-	if err != nil {
-		return err
-	}
-	adder.pinning.PinWithMode(rnk, dur, pin.Recursive)
+	adder.pinning.PinWithMode(rnk, pin.Recursive)
 	return adder.pinning.Flush(adder.ctx)
 }
 
@@ -369,12 +364,13 @@ func (adder *Adder) addNode(node ipld.Node, path string) error {
 
 // AddAllAndPin adds the given request's files and pin them.
 func (adder *Adder) AddAllAndPin(file files.Node) (ipld.Node, error) {
+	ctx := context.Background()
 	if adder.Pin {
-		adder.unlocker = adder.gcLocker.PinLock()
+		adder.unlocker = adder.gcLocker.PinLock(ctx)
 	}
 	defer func() {
 		if adder.unlocker != nil {
-			adder.unlocker.Unlock()
+			adder.unlocker.Unlock(ctx)
 		}
 	}()
 
@@ -602,7 +598,8 @@ func (adder *Adder) appendMetadataObject(metadata []byte, o interface{}) ([]byte
 }
 
 func (adder *Adder) maybePauseForGC() error {
-	if adder.unlocker != nil && adder.gcLocker.GCRequested() {
+	ctx := context.Background()
+	if adder.unlocker != nil && adder.gcLocker.GCRequested(ctx) {
 		rn, err := adder.curRootNode()
 		if err != nil {
 			return err
@@ -613,8 +610,8 @@ func (adder *Adder) maybePauseForGC() error {
 			return err
 		}
 
-		adder.unlocker.Unlock()
-		adder.unlocker = adder.gcLocker.PinLock()
+		adder.unlocker.Unlock(ctx)
+		adder.unlocker = adder.gcLocker.PinLock(ctx)
 	}
 	return nil
 }

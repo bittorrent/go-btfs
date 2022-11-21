@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/libp2p/go-libp2p-core/peer"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/rm"
@@ -28,7 +29,7 @@ import (
 	"github.com/alecthomas/units"
 	"github.com/cenkalti/backoff/v4"
 	cidlib "github.com/ipfs/go-cid"
-	ic "github.com/libp2p/go-libp2p-core/crypto"
+	ic "github.com/libp2p/go-libp2p/core/crypto"
 )
 
 var StorageUploadInitCmd = &cmds.Command{
@@ -66,7 +67,7 @@ the shard and replies back to client for the next challenge step.`,
 		}
 
 		// if my vault is not compatible with the peer's one, reject uploading
-		myPeerId, err := peer.IDB58Decode(ctxParams.Cfg.Identity.PeerID)
+		myPeerId, err := peer.Decode(ctxParams.Cfg.Identity.PeerID)
 		isVaultCompatible, err := chain.SettleObject.Factory.IsVaultCompatibleBetween(ctxParams.Ctx, myPeerId, requestPid)
 		if err != nil {
 			return err

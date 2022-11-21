@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"strings"
 
-	pin "github.com/TRON-US/go-btfs-pinner"
 	bserv "github.com/ipfs/go-blockservice"
 	cid "github.com/ipfs/go-cid"
 	dstore "github.com/ipfs/go-datastore"
 	bstore "github.com/ipfs/go-ipfs-blockstore"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
+	pin "github.com/ipfs/go-ipfs-pinner"
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log"
 	dag "github.com/ipfs/go-merkledag"
@@ -46,7 +46,7 @@ type Result struct {
 func GC(ctx context.Context, bs bstore.GCBlockstore, dstor dstore.Datastore, pn pin.Pinner, bestEffortRoots []cid.Cid) <-chan Result {
 	ctx, cancel := context.WithCancel(ctx)
 
-	unlocker := bs.GCLock()
+	unlocker := bs.GCLock(ctx)
 
 	bsrv := bserv.New(bs, offline.Exchange(bs))
 	ds := dag.NewDAGService(bsrv)
@@ -56,7 +56,7 @@ func GC(ctx context.Context, bs bstore.GCBlockstore, dstor dstore.Datastore, pn 
 	go func() {
 		defer cancel()
 		defer close(output)
-		defer unlocker.Unlock()
+		defer unlocker.Unlock(ctx)
 
 		gcs, err := ColoredSet(ctx, pn, ds, bestEffortRoots, output)
 		if err != nil {
@@ -86,7 +86,7 @@ func GC(ctx context.Context, bs bstore.GCBlockstore, dstor dstore.Datastore, pn 
 					break loop
 				}
 				if !gcs.Has(k) {
-					err := bs.DeleteBlock(k)
+					err := bs.DeleteBlock(ctx, k)
 					removed++
 					if err != nil {
 						errors = true
@@ -121,7 +121,7 @@ func GC(ctx context.Context, bs bstore.GCBlockstore, dstor dstore.Datastore, pn 
 			return
 		}
 
-		err = gds.CollectGarbage()
+		err = gds.CollectGarbage(ctx)
 		if err != nil {
 			select {
 			case output <- Result{Error: err}:
@@ -137,15 +137,12 @@ func GC(ctx context.Context, bs bstore.GCBlockstore, dstor dstore.Datastore, pn 
 // Descendants recursively finds all the descendants of the given roots and
 // adds them to the given cid.Set, using the provided dag.GetLinks function
 // to walk the tree.
-func Descendants(ctx context.Context, pn pin.Pinner, getLinks dag.GetLinks,
-	set *cid.Set, pinMap *cid.Map, pinMap2 *cid.Map, roots []cid.Cid) error {
+func Descendants(ctx context.Context, getLinks dag.GetLinks,
+	set *cid.Set, roots []cid.Cid) error {
 	verifyGetLinks := func(ctx context.Context, c cid.Cid) ([]*ipld.Link, error) {
 		err := verifcid.ValidateCid(c)
 		if err != nil {
 			return nil, err
-		}
-		if pn.IsExpiredPin(ctx, c) {
-			return nil, nil
 		}
 		return getLinks(ctx, c)
 	}
@@ -162,15 +159,10 @@ func Descendants(ctx context.Context, pn pin.Pinner, getLinks dag.GetLinks,
 	}
 
 	for _, c := range roots {
-		if pn.IsExpiredPin(ctx, c) {
-			if cleanMode == Eagar {
-				pn.Unpin(ctx, c, true)
-				pn.Flush(ctx)
-			}
-			continue
-		}
 		// Walk recursively walks the dag and adds the keys to the given set
-		err := dag.Walk(ctx, verifyGetLinks, c, set.Visit, dag.Concurrent())
+		err := dag.Walk(ctx, verifyGetLinks, c, func(k cid.Cid) bool {
+			return set.Visit(toCidV1(k))
+		}, dag.Concurrent())
 
 		if err != nil {
 			err = verboseCidError(err)
@@ -179,6 +171,14 @@ func Descendants(ctx context.Context, pn pin.Pinner, getLinks dag.GetLinks,
 	}
 
 	return nil
+}
+
+// toCidV1 converts any CIDv0s to CIDv1s.
+func toCidV1(c cid.Cid) cid.Cid {
+	if c.Version() == 0 {
+		return cid.NewCidV1(c.Type(), c.Hash())
+	}
+	return c
 }
 
 // ColoredSet computes the set of nodes in the graph that are pinned by the
@@ -200,19 +200,19 @@ func ColoredSet(ctx context.Context, pn pin.Pinner, ng ipld.NodeGetter, bestEffo
 		}
 		return links, nil
 	}
-	rmap, err := pn.RecursiveMap(ctx)
-	if err != nil {
-		return nil, err
-	}
-	dmap, err := pn.DirectMap(ctx)
-	if err != nil {
-		return nil, err
-	}
+	// rmap, err := pn.RecursiveMap(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// dmap, err := pn.DirectMap(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	rkeys, err := pn.RecursiveKeys(ctx)
 	if err != nil {
 		return nil, err
 	}
-	err = Descendants(ctx, pn, getLinks, gcs, rmap, dmap, rkeys)
+	err = Descendants(ctx, getLinks, gcs, rkeys)
 	if err != nil {
 		errors = true
 		select {
@@ -224,7 +224,7 @@ func ColoredSet(ctx context.Context, pn pin.Pinner, ng ipld.NodeGetter, bestEffo
 
 	bestEffortGetLinks := func(ctx context.Context, cid cid.Cid) ([]*ipld.Link, error) {
 		links, err := ipld.GetLinks(ctx, ng, cid)
-		if err != nil && err != ipld.ErrNotFound {
+		if err != nil && !ipld.IsNotFound(err) {
 			errors = true
 			select {
 			case output <- Result{Error: &CannotFetchLinksError{cid, err}}:
@@ -234,7 +234,7 @@ func ColoredSet(ctx context.Context, pn pin.Pinner, ng ipld.NodeGetter, bestEffo
 		}
 		return links, nil
 	}
-	err = Descendants(ctx, pn, bestEffortGetLinks, gcs, rmap, dmap, bestEffortRoots)
+	err = Descendants(ctx, bestEffortGetLinks, gcs, bestEffortRoots)
 	if err != nil {
 		errors = true
 		select {
@@ -249,15 +249,7 @@ func ColoredSet(ctx context.Context, pn pin.Pinner, ng ipld.NodeGetter, bestEffo
 		return nil, err
 	}
 	for _, k := range dkeys {
-		// Skip expired pins
-		if pn.IsExpiredPin(ctx, k) {
-			if cleanMode == Eagar {
-				pn.Unpin(ctx, k, false)
-				pn.Flush(ctx)
-			}
-			continue
-		}
-		gcs.Add(k)
+		gcs.Add(toCidV1(k))
 	}
 
 	ikeys, err := pn.InternalPins(ctx)
@@ -265,7 +257,7 @@ func ColoredSet(ctx context.Context, pn pin.Pinner, ng ipld.NodeGetter, bestEffo
 		return nil, err
 	}
 
-	err = Descendants(ctx, pn, getLinks, gcs, rmap, dmap, ikeys)
+	err = Descendants(ctx, getLinks, gcs, ikeys)
 	if err != nil {
 		errors = true
 		select {
