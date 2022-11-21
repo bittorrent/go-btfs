@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/bittorrent/go-btfs/core"
-	"github.com/bittorrent/go-btfs/core/mock"
+	coremock "github.com/bittorrent/go-btfs/core/mock"
 	"github.com/bittorrent/go-btfs/core/node/libp2p"
 
-	"github.com/ipfs/go-block-format"
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	mocknet "github.com/libp2p/go-libp2p/p2p/net/mock"
 )
@@ -20,7 +20,7 @@ func TestBitswapWithoutRouting(t *testing.T) {
 	const numPeers = 4
 
 	// create network
-	mn := mocknet.New(ctx)
+	mn := mocknet.New()
 
 	var nodes []*core.IpfsNode
 	for i := 0; i < numPeers; i++ {
@@ -62,7 +62,7 @@ func TestBitswapWithoutRouting(t *testing.T) {
 	block1 := blocks.NewBlock([]byte("block1"))
 
 	// put 1 before
-	if err := nodes[0].Blockstore.Put(block0); err != nil {
+	if err := nodes[0].Blockstore.Put(ctx, block0); err != nil {
 		t.Fatal(err)
 	}
 
@@ -85,7 +85,7 @@ func TestBitswapWithoutRouting(t *testing.T) {
 	}
 
 	// put 1 after
-	if err := nodes[1].Blockstore.Put(block1); err != nil {
+	if err := nodes[1].Blockstore.Put(ctx, block1); err != nil {
 		t.Fatal(err)
 	}
 
