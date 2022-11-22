@@ -62,5 +62,5 @@ func AddToken(s string, token common.Address) string {
 	if token == MpTokenAddr["WBTT"] {
 		return s
 	}
-	return fmt.Sprintf("%s_%s", s, token.String())
+	return fmt.Sprintf("%s_%s", token.String(), s)
 }

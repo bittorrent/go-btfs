@@ -406,6 +406,8 @@ func (s *Service) LastSendCheque(peer string, token common.Address) (*vault.Sign
 // LastReceivedCheques returns the list of last received cheques for all peers
 func (s *Service) LastSendCheques(token common.Address) (map[string]*vault.SignedCheque, error) {
 	lastcheques, err := s.vault.LastCheques(token)
+	fmt.Println("LastSendCheques ", lastcheques, err)
+
 	if err != nil {
 		return nil, err
 	}

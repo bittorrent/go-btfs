@@ -485,6 +485,9 @@ func (s *service) LastCheques(token common.Address) (map[common.Address]*SignedC
 	result := make(map[common.Address]*SignedCheque)
 	err := s.store.Iterate(tokencfg.AddToken(lastIssuedChequeKeyPrefix, token), func(key, val []byte) (stop bool, err error) {
 		addr, err := keyBeneficiary(key, tokencfg.AddToken(lastIssuedChequeKeyPrefix, token))
+		fmt.Println("LastCheques, iterate ", addr, err, tokencfg.AddToken(lastIssuedChequeKeyPrefix, token))
+		fmt.Println("LastCheques, iterate ", key, val, string(key), string(val))
+
 		if err != nil {
 			return false, fmt.Errorf("parse address from key: %s: %w", string(key), err)
 		}

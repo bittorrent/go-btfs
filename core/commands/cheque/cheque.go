@@ -23,6 +23,7 @@ type CashChequeRet struct {
 
 type cheque struct {
 	PeerID       string
+	Token        common.Address
 	Beneficiary  string
 	Vault        string
 	Payout       *big.Int

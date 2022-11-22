@@ -35,6 +35,7 @@ var ListSendChequesCmd = &cmds.Command{
 		for k, v := range cheques {
 			var record cheque
 			record.PeerID = k
+			record.Token = v.Token
 			record.Beneficiary = v.Beneficiary.String()
 			record.Vault = v.Vault.String()
 			record.Payout = v.CumulativePayout
