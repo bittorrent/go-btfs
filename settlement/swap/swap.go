@@ -423,7 +423,7 @@ func (s *Service) LastSendCheques(token common.Address) (map[string]*vault.Signe
 }
 
 // SendChequeRecordsByPeer returns the last received cheque for the peer
-func (s *Service) SendChequeRecordsByPeer(peer string, token common.Address) ([]vault.ChequeRecord, error) {
+func (s *Service) SendChequeRecordsByPeer(peer string) ([]vault.ChequeRecord, error) {
 	common, known, err := s.addressbook.Beneficiary(peer)
 	if err != nil {
 		return nil, err
@@ -433,19 +433,19 @@ func (s *Service) SendChequeRecordsByPeer(peer string, token common.Address) ([]
 		return nil, vault.ErrNoCheque
 	}
 
-	return s.chequeStore.SendChequeRecordsByPeer(common, token)
+	return s.chequeStore.SendChequeRecordsByPeer(common)
 }
 
 // SendChequeRecordsAll returns the last received cheque for all peer
-func (s *Service) SendChequeRecordsAll(token common.Address) ([]vault.ChequeRecord, error) {
-	mp, err := s.chequeStore.SendChequeRecordsAll(token)
+func (s *Service) SendChequeRecordsAll() ([]vault.ChequeRecord, error) {
+	mp, err := s.chequeStore.SendChequeRecordsAll()
 	if err != nil {
 		return nil, err
 	}
 
 	records := make([]vault.ChequeRecord, 0)
 	for comm, _ := range mp {
-		l, err := s.chequeStore.SendChequeRecordsByPeer(comm, token)
+		l, err := s.chequeStore.SendChequeRecordsByPeer(comm)
 		if err != nil {
 			return nil, err
 		}
