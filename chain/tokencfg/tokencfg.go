@@ -9,7 +9,7 @@ const (
 	TokenTypeName = "token-type"
 
 	bttcTestTokenWBTTHex = "0x107742eb846b86ceaaf7528d5c85cddcad3e409a"
-	bttcTestTokenTRXHex  = "0x8e009872b8a6d469939139be5e3bbd99a731212f"
+	bttcTestTokenTRXHex  = "0xb1cB0B7637C357108E1B72E191Aa41962019c7cc"
 
 	bttcTokenWBTTHex = ""
 	bttcTokenTRXHex  = ""

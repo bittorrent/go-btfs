@@ -281,6 +281,8 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
+	fmt.Println("begin send cheque: Issue ... 1")
+
 	availableBalance, err := s.reserveTotalIssued(ctx, amount, token)
 	if err != nil {
 		return nil, err
@@ -297,7 +299,7 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 	} else {
 		cumulativePayout = lastCheque.CumulativePayout
 	}
-
+	fmt.Println("begin send cheque: Issue ... 2")
 	// increase cumulativePayout by amount
 	cumulativePayout = cumulativePayout.Add(cumulativePayout, amount)
 
@@ -315,6 +317,7 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 		CumulativePayout: cumulativePayout,
 		Beneficiary:      beneficiary,
 	})
+	fmt.Println("begin send cheque: Issue ... 2.1", sig, err)
 	if err != nil {
 		return nil, err
 	}
@@ -324,10 +327,11 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 		Cheque:    cheque,
 		Signature: sig,
 	})
+	fmt.Println("begin send cheque: Issue ... 2.2", err)
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Println("begin send cheque: Issue ... 3")
 	err = s.store.Put(lastIssuedChequeKey(beneficiary, token), cheque)
 	if err != nil {
 		return nil, err
@@ -349,7 +353,7 @@ func (s *service) Issue(ctx context.Context, beneficiary common.Address, amount 
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Println("begin send cheque: Issue ... 4")
 	// totalIssued
 	totalIssued, err := s.totalIssued(token)
 	if err != nil {

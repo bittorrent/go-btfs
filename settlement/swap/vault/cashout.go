@@ -30,6 +30,7 @@ type CashoutService interface {
 	CashoutStatus(ctx context.Context, vaultAddress common.Address, token common.Address) (*CashoutStatus, error)
 	HasCashoutAction(ctx context.Context, peer common.Address, token common.Address) (bool, error)
 	CashoutResults(token common.Address) ([]CashOutResult, error)
+	CashoutResultsAll() ([]CashOutResult, error)
 }
 
 type cashoutService struct {
@@ -160,6 +161,23 @@ func (s *cashoutService) paidOutMuti(ctx context.Context, vault, beneficiary com
 func (s *cashoutService) CashoutResults(token common.Address) ([]CashOutResult, error) {
 	result := make([]CashOutResult, 0, 0)
 	err := s.store.Iterate(statestore.CashoutResultPrefixKey(token), func(key, val []byte) (stop bool, err error) {
+		cashOutResult := CashOutResult{}
+		err = s.store.Get(string(key), &cashOutResult)
+		if err != nil {
+			return false, err
+		}
+		result = append(result, cashOutResult)
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (s *cashoutService) CashoutResultsAll() ([]CashOutResult, error) {
+	result := make([]CashOutResult, 0, 0)
+	err := s.store.Iterate(statestore.CashoutResultPrefixAllKey(), func(key, val []byte) (stop bool, err error) {
 		cashOutResult := CashOutResult{}
 		err = s.store.Get(string(key), &cashOutResult)
 		if err != nil {

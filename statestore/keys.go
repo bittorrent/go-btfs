@@ -58,3 +58,7 @@ func CashoutResultPrefixKey(token common.Address) string {
 func CashoutResultKey(vault common.Address, token common.Address) string {
 	return fmt.Sprintf("%s%x_%d", CashoutResultPrefixKey(token), vault, time.Now().Unix())
 }
+
+func CashoutResultPrefixAllKey() string {
+	return "swap_cashout_result_"
+}

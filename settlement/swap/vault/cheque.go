@@ -141,7 +141,7 @@ func eip712DataForCheque(cheque *Cheque, chainID int64) *eip712.TypedData {
 		Domain: vaultDomain(chainID),
 		Types:  MutiChequeTypes,
 		Message: eip712.TypedDataMessage{
-			"token":            cheque.Token,
+			"token":            cheque.Token.Hex(),
 			"vault":            cheque.Vault.Hex(),
 			"beneficiary":      cheque.Beneficiary.Hex(),
 			"cumulativePayout": cheque.CumulativePayout.String(),

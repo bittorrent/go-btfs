@@ -104,6 +104,7 @@ func (c *vaultContractMuti) PaidOut(ctx context.Context, beneficiary common.Addr
 		return c.contractWBTT.PaidOut(ctx, beneficiary)
 	}
 
+	fmt.Println("multiTokensPaidOut ", token, beneficiary, c.address)
 	callData, err := vaultABINew.Pack("multiTokensPaidOut", token, beneficiary)
 	if err != nil {
 		return nil, err

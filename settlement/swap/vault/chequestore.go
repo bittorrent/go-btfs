@@ -166,7 +166,7 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 	// check this cheque is actually increasing in value by local storage
 	amount := big.NewInt(0).Sub(cheque.CumulativePayout, lastCumulativePayout)
 	if amount.Cmp(big.NewInt(0)) <= 0 {
-		fmt.Println("amount < 0, ", ErrChequeNotIncreasing, cheque.CumulativePayout.String(), lastCumulativePayout.String())
+		fmt.Println("amount < 0, ", ErrChequeNotIncreasing, cheque.CumulativePayout.String(), lastCumulativePayout.String(), token.Hex())
 		return nil, ErrChequeNotIncreasing
 	}
 	// blockchain calls below
@@ -206,7 +206,7 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 	// check this cheque is actually increasing in value by blockchain in case of the host migrate to another machine
 	// https://github.com/bittorrent/go-btfs/issues/187
 	if cheque.CumulativePayout.Cmp(alreadyPaidOut) <= 0 {
-		fmt.Println("CumulativePayout < alreadyPaidOut, ", ErrChequeNotIncreasing, cheque.CumulativePayout.String(), alreadyPaidOut.String())
+		fmt.Println("CumulativePayout < alreadyPaidOut, ", ErrChequeNotIncreasing, cheque.CumulativePayout.String(), alreadyPaidOut.String(), token.Hex())
 		return nil, ErrChequeNotIncreasing
 	}
 
