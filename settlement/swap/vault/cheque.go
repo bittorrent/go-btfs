@@ -21,6 +21,7 @@ type Cheque struct {
 }
 
 type ChequeRecord struct {
+	Token       common.Address
 	Vault       common.Address
 	Beneficiary common.Address
 	Amount      *big.Int

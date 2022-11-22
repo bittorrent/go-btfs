@@ -272,6 +272,7 @@ func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int, t
 
 	//stroe cheque record with the key: historyReceivedChequeKey(index)
 	chequeRecord := ChequeRecord{
+		token,
 		vault,
 		s.beneficiary,
 		amount,
@@ -454,6 +455,8 @@ func keyVault(key []byte, prefix string) (vault common.Address, err error) {
 func (s *chequeStore) LastReceivedCheques(token common.Address) (map[common.Address]*SignedCheque, error) {
 	result := make(map[common.Address]*SignedCheque)
 	err := s.store.Iterate(tokencfg.AddToken(lastReceivedChequePrefix, token), func(key, val []byte) (stop bool, err error) {
+		// if token is wbtt, need a wbtt key, other token is not this.
+
 		addr, err := keyVault(key, tokencfg.AddToken(lastReceivedChequePrefix, token)+"_")
 		if err != nil {
 			return false, fmt.Errorf("parse address from key: %s: %w", string(key), err)
@@ -534,8 +537,12 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 		*/
 	}
 
+	fmt.Printf("...1 StoreSendChequeRecord, historySendChequeIndexKey=%v, indexRange=%v \n",
+		historySendChequeIndexKey(beneficiary, token), indexRange)
+
 	//stroe cheque record with the key: historySendChequeKey(index)
 	chequeRecord := ChequeRecord{
+		token,
 		vault,
 		beneficiary,
 		amount,
@@ -546,6 +553,9 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("...2 StoreSendChequeRecord, historySendChequeKey=%v, indexRange=%v \n",
+		historySendChequeKey(beneficiary, indexRange.MaxIndex), indexRange)
 
 	//update Max : add one record
 	indexRange.MaxIndex += 1
@@ -560,6 +570,9 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("...3 StoreSendChequeRecord, historySendChequeKey=%v, indexRange=%v \n",
+		historySendChequeKey(beneficiary, indexRange.MaxIndex), indexRange)
 
 	var stat DailySentStats
 	err = s.store.Get(statestore.GetTodayTotalDailySentKey(token), &stat)
@@ -669,5 +682,9 @@ func (s *chequeStore) SendChequeRecordsAll(token common.Address) (map[common.Add
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("SendChequeRecordsAll ... result = ", result)
+	fmt.Println("SendChequeRecordsAll ... result = ", tokencfg.AddToken(sendChequeHistoryPrefix, token), tokencfg.AddToken(sendChequeHistoryPrefix, token)+"_", token)
+
 	return result, nil
 }

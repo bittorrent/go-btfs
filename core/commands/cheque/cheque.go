@@ -41,6 +41,7 @@ type ChequeRecords struct {
 
 type chequeRecordRet struct {
 	PeerId      string
+	Token       common.Address
 	Vault       common.Address
 	Beneficiary common.Address
 	Amount      *big.Int

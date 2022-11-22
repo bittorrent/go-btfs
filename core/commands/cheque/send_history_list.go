@@ -71,6 +71,7 @@ var ChequeSendHistoryListCmd = &cmds.Command{
 					}
 					r := chequeRecordRet{
 						PeerId:      peer,
+						Token:       result.Token,
 						Vault:       result.Vault,
 						Beneficiary: result.Beneficiary,
 						Amount:      result.Amount,
