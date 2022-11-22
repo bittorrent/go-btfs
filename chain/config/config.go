@@ -34,7 +34,7 @@ var (
 	bttcTestBatchAddress        = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	bttcTestVaultLogicAddressV1 = common.HexToAddress("0x212324b18255593AdE87597Fa37C2c582aD72d24")
 	bttcTestVaultLogicAddressV2 = common.HexToAddress("0x73bcbE03999913dB7229FD5dC485cf23247c58B5") // https://testnet.bttcscan.com/address/0x73bcbE03999913dB7229FD5dC485cf23247c58B5
-	bttcTestVaultLogicAddress   = common.HexToAddress("0xabB739618149A5Ce8C71b9686CFe58020AA6f9A1") // https://testnet.bttcscan.com/address/0xabB739618149A5Ce8C71b9686CFe58020AA6f9A1
+	bttcTestVaultLogicAddress   = common.HexToAddress("0x67F0366c4c0c83F55D4759D301BEe051EF01E350") // https://testnet.bttcscan.com/address/0x67F0366c4c0c83F55D4759D301BEe051EF01E350
 	bttcTestStatusAddress       = common.HexToAddress("0x38d1fF2C2e9744273E4531FA4608eB6432c1F26A")
 
 	bttcFactoryAddressV1    = common.HexToAddress("0x9AF4bEc1A30BeC47756Ecef4cf43B91592121bC9")
