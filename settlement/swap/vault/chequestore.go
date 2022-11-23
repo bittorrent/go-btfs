@@ -56,9 +56,9 @@ type ChequeStore interface {
 	// LastReceivedCheques return map[vault]cheque
 	LastReceivedCheques(token common.Address) (map[common.Address]*SignedCheque, error)
 	// ReceivedChequeRecordsByPeer returns the records we received from a specific vault.
-	ReceivedChequeRecordsByPeer(vault common.Address, token common.Address) ([]ChequeRecord, error)
+	ReceivedChequeRecordsByPeer(vault common.Address) ([]ChequeRecord, error)
 	// ListReceivedChequeRecords returns the records we received from a specific vault.
-	ReceivedChequeRecordsAll(token common.Address) (map[common.Address][]ChequeRecord, error)
+	ReceivedChequeRecordsAll() (map[common.Address][]ChequeRecord, error)
 	ReceivedStatsHistory(days int, token common.Address) ([]DailyReceivedStats, error)
 	SentStatsHistory(days int, token common.Address) ([]DailySentStats, error)
 
@@ -105,8 +105,8 @@ func lastReceivedChequeKey(vault common.Address, token common.Address) string {
 	return fmt.Sprintf("%s_%x", tokencfg.AddToken(lastReceivedChequePrefix, token), vault)
 }
 
-func historyReceivedChequeIndexKey(vault common.Address, token common.Address) string {
-	return fmt.Sprintf("%s_%x", tokencfg.AddToken(receivedChequeHistoryPrefix, token), vault)
+func historyReceivedChequeIndexKey(vault common.Address) string {
+	return fmt.Sprintf("%s_%x", receivedChequeHistoryPrefix, vault)
 }
 
 func historyReceivedChequeKey(vault common.Address, index uint64) string {
@@ -225,10 +225,10 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 }
 
 // ReceivedChequeRecords returns the records we received from a specific vault.
-func (s *chequeStore) ReceivedChequeRecordsByPeer(vault common.Address, token common.Address) ([]ChequeRecord, error) {
+func (s *chequeStore) ReceivedChequeRecordsByPeer(vault common.Address) ([]ChequeRecord, error) {
 	var records []ChequeRecord
 	var indexrange IndexRange
-	err := s.store.Get(historyReceivedChequeIndexKey(vault, token), &indexrange)
+	err := s.store.Get(historyReceivedChequeIndexKey(vault), &indexrange)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return nil, err
@@ -253,7 +253,7 @@ func (s *chequeStore) ReceivedChequeRecordsByPeer(vault common.Address, token co
 //Beneficiary common.Address
 func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int, token common.Address) error {
 	var indexRange IndexRange
-	err := s.store.Get(historyReceivedChequeIndexKey(vault, token), &indexRange)
+	err := s.store.Get(historyReceivedChequeIndexKey(vault), &indexRange)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return err
@@ -293,7 +293,7 @@ func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int, t
 	indexRange.MinIndex = minIndex
 
 	//update index
-	err = s.store.Put(historyReceivedChequeIndexKey(vault, token), indexRange)
+	err = s.store.Put(historyReceivedChequeIndexKey(vault), indexRange)
 	if err != nil {
 		return err
 	}
@@ -481,16 +481,16 @@ func (s *chequeStore) LastReceivedCheques(token common.Address) (map[common.Addr
 }
 
 // ListReceivedChequeRecords returns the last received cheques from every known vault.
-func (s *chequeStore) ReceivedChequeRecordsAll(token common.Address) (map[common.Address][]ChequeRecord, error) {
+func (s *chequeStore) ReceivedChequeRecordsAll() (map[common.Address][]ChequeRecord, error) {
 	result := make(map[common.Address][]ChequeRecord)
-	err := s.store.Iterate(tokencfg.AddToken(receivedChequeHistoryPrefix, token), func(key, val []byte) (stop bool, err error) {
-		addr, err := keyVault(key, tokencfg.AddToken(receivedChequeHistoryPrefix, token)+"_")
+	err := s.store.Iterate(receivedChequeHistoryPrefix, func(key, val []byte) (stop bool, err error) {
+		addr, err := keyVault(key, receivedChequeHistoryPrefix+"_")
 		if err != nil {
 			return false, fmt.Errorf("parse address from key: %s: %w", string(key), err)
 		}
 
 		if _, ok := result[addr]; !ok {
-			records, err := s.ReceivedChequeRecordsByPeer(addr, token)
+			records, err := s.ReceivedChequeRecordsByPeer(addr)
 			if err != nil && err != ErrNoCheque && err != ErrNoChequeRecords {
 				return false, err
 			} else if err == ErrNoCheque || err == ErrNoChequeRecords {

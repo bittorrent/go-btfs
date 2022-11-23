@@ -334,7 +334,7 @@ func (s *Service) LastReceivedCheques(token common.Address) (map[string]*vault.S
 }
 
 // LastReceivedCheque returns the last received cheque for the peer
-func (s *Service) ReceivedChequeRecordsByPeer(peer string, token common.Address) ([]vault.ChequeRecord, error) {
+func (s *Service) ReceivedChequeRecordsByPeer(peer string) ([]vault.ChequeRecord, error) {
 	common, known, err := s.addressbook.Vault(peer)
 	if err != nil {
 		return nil, err
@@ -344,19 +344,19 @@ func (s *Service) ReceivedChequeRecordsByPeer(peer string, token common.Address)
 		return nil, vault.ErrNoCheque
 	}
 
-	return s.chequeStore.ReceivedChequeRecordsByPeer(common, token)
+	return s.chequeStore.ReceivedChequeRecordsByPeer(common)
 }
 
 // ReceivedChequeRecordsAll returns the last received cheque for the peer
-func (s *Service) ReceivedChequeRecordsAll(token common.Address) ([]vault.ChequeRecord, error) {
-	mp, err := s.chequeStore.ReceivedChequeRecordsAll(token)
+func (s *Service) ReceivedChequeRecordsAll() ([]vault.ChequeRecord, error) {
+	mp, err := s.chequeStore.ReceivedChequeRecordsAll()
 	if err != nil {
 		return nil, err
 	}
 
 	records := make([]vault.ChequeRecord, 0)
 	for comm, _ := range mp {
-		l, err := s.chequeStore.ReceivedChequeRecordsByPeer(comm, token)
+		l, err := s.chequeStore.ReceivedChequeRecordsByPeer(comm)
 		if err != nil {
 			return nil, err
 		}
@@ -370,15 +370,15 @@ func (s *Service) ReceivedChequeRecordsAll(token common.Address) ([]vault.Cheque
 }
 
 // ReceivedChequeRecordsCount returns the last received cheque for the peer
-func (s *Service) ReceivedChequeRecordsCount(token common.Address) (int, error) {
-	mp, err := s.chequeStore.ReceivedChequeRecordsAll(token)
+func (s *Service) ReceivedChequeRecordsCount() (int, error) {
+	mp, err := s.chequeStore.ReceivedChequeRecordsAll()
 	if err != nil {
 		return 0, err
 	}
 
 	count := 0
 	for comm, _ := range mp {
-		l, err := s.chequeStore.ReceivedChequeRecordsByPeer(comm, token)
+		l, err := s.chequeStore.ReceivedChequeRecordsByPeer(comm)
 		if err != nil {
 			return 0, err
 		}
