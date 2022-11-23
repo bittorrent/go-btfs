@@ -35,6 +35,14 @@ type ListChequeRet struct {
 	Len     int
 }
 
+type ReceiveCheque struct {
+	PeerID           string
+	Token            common.Address
+	Vault            common.Address
+	Beneficiary      common.Address
+	CumulativePayout *big.Int
+}
+
 type ChequeRecords struct {
 	Records []chequeRecordRet
 	Len     int
@@ -63,6 +71,7 @@ Vault services include issue cheque to peer, receive cheque and store operations
 
 		"send":                   SendChequeCmd,
 		"sendlist":               ListSendChequesCmd,
+		"sendlistall":            ListSendChequesAllCmd,
 		"send-history-peer":      ChequeSendHistoryPeerCmd,
 		"send-history-list":      ChequeSendHistoryListCmd,
 		"send-history-stats":     ChequeSendHistoryStatsCmd,
@@ -71,6 +80,7 @@ Vault services include issue cheque to peer, receive cheque and store operations
 
 		"receive":                   ReceiveChequeCmd,
 		"receivelist":               ListReceiveChequeCmd,
+		"receivelistall":            ListReceiveChequeAllCmd,
 		"receive-history-peer":      ChequeReceiveHistoryPeerCmd,
 		"receive-history-list":      ChequeReceiveHistoryListCmd,
 		"receive-history-stats":     ChequeReceiveHistoryStatsCmd,
