@@ -141,8 +141,16 @@ func InitSettlement(
 	}
 	erc20Service := erc20.New(chaininfo.Backend, chaininfo.TransactionService, erc20Address)
 
+	fmt.Println("...InitSettlement  erc20Address ", erc20Address)
+
+	// muti tokens
+	mpErc20Service := make(map[string]erc20.Service)
+	for k, tokenAddr := range tokencfg.MpTokenAddr {
+		mpErc20Service[k] = erc20.New(chaininfo.Backend, chaininfo.TransactionService, tokenAddr)
+	}
+
 	// init bttc service
-	bttcService := bttc.New(chaininfo.TransactionService, erc20Service)
+	bttcService := bttc.New(chaininfo.TransactionService, erc20Service, mpErc20Service)
 
 	//initChequeStoreCashout
 	chequeStore, cashoutService := initChequeStoreCashout(
@@ -176,6 +184,7 @@ func InitSettlement(
 		deployGasPrice,
 		chequeStore,
 		erc20Service,
+		mpErc20Service,
 	)
 
 	if err != nil {
@@ -257,6 +266,7 @@ func initVaultService(
 	deployGasPrice string,
 	chequeStore vault.ChequeStore,
 	erc20Service erc20.Service,
+	mpErc20Service map[string]erc20.Service,
 ) (vault.Service, error) {
 	chequeSigner := vault.NewChequeSigner(signer, chainID)
 
@@ -281,6 +291,7 @@ func initVaultService(
 		chequeSigner,
 		chequeStore,
 		erc20Service,
+		mpErc20Service,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("vault init: %w", err)

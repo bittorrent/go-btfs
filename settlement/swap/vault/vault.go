@@ -124,15 +124,16 @@ func (s *service) Address() common.Address {
 
 // Deposit starts depositing erc20 token into the vault. This returns once the transactions has been broadcast.
 func (s *service) Deposit(ctx context.Context, amount *big.Int, token common.Address) (hash common.Hash, err error) {
-	balance, err := s.erc20Service.BalanceOf(ctx, s.ownerAddress)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	// check we can afford this so we don't waste gas
-	if balance.Cmp(amount) < 0 {
-		return common.Hash{}, ErrInsufficientFunds
-	}
+	//balance, err := s.erc20Service.BalanceOf(ctx, s.ownerAddress)
+	//if err != nil {
+	//	return common.Hash{}, err
+	//}
+	//
+	//fmt.Println("Deposit ", balance.String(), amount.String())
+	//// check we can afford this so we don't waste gas
+	//if balance.Cmp(amount) < 0 {
+	//	return common.Hash{}, ErrInsufficientFunds
+	//}
 
 	return s.contract.Deposit(ctx, amount, token)
 }

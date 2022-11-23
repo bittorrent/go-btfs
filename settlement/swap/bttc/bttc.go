@@ -31,14 +31,16 @@ type Service interface {
 }
 
 type service struct {
-	trxService   transaction.Service
-	erc20Service erc20.Service
+	trxService     transaction.Service
+	erc20Service   erc20.Service
+	mpErc20Service map[string]erc20.Service
 }
 
-func New(trxSvc transaction.Service, erc20Svc erc20.Service) Service {
+func New(trxSvc transaction.Service, erc20Svc erc20.Service, mpErc20Service map[string]erc20.Service) Service {
 	return &service{
-		trxService:   trxSvc,
-		erc20Service: erc20Svc,
+		trxService:     trxSvc,
+		erc20Service:   erc20Svc,
+		mpErc20Service: mpErc20Service,
 	}
 }
 

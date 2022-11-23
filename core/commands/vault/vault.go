@@ -12,6 +12,7 @@ Vault services include balance, address, withdraw, deposit operations.`,
 	},
 	Subcommands: map[string]*cmds.Command{
 		"balance":     VaultBalanceCmd,
+		"balance_all": VaultBalanceAllCmd,
 		"address":     VaultAddrCmd,
 		"withdraw":    VaultWithdrawCmd,
 		"deposit":     VaultDepositCmd,

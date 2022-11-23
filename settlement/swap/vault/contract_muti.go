@@ -177,7 +177,9 @@ func (c *vaultContractMuti) Deposit(ctx context.Context, amount *big.Int, token 
 		return c.contractWBTT.Deposit(ctx, amount)
 	}
 
+	fmt.Println("1 Deposit ", token, amount)
 	callData, err := vaultABINew.Pack("multiTokenDeposit", token, amount)
+	fmt.Println("2 Deposit err", err)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -186,6 +188,7 @@ func (c *vaultContractMuti) Deposit(ctx context.Context, amount *big.Int, token 
 		To:   &c.address,
 		Data: callData,
 	})
+	fmt.Println("3 Deposit err", err)
 	if err != nil {
 		return hash, err
 	}

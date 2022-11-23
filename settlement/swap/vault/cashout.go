@@ -183,7 +183,7 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 		return common.Hash{}, err
 	}
 
-	fmt.Println("_CashCheque ", vault, recipient, cheque.CumulativePayout, hexutils.BytesToHex(cheque.Signature))
+	fmt.Println("_CashCheque ", vault, recipient, cheque.CumulativePayout, hexutils.BytesToHex(cheque.Signature), cheque.Token)
 
 	//callData, err := vaultABI.Pack("cashChequeBeneficiary", recipient, cheque.CumulativePayout, cheque.Signature)
 	//if err != nil {
