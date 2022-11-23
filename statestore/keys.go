@@ -51,12 +51,12 @@ func GetTotalDailySentKeyByTime(timestamp int64, token common.Address) string {
 	return fmt.Sprintf("%s%d", tokencfg.AddToken(TotalDailySentKey, token), timestamp)
 }
 
-func CashoutResultPrefixKey(token common.Address) string {
-	return tokencfg.AddToken("swap_cashout_result_", token)
+func CashoutResultPrefixKey() string {
+	return "swap_cashout_result_"
 }
 
-func CashoutResultKey(vault common.Address, token common.Address) string {
-	return fmt.Sprintf("%s%x_%d", CashoutResultPrefixKey(token), vault, time.Now().Unix())
+func CashoutResultKey(vault common.Address) string {
+	return fmt.Sprintf("%s%x_%d", CashoutResultPrefixKey(), vault, time.Now().Unix())
 }
 
 func CashoutResultPrefixAllKey() string {

@@ -29,8 +29,7 @@ type CashoutService interface {
 	// CashoutStatus gets the status of the latest cashout transaction for the vault
 	CashoutStatus(ctx context.Context, vaultAddress common.Address, token common.Address) (*CashoutStatus, error)
 	HasCashoutAction(ctx context.Context, peer common.Address, token common.Address) (bool, error)
-	CashoutResults(token common.Address) ([]CashOutResult, error)
-	CashoutResultsAll() ([]CashOutResult, error)
+	CashoutResults() ([]CashOutResult, error)
 }
 
 type cashoutService struct {
@@ -73,6 +72,7 @@ type cashoutAction struct {
 
 type CashOutResult struct {
 	TxHash   common.Hash
+	Token    common.Address
 	Vault    common.Address
 	Amount   *big.Int
 	CashTime int64
@@ -158,26 +158,9 @@ func (s *cashoutService) paidOutMuti(ctx context.Context, vault, beneficiary com
 	return _PaidOutMuti(ctx, vault, beneficiary, s.transactionService, token)
 }
 
-func (s *cashoutService) CashoutResults(token common.Address) ([]CashOutResult, error) {
+func (s *cashoutService) CashoutResults() ([]CashOutResult, error) {
 	result := make([]CashOutResult, 0, 0)
-	err := s.store.Iterate(statestore.CashoutResultPrefixKey(token), func(key, val []byte) (stop bool, err error) {
-		cashOutResult := CashOutResult{}
-		err = s.store.Get(string(key), &cashOutResult)
-		if err != nil {
-			return false, err
-		}
-		result = append(result, cashOutResult)
-		return false, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (s *cashoutService) CashoutResultsAll() ([]CashOutResult, error) {
-	result := make([]CashOutResult, 0, 0)
-	err := s.store.Iterate(statestore.CashoutResultPrefixAllKey(), func(key, val []byte) (stop bool, err error) {
+	err := s.store.Iterate(statestore.CashoutResultPrefixKey(), func(key, val []byte) (stop bool, err error) {
 		cashOutResult := CashOutResult{}
 		err = s.store.Get(string(key), &cashOutResult)
 		if err != nil {
@@ -247,6 +230,7 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 	cashResult := CashOutResult{
 		TxHash:   txHash,
 		Vault:    vault,
+		Token:    token,
 		Amount:   cheque.CumulativePayout,
 		CashTime: time.Now().Unix(),
 		Status:   "fail",
@@ -311,7 +295,7 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 			}
 		}
 	}
-	err = s.store.Put(statestore.CashoutResultKey(vault, token), &cashResult)
+	err = s.store.Put(statestore.CashoutResultKey(vault), &cashResult)
 	if err != nil {
 		log.Infof("CashOutStats:put cashoutResultKey err:%+v", err)
 	}
