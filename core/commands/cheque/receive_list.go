@@ -66,6 +66,7 @@ var ListReceiveChequeCmd = &cmds.Command{
 			v := cheques[k]
 			var record cheque
 			record.PeerID = k
+			record.Token = v.Token.String()
 			record.Beneficiary = v.Beneficiary.String()
 			record.Vault = v.Vault.String()
 			record.Payout = v.CumulativePayout
