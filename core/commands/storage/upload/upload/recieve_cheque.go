@@ -2,7 +2,10 @@ package upload
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 	"time"
 
@@ -21,9 +24,12 @@ var StorageUploadChequeCmd = &cmds.Command{
 		cmds.StringArg("encoded-cheque", true, false, "encoded-cheque from peer-id."),
 		cmds.StringArg("amount", true, false, "amount"),
 		cmds.StringArg("contract-id", false, false, "contract-id."),
+		cmds.StringArg("token", true, false, "token."),
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		fmt.Printf("receive cheque ...\n")
+
 		ctxParams, err := uh.ExtractContextParams(req, env)
 		if err != nil {
 			return err
@@ -44,10 +50,18 @@ var StorageUploadChequeCmd = &cmds.Command{
 
 		encodedCheque := req.Arguments[0]
 		contractId := req.Arguments[2]
-		fmt.Printf("receive cheque, requestPid:%s contractId:%+v,encodedCheque:%+v \n", requestPid.String(), contractId, encodedCheque)
+		tokenHex := req.Arguments[3]
+		fmt.Printf("receive cheque, requestPid:%s contractId:%+v,encodedCheque:%+v token:%+v\n",
+			requestPid.String(), contractId, encodedCheque, tokenHex)
+
+		token := common.HexToAddress(tokenHex)
+		_, bl := tokencfg.MpTokenStr[token]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
 
 		// decode and deal the cheque
-		err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price)
+		err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price, token)
 		if err != nil {
 			fmt.Println("receive cheque, swapprotocol.SwapProtocol.Handler, error:", err)
 			return err

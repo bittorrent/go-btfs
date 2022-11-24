@@ -65,6 +65,7 @@ func Init(
 	chequeSigner ChequeSigner,
 	chequeStore ChequeStore,
 	erc20Service erc20.Service,
+	mpErc20Service map[string]erc20.Service,
 ) (vaultService Service, err error) {
 
 	// verify that the supplied factory is valid
@@ -92,6 +93,14 @@ func Init(
 	err = erc20tokenApprove(ctx, erc20Service, overlayEthAddress, vaultAddress)
 	if err != nil {
 		return nil, err
+	}
+
+	// muti tokens
+	for _, erc20Svr := range mpErc20Service {
+		err = erc20tokenApprove(ctx, erc20Svr, overlayEthAddress, vaultAddress)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	vaultService, err = New(transactionService, vaultAddress, overlayEthAddress, stateStore, chequeSigner, erc20Service, chequeStore)

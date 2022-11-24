@@ -24,7 +24,6 @@ var ChequeReceiveHistoryListCmd = &cmds.Command{
 		cmds.StringArg("from", true, false, "page offset"),
 		cmds.StringArg("limit", true, false, "page limit."),
 	},
-
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		from, err := strconv.Atoi(req.Arguments[0])
 		if err != nil {
@@ -66,6 +65,7 @@ var ChequeReceiveHistoryListCmd = &cmds.Command{
 					}
 					r := chequeRecordRet{
 						PeerId:      peer,
+						Token:       result.Token,
 						Vault:       result.Vault,
 						Beneficiary: result.Beneficiary,
 						Amount:      result.Amount,

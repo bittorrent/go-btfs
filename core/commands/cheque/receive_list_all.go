@@ -1,7 +1,6 @@
 package cheque
 
 import (
-	"errors"
 	"fmt"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
@@ -10,20 +9,16 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
-	"go4.org/sort"
 	"golang.org/x/net/context"
 )
 
-var ListReceiveChequeCmd = &cmds.Command{
+var ListReceiveChequeAllCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "List cheque(s) received from peers.",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("offset", true, false, "page offset"),
 		cmds.StringArg("limit", true, false, "page limit."),
-	},
-	Options: []cmds.Option{
-		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		offset, err := strconv.Atoi(req.Arguments[0])
@@ -34,40 +29,41 @@ var ListReceiveChequeCmd = &cmds.Command{
 		if err != nil {
 			return fmt.Errorf("parse limit:%v failed", req.Arguments[1])
 		}
-		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
-		fmt.Printf("... token:%+v\n", tokenStr)
-		token, bl := tokencfg.MpTokenAddr[tokenStr]
-		if !bl {
-			return errors.New("your input token is none. ")
+
+		listCheques := make([]ReceiveCheque, 0)
+		for _, tokenAddr := range tokencfg.MpTokenAddr {
+			cheques, err := chain.SettleObject.SwapService.LastReceivedCheques(tokenAddr)
+			if err != nil {
+				return err
+			}
+			for k, v := range cheques {
+				var record ReceiveCheque
+				record.PeerID = k
+				record.Token = v.Token
+				record.Vault = v.Vault
+				record.Beneficiary = v.Beneficiary
+				record.CumulativePayout = v.CumulativePayout
+
+				listCheques = append(listCheques, record)
+			}
 		}
 
-		fmt.Println("receive list ... 1")
-		var listRet ListChequeRet
-		cheques, err := chain.SettleObject.SwapService.LastReceivedCheques(token)
-		fmt.Println("receive list ... 2", cheques, err)
+		//sort.Strings(listCheques)
 
-		if err != nil {
-			return err
-		}
-		peerIds := make([]string, 0, len(cheques))
-		for key := range cheques {
-			peerIds = append(peerIds, key)
-		}
-		sort.Strings(peerIds)
 		//[offset:offset+limit]
-		if len(peerIds) < offset+1 {
-			peerIds = peerIds[0:0]
+		if len(listCheques) < offset+1 {
+			listCheques = listCheques[0:0]
 		} else {
-			peerIds = peerIds[offset:]
+			listCheques = listCheques[offset:]
 		}
 
-		if len(peerIds) > limit {
-			peerIds = peerIds[:limit]
+		if len(listCheques) > limit {
+			listCheques = listCheques[:limit]
 		}
 
-		fmt.Println("receive list ... 3")
-		for _, k := range peerIds {
-			v := cheques[k]
+		var listRet ListChequeRet
+		for _, v := range listCheques {
+			k := v.PeerID
 			var record cheque
 			record.PeerID = k
 			record.Token = v.Token.String()
@@ -75,8 +71,7 @@ var ListReceiveChequeCmd = &cmds.Command{
 			record.Vault = v.Vault.String()
 			record.Payout = v.CumulativePayout
 
-			cashStatus, err := chain.SettleObject.CashoutService.CashoutStatus(context.Background(), v.Vault, token)
-			fmt.Println("receive list ... 3.2", cashStatus, err, token)
+			cashStatus, err := chain.SettleObject.CashoutService.CashoutStatus(context.Background(), v.Vault, v.Token)
 			if err != nil {
 				return err
 			}
@@ -86,7 +81,7 @@ var ListReceiveChequeCmd = &cmds.Command{
 
 			listRet.Cheques = append(listRet.Cheques, record)
 		}
-		fmt.Println("receive list ... 4")
+
 		listRet.Len = len(listRet.Cheques)
 		return cmds.EmitOnce(res, &listRet)
 	},

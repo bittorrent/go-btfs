@@ -7,6 +7,7 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -443,6 +444,8 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		}
 	}
 
+	tokencfg.InitToken(chainid)
+
 	//endpoint
 	chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000),
 		chainid, cfg.Identity.PeerID, chainCfg)
@@ -471,7 +474,7 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	}
 
 	/*settleinfo*/
-	_, err = chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
+	settleInfo, err := chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
 	if err != nil {
 		fmt.Println("init settlement err: ", err)
 		if strings.Contains(err.Error(), "insufficient funds") {
@@ -483,6 +486,21 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		}
 
 		return err
+	}
+
+	/*upgrade vault implementation*/
+	oldImpl, newImpl, err := settleInfo.VaultService.UpgradeTo(context.Background(), chainInfo.Chainconfig.VaultLogicAddress)
+	if err != nil {
+		emsg := err.Error()
+		if strings.Contains(emsg, "already upgraded") {
+			fmt.Printf("vault implementation is updated: %s\n", chainInfo.Chainconfig.VaultLogicAddress)
+			err = nil
+		} else {
+			fmt.Println("upgrade vault implementation err: ", err)
+			return err
+		}
+	} else {
+		fmt.Printf("vault logic implementation upgrade from %s to %s\n", oldImpl, newImpl)
 	}
 
 	// init report status contract

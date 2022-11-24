@@ -56,7 +56,7 @@ func TestVaultBalance(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	returnedBalance, err := vaultService.TotalBalance(context.Background())
+	returnedBalance, err := vaultService.TotalBalance(context.Background(), _token)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,15 +200,15 @@ func TestVaultWaitForDepositReverted(t *testing.T) {
 // 	vaultService, err := vault.New(
 // 		transactionmock.New(
 // 			transactionmock.WithABICallSequence(
-// 				transactionmock.ABICall(&vaultABI, address, big.NewInt(100).FillBytes(make([]byte, 32)), "totalbalance"),
-// 				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalPaidOut"),
-// 				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", beneficiary),
-// 				transactionmock.ABICall(&vaultABI, address, big.NewInt(100).FillBytes(make([]byte, 32)), "totalbalance"),
-// 				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalPaidOut"),
-// 				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", beneficiary),
-// 				transactionmock.ABICall(&vaultABI, address, big.NewInt(100).FillBytes(make([]byte, 32)), "totalbalance"),
-// 				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalPaidOut"),
-// 				transactionmock.ABICall(&vaultABI, address, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", ownerAdress),
+// 				transactionmock.ABICall(&vaultABINew, address, big.NewInt(100).FillBytes(make([]byte, 32)), "totalbalance"),
+// 				transactionmock.ABICall(&vaultABINew, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalPaidOut"),
+// 				transactionmock.ABICall(&vaultABINew, address, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", beneficiary),
+// 				transactionmock.ABICall(&vaultABINew, address, big.NewInt(100).FillBytes(make([]byte, 32)), "totalbalance"),
+// 				transactionmock.ABICall(&vaultABINew, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalPaidOut"),
+// 				transactionmock.ABICall(&vaultABINew, address, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", beneficiary),
+// 				transactionmock.ABICall(&vaultABINew, address, big.NewInt(100).FillBytes(make([]byte, 32)), "totalbalance"),
+// 				transactionmock.ABICall(&vaultABINew, address, big.NewInt(0).FillBytes(make([]byte, 32)), "totalPaidOut"),
+// 				transactionmock.ABICall(&vaultABINew, address, big.NewInt(0).FillBytes(make([]byte, 32)), "paidOut", ownerAdress),
 // 			),
 // 		),
 // 		address,
