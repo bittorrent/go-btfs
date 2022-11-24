@@ -7,9 +7,10 @@ var BttcCmd = &cmds.Command{
 		Tagline: "Interact with bttc related services.",
 	},
 	Subcommands: map[string]*cmds.Command{
-		"btt2wbtt":     BttcBtt2WbttCmd,
-		"wbtt2btt":     BttcWbtt2BttCmd,
-		"send-btt-to":  BttcSendBttToCmd,
-		"send-wbtt-to": BttcSendWbttToCmd,
+		"btt2wbtt":      BttcBtt2WbttCmd,
+		"wbtt2btt":      BttcWbtt2BttCmd,
+		"send-btt-to":   BttcSendBttToCmd,
+		"send-wbtt-to":  BttcSendWbttToCmd,
+		"send-token-to": BttcSendTokenToCmd,
 	},
 }
