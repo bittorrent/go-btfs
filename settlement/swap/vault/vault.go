@@ -73,6 +73,8 @@ type Service interface {
 	LastCheques(token common.Address) (map[common.Address]*SignedCheque, error)
 	// WbttBalanceOf retrieve the addr balance
 	WBTTBalanceOf(ctx context.Context, addr common.Address) (*big.Int, error)
+	// TokenBalanceOf retrieve the addr balance
+	TokenBalanceOf(ctx context.Context, addr common.Address, tokenStr string) (*big.Int, error)
 	// BTTBalanceOf retrieve the btt balance of addr
 	BTTBalanceOf(ctx context.Context, address common.Address, block *big.Int) (*big.Int, error)
 	// TotalPaidOut return total pay out of the vault
@@ -91,7 +93,8 @@ type service struct {
 	contract     *vaultContractMuti
 	ownerAddress common.Address
 
-	erc20Service erc20.Service
+	erc20Service   erc20.Service
+	mpErc20Service map[string]erc20.Service
 
 	store        storage.StateStorer
 	chequeSigner ChequeSigner
@@ -102,13 +105,14 @@ type service struct {
 
 // New creates a new vault service for the provided vault contract.
 func New(transactionService transaction.Service, address, ownerAddress common.Address, store storage.StateStorer,
-	chequeSigner ChequeSigner, erc20Service erc20.Service, chequeStore ChequeStore) (Service, error) {
+	chequeSigner ChequeSigner, erc20Service erc20.Service, mpErc20Service map[string]erc20.Service, chequeStore ChequeStore) (Service, error) {
 	return &service{
 		transactionService: transactionService,
 		address:            address,
 		contract:           newVaultContractMuti(address, transactionService),
 		ownerAddress:       ownerAddress,
 		erc20Service:       erc20Service,
+		mpErc20Service:     mpErc20Service,
 		store:              store,
 		chequeSigner:       chequeSigner,
 		//totalIssuedReserved:   big.NewInt(0),
@@ -559,6 +563,10 @@ func (s *service) Withdraw(ctx context.Context, amount *big.Int, token common.Ad
 
 func (s *service) WBTTBalanceOf(ctx context.Context, addr common.Address) (*big.Int, error) {
 	return s.erc20Service.BalanceOf(ctx, addr)
+}
+
+func (s *service) TokenBalanceOf(ctx context.Context, addr common.Address, tokenStr string) (*big.Int, error) {
+	return s.mpErc20Service[tokenStr].BalanceOf(ctx, addr)
 }
 
 func (s *service) BTTBalanceOf(ctx context.Context, address common.Address, block *big.Int) (*big.Int, error) {
