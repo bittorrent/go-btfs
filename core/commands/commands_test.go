@@ -331,6 +331,12 @@ func TestCommands(t *testing.T) {
 		"/statuscontract/config",
 		"/statuscontract/report_online_server",
 		"/statuscontract/report_status_contract",
+		"/bittorrent",
+		"/bittorrent/download",
+		"/bittorrent/serve",
+		"/bittorrent/scrape",
+		"/bittorrent/metainfo",
+		"/bittorrent/bencode",
 	}
 
 	cmdSet := make(map[string]struct{})
