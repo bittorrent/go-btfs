@@ -271,7 +271,7 @@ var downloadBTCmd = &cmds.Command{
 		}
 
 		btfsBinaryPath := "btfs"
-		cmd := exec.Command(btfsBinaryPath, "add", "-r", t.Name())
+		cmd := exec.Command(btfsBinaryPath, "add", "-r", "--pin", t.Name())
 
 		go func() {
 			time.Sleep(10 * time.Minute)
