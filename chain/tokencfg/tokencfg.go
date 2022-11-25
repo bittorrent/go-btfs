@@ -8,11 +8,24 @@ import (
 const (
 	TokenTypeName = "token-type"
 
-	bttcTestTokenWBTTHex = "0x107742eb846b86ceaaf7528d5c85cddcad3e409a"
-	bttcTestTokenTRXHex  = "0xb1cB0B7637C357108E1B72E191Aa41962019c7cc"
+	WBTT = "WBTT"
+	TRX  = "TRX"
+	USDD = "USDD"
+	USDT = "USDT"
+	TST  = "TST"
 
-	bttcTokenWBTTHex = "0x23181F21DEa5936e24163FFABa4Ea3B316B57f3C"
-	bttcTokenTRXHex  = "0xEdf53026aeA60f8F75FcA25f8830b7e2d6200662"
+	// online
+	bttcWBTTHex = "0x23181F21DEa5936e24163FFABa4Ea3B316B57f3C"
+	bttcTRXHex  = ""
+	bttcUSDDHex = ""
+	bttcUSDTHex = ""
+
+	// test
+	bttcTestWBTTHex = "0x107742eb846b86ceaaf7528d5c85cddcad3e409a"
+	bttcTestTRXHex  = "0x8e009872b8a6d469939139be5e3bbd99a731212f"
+	bttcTestUSDDHex = "0xa092706717dcb6892b93f0baacc07b902dbd509c"
+	bttcTestUSDTHex = "0x7b906030735435422675e0679bc02dae7dfc71da"
+	bttcTestTSTHex  = "0xb1cB0B7637C357108E1B72E191Aa41962019c7cc"
 )
 
 var chainIDStore int64
@@ -30,17 +43,27 @@ func InitToken(chainID int64) {
 	fmt.Println("------ InitToken ", chainIDStore)
 
 	if chainID == 199 {
-		MpTokenAddr["WBTT"] = common.HexToAddress(bttcTokenWBTTHex)
-		MpTokenAddr["TRX"] = common.HexToAddress(bttcTokenTRXHex)
+		MpTokenAddr[WBTT] = common.HexToAddress(bttcWBTTHex)
+		MpTokenAddr[TRX] = common.HexToAddress(bttcTRXHex)
+		MpTokenAddr[USDD] = common.HexToAddress(bttcUSDDHex)
+		MpTokenAddr[USDT] = common.HexToAddress(bttcUSDTHex)
 
-		MpTokenStr[common.HexToAddress(bttcTokenWBTTHex)] = "WBTT"
-		MpTokenStr[common.HexToAddress(bttcTokenTRXHex)] = "TRX"
+		MpTokenStr[common.HexToAddress(bttcWBTTHex)] = WBTT
+		MpTokenStr[common.HexToAddress(bttcTRXHex)] = TRX
+		MpTokenStr[common.HexToAddress(bttcUSDDHex)] = USDD
+		MpTokenStr[common.HexToAddress(bttcUSDTHex)] = USDT
 	} else {
-		MpTokenAddr["WBTT"] = common.HexToAddress(bttcTestTokenWBTTHex)
-		MpTokenAddr["TRX"] = common.HexToAddress(bttcTestTokenTRXHex)
+		MpTokenAddr[WBTT] = common.HexToAddress(bttcTestWBTTHex)
+		MpTokenAddr[TRX] = common.HexToAddress(bttcTestTRXHex)
+		MpTokenAddr[USDD] = common.HexToAddress(bttcTestUSDDHex)
+		MpTokenAddr[USDT] = common.HexToAddress(bttcTestUSDTHex)
+		MpTokenAddr[TST] = common.HexToAddress(bttcTestTSTHex)
 
-		MpTokenStr[common.HexToAddress(bttcTestTokenWBTTHex)] = "WBTT"
-		MpTokenStr[common.HexToAddress(bttcTestTokenTRXHex)] = "TRX"
+		MpTokenStr[common.HexToAddress(bttcTestWBTTHex)] = WBTT
+		MpTokenStr[common.HexToAddress(bttcTestTRXHex)] = TRX
+		MpTokenStr[common.HexToAddress(bttcTestUSDDHex)] = USDD
+		MpTokenStr[common.HexToAddress(bttcTestUSDTHex)] = USDT
+		MpTokenStr[common.HexToAddress(bttcTestTSTHex)] = TST
 	}
 }
 
@@ -48,9 +71,9 @@ func GetWbttToken() common.Address {
 	fmt.Println("------ GetWbttToken ", chainIDStore)
 
 	if chainIDStore == 199 {
-		return common.HexToAddress(bttcTokenWBTTHex)
+		return common.HexToAddress(bttcWBTTHex)
 	} else {
-		return common.HexToAddress(bttcTestTokenWBTTHex)
+		return common.HexToAddress(bttcTestWBTTHex)
 	}
 }
 
