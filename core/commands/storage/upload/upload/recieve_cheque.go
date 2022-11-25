@@ -24,7 +24,7 @@ var StorageUploadChequeCmd = &cmds.Command{
 		cmds.StringArg("encoded-cheque", true, false, "encoded-cheque from peer-id."),
 		cmds.StringArg("amount", true, false, "amount"),
 		cmds.StringArg("contract-id", false, false, "contract-id."),
-		cmds.StringArg("token", true, false, "token."),
+		cmds.StringArg("token", false, false, "token."),
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {

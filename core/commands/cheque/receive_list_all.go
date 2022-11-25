@@ -5,6 +5,7 @@ import (
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 	"math/big"
+	"sort"
 	"strconv"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -48,7 +49,9 @@ var ListReceiveChequeAllCmd = &cmds.Command{
 			}
 		}
 
-		//sort.Strings(listCheques)
+		sort.Slice(listCheques, func(i, j int) bool {
+			return listCheques[i].PeerID < listCheques[j].PeerID
+		})
 
 		//[offset:offset+limit]
 		if len(listCheques) < offset+1 {
