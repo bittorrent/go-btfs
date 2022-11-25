@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/settlement/swap/erc20"
 	"math/big"
 	"testing"
 
@@ -16,6 +17,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+var TOKEN = common.HexToAddress("0x000")
+
 func TestVaultAddress(t *testing.T) {
 	address := common.HexToAddress("0xabcd")
 	ownerAdress := common.HexToAddress("0xfff")
@@ -26,6 +29,7 @@ func TestVaultAddress(t *testing.T) {
 		nil,
 		&chequeSignerMock{},
 		erc20mock.New(),
+		make(map[string]erc20.Service),
 		nil,
 	)
 	if err != nil {
@@ -50,13 +54,14 @@ func TestVaultBalance(t *testing.T) {
 		nil,
 		&chequeSignerMock{},
 		erc20mock.New(),
+		make(map[string]erc20.Service),
 		nil,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	returnedBalance, err := vaultService.TotalBalance(context.Background(), _token)
+	returnedBalance, err := vaultService.TotalBalance(context.Background(), TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,13 +108,14 @@ func TestVaultDeposit(t *testing.T) {
 				return txHash, nil
 			}),
 		),
+		make(map[string]erc20.Service),
 		nil,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	returnedTxHash, err := vaultService.Deposit(context.Background(), depositAmount)
+	returnedTxHash, err := vaultService.Deposit(context.Background(), depositAmount, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,6 +145,7 @@ func TestVaultWaitForDeposit(t *testing.T) {
 		nil,
 		&chequeSignerMock{},
 		erc20mock.New(),
+		make(map[string]erc20.Service),
 		nil,
 	)
 	if err != nil {
@@ -171,6 +178,7 @@ func TestVaultWaitForDepositReverted(t *testing.T) {
 		nil,
 		&chequeSignerMock{},
 		erc20mock.New(),
+		make(map[string]erc20.Service),
 		nil,
 	)
 	if err != nil {
@@ -361,6 +369,7 @@ func TestVaultIssueErrorSend(t *testing.T) {
 		store,
 		chequeSigner,
 		erc20mock.New(),
+		make(map[string]erc20.Service),
 		nil,
 	)
 	if err != nil {
@@ -371,7 +380,7 @@ func TestVaultIssueErrorSend(t *testing.T) {
 		return sig, nil
 	}
 
-	_, err = vaultService.Issue(context.Background(), beneficiary, amount, func(cheque *vault.SignedCheque) error {
+	_, err = vaultService.Issue(context.Background(), beneficiary, amount, TOKEN, func(cheque *vault.SignedCheque) error {
 		return errors.New("err")
 	})
 	if err == nil {
@@ -379,7 +388,7 @@ func TestVaultIssueErrorSend(t *testing.T) {
 	}
 
 	// verify the cheque was not saved
-	_, err = vaultService.LastCheque(beneficiary)
+	_, err = vaultService.LastCheque(beneficiary, TOKEN)
 	if !errors.Is(err, vault.ErrNoCheque) {
 		t.Fatalf("wrong error. wanted %v, got %v", vault.ErrNoCheque, err)
 	}
@@ -404,13 +413,14 @@ func TestVaultIssueOutOfFunds(t *testing.T) {
 		store,
 		&chequeSignerMock{},
 		erc20mock.New(),
+		make(map[string]erc20.Service),
 		nil,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = vaultService.Issue(context.Background(), beneficiary, amount, func(cheque *vault.SignedCheque) error {
+	_, err = vaultService.Issue(context.Background(), beneficiary, amount, TOKEN, func(cheque *vault.SignedCheque) error {
 		return nil
 	})
 	if !errors.Is(err, vault.ErrOutOfFunds) {
@@ -418,7 +428,7 @@ func TestVaultIssueOutOfFunds(t *testing.T) {
 	}
 
 	// verify the cheque was not saved
-	_, err = vaultService.LastCheque(beneficiary)
+	_, err = vaultService.LastCheque(beneficiary, TOKEN)
 
 	if !errors.Is(err, vault.ErrNoCheque) {
 		t.Fatalf("wrong error. wanted %v, got %v", vault.ErrNoCheque, err)
@@ -445,13 +455,14 @@ func TestVaultWithdraw(t *testing.T) {
 		store,
 		&chequeSignerMock{},
 		erc20mock.New(),
+		make(map[string]erc20.Service),
 		nil,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	returnedTxHash, err := vaultService.Withdraw(context.Background(), withdrawAmount)
+	returnedTxHash, err := vaultService.Withdraw(context.Background(), withdrawAmount, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -480,13 +491,14 @@ func TestVaultWithdrawInsufficientFunds(t *testing.T) {
 		store,
 		&chequeSignerMock{},
 		erc20mock.New(),
+		make(map[string]erc20.Service),
 		nil,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = vaultService.Withdraw(context.Background(), withdrawAmount)
+	_, err = vaultService.Withdraw(context.Background(), withdrawAmount, TOKEN)
 	if !errors.Is(err, vault.ErrInsufficientFunds) {
 		t.Fatalf("got wrong error. wanted %v, got %v", vault.ErrInsufficientFunds, err)
 	}
@@ -496,17 +508,17 @@ func TestStateStoreKeys(t *testing.T) {
 	address := common.HexToAddress("0xabcd")
 
 	expected := "swap_cashout_000000000000000000000000000000000000abcd"
-	if vault.CashoutActionKey(address) != expected {
-		t.Fatalf("wrong cashout action key. wanted %s, got %s", expected, vault.CashoutActionKey(address))
+	if vault.CashoutActionKey(address, TOKEN) != expected {
+		t.Fatalf("wrong cashout action key. wanted %s, got %s", expected, vault.CashoutActionKey(address, TOKEN))
 	}
 
 	expected = "swap_vault_last_issued_cheque_000000000000000000000000000000000000abcd"
-	if vault.LastIssuedChequeKey(address) != expected {
-		t.Fatalf("wrong last issued cheque key. wanted %s, got %s", expected, vault.LastIssuedChequeKey(address))
+	if vault.LastIssuedChequeKey(address, TOKEN) != expected {
+		t.Fatalf("wrong last issued cheque key. wanted %s, got %s", expected, vault.LastIssuedChequeKey(address, TOKEN))
 	}
 
 	expected = "swap_vault_last_received_cheque_000000000000000000000000000000000000abcd"
-	if vault.LastReceivedChequeKey(address) != expected {
-		t.Fatalf("wrong last received cheque key. wanted %s, got %s", expected, vault.LastReceivedChequeKey(address))
+	if vault.LastReceivedChequeKey(address, TOKEN) != expected {
+		t.Fatalf("wrong last received cheque key. wanted %s, got %s", expected, vault.LastReceivedChequeKey(address, TOKEN))
 	}
 }

@@ -145,7 +145,7 @@ func (s *Service) LastReceivedCheques(token common.Address) (map[common.Address]
 }
 
 // ReceivedChequeRecordsByPeer returns the records we received from a specific vault.
-func (s *Service) ReceivedChequeRecordsByPeer(vault common.Address, token common.Address) ([]vault.ChequeRecord, error) {
+func (s *Service) ReceivedChequeRecordsByPeer(vault common.Address) ([]vault.ChequeRecord, error) {
 	if s.receivedChequeRecordsByPeerFunc != nil {
 		return s.receivedChequeRecordsByPeerFunc(vault)
 	}
@@ -153,7 +153,7 @@ func (s *Service) ReceivedChequeRecordsByPeer(vault common.Address, token common
 }
 
 // ListReceivedChequeRecords returns the records we received from a specific vault.
-func (s *Service) ReceivedChequeRecordsAll(token common.Address) (map[common.Address][]vault.ChequeRecord, error) {
+func (s *Service) ReceivedChequeRecordsAll() (map[common.Address][]vault.ChequeRecord, error) {
 	if s.receivedChequeRecordsAllFunc != nil {
 		return s.receivedChequeRecordsAllFunc()
 	}
@@ -183,7 +183,7 @@ func (s *Service) StoreSendChequeRecord(vault, beneficiary common.Address, amoun
 }
 
 // SendChequeRecordsByPeer returns the records we send to a specific vault.
-func (s *Service) SendChequeRecordsByPeer(beneficiary common.Address, token common.Address) ([]vault.ChequeRecord, error) {
+func (s *Service) SendChequeRecordsByPeer(beneficiary common.Address) ([]vault.ChequeRecord, error) {
 	if s.sendChequeRecordsByPeerFunc != nil {
 		return s.sendChequeRecordsByPeerFunc(beneficiary)
 	}
@@ -191,7 +191,7 @@ func (s *Service) SendChequeRecordsByPeer(beneficiary common.Address, token comm
 }
 
 // SendChequeRecordsAll returns the records we send to a specific vault.
-func (s *Service) SendChequeRecordsAll(token common.Address) (map[common.Address][]vault.ChequeRecord, error) {
+func (s *Service) SendChequeRecordsAll() (map[common.Address][]vault.ChequeRecord, error) {
 	if s.sendChequeRecordsAllFunc != nil {
 		return s.sendChequeRecordsAllFunc()
 	}
