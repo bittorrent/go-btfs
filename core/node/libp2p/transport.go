@@ -7,10 +7,10 @@ import (
 
 	libp2p "github.com/libp2p/go-libp2p"
 	metrics "github.com/libp2p/go-libp2p-core/metrics"
-	libp2pquic "github.com/libp2p/go-libp2p-quic-transport"
+
+	// libp2pquic "github.com/libp2p/go-libp2p-quic-transport"
 	tcp "github.com/libp2p/go-tcp-transport"
 	websocket "github.com/libp2p/go-ws-transport"
-	quic "github.com/lucas-clemente/quic-go"
 
 	"go.uber.org/fx"
 )
@@ -19,7 +19,7 @@ import (
 // https://github.com/lucas-clemente/quic-go/releases/tag/v0.17.3.
 // TODO: remove this once the network has upgraded to > v0.6.0.
 func init() {
-	quic.RetireBugBackwardsCompatibilityMode = true
+	// quic.RetireBugBackwardsCompatibilityMode = true
 }
 
 func Transports(tptConfig config.Transports) interface{} {
@@ -46,7 +46,7 @@ func Transports(tptConfig config.Transports) interface{} {
 						"Please disable Swarm.Transports.Network.QUIC.",
 				)
 			}
-			opts.Opts = append(opts.Opts, libp2p.Transport(libp2pquic.NewTransport))
+			// opts.Opts = append(opts.Opts, libp2p.Transport(libp2pquic.NewTransport))
 		}
 
 		return opts, nil

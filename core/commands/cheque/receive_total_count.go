@@ -16,8 +16,17 @@ var ReceiveChequesCountCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "send cheque(s) count",
 	},
-
+	//Options: []cmds.Option{
+	//	cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+	//},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		//tokenStr := req.Options[tokencfg.TokenTypeName].(string)
+		//fmt.Printf("... token:%+v\n", tokenStr)
+		//token, bl := tokencfg.MpTokenAddr[tokenStr]
+		//if !bl {
+		//	return errors.New("your input token is none. ")
+		//}
+
 		count, err := chain.SettleObject.SwapService.ReceivedChequeRecordsCount()
 		if err != nil {
 			return err

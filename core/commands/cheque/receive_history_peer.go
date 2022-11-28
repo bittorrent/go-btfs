@@ -16,9 +16,7 @@ var ChequeReceiveHistoryPeerCmd = &cmds.Command{
 	Arguments: []cmds.Argument{
 		cmds.StringArg("peer-id", true, false, "The peer id of cheques received."),
 	},
-
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-
 		var listRet ChequeRecords
 		peer_id := req.Arguments[0]
 		fmt.Println("ChequeReceiveHistoryPeerCmd peer_id = ", peer_id)
@@ -32,6 +30,7 @@ var ChequeReceiveHistoryPeerCmd = &cmds.Command{
 		for _, v := range records {
 			recordsRet = append(recordsRet, chequeRecordRet{
 				PeerId:      peer_id,
+				Token:       v.Token,
 				Vault:       v.Vault,
 				Beneficiary: v.Beneficiary,
 				Amount:      v.Amount,

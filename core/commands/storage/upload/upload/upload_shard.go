@@ -2,7 +2,11 @@ package upload
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/ethereum/go-ethereum/common"
+	"reflect"
 	"time"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -13,16 +17,18 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
-func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price int64, shardSize int64,
+func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price int64, token common.Address, shardSize int64,
 	storageLength int,
 	offlineSigning bool, renterId peer.ID, fileSize int64, shardIndexes []int, rp *RepairParams) error {
 
 	expectTotalPay := helper.TotalPay(shardSize, price, storageLength) * int64(len(rss.ShardHashes))
-	err := checkAvailableBalance(rss.Ctx, expectTotalPay)
+	err := checkAvailableBalance(rss.Ctx, expectTotalPay, token)
 	if err != nil {
 		return err
 	}
 
+	var cannot int
+	var pass int
 	for index, shardHash := range rss.ShardHashes {
 		go func(i int, h string) {
 			err := backoff.Retry(func() error {
@@ -32,6 +38,12 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 				default:
 					break
 				}
+
+				// check some host, if not matching, return err.
+				if cannot >= 10 && pass <= 0 {
+					return errors.New("There are no valid matching hosts to upload. ")
+				}
+
 				host, err := hp.NextValidHost()
 				if err != nil {
 					terr := rss.To(sessions.RssToErrorEvent, err)
@@ -41,6 +53,49 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 					}
 					return nil
 				}
+
+				hostPid, err := peer.IDB58Decode(host)
+				if err != nil {
+					log.Errorf("shard %s decodes host_pid error: %s", h, err.Error())
+					return err
+				}
+
+				//token: check host tokens
+				{
+					ctx, _ := context.WithTimeout(rss.Ctx, 60*time.Second)
+					output, err := remote.P2PCall(ctx, rss.CtxParams.N, rss.CtxParams.Api, hostPid, "/storage/upload/supporttokens")
+					if err != nil {
+						return nil
+					}
+
+					fmt.Println("1 get from supporttokens,", string(output), reflect.TypeOf(output))
+					//return nil
+
+					var mpToken map[string]common.Address
+					err = json.Unmarshal(output, &mpToken)
+					fmt.Println("1.2 get from supporttokens, err = ", err)
+					if err != nil {
+						return err
+					}
+
+					fmt.Println("2 get from supporttokens, mpToken = ", mpToken)
+
+					ok := false
+					for _, v := range mpToken {
+						if token == v {
+							ok = true
+						}
+					}
+					if !ok {
+						cannot++
+						return nil
+					}
+				}
+				pass++
+
+				fmt.Println("3 get from supporttokens .... continue ")
+
+				// TotalPay
 				contractId := helper.NewContractID(rss.SsId)
 				cb := make(chan error)
 				ShardErrChanMap.Set(contractId, cb)
@@ -83,11 +138,6 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 					}
 				}
 
-				hostPid, err := peer.IDB58Decode(host)
-				if err != nil {
-					log.Errorf("shard %s decodes host_pid error: %s", h, err.Error())
-					return err
-				}
 				go func() {
 					ctx, _ := context.WithTimeout(rss.Ctx, 10*time.Second)
 					_, err := remote.P2PCall(ctx, rss.CtxParams.N, rss.CtxParams.Api, hostPid, "/storage/upload/init",

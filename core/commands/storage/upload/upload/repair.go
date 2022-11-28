@@ -3,6 +3,7 @@ package upload
 import (
 	"context"
 	"errors"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"strings"
 	"time"
 
@@ -85,7 +86,9 @@ This command repairs the given shards of a file.`,
 		if err != nil {
 			return err
 		}
-		UploadShard(rss, hp, m.Price, m.ShardFileSize, -1, false, renterPid, -1,
+
+		// token: notice repair is dropped. This is just a compatible function of 'UploadShard'.
+		UploadShard(rss, hp, m.Price, tokencfg.MpTokenAddr["WBTT"], m.ShardFileSize, -1, false, renterPid, -1,
 			shardIndexes, &RepairParams{
 				RenterStart: m.RentStart,
 				RenterEnd:   m.RentEnd,

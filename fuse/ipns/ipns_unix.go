@@ -1,3 +1,4 @@
+//go:build !nofuse && !openbsd && !netbsd
 // +build !nofuse,!openbsd,!netbsd
 
 // package fuse/ipns implements a fuse filesystem that interfaces

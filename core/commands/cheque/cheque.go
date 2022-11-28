@@ -1,7 +1,9 @@
 package cheque
 
 import (
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 	"math/big"
 	"time"
@@ -21,6 +23,7 @@ type CashChequeRet struct {
 
 type cheque struct {
 	PeerID       string
+	Token        string
 	Beneficiary  string
 	Vault        string
 	Payout       *big.Int
@@ -32,6 +35,14 @@ type ListChequeRet struct {
 	Len     int
 }
 
+type ReceiveCheque struct {
+	PeerID           string
+	Token            common.Address
+	Vault            common.Address
+	Beneficiary      common.Address
+	CumulativePayout *big.Int
+}
+
 type ChequeRecords struct {
 	Records []chequeRecordRet
 	Len     int
@@ -39,6 +50,7 @@ type ChequeRecords struct {
 
 type chequeRecordRet struct {
 	PeerId      string
+	Token       common.Address
 	Vault       common.Address
 	Beneficiary common.Address
 	Amount      *big.Int
@@ -57,23 +69,30 @@ Vault services include issue cheque to peer, receive cheque and store operations
 		"cashlist":   ChequeCashListCmd,
 		"price":      StorePriceCmd,
 
-		"send":               SendChequeCmd,
-		"sendlist":           ListSendChequesCmd,
-		"send-history-peer":  ChequeSendHistoryPeerCmd,
-		"send-history-list":  ChequeSendHistoryListCmd,
-		"send-history-stats": ChequeSendHistoryStatsCmd,
-		"send-total-count":   SendChequesCountCmd,
+		"send":                   SendChequeCmd,
+		"sendlist":               ListSendChequesCmd,
+		"sendlistall":            ListSendChequesAllCmd,
+		"send-history-peer":      ChequeSendHistoryPeerCmd,
+		"send-history-list":      ChequeSendHistoryListCmd,
+		"send-history-stats":     ChequeSendHistoryStatsCmd,
+		"send-history-stats-all": ChequeSendHistoryStatsAllCmd,
+		"send-total-count":       SendChequesCountCmd,
 
-		"receive":               ReceiveChequeCmd,
-		"receivelist":           ListReceiveChequeCmd,
-		"receive-history-peer":  ChequeReceiveHistoryPeerCmd,
-		"receive-history-list":  ChequeReceiveHistoryListCmd,
-		"receive-history-stats": ChequeReceiveHistoryStatsCmd,
-		"receive-total-count":   ReceiveChequesCountCmd,
-		"stats":                 ChequeStatsCmd,
+		"receive":                   ReceiveChequeCmd,
+		"receivelist":               ListReceiveChequeCmd,
+		"receivelistall":            ListReceiveChequeAllCmd,
+		"receive-history-peer":      ChequeReceiveHistoryPeerCmd,
+		"receive-history-list":      ChequeReceiveHistoryListCmd,
+		"receive-history-stats":     ChequeReceiveHistoryStatsCmd,
+		"receive-history-stats-all": ChequeReceiveHistoryStatsAllCmd,
+		"receive-total-count":       ReceiveChequesCountCmd,
+		"stats":                     ChequeStatsCmd,
+		"stats-all":                 ChequeStatsAllCmd,
 
-		"chaininfo":  ChequeChainInfoCmd,
-		"bttbalance": ChequeBttBalanceCmd,
+		"chaininfo":         ChequeChainInfoCmd,
+		"bttbalance":        ChequeBttBalanceCmd,
+		"token_balance":     ChequeTokenBalanceCmd,
+		"all_token_balance": ChequeAllTokenBalanceCmd,
 	},
 }
 
@@ -81,9 +100,20 @@ var StorePriceCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Get btfs store price.",
 	},
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		totalPrice, err := chain.SettleObject.OracleService.CheckNewPrice()
+		// token: parse token option
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
+		fmt.Println("... use token = ", tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
+
+		totalPrice, err := chain.SettleObject.OracleService.CheckNewPrice(token)
 		if err != nil {
 			return err
 		}
@@ -108,12 +138,22 @@ var CashChequeCmd = &cmds.Command{
 	Arguments: []cmds.Argument{
 		cmds.StringArg("peer-id", true, false, "Peer id tobe cashed."),
 	},
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 
 		// get the peer id
 		peerID := req.Arguments[0]
-		tx_hash, err := chain.SettleObject.SwapService.CashCheque(req.Context, peerID)
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
+		fmt.Printf("... token:%+v\n", tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
+
+		tx_hash, err := chain.SettleObject.SwapService.CashCheque(req.Context, peerID, token)
 		if err != nil {
 			return err
 		}

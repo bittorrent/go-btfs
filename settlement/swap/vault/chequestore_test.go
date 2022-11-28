@@ -68,7 +68,7 @@ func TestReceiveCheque(t *testing.T) {
 			return issuer, nil
 		})
 
-	received, err := chequestore.ReceiveCheque(context.Background(), cheque, exchangeRate)
+	received, err := chequestore.ReceiveCheque(context.Background(), cheque, exchangeRate, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +81,7 @@ func TestReceiveCheque(t *testing.T) {
 		t.Fatalf("calculated wrong received cumulativePayout. wanted %d, got %d", cumulativePayout, received)
 	}
 
-	lastCheque, err := chequestore.LastReceivedCheque(vaultAddress)
+	lastCheque, err := chequestore.LastReceivedCheque(vaultAddress, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +100,7 @@ func TestReceiveCheque(t *testing.T) {
 	}
 
 	verifiedWithFactory = false
-	received, err = chequestore.ReceiveCheque(context.Background(), cheque, exchangeRate)
+	received, err = chequestore.ReceiveCheque(context.Background(), cheque, exchangeRate, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +142,7 @@ func TestReceiveChequeInvalidBeneficiary(t *testing.T) {
 		nil,
 	)
 
-	_, err := chequestore.ReceiveCheque(context.Background(), cheque, cumulativePayout)
+	_, err := chequestore.ReceiveCheque(context.Background(), cheque, cumulativePayout, TOKEN)
 	if err == nil {
 		t.Fatal("accepted cheque with wrong beneficiary")
 	}
@@ -188,7 +188,7 @@ func TestReceiveChequeInvalidAmount(t *testing.T) {
 			Vault:            vaultAddress,
 		},
 		Signature: sig,
-	}, cumulativePayout)
+	}, cumulativePayout, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,7 +200,7 @@ func TestReceiveChequeInvalidAmount(t *testing.T) {
 			Vault:            vaultAddress,
 		},
 		Signature: sig,
-	}, cumulativePayout)
+	}, cumulativePayout, TOKEN)
 	if err == nil {
 		t.Fatal("accepted lower amount cheque")
 	}
@@ -244,7 +244,7 @@ func TestReceiveChequeInvalidVault(t *testing.T) {
 			Vault:            vaultAddress,
 		},
 		Signature: sig,
-	}, cumulativePayout)
+	}, cumulativePayout, TOKEN)
 	if !errors.Is(err, vault.ErrNotDeployedByFactory) {
 		t.Fatalf("wrong error. wanted %v, got %v", vault.ErrNotDeployedByFactory, err)
 	}
@@ -284,7 +284,7 @@ func TestReceiveChequeInvalidSignature(t *testing.T) {
 			Vault:            vaultAddress,
 		},
 		Signature: sig,
-	}, cumulativePayout)
+	}, cumulativePayout, TOKEN)
 	if !errors.Is(err, vault.ErrChequeInvalid) {
 		t.Fatalf("wrong error. wanted %v, got %v", vault.ErrChequeInvalid, err)
 	}
@@ -326,7 +326,7 @@ func TestReceiveChequeInsufficientBalance(t *testing.T) {
 			Vault:            vaultAddress,
 		},
 		Signature: sig,
-	}, cumulativePayout)
+	}, cumulativePayout, TOKEN)
 	if !errors.Is(err, vault.ErrBouncingCheque) {
 		t.Fatalf("wrong error. wanted %v, got %v", vault.ErrBouncingCheque, err)
 	}
@@ -368,7 +368,7 @@ func TestReceiveChequeSufficientBalancePaidOut(t *testing.T) {
 			Vault:            vaultAddress,
 		},
 		Signature: sig,
-	}, cumulativePayout)
+	}, cumulativePayout, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -424,7 +424,7 @@ func TestReceiveChequeNotEnoughValue(t *testing.T) {
 			return issuer, nil
 		})
 
-	_, err := chequestore.ReceiveCheque(context.Background(), cheque, exchangeRate)
+	_, err := chequestore.ReceiveCheque(context.Background(), cheque, exchangeRate, TOKEN)
 	if err != nil {
 		t.Fatalf("got wrong error. wanted nil, got %v", err)
 	}
@@ -485,7 +485,7 @@ func TestReceiveChequeNotEnoughValue2(t *testing.T) {
 			return issuer, nil
 		})
 
-	_, err := chequestore.ReceiveCheque(context.Background(), cheque, exchangeRate)
+	_, err := chequestore.ReceiveCheque(context.Background(), cheque, exchangeRate, TOKEN)
 	if err != nil {
 		t.Fatalf("got wrong error. wanted nil, got %v", err)
 	}

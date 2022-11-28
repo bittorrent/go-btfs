@@ -1,4 +1,5 @@
-//+build never,!never
+//go:build never && !never
+// +build never,!never
 
 package assets
 

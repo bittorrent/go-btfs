@@ -2,6 +2,9 @@ package settlement
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 	"time"
 
@@ -28,12 +31,23 @@ var ListSettlementCmd = &cmds.Command{
 		Tagline: "list all settlements.",
 	},
 	RunTimeout: 5 * time.Minute,
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		settlementsSent, err := chain.SettleObject.SwapService.SettlementsSent()
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
+		fmt.Printf("... token:%+v\n", tokenStr)
+
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
+
+		settlementsSent, err := chain.SettleObject.SwapService.SettlementsSent(token)
 		if err != nil {
 			return err
 		}
-		settlementsReceived, err := chain.SettleObject.SwapService.SettlementsReceived()
+		settlementsReceived, err := chain.SettleObject.SwapService.SettlementsReceived(token)
 		if err != nil {
 			return err
 		}
@@ -66,7 +80,7 @@ var ListSettlementCmd = &cmds.Command{
 				}
 			}
 			totalReceived.Add(b, totalReceived)
-			if has, err := chain.SettleObject.SwapService.HasCashoutAction(context.Background(), a); err == nil && has {
+			if has, err := chain.SettleObject.SwapService.HasCashoutAction(context.Background(), a, token); err == nil && has {
 				totalReceivedCashed.Add(b, totalReceivedCashed)
 			}
 		}
@@ -77,7 +91,7 @@ var ListSettlementCmd = &cmds.Command{
 			i++
 		}
 
-		totalPaidOut, err := chain.SettleObject.VaultService.TotalPaidOut(context.Background())
+		totalPaidOut, err := chain.SettleObject.VaultService.TotalPaidOut(context.Background(), token)
 		if err != nil {
 			return err
 		}

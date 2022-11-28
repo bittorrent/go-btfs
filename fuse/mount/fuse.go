@@ -1,3 +1,4 @@
+//go:build !nofuse && !windows && !openbsd && !netbsd
 // +build !nofuse,!windows,!openbsd,!netbsd
 
 package mount
