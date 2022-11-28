@@ -3,6 +3,7 @@ package helper
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"strings"
 	"time"
 
@@ -174,12 +175,14 @@ func GetPriceAndMinStorageLength(params *ContextParams) (price int64, storageLen
 	return
 }
 
-func TotalPay(shardSize int64, price int64, storageLength int) int64 {
+func TotalPay(shardSize int64, price int64, storageLength int, rate *big.Int) int64 {
 	totalPay := int64(float64(shardSize) / float64(units.GiB) * float64(price) * float64(storageLength))
 	if totalPay <= 0 {
 		totalPay = 1
 	}
-	fmt.Printf("size:%v GB, price:%v000000000000 , storageLength:%v,  TotalPay:%v000000000000 \n", float64(shardSize)/float64(units.GiB), price, storageLength, totalPay)
+	//fmt.Printf("size:%v GB, price:%v000000000000 , storageLength:%v,  TotalPay:%v000000000000 \n", float64(shardSize)/float64(units.GiB), price, storageLength, totalPay)
+	fmt.Printf("size:%v GB, price:%v*%v , storageLength:%v,  TotalPay:%v*%v \n", float64(shardSize)/float64(units.GiB), price, rate.String(), storageLength, totalPay, rate.String())
+
 	return totalPay
 }
 

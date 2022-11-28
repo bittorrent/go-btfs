@@ -176,7 +176,6 @@ Use status command to check for completion:
 		}
 
 		// token: get new price
-		//priceObj, err := chain.SettleObject.OracleService.CurrentPrice(token)
 		priceObj, err := chain.SettleObject.OracleService.CurrentPrice(token)
 		if err != nil {
 			return err
