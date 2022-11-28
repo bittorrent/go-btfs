@@ -139,7 +139,7 @@ var testChequeCmd = &cmds.Command{
 
 		toPeer := "16Uiu2HAmQ4VAZdAmXJKapZYAib2BZpsSkVQfTwowCYvSqbEyuTnQ"
 		//toPeer := nodes[0].NodeId
-		chain.SettleObject.SwapService.Settle(toPeer, big.NewInt(10), "", tokencfg.MpTokenAddr["WBTT"])
+		chain.SettleObject.SwapService.Settle(toPeer, big.NewInt(10), "", tokencfg.GetWbttToken())
 
 		return cmds.EmitOnce(res, &TestOutput{"send cheque ok"})
 	},

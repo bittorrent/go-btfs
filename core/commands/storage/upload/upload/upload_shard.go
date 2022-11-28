@@ -22,13 +22,16 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 	storageLength int,
 	offlineSigning bool, renterId peer.ID, fileSize int64, shardIndexes []int, rp *RepairParams) error {
 
-	// token: get new price
+	// token: get new rate
 	rate, err := chain.SettleObject.OracleService.CurrentRate(token)
 	if err != nil {
 		return err
 	}
-
-	expectTotalPay := helper.TotalPay(shardSize, price, storageLength, rate) * int64(len(rss.ShardHashes))
+	expectOnePay, err := helper.TotalPayRound(shardSize, price, storageLength, rate)
+	if err != nil {
+		return err
+	}
+	expectTotalPay := expectOnePay * int64(len(rss.ShardHashes))
 	err = checkAvailableBalance(rss.Ctx, expectTotalPay, token)
 	if err != nil {
 		return err
@@ -106,7 +109,11 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 				contractId := helper.NewContractID(rss.SsId)
 				cb := make(chan error)
 				ShardErrChanMap.Set(contractId, cb)
-				tp := helper.TotalPay(shardSize, price, storageLength, rate)
+				tp, err := helper.TotalPayRound(shardSize, price, storageLength, rate)
+				if err != nil {
+					log.Errorf("TotalPayRound is error: %s", err.Error())
+					return err
+				}
 
 				errChan := make(chan error, 2)
 

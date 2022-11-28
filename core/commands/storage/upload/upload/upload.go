@@ -169,18 +169,28 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
+
 		// CheckNewPrice, get latest price when upload.
 		_, err = chain.SettleObject.OracleService.CheckNewPrice(token)
 		if err != nil {
 			return err
 		}
-
 		// token: get new price
 		priceObj, err := chain.SettleObject.OracleService.CurrentPrice(token)
 		if err != nil {
 			return err
 		}
 		price := priceObj.Int64()
+		// token: get new rate
+		rate, err := chain.SettleObject.OracleService.CurrentRate(token)
+		if err != nil {
+			return err
+		}
+		_, err = helper.TotalPayRound(shardSize, price, storageLength, rate)
+		if err != nil {
+			fmt.Println(err.Error())
+			return err
+		}
 
 		// sync hosts from hub hosts.
 		if !ctxParams.Cfg.Experimental.HostsSyncEnabled {
