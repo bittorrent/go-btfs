@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"regexp"
 	"strings"
 	"time"
@@ -84,6 +85,7 @@ type RenterSession struct {
 	CtxParams   *uh.ContextParams
 	Ctx         context.Context
 	Cancel      context.CancelFunc
+	Token       common.Address
 }
 
 func GetRenterSession(ctxParams *uh.ContextParams, ssId string, hash string, shardHashes []string) (*RenterSession,
@@ -104,6 +106,46 @@ func GetRenterSession(ctxParams *uh.ContextParams, ssId string, hash string, sha
 			Ctx:         ctx,
 			Cancel:      cancel,
 			CtxParams:   ctxParams,
+		}
+		status, err := rs.Status()
+		if err != nil {
+			return nil, err
+		}
+		if rs.Hash = hash; hash == "" {
+			rs.Hash = status.Hash
+		}
+		if rs.ShardHashes = shardHashes; shardHashes == nil || len(shardHashes) == 0 {
+			rs.ShardHashes = status.ShardHashes
+		}
+		if status.Status != RssCompleteStatus {
+			rs.fsm = fsm.NewFSM(status.Status, rssFsmEvents, fsm.Callbacks{
+				"enter_state": rs.enterState,
+			})
+		}
+		renterSessionsInMem.Set(k, rs)
+	}
+	return rs, nil
+}
+
+func GetRenterSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash string, shardHashes []string, token common.Address) (*RenterSession,
+	error) {
+	k := fmt.Sprintf(RenterSessionInMemKey, ctxParams.N.Identity.Pretty(), ssId)
+	var rs *RenterSession
+	if tmp, ok := renterSessionsInMem.Get(k); ok {
+		log.Debugf("get renter_session:%s from cache.", k)
+		rs = tmp.(*RenterSession)
+	} else {
+		log.Debugf("new renter_session:%s.", k)
+		ctx, cancel := helper.NewGoContext(ctxParams.Ctx)
+		rs = &RenterSession{
+			PeerId:      ctxParams.N.Identity.Pretty(),
+			SsId:        ssId,
+			Hash:        hash,
+			ShardHashes: shardHashes,
+			Ctx:         ctx,
+			Cancel:      cancel,
+			CtxParams:   ctxParams,
+			Token:       token,
 		}
 		status, err := rs.Status()
 		if err != nil {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 	"math/big"
 	"time"
@@ -138,7 +139,7 @@ var testChequeCmd = &cmds.Command{
 
 		toPeer := "16Uiu2HAmQ4VAZdAmXJKapZYAib2BZpsSkVQfTwowCYvSqbEyuTnQ"
 		//toPeer := nodes[0].NodeId
-		chain.SettleObject.SwapService.Settle(toPeer, big.NewInt(10), "")
+		chain.SettleObject.SwapService.Settle(toPeer, big.NewInt(10), "", tokencfg.MpTokenAddr["WBTT"])
 
 		return cmds.EmitOnce(res, &TestOutput{"send cheque ok"})
 	},

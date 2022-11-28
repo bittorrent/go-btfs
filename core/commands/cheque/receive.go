@@ -2,7 +2,9 @@ package cheque
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 	"math/big"
 
@@ -17,15 +19,22 @@ var ReceiveChequeCmd = &cmds.Command{
 	Arguments: []cmds.Argument{
 		cmds.StringArg("peer-id", true, false, "deposit amount."),
 	},
-
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 
 		var record cheque
 		peer_id := req.Arguments[0]
-		fmt.Println("ReceiveChequeCmd peer_id = ", peer_id)
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
+		fmt.Printf("ReceiveChequeCmd peer_id:%+v, token:%+v\n", peer_id, tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
 
 		if len(peer_id) > 0 {
-			chequeTmp, err := chain.SettleObject.SwapService.LastReceivedCheque(peer_id)
+			chequeTmp, err := chain.SettleObject.SwapService.LastReceivedCheque(peer_id, token)
 			if err != nil {
 				return err
 			}
@@ -35,7 +44,7 @@ var ReceiveChequeCmd = &cmds.Command{
 			record.Payout = chequeTmp.CumulativePayout
 			record.PeerID = peer_id
 
-			cashStatus, err := chain.SettleObject.CashoutService.CashoutStatus(context.Background(), chequeTmp.Vault)
+			cashStatus, err := chain.SettleObject.CashoutService.CashoutStatus(context.Background(), chequeTmp.Vault, token)
 			if err != nil {
 				return err
 			}

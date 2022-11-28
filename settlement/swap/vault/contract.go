@@ -2,6 +2,7 @@ package vault
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 
 	"github.com/bittorrent/go-btfs/transaction"
@@ -89,8 +90,8 @@ func (c *vaultContract) LiquidBalance(ctx context.Context) (*big.Int, error) {
 	return abi.ConvertType(results[0], new(big.Int)).(*big.Int), nil
 }
 
-func (c *vaultContract) PaidOut(ctx context.Context, address common.Address) (*big.Int, error) {
-	callData, err := vaultABI.Pack("paidOut", address)
+func (c *vaultContract) PaidOut(ctx context.Context, beneficiary common.Address) (*big.Int, error) {
+	callData, err := vaultABI.Pack("paidOut", beneficiary)
 	if err != nil {
 		return nil, err
 	}
@@ -192,6 +193,25 @@ func (c *vaultContract) UpgradeTo(ctx context.Context, newImpl common.Address) (
 	return
 }
 
+func (c *vaultContract) Withdraw(ctx context.Context, amount *big.Int) (common.Hash, error) {
+	callData, err := vaultABI.Pack("withdraw", amount)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	hash, err := c.transactionService.Send(ctx, &transaction.TxRequest{
+		To:          &c.address,
+		Data:        callData,
+		Value:       big.NewInt(0),
+		Description: fmt.Sprintf("vault withdrawal of %d WBTT", amount),
+	})
+	if err != nil {
+		return hash, err
+	}
+
+	return hash, nil
+}
+
 // GetVaultImpl queries the vault implementation used for the proxy
 func GetVaultImpl(ctx context.Context, vault common.Address, trxSvc transaction.Service) (vaultImpl common.Address, err error) {
 	callData, err := vaultABI.Pack("implementation")
@@ -214,4 +234,57 @@ func GetVaultImpl(ctx context.Context, vault common.Address, trxSvc transaction.
 
 	vaultImpl = *abi.ConvertType(results[0], new(common.Address)).(*common.Address)
 	return
+}
+
+func _CashCheque(ctx context.Context, vault, recipient common.Address, cheque *SignedCheque, tS transaction.Service) (common.Hash, error) {
+	fmt.Println("_CashCheque ", vault, recipient, cheque.CumulativePayout, cheque.Signature)
+
+	callData, err := vaultABI.Pack("cashChequeBeneficiary", recipient, cheque.CumulativePayout, cheque.Signature)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	request := &transaction.TxRequest{
+		To:          &vault,
+		Data:        callData,
+		Value:       big.NewInt(0),
+		Description: "cheque cashout",
+	}
+
+	txHash, err := tS.Send(ctx, request)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	return txHash, nil
+}
+
+func _PaidOut(ctx context.Context, vault, beneficiary common.Address, tS transaction.Service) (*big.Int, error) {
+	callData, err := vaultABINew.Pack("paidOut", beneficiary)
+	if err != nil {
+		return nil, err
+	}
+
+	output, err := tS.Call(ctx, &transaction.TxRequest{
+		To:   &vault,
+		Data: callData,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	results, err := vaultABINew.Unpack("paidOut", output)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(results) != 1 {
+		return nil, errDecodeABI
+	}
+
+	paidOut, ok := abi.ConvertType(results[0], new(big.Int)).(*big.Int)
+	if !ok || paidOut == nil {
+		return nil, errDecodeABI
+	}
+
+	return paidOut, nil
 }

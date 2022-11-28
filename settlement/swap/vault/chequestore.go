@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 	"strings"
 	"sync"
@@ -41,6 +42,7 @@ var (
 	ErrWrongBeneficiary = errors.New("wrong beneficiary")
 	// ErrBouncingCheque is the error returned if the vault is demonstrably illiquid.
 	ErrBouncingCheque = errors.New("bouncing cheque")
+	ErrTokenCheque    = errors.New("wrong token cheque")
 	// ErrChequeValueTooLow is the error returned if the after deduction value of a cheque did not cover 1 accounting credit
 	ErrChequeValueTooLow = errors.New("cheque value lower than acceptable")
 )
@@ -48,20 +50,20 @@ var (
 // ChequeStore handles the verification and storage of received cheques
 type ChequeStore interface {
 	// ReceiveCheque verifies and stores a cheque. It returns the total amount earned.
-	ReceiveCheque(ctx context.Context, cheque *SignedCheque, price *big.Int) (*big.Int, error)
+	ReceiveCheque(ctx context.Context, cheque *SignedCheque, price *big.Int, token common.Address) (*big.Int, error)
 	// LastReceivedCheque returns the last cheque we received from a specific vault.
-	LastReceivedCheque(vault common.Address) (*SignedCheque, error)
+	LastReceivedCheque(vault common.Address, token common.Address) (*SignedCheque, error)
 	// LastReceivedCheques return map[vault]cheque
-	LastReceivedCheques() (map[common.Address]*SignedCheque, error)
+	LastReceivedCheques(token common.Address) (map[common.Address]*SignedCheque, error)
 	// ReceivedChequeRecordsByPeer returns the records we received from a specific vault.
 	ReceivedChequeRecordsByPeer(vault common.Address) ([]ChequeRecord, error)
 	// ListReceivedChequeRecords returns the records we received from a specific vault.
 	ReceivedChequeRecordsAll() (map[common.Address][]ChequeRecord, error)
-	ReceivedStatsHistory(days int) ([]DailyReceivedStats, error)
-	SentStatsHistory(days int) ([]DailySentStats, error)
+	ReceivedStatsHistory(days int, token common.Address) ([]DailyReceivedStats, error)
+	SentStatsHistory(days int, token common.Address) ([]DailySentStats, error)
 
 	// StoreSendChequeRecord store send cheque records.
-	StoreSendChequeRecord(vault, beneficiary common.Address, amount *big.Int) error
+	StoreSendChequeRecord(vault, beneficiary common.Address, amount *big.Int, token common.Address) error
 	// SendChequeRecordsByPeer returns the records we send to a specific vault.
 	SendChequeRecordsByPeer(beneficiary common.Address) ([]ChequeRecord, error)
 	// SendChequeRecordsAll returns the records we send to a specific vault.
@@ -99,8 +101,8 @@ func NewChequeStore(
 }
 
 // lastReceivedChequeKey computes the key where to store the last cheque received from a vault.
-func lastReceivedChequeKey(vault common.Address) string {
-	return fmt.Sprintf("%s_%x", lastReceivedChequePrefix, vault)
+func lastReceivedChequeKey(vault common.Address, token common.Address) string {
+	return fmt.Sprintf("%s_%x", tokencfg.AddToken(lastReceivedChequePrefix, token), vault)
 }
 
 func historyReceivedChequeIndexKey(vault common.Address) string {
@@ -113,9 +115,9 @@ func historyReceivedChequeKey(vault common.Address, index uint64) string {
 }
 
 // LastReceivedCheque map[vault]cheque
-func (s *chequeStore) LastReceivedCheque(vault common.Address) (*SignedCheque, error) {
+func (s *chequeStore) LastReceivedCheque(vault common.Address, token common.Address) (*SignedCheque, error) {
 	var cheque *SignedCheque
-	err := s.store.Get(lastReceivedChequeKey(vault), &cheque)
+	err := s.store.Get(lastReceivedChequeKey(vault, token), &cheque)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return nil, err
@@ -127,11 +129,15 @@ func (s *chequeStore) LastReceivedCheque(vault common.Address) (*SignedCheque, e
 }
 
 // ReceiveCheque verifies and stores a cheque. It returns the totam amount earned.
-func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, price *big.Int) (*big.Int, error) {
+func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, price *big.Int, token common.Address) (*big.Int, error) {
 	// verify we are the beneficiary
 	if cheque.Beneficiary != s.beneficiary {
 		return nil, ErrWrongBeneficiary
 	}
+
+	//if token != cheque.Token {
+	//	return nil, ErrTokenCheque
+	//}
 
 	// don't allow concurrent processing of cheques
 	// this would be sufficient on a per vault basis
@@ -141,7 +147,7 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 	// load the lastCumulativePayout for the cheques vault
 	var lastCumulativePayout *big.Int
 	var lastReceivedCheque *SignedCheque
-	err := s.store.Get(lastReceivedChequeKey(cheque.Vault), &lastReceivedCheque)
+	err := s.store.Get(lastReceivedChequeKey(cheque.Vault, token), &lastReceivedCheque)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return nil, err
@@ -160,17 +166,18 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 	// check this cheque is actually increasing in value by local storage
 	amount := big.NewInt(0).Sub(cheque.CumulativePayout, lastCumulativePayout)
 	if amount.Cmp(big.NewInt(0)) <= 0 {
+		fmt.Println("amount < 0, ", ErrChequeNotIncreasing, cheque.CumulativePayout.String(), lastCumulativePayout.String(), token.Hex())
 		return nil, ErrChequeNotIncreasing
 	}
 	// blockchain calls below
-	contract := newVaultContract(cheque.Vault, s.transactionService)
+	contract := newVaultContractMuti(cheque.Vault, s.transactionService)
 	// this does not change for the same vault
 	expectedIssuer, err := contract.Issuer(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// verify the cheque signature
+	// verify the cheque signature, (cheque contains token)
 	issuer, err := s.recoverChequeFunc(cheque, s.chaindID)
 	if err != nil {
 		return nil, err
@@ -182,12 +189,12 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 
 	// basic balance check
 	// could be omitted as it is not particularly useful
-	balance, err := contract.TotalBalance(ctx)
+	balance, err := contract.TotalBalance(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 
-	alreadyPaidOut, err := contract.PaidOut(ctx, s.beneficiary)
+	alreadyPaidOut, err := contract.PaidOut(ctx, s.beneficiary, token)
 	if err != nil {
 		return nil, err
 	}
@@ -199,17 +206,18 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 	// check this cheque is actually increasing in value by blockchain in case of the host migrate to another machine
 	// https://github.com/bittorrent/go-btfs/issues/187
 	if cheque.CumulativePayout.Cmp(alreadyPaidOut) <= 0 {
+		fmt.Println("CumulativePayout < alreadyPaidOut, ", ErrChequeNotIncreasing, cheque.CumulativePayout.String(), alreadyPaidOut.String(), token.Hex())
 		return nil, ErrChequeNotIncreasing
 	}
 
 	// store the accepted cheque
-	err = s.store.Put(lastReceivedChequeKey(cheque.Vault), cheque)
+	err = s.store.Put(lastReceivedChequeKey(cheque.Vault, token), cheque)
 	if err != nil {
 		return nil, err
 	}
 
 	// store the history cheque
-	err = s.storeChequeRecord(cheque.Vault, amount)
+	err = s.storeChequeRecord(cheque.Vault, amount, token)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +251,7 @@ func (s *chequeStore) ReceivedChequeRecordsByPeer(vault common.Address) ([]Chequ
 
 //store cheque record
 //Beneficiary common.Address
-func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int) error {
+func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int, token common.Address) error {
 	var indexRange IndexRange
 	err := s.store.Get(historyReceivedChequeIndexKey(vault), &indexRange)
 	if err != nil {
@@ -264,6 +272,7 @@ func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int) e
 
 	//stroe cheque record with the key: historyReceivedChequeKey(index)
 	chequeRecord := ChequeRecord{
+		token,
 		vault,
 		s.beneficiary,
 		amount,
@@ -291,7 +300,7 @@ func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int) e
 
 	var stat DailyReceivedStats
 	stat.Amount = big.NewInt(0)
-	err = s.store.Get(statestore.GetTodayTotalDailyReceivedKey(), &stat)
+	err = s.store.Get(statestore.GetTodayTotalDailyReceivedKey(token), &stat)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return err
@@ -304,35 +313,35 @@ func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int) e
 	}
 	stat.Amount.Add(stat.Amount, amount)
 	stat.Count += 1
-	err = s.store.Put(statestore.GetTodayTotalDailyReceivedKey(), stat)
+	err = s.store.Put(statestore.GetTodayTotalDailyReceivedKey(token), stat)
 	if err != nil {
 		return err
 	}
 
 	// update uncashed records key
 	uncashed := 0
-	err = s.store.Get(statestore.PeerReceivedUncashRecordsCountKey(vault), &uncashed)
+	err = s.store.Get(statestore.PeerReceivedUncashRecordsCountKey(vault, token), &uncashed)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return err
 		}
 	}
 	uncashed += 1
-	err = s.store.Put(statestore.PeerReceivedUncashRecordsCountKey(vault), uncashed)
+	err = s.store.Put(statestore.PeerReceivedUncashRecordsCountKey(vault, token), uncashed)
 	if err != nil {
 		return err
 	}
 
 	return nil
 }
-func (s *chequeStore) ReceivedStatsHistory(days int) ([]DailyReceivedStats, error) {
+func (s *chequeStore) ReceivedStatsHistory(days int, token common.Address) ([]DailyReceivedStats, error) {
 	stats := make([]DailyReceivedStats, 0, days)
 	y, m, d := time.Now().Date()
 	todayStart := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 	for i := 0; i < days; i++ {
 		stat := DailyReceivedStats{}
 		t := todayStart.AddDate(0, 0, -1*i)
-		key := statestore.GetTotalDailyReceivedKeyByTime(t.Unix())
+		key := statestore.GetTotalDailyReceivedKeyByTime(t.Unix(), token)
 		err := s.store.Get(key, &stat)
 		if err != nil {
 			if err != storage.ErrNotFound {
@@ -350,14 +359,14 @@ func (s *chequeStore) ReceivedStatsHistory(days int) ([]DailyReceivedStats, erro
 	return stats, nil
 }
 
-func (s *chequeStore) SentStatsHistory(days int) ([]DailySentStats, error) {
+func (s *chequeStore) SentStatsHistory(days int, token common.Address) ([]DailySentStats, error) {
 	stats := make([]DailySentStats, 0, days)
 	y, m, d := time.Now().Date()
 	todayStart := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 	for i := 0; i < days; i++ {
 		stat := DailySentStats{}
 		t := todayStart.AddDate(0, 0, -1*i)
-		key := statestore.GetTotalDailySentKeyByTime(t.Unix())
+		key := statestore.GetTotalDailySentKeyByTime(t.Unix(), token)
 		err := s.store.Get(key, &stat)
 		if err != nil {
 			if err != storage.ErrNotFound {
@@ -443,16 +452,18 @@ func keyVault(key []byte, prefix string) (vault common.Address, err error) {
 }
 
 // LastCheques returns map[vault]cheque
-func (s *chequeStore) LastReceivedCheques() (map[common.Address]*SignedCheque, error) {
+func (s *chequeStore) LastReceivedCheques(token common.Address) (map[common.Address]*SignedCheque, error) {
 	result := make(map[common.Address]*SignedCheque)
-	err := s.store.Iterate(lastReceivedChequePrefix, func(key, val []byte) (stop bool, err error) {
-		addr, err := keyVault(key, lastReceivedChequePrefix+"_")
+	err := s.store.Iterate(tokencfg.AddToken(lastReceivedChequePrefix, token), func(key, val []byte) (stop bool, err error) {
+		// if token is wbtt, need a wbtt key, other token is not this.
+
+		addr, err := keyVault(key, tokencfg.AddToken(lastReceivedChequePrefix, token)+"_")
 		if err != nil {
 			return false, fmt.Errorf("parse address from key: %s: %w", string(key), err)
 		}
 
 		if _, ok := result[addr]; !ok {
-			lastCheque, err := s.LastReceivedCheque(addr)
+			lastCheque, err := s.LastReceivedCheque(addr, token)
 			if err != nil && err != ErrNoCheque {
 				return false, err
 			} else if err == ErrNoCheque {
@@ -507,7 +518,7 @@ func historySendChequeKey(beneficiary common.Address, index uint64) string {
 
 //store cheque record
 //Beneficiary common.Address
-func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, amount *big.Int) error {
+func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, amount *big.Int, token common.Address) error {
 	var indexRange IndexRange
 	err := s.store.Get(historySendChequeIndexKey(beneficiary), &indexRange)
 	if err != nil {
@@ -526,8 +537,12 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 		*/
 	}
 
+	fmt.Printf("...1 StoreSendChequeRecord, historySendChequeIndexKey=%v, indexRange=%v, token=%v \n",
+		historySendChequeIndexKey(beneficiary), indexRange, token.Hex())
+
 	//stroe cheque record with the key: historySendChequeKey(index)
 	chequeRecord := ChequeRecord{
+		token,
 		vault,
 		beneficiary,
 		amount,
@@ -538,6 +553,9 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("...2 StoreSendChequeRecord, historySendChequeKey=%v, indexRange=%v \n",
+		historySendChequeKey(beneficiary, indexRange.MaxIndex), indexRange)
 
 	//update Max : add one record
 	indexRange.MaxIndex += 1
@@ -553,8 +571,11 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 		return err
 	}
 
+	fmt.Printf("...3 StoreSendChequeRecord, historySendChequeKey=%v, indexRange=%v \n",
+		historySendChequeKey(beneficiary, indexRange.MaxIndex), indexRange)
+
 	var stat DailySentStats
-	err = s.store.Get(statestore.GetTodayTotalDailySentKey(), &stat)
+	err = s.store.Get(statestore.GetTodayTotalDailySentKey(token), &stat)
 	if err != nil {
 		if err != storage.ErrNotFound {
 			return err
@@ -567,7 +588,7 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 	}
 	stat.Amount.Add(stat.Amount, amount)
 	stat.Count += 1
-	err = s.store.Put(statestore.GetTodayTotalDailySentKey(), stat)
+	err = s.store.Put(statestore.GetTodayTotalDailySentKey(token), stat)
 	if err != nil {
 		return err
 	}
@@ -661,5 +682,9 @@ func (s *chequeStore) SendChequeRecordsAll() (map[common.Address][]ChequeRecord,
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("SendChequeRecordsAll ... result = ", result)
+	fmt.Println("SendChequeRecordsAll ... result = ", sendChequeHistoryPrefix, sendChequeHistoryPrefix+"_")
+
 	return result, nil
 }
