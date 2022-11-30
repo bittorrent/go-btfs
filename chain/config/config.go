@@ -29,7 +29,8 @@ var (
 
 	bttcTestFactoryAddressV1    = common.HexToAddress("0xc4e269975e5277eA16c32023A5A70F96541ED854")
 	bttcTestFactoryAddress      = common.HexToAddress("0x47caA2198A7614E68a9F9578e217535Ef9674040") // https://testnet.bttcscan.com/address/0x47caA2198A7614E68a9F9578e217535Ef9674040
-	bttcTestOracleAddress       = common.HexToAddress("0x4Ef7658416E2CC662492d4D37917D340425522Fc")
+	bttcTestOracleAddress       = common.HexToAddress("0xb2C746a9C81564bEF8382e885AF11e73De4a9E15") // old
+	bttcTestMutiOracleAddress   = common.HexToAddress("0x0DE81B472d87fBA50DF04660430731372A5B823D") // muti token new
 	bttcTestBatchAddress        = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	bttcTestVaultLogicAddressV1 = common.HexToAddress("0x212324b18255593AdE87597Fa37C2c582aD72d24")
 	bttcTestVaultLogicAddressV2 = common.HexToAddress("0x73bcbE03999913dB7229FD5dC485cf23247c58B5") // https://testnet.bttcscan.com/address/0x73bcbE03999913dB7229FD5dC485cf23247c58B5
@@ -113,7 +114,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 	case bttcTestChainID:
 		cfg.StartBlock = bttcStartBlock
 		cfg.CurrentFactory = bttcTestFactoryAddress
-		cfg.PriceOracleAddress = bttcTestOracleAddress
+		cfg.PriceOracleAddress = bttcTestMutiOracleAddress
 		cfg.DeploymentGas = bttcTestDeploymentGas
 		cfg.Endpoint = bttcTestEndpoint
 		cfg.BatchAddress = bttcTestBatchAddress
