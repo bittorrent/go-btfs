@@ -118,7 +118,7 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/syndtr/goleveldb v1.0.1-0.20210305035536-64b5b1c73954
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
-	github.com/tron-us/go-btfs-common v0.8.10
+	github.com/tron-us/go-btfs-common v0.8.13-pre1
 	github.com/tron-us/go-common/v2 v2.3.0
 	github.com/tron-us/protobuf v1.3.7
 	github.com/tyler-smith/go-bip32 v0.0.0-20170922074101-2c9cfd177564

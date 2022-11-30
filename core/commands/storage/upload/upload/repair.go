@@ -88,7 +88,7 @@ This command repairs the given shards of a file.`,
 		}
 
 		// token: notice repair is dropped. This is just a compatible function of 'UploadShard'.
-		UploadShard(rss, hp, m.Price, tokencfg.MpTokenAddr["WBTT"], m.ShardFileSize, -1, false, renterPid, -1,
+		UploadShard(rss, hp, m.Price, tokencfg.GetWbttToken(), m.ShardFileSize, -1, false, renterPid, -1,
 			shardIndexes, &RepairParams{
 				RenterStart: m.RentStart,
 				RenterEnd:   m.RentEnd,
