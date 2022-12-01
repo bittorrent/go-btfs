@@ -50,7 +50,7 @@ var (
 // ChequeStore handles the verification and storage of received cheques
 type ChequeStore interface {
 	// ReceiveCheque verifies and stores a cheque. It returns the total amount earned.
-	ReceiveCheque(ctx context.Context, cheque *SignedCheque, price *big.Int, token common.Address) (*big.Int, error)
+	ReceiveCheque(ctx context.Context, cheque *SignedCheque, amountCheck *big.Int, token common.Address) (*big.Int, error)
 	// LastReceivedCheque returns the last cheque we received from a specific vault.
 	LastReceivedCheque(vault common.Address, token common.Address) (*SignedCheque, error)
 	// LastReceivedCheques return map[vault]cheque
@@ -129,7 +129,7 @@ func (s *chequeStore) LastReceivedCheque(vault common.Address, token common.Addr
 }
 
 // ReceiveCheque verifies and stores a cheque. It returns the totam amount earned.
-func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, price *big.Int, token common.Address) (*big.Int, error) {
+func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, amountCheck *big.Int, token common.Address) (*big.Int, error) {
 	// verify we are the beneficiary
 	if cheque.Beneficiary != s.beneficiary {
 		return nil, ErrWrongBeneficiary
@@ -169,6 +169,14 @@ func (s *chequeStore) ReceiveCheque(ctx context.Context, cheque *SignedCheque, p
 		fmt.Println("amount < 0, ", ErrChequeNotIncreasing, cheque.CumulativePayout.String(), lastCumulativePayout.String(), token.Hex())
 		return nil, ErrChequeNotIncreasing
 	}
+
+	//fmt.Println("... ReceiveCheque check, ", amount.String(), amountCheck.String())
+	if amount.Cmp(amountCheck) < 0 {
+		return nil, errors.New(
+			fmt.Sprintf("amount[%v] is less than store amount[%v]. ", amount.String(), amountCheck.String()),
+		)
+	}
+
 	// blockchain calls below
 	contract := newVaultContractMuti(cheque.Vault, s.transactionService)
 	// this does not change for the same vault

@@ -382,7 +382,7 @@ func TestReceiveChequeNotEnoughValue(t *testing.T) {
 	vaultAddress := common.HexToAddress("0xeeee")
 	sig := make([]byte, 65)
 	chainID := int64(1)
-	exchangeRate := big.NewInt(101)
+	amountCheck := big.NewInt(100)
 
 	cheque := &vault.SignedCheque{
 		Cheque: vault.Cheque{
@@ -424,7 +424,7 @@ func TestReceiveChequeNotEnoughValue(t *testing.T) {
 			return issuer, nil
 		})
 
-	_, err := chequestore.ReceiveCheque(context.Background(), cheque, exchangeRate, TOKEN)
+	_, err := chequestore.ReceiveCheque(context.Background(), cheque, amountCheck, TOKEN)
 	if err != nil {
 		t.Fatalf("got wrong error. wanted nil, got %v", err)
 	}
@@ -443,7 +443,7 @@ func TestReceiveChequeNotEnoughValue2(t *testing.T) {
 	// in order to amount to at least 1 accounting credit and be accepted
 	// in this test cheque amount is just not enough to cover that therefore we expect
 
-	exchangeRate := big.NewInt(100)
+	amountCheck := big.NewInt(100)
 
 	cheque := &vault.SignedCheque{
 		Cheque: vault.Cheque{
@@ -485,7 +485,7 @@ func TestReceiveChequeNotEnoughValue2(t *testing.T) {
 			return issuer, nil
 		})
 
-	_, err := chequestore.ReceiveCheque(context.Background(), cheque, exchangeRate, TOKEN)
+	_, err := chequestore.ReceiveCheque(context.Background(), cheque, amountCheck, TOKEN)
 	if err != nil {
 		t.Fatalf("got wrong error. wanted nil, got %v", err)
 	}

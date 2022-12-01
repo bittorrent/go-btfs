@@ -51,8 +51,8 @@ var StorageUploadChequeCmd = &cmds.Command{
 		encodedCheque := req.Arguments[0]
 		contractId := req.Arguments[2]
 		tokenHex := req.Arguments[3]
-		fmt.Printf("receive cheque, requestPid:%s contractId:%+v,encodedCheque:%+v token:%+v\n",
-			requestPid.String(), contractId, encodedCheque, tokenHex)
+		fmt.Printf("receive cheque, requestPid:%s contractId:%+v,encodedCheque:%+v price:%v token:%+v\n",
+			requestPid.String(), contractId, encodedCheque, price, tokenHex)
 
 		token := common.HexToAddress(tokenHex)
 		_, bl := tokencfg.MpTokenStr[token]
@@ -60,8 +60,23 @@ var StorageUploadChequeCmd = &cmds.Command{
 			return errors.New("your input token is none. ")
 		}
 
+		// check price
+		priceStore, amountStore, rateStore, err := getInputPriceAmountRate(ctxParams, contractId)
+		if err != nil {
+			return err
+		}
+		if price.Int64() < priceStore {
+			return errors.New(
+				fmt.Sprintf("receive cheque, your input-price[%v] is less than store-price[%v]. ",
+					price, priceStore),
+			)
+		}
+		realAmount := new(big.Int).Mul(big.NewInt(amountStore), rateStore)
+		fmt.Printf("receive cheque, price:%v amountStore:%v rateStore:%+v,realAmount:%+v \n",
+			priceStore, amountStore, rateStore.String(), realAmount.String())
+
 		// decode and deal the cheque
-		err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, price, token)
+		err = swapprotocol.SwapProtocol.Handler(context.Background(), requestPid.String(), encodedCheque, realAmount, token)
 		if err != nil {
 			fmt.Println("receive cheque, swapprotocol.SwapProtocol.Handler, error:", err)
 			return err

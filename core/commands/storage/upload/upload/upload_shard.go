@@ -27,7 +27,7 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 	if err != nil {
 		return err
 	}
-	expectOnePay, err := helper.TotalPayRound(shardSize, price, storageLength, rate)
+	expectOnePay, err := helper.TotalPay(shardSize, price, storageLength, rate)
 	if err != nil {
 		return err
 	}
@@ -109,14 +109,8 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 				contractId := helper.NewContractID(rss.SsId)
 				cb := make(chan error)
 				ShardErrChanMap.Set(contractId, cb)
-				tp, err := helper.TotalPayRound(shardSize, price, storageLength, rate)
-				if err != nil {
-					log.Errorf("TotalPayRound is error: %s", err.Error())
-					return err
-				}
 
 				errChan := make(chan error, 2)
-
 				var guardContractBytes []byte
 				go func() {
 					tmp := func() error {
@@ -131,8 +125,8 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 							StartTime:     time.Now(),
 							StorageLength: int64(storageLength),
 							Price:         price,
-							TotalPay:      tp,
-						}, offlineSigning, rp)
+							TotalPay:      expectOnePay,
+						}, offlineSigning, rp, token.String())
 						if err != nil {
 							log.Errorf("shard %s signs guard_contract error: %s", h, err.Error())
 							return err

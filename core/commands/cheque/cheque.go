@@ -113,7 +113,7 @@ var StorePriceCmd = &cmds.Command{
 			return errors.New("your input token is none. ")
 		}
 
-		totalPrice, err := chain.SettleObject.OracleService.CheckNewPrice(token)
+		totalPrice, err := chain.SettleObject.OracleService.CurrentTotalPrice(token)
 		if err != nil {
 			return err
 		}
