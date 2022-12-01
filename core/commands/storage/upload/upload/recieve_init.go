@@ -174,11 +174,6 @@ the shard and replies back to client for the next challenge step.`,
 				return err
 			}
 
-			_, err := chain.SettleObject.OracleService.CheckNewPrice(token)
-			if err != nil {
-				return err
-			}
-
 			// check renter-price
 			price = guardContractMeta.Price
 			priceOnline, err := chain.SettleObject.OracleService.CurrentPrice(token)
