@@ -177,7 +177,14 @@ func GetPriceAndMinStorageLength(params *ContextParams) (price int64, storageLen
 	return
 }
 
-func TotalPay(shardSize int64, price int64, storageLength int, rate *big.Int) int64 {
+func TotalPay(shardSize int64, price int64, storageLength int, rate *big.Int) (int64, error) {
+	if rate.Cmp(big.NewInt(1)) > 0 {
+		return TotalPayReal(shardSize, price, storageLength, rate)
+	}
+	return TotalPayRound(shardSize, price, storageLength, rate)
+}
+
+func TotalPayReal(shardSize int64, price int64, storageLength int, rate *big.Int) (int64, error) {
 	totalPay := int64(float64(shardSize) / float64(units.GiB) * float64(price) * float64(storageLength))
 	if totalPay <= 0 {
 		totalPay = 1
@@ -185,7 +192,7 @@ func TotalPay(shardSize int64, price int64, storageLength int, rate *big.Int) in
 	//fmt.Printf("size:%v GB, price:%v000000000000 , storageLength:%v,  TotalPay:%v000000000000 \n", float64(shardSize)/float64(units.GiB), price, storageLength, totalPay)
 	fmt.Printf("size:%v GB, price:%v*%v , storageLength:%v,  TotalPay:%v*%v \n", float64(shardSize)/float64(units.GiB), price, rate.String(), storageLength, totalPay, rate.String())
 
-	return totalPay
+	return totalPay, nil
 }
 
 func TotalPayRound(shardSize int64, price int64, storageLength int, rate *big.Int) (int64, error) {

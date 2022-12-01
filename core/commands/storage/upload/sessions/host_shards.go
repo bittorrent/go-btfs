@@ -3,6 +3,7 @@ package sessions
 import (
 	"context"
 	"fmt"
+	"math/big"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -51,9 +52,12 @@ type HostShard struct {
 	fsm        *fsm.FSM
 	ctx        context.Context
 	ds         datastore.Datastore
+	inputPrice int64
+	amount     int64
+	rate       *big.Int
 }
 
-func GetHostShard(ctxParams *uh.ContextParams, contractId string) (*HostShard, error) {
+func GetHostShard(ctxParams *uh.ContextParams, contractId string, inputPrice int64, amount int64, rate *big.Int) (*HostShard, error) {
 	k := fmt.Sprintf(hostShardsInMemKey, ctxParams.N.Identity.Pretty(), contractId)
 	var hs *HostShard
 	if tmp, ok := hostShardsInMem.Get(k); ok {
@@ -65,6 +69,9 @@ func GetHostShard(ctxParams *uh.ContextParams, contractId string) (*HostShard, e
 			contractId: contractId,
 			ctx:        ctx,
 			ds:         ctxParams.N.Repo.Datastore(),
+			inputPrice: inputPrice,
+			amount:     amount,
+			rate:       rate,
 		}
 		hostShardsInMem.Set(k, hs)
 	}
@@ -78,6 +85,16 @@ func GetHostShard(ctxParams *uh.ContextParams, contractId string) (*HostShard, e
 		})
 	}
 	return hs, nil
+}
+
+func (hs *HostShard) GetInputPrice() int64 {
+	return hs.inputPrice
+}
+func (hs *HostShard) GetInputAmount() int64 {
+	return hs.amount
+}
+func (hs *HostShard) GetInputRate() *big.Int {
+	return hs.rate
 }
 
 func (hs *HostShard) enterState(e *fsm.Event) {

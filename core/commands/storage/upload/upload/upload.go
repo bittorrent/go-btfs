@@ -186,7 +186,7 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
-		_, err = helper.TotalPayRound(shardSize, price, storageLength, rate)
+		_, err = helper.TotalPay(shardSize, price, storageLength, rate)
 		if err != nil {
 			fmt.Println(err.Error())
 			return err
