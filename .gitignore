@@ -54,4 +54,4 @@ cmd/btfs/btfs
 cmd/btfs/btfs.upgrade
 cmd/btfs/ttt
 cmd/btfs/tt
-cmd/btfs/t
+cmd/btfs/t*

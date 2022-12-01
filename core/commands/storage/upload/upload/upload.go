@@ -170,11 +170,6 @@ Use status command to check for completion:
 			return err
 		}
 
-		// CheckNewPrice, get latest price when upload.
-		_, err = chain.SettleObject.OracleService.CheckNewPrice(token)
-		if err != nil {
-			return err
-		}
 		// token: get new price
 		priceObj, err := chain.SettleObject.OracleService.CurrentPrice(token)
 		if err != nil {
@@ -186,7 +181,7 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
-		_, err = helper.TotalPayRound(shardSize, price, storageLength, rate)
+		_, err = helper.TotalPay(shardSize, price, storageLength, rate)
 		if err != nil {
 			fmt.Println(err.Error())
 			return err
