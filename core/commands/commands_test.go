@@ -286,6 +286,7 @@ func TestCommands(t *testing.T) {
 		"/cheque/cashstatus",
 		"/cheque/chaininfo",
 		"/cheque/price",
+		"/cheque/price-all",
 		"/cheque/receive",
 		"/cheque/receive-history-list",
 		"/cheque/receive-history-peer",
