@@ -75,7 +75,8 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 					ctx, _ := context.WithTimeout(rss.Ctx, 60*time.Second)
 					output, err := remote.P2PCall(ctx, rss.CtxParams.N, rss.CtxParams.Api, hostPid, "/storage/upload/supporttokens")
 					if err != nil {
-						return nil
+						fmt.Printf("uploadShard, remote.P2PCall(supporttokens) timeout, hostPid = %v, will try again. \n", hostPid)
+						return err
 					}
 
 					fmt.Println("1 get from supporttokens,", string(output), reflect.TypeOf(output))

@@ -68,6 +68,7 @@ Vault services include issue cheque to peer, receive cheque and store operations
 		"cashstatus": ChequeCashStatusCmd,
 		"cashlist":   ChequeCashListCmd,
 		"price":      StorePriceCmd,
+		"price-all":  StorePriceAllCmd,
 
 		"send":                   SendChequeCmd,
 		"sendlist":               ListSendChequesCmd,
@@ -96,9 +97,17 @@ Vault services include issue cheque to peer, receive cheque and store operations
 	},
 }
 
+type PriceInfo struct {
+	Token      string `json:"token"`
+	TokenStr   string `json:"token_str"`
+	Price      string `json:"price"`
+	Rate       string `json:"rate"`
+	TotalPrice string `json:"total_price"`
+}
+
 var StorePriceCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Get btfs store price.",
+		Tagline: "Get btfs token price.",
 	},
 	Options: []cmds.Option{
 		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
@@ -113,21 +122,70 @@ var StorePriceCmd = &cmds.Command{
 			return errors.New("your input token is none. ")
 		}
 
+		price, err := chain.SettleObject.OracleService.CurrentPrice(token)
+		if err != nil {
+			return err
+		}
+
+		rate, err := chain.SettleObject.OracleService.CurrentRate(token)
+		if err != nil {
+			return err
+		}
+
 		totalPrice, err := chain.SettleObject.OracleService.CurrentTotalPrice(token)
 		if err != nil {
 			return err
 		}
 
-		return cmds.EmitOnce(res, &StorePriceRet{
-			Price: totalPrice,
-		})
+		priceInfo := PriceInfo{
+			Token:      token.String(),
+			TokenStr:   tokenStr,
+			Price:      price.String(),
+			Rate:       rate.String(),
+			TotalPrice: totalPrice.String(),
+		}
+
+		return cmds.EmitOnce(res, &priceInfo)
 	},
-	Type: StorePriceRet{},
-	Encoders: cmds.EncoderMap{
-		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *StorePriceRet) error {
-			_, err := fmt.Fprintf(w, "the btfs store price: %v\n", out.Price)
-			return err
-		}),
+}
+
+var StorePriceAllCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "Get btfs all price.",
+	},
+	RunTimeout: 5 * time.Minute,
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+
+		mp := make(map[string]*PriceInfo, 0)
+		for k, token := range tokencfg.MpTokenAddr {
+
+			price, err := chain.SettleObject.OracleService.CurrentPrice(token)
+			if err != nil {
+				return err
+			}
+
+			rate, err := chain.SettleObject.OracleService.CurrentRate(token)
+			if err != nil {
+				return err
+			}
+
+			totalPrice, err := chain.SettleObject.OracleService.CurrentTotalPrice(token)
+			if err != nil {
+				return err
+			}
+
+			priceInfo := PriceInfo{
+				Token:      token.String(),
+				TokenStr:   k,
+				Price:      price.String(),
+				Rate:       rate.String(),
+				TotalPrice: totalPrice.String(),
+			}
+
+			mp[k] = &priceInfo
+		}
+
+		return cmds.EmitOnce(res, &mp)
 	},
 }
 
