@@ -3,6 +3,7 @@ package spin
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -22,7 +23,7 @@ func (dc *dcWrap) doSendOnlineDaily(ctx context.Context, config *config.Config, 
 	}
 	cb := cgrpc.OnlineClient(onlineService)
 	return cb.WithContext(ctx, func(ctx context.Context, client onlinePb.OnlineServiceClient) error {
-		resp, err := client.DoDailyStatusReportHandler(ctx, sm)
+		resp, err := client.DoDailyStatusReport(ctx, sm)
 		if err != nil {
 			chain.CodeStatus = chain.ConstCodeError
 			chain.ErrStatus = err
@@ -80,9 +81,10 @@ func (dc *dcWrap) SendOnlineDaily(node *core.IpfsNode, config *config.Config) {
 	bo := backoff.NewExponentialBackOff()
 	bo.MaxElapsedTime = maxRetryTotal
 	backoff.Retry(func() error {
+		fmt.Printf("--- online 1, doSendDataOnline \n")
 		err := dc.doSendOnlineDaily(node.Context(), config, sm)
 		if err != nil {
-			//fmt.Printf("--- online, doSendDataOnline error = %+v \n", err)
+			fmt.Printf("--- online 2, doSendDataOnline error = %+v \n", err)
 			log.Infof("failed： doSendDataOnline to online server: %+v ", err)
 		} else {
 			log.Debug("sent OK, doSendDataOnline to online server")
@@ -124,7 +126,7 @@ func GetLastOnlineInfoWhenNodeMigration(ctx context.Context, config *config.Conf
 			PeerId: config.Identity.PeerID,
 		}
 
-		resp, err := client.GetLastDailySignedInfoHandler(ctx, &req)
+		resp, err := client.GetLastDailySignedInfo(ctx, &req)
 		if err != nil {
 			chain.CodeStatus = chain.ConstCodeError
 			chain.ErrStatus = err
