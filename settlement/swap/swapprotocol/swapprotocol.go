@@ -193,22 +193,16 @@ func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, 
 
 	// issue cheque call with provided callback for sending cheque to finish transaction
 	balance, err = issue(ctx, common.BytesToAddress(handshakeInfo.Beneficiary), sentAmount, token, func(cheque *vault.SignedCheque) error {
-		fmt.Println("begin send cheque: 1")
-
 		// for simplicity we use json marshaller. can be replaced by a binary encoding in the future.
 		encodedCheque, err := json.Marshal(cheque)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("begin send cheque: 2")
-
 		price, err := s.priceOracle.CurrentPrice(token)
 		if err != nil {
 			return err
 		}
-
-		fmt.Println("begin send cheque: 3")
 
 		// sending cheque
 		log.Infof("sending cheque message to peer %v (%v)", peer, cheque)

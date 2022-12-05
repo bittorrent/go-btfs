@@ -26,7 +26,7 @@ var SendChequeCmd = &cmds.Command{
 		fmt.Println("SendChequeCmd peer_id = ", peer_id)
 
 		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
-		fmt.Printf("... token:%+v\n", tokenStr)
+		//fmt.Printf("... token:%+v\n", tokenStr)
 		token, bl := tokencfg.MpTokenAddr[tokenStr]
 		if !bl {
 			return errors.New("your input token is none. ")

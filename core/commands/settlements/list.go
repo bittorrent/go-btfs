@@ -3,7 +3,6 @@ package settlement
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 	"time"
@@ -36,7 +35,7 @@ var ListSettlementCmd = &cmds.Command{
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
-		fmt.Printf("... token:%+v\n", tokenStr)
+		//fmt.Printf("... token:%+v\n", tokenStr)
 
 		token, bl := tokencfg.MpTokenAddr[tokenStr]
 		if !bl {

@@ -40,7 +40,7 @@ var ChequeCashStatusCmd = &cmds.Command{
 		// get the peer id
 		peerID := req.Arguments[0]
 		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
-		fmt.Printf("... peerID:%+v, token:%+v\n", peerID, tokenStr)
+		fmt.Printf("peerID:%+v, token:%+v\n", peerID, tokenStr)
 		token, bl := tokencfg.MpTokenAddr[tokenStr]
 		if !bl {
 			return errors.New("your input token is none. ")

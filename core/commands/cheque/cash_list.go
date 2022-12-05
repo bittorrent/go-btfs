@@ -36,9 +36,6 @@ var ChequeCashListCmd = &cmds.Command{
 		cmds.StringArg("from", true, false, "page offset"),
 		cmds.StringArg("limit", true, false, "page limit."),
 	},
-	//Options: []cmds.Option{
-	//	cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
-	//},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		from, err := strconv.Atoi(req.Arguments[0])
 		if err != nil {
@@ -55,19 +52,10 @@ var ChequeCashListCmd = &cmds.Command{
 			return fmt.Errorf("invalid limit: %d", limit)
 		}
 
-		//tokenStr := req.Options[tokencfg.TokenTypeName].(string)
-		//fmt.Printf("... token:%+v\n", tokenStr)
-		//token, bl := tokencfg.MpTokenAddr[tokenStr]
-		//if !bl {
-		//	return errors.New("your input token is none. ")
-		//}
-
 		results, err := chain.SettleObject.CashoutService.CashoutResults()
 		if err != nil {
 			return err
 		}
-		fmt.Println("get CashoutResults, ", results)
-
 		sort.Slice(results, func(i, j int) bool {
 			return results[i].CashTime > results[j].CashTime
 		})

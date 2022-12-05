@@ -35,16 +35,14 @@ var ListReceiveChequeCmd = &cmds.Command{
 			return fmt.Errorf("parse limit:%v failed", req.Arguments[1])
 		}
 		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
-		fmt.Printf("... token:%+v\n", tokenStr)
+		//fmt.Printf("... token:%+v\n", tokenStr)
 		token, bl := tokencfg.MpTokenAddr[tokenStr]
 		if !bl {
 			return errors.New("your input token is none. ")
 		}
 
-		fmt.Println("receive list ... 1")
 		var listRet ListChequeRet
 		cheques, err := chain.SettleObject.SwapService.LastReceivedCheques(token)
-		fmt.Println("receive list ... 2", cheques, err)
 
 		if err != nil {
 			return err
@@ -65,7 +63,6 @@ var ListReceiveChequeCmd = &cmds.Command{
 			peerIds = peerIds[:limit]
 		}
 
-		fmt.Println("receive list ... 3")
 		for _, k := range peerIds {
 			v := cheques[k]
 			var record cheque
@@ -76,7 +73,6 @@ var ListReceiveChequeCmd = &cmds.Command{
 			record.Payout = v.CumulativePayout
 
 			cashStatus, err := chain.SettleObject.CashoutService.CashoutStatus(context.Background(), v.Vault, token)
-			fmt.Println("receive list ... 3.2", cashStatus, err, token)
 			if err != nil {
 				return err
 			}
@@ -86,7 +82,6 @@ var ListReceiveChequeCmd = &cmds.Command{
 
 			listRet.Cheques = append(listRet.Cheques, record)
 		}
-		fmt.Println("receive list ... 4")
 		listRet.Len = len(listRet.Cheques)
 		return cmds.EmitOnce(res, &listRet)
 	},
