@@ -22,7 +22,7 @@ func (dc *dcWrap) doSendOnlineDaily(ctx context.Context, config *config.Config, 
 	}
 	cb := cgrpc.OnlineClient(onlineService)
 	return cb.WithContext(ctx, func(ctx context.Context, client onlinePb.OnlineServiceClient) error {
-		resp, err := client.DoDailySignReportHandler(ctx, sm)
+		resp, err := client.DoDailyStatusReportHandler(ctx, sm)
 		if err != nil {
 			chain.CodeStatus = chain.ConstCodeError
 			chain.ErrStatus = err
@@ -120,11 +120,11 @@ func GetLastOnlineInfoWhenNodeMigration(ctx context.Context, config *config.Conf
 	}
 	cb := cgrpc.OnlineClient(onlineService)
 	return cb.WithContext(ctx, func(ctx context.Context, client onlinePb.OnlineServiceClient) error {
-		req := onlinePb.ReqLatestSignReport{
-			NodeId: config.Identity.PeerID,
+		req := onlinePb.ReqLastDailySignedInfo{
+			PeerId: config.Identity.PeerID,
 		}
 
-		resp, err := client.GetLatestSignReport(ctx, &req)
+		resp, err := client.GetLastDailySignedInfoHandler(ctx, &req)
 		if err != nil {
 			chain.CodeStatus = chain.ConstCodeError
 			chain.ErrStatus = err

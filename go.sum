@@ -1524,8 +1524,8 @@ github.com/tklauser/numcpus v0.2.2/go.mod h1:x3qojaO3uyYt0i56EW/VUYs7uBvdl2fkfZF
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tron-us/go-btfs-common v0.2.11/go.mod h1:9ND33JahGMg52sCC2/gO5DakLsd1Pg2lVe2CihW7lBE=
 github.com/tron-us/go-btfs-common v0.3.7/go.mod h1:FbYoo6ZrtnJH3TKdyJTGQrUP2rbwNVATQpxplwaYQ/c=
-github.com/tron-us/go-btfs-common v0.8.13-pre3 h1:wMvsoxcXDi1zk+lYXWdIP+3dhrMMDKkCfYzGcVTiU24=
-github.com/tron-us/go-btfs-common v0.8.13-pre3/go.mod h1:xnIFfbMRS5VsF948fBHPcYIeYGZkQgaJ6NIEGIPfYUs=
+github.com/tron-us/go-btfs-common v0.8.13-pre5 h1:R5ytQhUmjWWcVul7lbBZibk4bXWt0d/YGCERlMzfn9c=
+github.com/tron-us/go-btfs-common v0.8.13-pre5/go.mod h1:xnIFfbMRS5VsF948fBHPcYIeYGZkQgaJ6NIEGIPfYUs=
 github.com/tron-us/go-common/v2 v2.0.5/go.mod h1:GiKX9noBLHotkZAU+7ET4h7N0DYWnm3OcGHOFJg1Q68=
 github.com/tron-us/go-common/v2 v2.1.9/go.mod h1:YIEJZF9Ph79g0zZWOvfNDtJhvO5OqSNPAb/TM1i+KvQ=
 github.com/tron-us/go-common/v2 v2.3.0 h1:bt7WYyOWG6NleHsBB1B/iR1m+mwe3JsaTv/HFbFgxYw=
