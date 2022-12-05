@@ -3,7 +3,6 @@ package priceoracle
 import (
 	"context"
 	"errors"
-	"fmt"
 	conabi "github.com/bittorrent/go-btfs/chain/abi"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -81,13 +80,13 @@ func (s *service) CheckNewPrice(token common.Address) (*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("currentPrice ", price)
+	//fmt.Println("currentPrice ", price)
 
 	rate, err := s.currentRate(token)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("currentRate ", rate)
+	//fmt.Println("currentRate ", rate)
 
 	totalPrice := big.NewInt(0).Mul(price, rate)
 

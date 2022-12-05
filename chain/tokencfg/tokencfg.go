@@ -40,7 +40,6 @@ func init() {
 
 func InitToken(chainID int64) {
 	chainIDStore = chainID
-	fmt.Println("------ InitToken ", chainIDStore)
 
 	if chainID == 199 {
 		MpTokenAddr[WBTT] = common.HexToAddress(bttcWBTTHex)
@@ -65,10 +64,12 @@ func InitToken(chainID int64) {
 		MpTokenStr[common.HexToAddress(bttcTestUSDTHex)] = USDT
 		MpTokenStr[common.HexToAddress(bttcTestTSTHex)] = TST
 	}
+
+	fmt.Println("InitToken: ", chainIDStore, MpTokenAddr)
 }
 
 func GetWbttToken() common.Address {
-	fmt.Println("------ GetWbttToken ", chainIDStore)
+	//fmt.Println("------ GetWbttToken ", chainIDStore)
 
 	if chainIDStore == 199 {
 		return common.HexToAddress(bttcWBTTHex)

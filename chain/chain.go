@@ -141,8 +141,6 @@ func InitSettlement(
 	}
 	erc20Service := erc20.New(chaininfo.Backend, chaininfo.TransactionService, erc20Address)
 
-	fmt.Println("...InitSettlement  erc20Address ", erc20Address)
-
 	// muti tokens
 	mpErc20Service := make(map[string]erc20.Service)
 	for k, tokenAddr := range tokencfg.MpTokenAddr {
