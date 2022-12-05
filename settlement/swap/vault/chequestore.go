@@ -545,8 +545,8 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 		*/
 	}
 
-	fmt.Printf("...1 StoreSendChequeRecord, historySendChequeIndexKey=%v, indexRange=%v, token=%v \n",
-		historySendChequeIndexKey(beneficiary), indexRange, token.Hex())
+	//fmt.Printf("...1 StoreSendChequeRecord, historySendChequeIndexKey=%v, indexRange=%v, token=%v \n",
+	//	historySendChequeIndexKey(beneficiary), indexRange, token.Hex())
 
 	//stroe cheque record with the key: historySendChequeKey(index)
 	chequeRecord := ChequeRecord{
@@ -562,8 +562,8 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 		return err
 	}
 
-	fmt.Printf("...2 StoreSendChequeRecord, historySendChequeKey=%v, indexRange=%v \n",
-		historySendChequeKey(beneficiary, indexRange.MaxIndex), indexRange)
+	//fmt.Printf("...2 StoreSendChequeRecord, historySendChequeKey=%v, indexRange=%v \n",
+	//	historySendChequeKey(beneficiary, indexRange.MaxIndex), indexRange)
 
 	//update Max : add one record
 	indexRange.MaxIndex += 1
@@ -579,8 +579,8 @@ func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, a
 		return err
 	}
 
-	fmt.Printf("...3 StoreSendChequeRecord, historySendChequeKey=%v, indexRange=%v \n",
-		historySendChequeKey(beneficiary, indexRange.MaxIndex), indexRange)
+	//fmt.Printf("...3 StoreSendChequeRecord, historySendChequeKey=%v, indexRange=%v \n",
+	//	historySendChequeKey(beneficiary, indexRange.MaxIndex), indexRange)
 
 	var stat DailySentStats
 	err = s.store.Get(statestore.GetTodayTotalDailySentKey(token), &stat)
@@ -691,8 +691,8 @@ func (s *chequeStore) SendChequeRecordsAll() (map[common.Address][]ChequeRecord,
 		return nil, err
 	}
 
-	fmt.Println("SendChequeRecordsAll ... result = ", result)
-	fmt.Println("SendChequeRecordsAll ... result = ", sendChequeHistoryPrefix, sendChequeHistoryPrefix+"_")
+	//fmt.Println("SendChequeRecordsAll ... result = ", result)
+	//fmt.Println("SendChequeRecordsAll ... result = ", sendChequeHistoryPrefix, sendChequeHistoryPrefix+"_")
 
 	return result, nil
 }

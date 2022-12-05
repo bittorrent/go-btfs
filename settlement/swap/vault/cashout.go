@@ -236,16 +236,11 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 		CashTime: time.Now().Unix(),
 		Status:   "fail",
 	}
-	fmt.Println("1 put CashoutResultKey ", cashResult)
 
 	_, err := s.transactionService.WaitForReceipt(ctx, txHash)
 	if err != nil {
-		fmt.Println("2 put CashoutResultKey ", cashResult)
-
 		log.Infof("storeCashResult err:%+v", err)
 	} else {
-		fmt.Println("3 put CashoutResultKey ", cashResult)
-
 		cs, err := s.CashoutStatus(ctx, vault, token)
 		if err != nil {
 			log.Infof("CashOutStats:get cashout status err:%+v", err)
@@ -263,20 +258,13 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 			}
 			cashResult.Amount = totalPaidOut
 			totalReceivedCashed := big.NewInt(0)
-
-			fmt.Println("3.1 put CashoutResultKey ", token.String())
 			if err = s.store.Get(tokencfg.AddToken(statestore.TotalReceivedCashedKey, token), &totalReceivedCashed); err == nil || err == storage.ErrNotFound {
-				fmt.Println("3.2 put CashoutResultKey ", totalReceivedCashed.String())
 				totalReceivedCashed = totalReceivedCashed.Add(totalReceivedCashed, totalPaidOut)
-				fmt.Println("3.3 put CashoutResultKey ", totalReceivedCashed.String())
 				err := s.store.Put(tokencfg.AddToken(statestore.TotalReceivedCashedKey, token), totalReceivedCashed)
-				fmt.Println("3.4 put CashoutResultKey ", totalReceivedCashed.String())
 				if err != nil {
 					log.Infof("CashOutStats:put totalReceivedCashdKey err:%+v", err)
 				}
 			}
-
-			fmt.Println("3.5 put CashoutResultKey ", totalReceivedCashed.String())
 
 			totalDailyReceivedCashed := big.NewInt(0)
 			if err = s.store.Get(statestore.GetTodayTotalDailyReceivedCashedKey(token), &totalDailyReceivedCashed); err == nil || err == storage.ErrNotFound {
@@ -310,7 +298,6 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 		}
 	}
 	err = s.store.Put(statestore.CashoutResultKey(vault), &cashResult)
-	fmt.Println("4 put CashoutResultKey ", cashResult)
 	if err != nil {
 		log.Infof("CashOutStats:put cashoutResultKey err:%+v", err)
 	}
@@ -319,18 +306,13 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 
 // CashoutStatus gets the status of the latest cashout transaction for the vault
 func (s *cashoutService) CashoutStatus(ctx context.Context, vaultAddress common.Address, token common.Address) (*CashoutStatus, error) {
-	fmt.Println("...1 CashoutStatus ")
-
 	cheque, err := s.chequeStore.LastReceivedCheque(vaultAddress, token)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("...2 CashoutStatus ", cheque, err)
-
 	var action cashoutAction
 	err = s.store.Get(cashoutActionKey(vaultAddress, token), &action)
-	fmt.Println("...3 CashoutStatus ", err)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return &CashoutStatus{
@@ -342,7 +324,6 @@ func (s *cashoutService) CashoutStatus(ctx context.Context, vaultAddress common.
 	}
 
 	_, pending, err := s.backend.TransactionByHash(ctx, action.TxHash)
-	fmt.Println("...3 CashoutStatus ", pending, err)
 	if err != nil {
 		// treat not found as pending
 		if !errors.Is(err, ethereum.NotFound) {
@@ -364,14 +345,10 @@ func (s *cashoutService) CashoutStatus(ctx context.Context, vaultAddress common.
 		}, nil
 	}
 
-	fmt.Println("...4 CashoutStatus ")
-
 	receipt, err := s.backend.TransactionReceipt(ctx, action.TxHash)
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("...5 CashoutStatus ", receipt)
 
 	if receipt.Status == types.ReceiptStatusFailed {
 		// if a tx failed (should be almost impossible in practice) we no longer have the necessary information to compute uncashed locally
@@ -392,14 +369,10 @@ func (s *cashoutService) CashoutStatus(ctx context.Context, vaultAddress common.
 		}, nil
 	}
 
-	fmt.Println("...6 CashoutStatus ")
-
 	result, err := s.parseCashChequeBeneficiaryReceiptMuti(vaultAddress, receipt, token)
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("...7 CashoutStatus ", result)
 
 	return &CashoutStatus{
 		Last: &LastCashout{
@@ -444,12 +417,9 @@ func (s *cashoutService) parseCashChequeBeneficiaryReceipt(vaultAddress common.A
 
 // parseCashChequeBeneficiaryReceiptMuti processes the receipt from a CashChequeBeneficiary transaction
 func (s *cashoutService) parseCashChequeBeneficiaryReceiptMuti(vaultAddress common.Address, receipt *types.Receipt, token common.Address) (*CashChequeResult, error) {
-	fmt.Println("parseCashChequeBeneficiaryReceiptMuti ... 1", vaultAddress, token)
 	if tokencfg.IsWBTT(token) {
 		return s.parseCashChequeBeneficiaryReceipt(vaultAddress, receipt)
 	}
-
-	fmt.Println("parseCashChequeBeneficiaryReceiptMuti ... 2", vaultAddress, token)
 
 	result := &CashChequeResult{
 		Bounced: false,
@@ -457,7 +427,6 @@ func (s *cashoutService) parseCashChequeBeneficiaryReceiptMuti(vaultAddress comm
 
 	var mtCashedEvent mutiChequeCashedEvent
 	err := transaction.FindSingleEvent(&vaultABINew, receipt, vaultAddress, mutiChequeCashedEventType, &mtCashedEvent)
-	fmt.Println("parseCashChequeBeneficiaryReceiptMuti ... 3", err, mtCashedEvent)
 	if err != nil {
 		return nil, err
 	}
@@ -471,14 +440,12 @@ func (s *cashoutService) parseCashChequeBeneficiaryReceiptMuti(vaultAddress comm
 
 	//var mtBouncedEvent mutiChequeBouncedEvent
 	err = transaction.FindSingleEvent(&vaultABINew, receipt, vaultAddress, mutiChequeBouncedEventType, nil)
-	fmt.Println("parseCashChequeBeneficiaryReceiptMuti ... 4", err)
 	if err == nil {
 		result.Bounced = true
 	} else if !errors.Is(err, transaction.ErrEventNotFound) {
 		return nil, err
 	}
 
-	fmt.Println("parseCashChequeBeneficiaryReceiptMuti ... 4")
 	return result, nil
 }
 

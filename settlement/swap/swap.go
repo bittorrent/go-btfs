@@ -470,7 +470,7 @@ func (s *Service) CashCheque(ctx context.Context, peer string, token common.Addr
 		return common.Hash{}, vault.ErrNoCheque
 	}
 
-	fmt.Println("...CashCheque, vaultAddress, s.vault.Address(), token ", vaultAddress, s.vault.Address(), token)
+	//fmt.Println("...CashCheque, vaultAddress, s.vault.Address(), token ", vaultAddress, s.vault.Address(), token)
 	return s.cashout.CashCheque(ctx, vaultAddress, s.vault.Address(), token)
 }
 
