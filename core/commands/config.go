@@ -742,6 +742,28 @@ func SyncConfigOnlineCfg(configRoot string, onlineServerDomain string, reportOnl
 	return nil
 }
 
+func SyncConfigOnlineCfgV2(configRoot string, onlineServerDomain string, reportOnline bool) error {
+	r, err := fsrepo.Open(configRoot)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	cfg, err := r.Config()
+	if err != nil {
+		return err
+	}
+	cfg.Services.OnlineServerDomain = onlineServerDomain
+	cfg.Experimental.ReportOnline = reportOnline
+	cfg.Experimental.ReportStatusContract = false
+
+	err = r.SetConfig(cfg)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func SyncHubDomainConfig(configRoot string, hubServerDomain string) error {
 	r, err := fsrepo.Open(configRoot)
 	if err != nil {

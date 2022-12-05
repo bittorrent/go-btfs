@@ -504,8 +504,15 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	}
 
 	// init report status contract
-	reportStatusServ := reportstatus.Init(chainInfo.TransactionService, cfg, chainCfg.StatusAddress)
-	err = CheckExistLastOnlineReport(cfg, configRoot, chainid, reportStatusServ)
+	//reportStatusServ := reportstatus.Init(chainInfo.TransactionService, cfg, chainCfg.StatusAddress)
+	//err = CheckExistLastOnlineReport(cfg, configRoot, chainid, reportStatusServ)
+	//if err != nil {
+	//	fmt.Println("check report status, err: ", err)
+	//	return err
+	//}
+
+	// init report online info
+	err = CheckExistLastOnlineReportV2(cfg, configRoot, chainid)
 	if err != nil {
 		fmt.Println("check report status, err: ", err)
 		return err
@@ -1402,5 +1409,41 @@ func CheckHubDomainConfig(cfg *config.Config, configRoot string, chainId int64) 
 		}
 	}
 
+	return nil
+}
+
+// CheckExistLastOnlineReportV2 sync conf and lastOnlineInfo
+func CheckExistLastOnlineReportV2(cfg *config.Config, configRoot string, chainId int64) error {
+	lastOnline, err := chain.GetLastOnline()
+	if err != nil {
+		return err
+	}
+
+	// if nil, set config online status config
+	if lastOnline == nil {
+		var reportOnline bool
+		if cfg.Experimental.StorageHostEnabled {
+			reportOnline = true
+		}
+
+		var onlineServerDomain string
+		if chainId == 199 {
+			onlineServerDomain = config.DefaultServicesConfig().OnlineServerDomain
+		} else {
+			onlineServerDomain = config.DefaultServicesConfigTestnet().OnlineServerDomain
+		}
+
+		err = commands.SyncConfigOnlineCfgV2(configRoot, onlineServerDomain, reportOnline)
+		if err != nil {
+			return err
+		}
+	}
+
+	// if nil, set last online info
+	if lastOnline == nil {
+		if err != spin.GetLastOnlineInfoWhenNodeMigration(context.Background(), cfg) {
+			return err
+		}
+	}
 	return nil
 }
