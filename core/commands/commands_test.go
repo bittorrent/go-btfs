@@ -342,7 +342,7 @@ func TestCommands(t *testing.T) {
 		"/statuscontract/config",
 		"/statuscontract/report_online_server",
 		//"/statuscontract/report_status_contract",
-		"/statuscontract/daily_report_online",
+		"/statuscontract/daily_report_online_server",
 		"/statuscontract/daily_report_list",
 		"/statuscontract/daily_total",
 		"/statuscontract/daily_last_report_time",

@@ -29,16 +29,20 @@ var ReportOnlineDailyCmd = &cmds.Command{
 			return err
 		}
 
-		spin.DC.SendOnlineDaily(node, cfg)
+		msg, err := spin.DC.SendOnlineDaily(node, cfg)
+		if err != nil {
+			return err
+		}
 
-		return cmds.EmitOnce(res, "daily report online server ok!")
+		return cmds.EmitOnce(res, "daily report online server ok! "+msg)
 	},
 }
 
 type RetReportOnlineListDaily struct {
-	Records []*chain.LastOnlineInfo `json:"records"`
-	Total   int                     `json:"total"`
-	PeerId  string                  `json:"peer_id"`
+	Records  []*chain.LastOnlineInfo `json:"records"`
+	Total    int                     `json:"total"`
+	PeerId   string                  `json:"peer_id"`
+	BttcAddr string                  `json:"bttc_addr"`
 }
 
 // ReportListDailyCmd (report list daily)
@@ -57,6 +61,12 @@ var ReportListDailyCmd = &cmds.Command{
 			return err
 		}
 		peerId := n.Identity.Pretty()
+
+		cfg, err := cmdenv.GetConfig(env)
+		if err != nil {
+			return err
+		}
+		bttcAddr := cfg.Identity.BttcAddr
 
 		from, err := strconv.Atoi(req.Arguments[0])
 		if err != nil {
@@ -94,9 +104,10 @@ var ReportListDailyCmd = &cmds.Command{
 		}
 
 		return cmds.EmitOnce(res, &RetReportOnlineListDaily{
-			Records: list,
-			Total:   total,
-			PeerId:  peerId,
+			Records:  list,
+			Total:    total,
+			PeerId:   peerId,
+			BttcAddr: bttcAddr,
 		})
 	},
 	Type: RetReportOnlineListDaily{},

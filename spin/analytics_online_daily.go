@@ -20,22 +20,26 @@ var (
 	startTime = time.Now()
 )
 
-func (dc *dcWrap) doSendOnlineDaily(ctx context.Context, config *config.Config, sm *onlinePb.ReqSignMetrics) error {
+func (dc *dcWrap) doSendOnlineDaily(ctx context.Context, config *config.Config, sm *onlinePb.ReqSignMetrics) (msg string, err error) {
 	onlineService := config.Services.OnlineServerDomain
 	if len(onlineService) <= 0 {
 		onlineService = chain.GetOnlineServer(config.ChainInfo.ChainId)
 	}
 	cb := cgrpc.OnlineClient(onlineService)
-	return cb.WithContext(ctx, func(ctx context.Context, client onlinePb.OnlineServiceClient) error {
+	err = cb.WithContext(ctx, func(ctx context.Context, client onlinePb.OnlineServiceClient) error {
 		resp, err := client.DoDailyStatusReport(ctx, sm)
-		//fmt.Printf("--- online DoDailyStatusReport, resp = %+v, err = %+v \n", resp, err)
 		if err != nil {
+			fmt.Printf("daily report online, resp = %+v, err = %+v \n", resp, err)
 			chain.CodeStatus = chain.ConstCodeError
 			chain.ErrStatus = err
 			return err
 		} else {
 			chain.CodeStatus = chain.ConstCodeSuccess
 			chain.ErrStatus = nil
+		}
+
+		if resp != nil && len(resp.Message) > 0 {
+			msg = resp.Message
 		}
 
 		//return errors.New("xxx") //test err
@@ -65,9 +69,11 @@ func (dc *dcWrap) doSendOnlineDaily(ctx context.Context, config *config.Config, 
 
 		return nil
 	})
+
+	return msg, err
 }
 
-func (dc *dcWrap) SendOnlineDaily(node *core.IpfsNode, config *config.Config) {
+func (dc *dcWrap) SendOnlineDaily(node *core.IpfsNode, config *config.Config) (msg string, err error) {
 	sm, errs, err := dc.doPrepDataOnline(node)
 	if errs == nil {
 		errs = make([]error, 0)
@@ -83,13 +89,16 @@ func (dc *dcWrap) SendOnlineDaily(node *core.IpfsNode, config *config.Config) {
 	log.Debug(sb.String())
 	// If complete prep failure we return
 	if err != nil {
-		return
+		return "", err
 	}
 
+	// retry: max 3 times
 	bo := backoff.NewExponentialBackOff()
-	bo.MaxElapsedTime = maxRetryTotal
+	bo.MaxElapsedTime = 3 * 60 * time.Second
+	bo.InitialInterval = 60 * time.Second
+	bo.MaxInterval = 60 * time.Second
 	backoff.Retry(func() error {
-		err := dc.doSendOnlineDaily(node.Context(), config, sm)
+		msg, err = dc.doSendOnlineDaily(node.Context(), config, sm)
 		if err != nil {
 			log.Infof("failed： doSendDataOnline to online server: %+v ", err)
 		} else {
@@ -98,6 +107,8 @@ func (dc *dcWrap) SendOnlineDaily(node *core.IpfsNode, config *config.Config) {
 
 		return err
 	}, bo)
+
+	return msg, err
 }
 
 func (dc *dcWrap) collectionAgentOnlineDaily(node *core.IpfsNode) {
