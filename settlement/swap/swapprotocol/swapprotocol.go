@@ -223,7 +223,7 @@ func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, 
 						return err
 					}
 
-					fmt.Println("begin send cheque: /storage/upload/cheque, hostPid, contractId, token = ", hostPid, contractId, token.String(), token.Hex(), tokencfg.MpTokenStr[token])
+					fmt.Println("begin send cheque: /storage/upload/cheque, hostPid, contractId, token = ", hostPid, contractId, token.String(), tokencfg.MpTokenStr[token])
 
 					//send cheque
 					_, err = remote.P2PCall(ctx, node, coreApi, hostPid, "/storage/upload/cheque",
