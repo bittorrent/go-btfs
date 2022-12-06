@@ -41,7 +41,7 @@ const (
 
 	heartBeatOnline = 60 * time.Minute
 
-	dailyReportOnline = 24 * 60 * time.Minute
+	interReportOnlineDaily = 10 * time.Minute
 
 	// Expotentially delayed retries will be capped at this total time
 	maxRetryTotal = 10 * time.Minute

@@ -16,6 +16,10 @@ import (
 	"github.com/cenkalti/backoff/v4"
 )
 
+var (
+	startTime = time.Now()
+)
+
 func (dc *dcWrap) doSendOnlineDaily(ctx context.Context, config *config.Config, sm *onlinePb.ReqSignMetrics) error {
 	onlineService := config.Services.OnlineServerDomain
 	if len(onlineService) <= 0 {
@@ -24,6 +28,7 @@ func (dc *dcWrap) doSendOnlineDaily(ctx context.Context, config *config.Config, 
 	cb := cgrpc.OnlineClient(onlineService)
 	return cb.WithContext(ctx, func(ctx context.Context, client onlinePb.OnlineServiceClient) error {
 		resp, err := client.DoDailyStatusReport(ctx, sm)
+		//fmt.Printf("--- online DoDailyStatusReport, resp = %+v, err = %+v \n", resp, err)
 		if err != nil {
 			chain.CodeStatus = chain.ConstCodeError
 			chain.ErrStatus = err
@@ -33,8 +38,11 @@ func (dc *dcWrap) doSendOnlineDaily(ctx context.Context, config *config.Config, 
 			chain.ErrStatus = nil
 		}
 
-		//fmt.Printf("--- online, resp, SignedInfo = %+v, signature = %+v \n", resp.SignedInfo, resp.Signature)
+		//return errors.New("xxx") //test err
 		if resp.Code != onlinePb.ResponseCode_SUCCESS {
+			if resp.Message == "to many request" {
+				return nil
+			}
 			return errors.New("DoDailySignReportHandler err: " + resp.Message)
 		}
 
@@ -81,21 +89,20 @@ func (dc *dcWrap) SendOnlineDaily(node *core.IpfsNode, config *config.Config) {
 	bo := backoff.NewExponentialBackOff()
 	bo.MaxElapsedTime = maxRetryTotal
 	backoff.Retry(func() error {
-		fmt.Printf("--- online 1, doSendDataOnline \n")
 		err := dc.doSendOnlineDaily(node.Context(), config, sm)
 		if err != nil {
-			fmt.Printf("--- online 2, doSendDataOnline error = %+v \n", err)
 			log.Infof("failed： doSendDataOnline to online server: %+v ", err)
 		} else {
 			log.Debug("sent OK, doSendDataOnline to online server")
 		}
+
 		return err
 	}, bo)
 }
 
 func (dc *dcWrap) collectionAgentOnlineDaily(node *core.IpfsNode) {
-	//tick := time.NewTicker(dailyReportOnline)
-	tick := time.NewTicker(10 * time.Second)
+	tick := time.NewTicker(interReportOnlineDaily)
+	//tick := time.NewTicker(60 * time.Second)
 	defer tick.Stop()
 
 	// Force tick on immediate start
@@ -105,11 +112,33 @@ func (dc *dcWrap) collectionAgentOnlineDaily(node *core.IpfsNode) {
 		if err != nil {
 			continue
 		}
+		if !isReportOnlineEnabled(cfg) {
+			return
+		}
 
-		if isReportOnlineEnabled(cfg) {
-			//fmt.Println("")
-			//fmt.Println("--- online agent ---")
+		report, err := chain.GetReportOnlineLastTimeDaily()
+		//fmt.Printf("... GetReportOnlineLastTimeDaily, report: %+v err:%+v \n", report, err)
+		if err != nil {
+			log.Errorf("GetReportOnlineLastTimeDaily err:%+v", err)
+			if strings.Contains(err.Error(), "storage: not found") {
+				fmt.Println(`This error is generated when the node reports online daily for the first time because the local data is empty. The error will disappear after the number of reports >= 2.
+            This error can be ignored and does not need to be handled.`)
+			}
+			continue
+		}
 
+		now := time.Now()
+		if now.Sub(startTime) < 30*time.Minute {
+			continue
+		}
+
+		nowMod := now.Unix() % 86400
+		// report only 1 hour every, and must after 10 hour.
+		if nowMod > report.EveryDaySeconds &&
+			nowMod < report.EveryDaySeconds+3600*2 &&
+			now.Sub(report.LastReportTime) > 10*time.Hour {
+
+			fmt.Printf("every day, SendOnlineDaily, time:%+v\n", time.Now().String())
 			dc.SendOnlineDaily(node, cfg)
 		}
 	}

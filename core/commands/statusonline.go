@@ -142,7 +142,7 @@ var TotalDailyCmd = &cmds.Command{
 
 		return cmds.EmitOnce(res, &RetTotalDaily{
 			PeerId:         peerId,
-			StatusContract: "0x111",
+			StatusContract: chain.ChainObject.Chainconfig.StatusAddress.String(),
 			TotalCount:     len(list),
 		})
 	},
@@ -161,7 +161,8 @@ var TotalDailyCmd = &cmds.Command{
 }
 
 type RetReportLastTime struct {
-	LastTime time.Time `json:"last_time"`
+	EveryDaySeconds int64     `json:"every_day_seconds"`
+	LastTime        time.Time `json:"last_time"`
 }
 
 // ReportLastTimeDailyCmd (last time daily)
@@ -177,7 +178,8 @@ var ReportLastTimeDailyCmd = &cmds.Command{
 		}
 
 		return cmds.EmitOnce(res, &RetReportLastTime{
-			LastTime: last.LastReportTime,
+			EveryDaySeconds: last.EveryDaySeconds,
+			LastTime:        last.LastReportTime,
 		})
 	},
 	Type: RetReportLastTime{},

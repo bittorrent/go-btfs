@@ -321,7 +321,8 @@ func GetOnlineServer(chainId int64) string {
 var keyReportOnlineLastTimeDaily = "keyReportOnlineLastTimeDaily"
 
 type ReportOnlineLastTimeDaily struct {
-	LastReportTime time.Time
+	EveryDaySeconds int64
+	LastReportTime  time.Time
 }
 
 func GetReportOnlineLastTimeDaily() (*ReportOnlineLastTimeDaily, error) {
@@ -333,7 +334,12 @@ func GetReportOnlineLastTimeDaily() (*ReportOnlineLastTimeDaily, error) {
 	err := StateStore.Get(keyReportOnlineLastTimeDaily, &info)
 	if err != nil {
 		if err == storage.ErrNotFound {
-			return nil, nil
+			v := ReportOnlineLastTimeDaily{EveryDaySeconds: int64(rand.Intn(100000000) % 86400), LastReportTime: time.Time{}}
+			err := StateStore.Put(keyReportOnlineLastTimeDaily, v)
+			if err != nil {
+				fmt.Println("GetReportOnlineLastTimeDaily: init leveldb err: ", err)
+				return nil, err
+			}
 		}
 		return nil, err
 	}
