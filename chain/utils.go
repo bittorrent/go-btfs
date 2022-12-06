@@ -279,9 +279,9 @@ func GetReportStatusListOK() ([]*LevelDbReportStatusInfo, error) {
 var keyLastOnline = "keyLastOnline"
 
 type LastOnlineInfo struct {
-	LastSignedInfo onlinePb.SignedInfo
-	LastSignature  string
-	LastTime       time.Time
+	LastSignedInfo onlinePb.SignedInfo `json:"last_signed_info"`
+	LastSignature  string              `json:"last_signature"`
+	LastTime       time.Time           `json:"last_time""`
 }
 
 func GetLastOnline() (*LastOnlineInfo, error) {

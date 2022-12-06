@@ -15,7 +15,7 @@ import (
 // ReportOnlineDailyCmd (report online daily)
 var ReportOnlineDailyCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "report online server. ",
+		Tagline: "daily report online server. ",
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -31,7 +31,7 @@ var ReportOnlineDailyCmd = &cmds.Command{
 
 		spin.DC.SendOnlineDaily(node, cfg)
 
-		return cmds.EmitOnce(res, "report online server ok!")
+		return cmds.EmitOnce(res, "daily report online server ok!")
 	},
 }
 
