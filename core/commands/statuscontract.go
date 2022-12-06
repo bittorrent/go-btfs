@@ -31,10 +31,10 @@ report status-contract cmd, total cmd and list cmd.`,
 		"lastinfo":             LastInfoCmd,
 		"report_online_server": ReportOnlineServerCmd,
 
-		"daily_report_online":    ReportOnlineDailyCmd,
-		"daily_report_list":      ReportListDailyCmd,
-		"daily_total":            TotalDailyCmd,
-		"daily_last_report_time": ReportLastTimeDailyCmd,
+		"daily_report_online_server": ReportOnlineDailyCmd,
+		"daily_report_list":          ReportListDailyCmd,
+		"daily_total":                TotalDailyCmd,
+		"daily_last_report_time":     ReportLastTimeDailyCmd,
 	},
 }
 
