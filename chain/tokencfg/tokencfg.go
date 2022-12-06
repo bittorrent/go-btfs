@@ -16,9 +16,9 @@ const (
 
 	// online
 	bttcWBTTHex = "0x23181F21DEa5936e24163FFABa4Ea3B316B57f3C"
-	bttcTRXHex  = ""
-	bttcUSDDHex = ""
-	bttcUSDTHex = ""
+	bttcTRXHex  = "0xEdf53026aeA60f8F75FcA25f8830b7e2d6200662"
+	bttcUSDDHex = "0x17f235fd5974318e4e2a5e37919a209f7c37a6d1"
+	bttcUSDTHex = "0xdB28719F7f938507dBfe4f0eAe55668903D34a15"
 
 	// test
 	bttcTestWBTTHex = "0x107742eb846b86ceaaf7528d5c85cddcad3e409a"
