@@ -360,7 +360,7 @@ func SetReportOnlineLastTimeDailyOK() (*ReportOnlineLastTimeDaily, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("... SetReportOnlineLastTimeDailyOK: ok! ")
+	//fmt.Println("... SetReportOnlineLastTimeDailyOK: ok! ")
 	return &info, nil
 }
 
@@ -388,7 +388,7 @@ func SetReportOnlineListDailyOK(r *LastOnlineInfo) ([]*LastOnlineInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("... SetReportOnlineListDailyOK: ok! rList = ", rList)
+	fmt.Println("SetReportOnlineListDailyOK: ok! nonce =", r.LastSignedInfo.Nonce)
 	return rList, nil
 }
 
