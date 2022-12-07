@@ -148,9 +148,9 @@ func InitChainConfig(
 		if len(cfg.ChainInfo.CurrentFactory) <= 0 {
 			return nil, errors.New("CurrentFactory is None in config file")
 		}
-		if len(cfg.ChainInfo.PriceOracleAddress) <= 0 {
-			return nil, errors.New("PriceOracleAddress is None in config file")
-		}
+		//if len(cfg.ChainInfo.PriceOracleAddress) <= 0 {
+		//	return nil, errors.New("PriceOracleAddress is None in config file")
+		//}
 		if len(cfg.ChainInfo.Endpoint) <= 0 {
 			return nil, errors.New("Endpoint is None in config file")
 		}
@@ -163,7 +163,7 @@ func InitChainConfig(
 
 	if stored {
 		chainconfig.CurrentFactory = common.HexToAddress(cfg.ChainInfo.CurrentFactory)
-		chainconfig.PriceOracleAddress = common.HexToAddress(cfg.ChainInfo.PriceOracleAddress)
+		// chainconfig.PriceOracleAddress = common.HexToAddress(cfg.ChainInfo.PriceOracleAddress)
 		chainconfig.Endpoint = cfg.ChainInfo.Endpoint
 	}
 
