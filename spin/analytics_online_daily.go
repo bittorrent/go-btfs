@@ -131,10 +131,6 @@ func (dc *dcWrap) collectionAgentOnlineDaily(node *core.IpfsNode) {
 		//fmt.Printf("... GetReportOnlineLastTimeDaily, report: %+v err:%+v \n", report, err)
 		if err != nil {
 			log.Errorf("GetReportOnlineLastTimeDaily err:%+v", err)
-			if strings.Contains(err.Error(), "storage: not found") {
-				fmt.Println(`This error is generated when the node reports online daily for the first time because the local data is empty. The error will disappear after the number of reports >= 2.
-            This error can be ignored and does not need to be handled.`)
-			}
 			continue
 		}
 

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/ethereum/go-ethereum/common"
-	"reflect"
 	"time"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -37,8 +36,6 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 		return err
 	}
 
-	var cannot int
-	var pass int
 	for index, shardHash := range rss.ShardHashes {
 		go func(i int, h string) {
 			err := backoff.Retry(func() error {
@@ -48,12 +45,6 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 				default:
 					break
 				}
-
-				// check some host, if not matching, return err.
-				if cannot >= 10 && pass <= 0 {
-					return errors.New("There are no valid matching hosts to upload. ")
-				}
-
 				host, err := hp.NextValidHost()
 				if err != nil {
 					terr := rss.To(sessions.RssToErrorEvent, err)
@@ -79,17 +70,11 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 						return err
 					}
 
-					fmt.Println("1 get from supporttokens,", string(output), reflect.TypeOf(output))
-					//return nil
-
 					var mpToken map[string]common.Address
 					err = json.Unmarshal(output, &mpToken)
-					fmt.Println("1.2 get from supporttokens, err = ", err)
 					if err != nil {
 						return err
 					}
-
-					fmt.Println("2 get from supporttokens, mpToken = ", mpToken)
 
 					ok := false
 					for _, v := range mpToken {
@@ -98,13 +83,9 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 						}
 					}
 					if !ok {
-						cannot++
 						return nil
 					}
 				}
-				pass++
-
-				fmt.Println("3 get from supporttokens .... continue ")
 
 				// TotalPay
 				contractId := helper.NewContractID(rss.SsId)

@@ -146,11 +146,11 @@ Use status command to check for completion:
 
 		// token: parse token argument
 		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
-		//fmt.Println("... use token = ", tokenStr)
 		token, bl := tokencfg.MpTokenAddr[tokenStr]
 		if !bl {
 			return errors.New("your input token is none. ")
 		}
+		fmt.Println("token =", token, tokenStr)
 
 		fileHash := req.Arguments[0]
 		shardHashes, fileSize, shardSize, err = helper.GetShardHashes(ctxParams, fileHash)

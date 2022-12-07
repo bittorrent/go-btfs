@@ -63,11 +63,11 @@ func New(statusAddress common.Address, transactionService transaction.Service, c
 		transactionService: transactionService,
 	}
 
-	if isReportStatusEnabled(cfg) {
-		go func() {
-			cycleCheckReport()
-		}()
-	}
+	//if isReportStatusEnabled(cfg) {
+	//	go func() {
+	//		cycleCheckReport()
+	//	}()
+	//}
 	return serv
 }
 

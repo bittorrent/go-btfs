@@ -340,8 +340,10 @@ func GetReportOnlineLastTimeDaily() (*ReportOnlineLastTimeDaily, error) {
 				fmt.Println("GetReportOnlineLastTimeDaily: init leveldb err: ", err)
 				return nil, err
 			}
+			return &v, nil
+		} else {
+			return nil, err
 		}
-		return nil, err
 	}
 	return &info, nil
 }
