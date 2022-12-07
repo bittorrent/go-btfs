@@ -180,7 +180,7 @@ the shard and replies back to client for the next challenge step.`,
 			if err != nil {
 				return err
 			}
-			//fmt.Printf("receive init, your renter-price[%v], online-price[%v], token[%s]. \n", price, priceOnline, token.String())
+			fmt.Printf("receive init, token[%s] renter-price[%v], online-price[%v],  \n", token.String(), price, priceOnline)
 
 			if price < priceOnline.Int64() {
 				return errors.New(
