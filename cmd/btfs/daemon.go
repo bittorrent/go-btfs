@@ -355,6 +355,10 @@ If the user need to start multiple nodes on the same machine, the configuration 
 
 	if !inited {
 		migrated := config.MigrateConfig(cfg, false, hasHval)
+		if cfg.ChainInfo.PriceOracleAddress != "" {
+			cfg.ChainInfo.PriceOracleAddress = ""
+			migrated = true
+		}
 		if migrated {
 			// Flush changes if migrated
 			err = repo.SetConfig(cfg)
