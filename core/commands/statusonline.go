@@ -7,6 +7,7 @@ import (
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/spin"
+	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
 	"io"
 	"strconv"
 	"time"
@@ -39,10 +40,10 @@ var ReportOnlineDailyCmd = &cmds.Command{
 }
 
 type RetReportOnlineListDaily struct {
-	Records  []*chain.LastOnlineInfo `json:"records"`
-	Total    int                     `json:"total"`
-	PeerId   string                  `json:"peer_id"`
-	BttcAddr string                  `json:"bttc_addr"`
+	Records  []*chain.LastOnlineInfoRet `json:"records"`
+	Total    int                        `json:"total"`
+	PeerId   string                     `json:"peer_id"`
+	BttcAddr string                     `json:"bttc_addr"`
 }
 
 // ReportListDailyCmd (report list daily)
@@ -103,8 +104,25 @@ var ReportListDailyCmd = &cmds.Command{
 			}
 		}
 
+		rs := make([]*chain.LastOnlineInfoRet, 0)
+		for _, v := range list {
+			r := chain.LastOnlineInfoRet{
+				LastTime:      v.LastTime,
+				LastSignature: v.LastSignature,
+				LastSignedInfo: onlinePb.SignedInfo{
+					Peer:        v.LastSignedInfo.Peer,
+					CreatedTime: v.LastSignedInfo.CreatedTime,
+					Version:     v.LastSignedInfo.Version,
+					Nonce:       v.LastSignedInfo.Nonce,
+					BttcAddress: v.LastSignedInfo.BttcAddress,
+					SignedTime:  v.LastSignedInfo.SignedTime,
+				},
+			}
+			rs = append(rs, &r)
+		}
+
 		return cmds.EmitOnce(res, &RetReportOnlineListDaily{
-			Records:  list,
+			Records:  rs,
 			Total:    total,
 			PeerId:   peerId,
 			BttcAddr: bttcAddr,
