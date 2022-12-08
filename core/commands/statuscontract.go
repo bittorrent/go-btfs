@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
 	"io"
 	"math/big"
 	"strconv"
@@ -194,11 +195,24 @@ var LastInfoCmd = &cmds.Command{
 			return errors.New("not found. ")
 		}
 
-		return cmds.EmitOnce(res, last)
+		r := chain.LastOnlineInfoRet{
+			LastTime:      last.LastTime,
+			LastSignature: last.LastSignature,
+			LastSignedInfo: onlinePb.SignedInfo{
+				Peer:        last.LastSignedInfo.Peer,
+				CreatedTime: last.LastSignedInfo.CreatedTime,
+				Version:     last.LastSignedInfo.Version,
+				Nonce:       last.LastSignedInfo.Nonce,
+				BttcAddress: last.LastSignedInfo.BttcAddress,
+				SignedTime:  last.LastSignedInfo.SignedTime,
+			},
+		}
+
+		return cmds.EmitOnce(res, &r)
 	},
-	Type: chain.LastOnlineInfo{},
+	Type: chain.LastOnlineInfoRet{},
 	Encoders: cmds.EncoderMap{
-		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *chain.LastOnlineInfo) error {
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *chain.LastOnlineInfoRet) error {
 			marshaled, err := json.MarshalIndent(out, "", "\t")
 			if err != nil {
 				return err
