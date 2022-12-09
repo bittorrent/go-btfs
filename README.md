@@ -87,7 +87,7 @@ cannot continue until there is sufficient (100 Suggested) BTT (for Gas) availabl
 
 **Run the Daemon**
 
-When starting the BTFS daemon for the first time, the system will create a node account and at the same time print a string of messages: cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on After seeing such a message, it is necessary to recharge the node account with BTT through an external account, and the system suggests a minimum of 100 BTT, which is used as gas to deploy a node vault contract by the node account.
+When starting the BTFS daemon for the first time, the system will create a node account and at the same time print a string of messages: cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on After seeing such a message, it is necessary to recharge the node account with BTT through an external account, and the system suggests a minimum of 30000 BTT, which is used as gas to deploy a node vault contract by the node account.
 After the recharge, the BTFS node will create the vault contract.
 
 Get BTT on BTTC testnet reference [Faucet](#Faucet)

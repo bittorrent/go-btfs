@@ -47,7 +47,7 @@ You can run the script again if it failed due to occasional reasons, weak networ
 
 2. Upgrade your Vault to New Version
 
-Upgradation will re-deploy a vault for you, so make sure there are at least 100 BTT in your BTTC address. Note that your original private key and BTTC address won't be changed in this upgradation. Before upgrading, the program will back your `statestore` and `config` up in your `$BTFS_PATH`.
+Upgradation will re-deploy a vault for you, so make sure there are at least 30000 BTT in your BTTC address. Note that your original private key and BTTC address won't be changed in this upgradation. Before upgrading, the program will back your `statestore` and `config` up in your `$BTFS_PATH`.
 
 Upgrade steps:
 
