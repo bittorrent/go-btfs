@@ -40,7 +40,7 @@ var ListReceiveChequeAllCmd = &cmds.Command{
 			for k, v := range cheques {
 				var record ReceiveCheque
 				record.PeerID = k
-				record.Token = v.Token
+				record.Token = tokenAddr
 				record.Vault = v.Vault
 				record.Beneficiary = v.Beneficiary
 				record.CumulativePayout = v.CumulativePayout
