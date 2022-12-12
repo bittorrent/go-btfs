@@ -41,7 +41,7 @@ func checkBalance(ctx context.Context, swapBackend transaction.Backend, overlayE
 		minimumEth := gasPrice.Mul(gasPrice, big.NewInt(300000))
 		insufficientETH := ethBalance.Cmp(minimumEth) < 0
 		if insufficientETH {
-			fmt.Printf("cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on 0x%x \n", overlayEthAddress)
+			fmt.Printf("cannot continue until there is sufficient (30000 Suggested) BTT (for Gas) available on 0x%x \n", overlayEthAddress)
 			select {
 			case <-time.After(balanceCheckBackoffDuration):
 				continue
