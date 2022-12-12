@@ -309,13 +309,12 @@ func prepareTransaction(ctx context.Context, request *TxRequest, from common.Add
 
 	var gasPrice *big.Int
 	if request.GasPrice == nil {
-		/*
-			gasPrice, err = backend.SuggestGasPrice(ctx)
-			if err != nil {
-				return nil, err
-			}
-		*/
-		gasPrice = big.NewInt(300000000000000)
+		gasPrice, err = backend.SuggestGasPrice(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		//gasPrice = big.NewInt(300000000000000)
 	} else {
 		gasPrice = request.GasPrice
 	}
