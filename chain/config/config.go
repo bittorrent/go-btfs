@@ -48,11 +48,14 @@ var (
 	bttcStatusAddress         = common.HexToAddress("0x6DBAd4Bd16C15AE6dDEaA640626e5A3E151F02fC")
 
 	// deploy gas
-	ethDeploymentGas      = "10"
-	tronDeploymentGas     = "10"
-	bttcDeploymentGas     = "300000000000000"
-	bttcTestDeploymentGas = "300000000000000"
-	testDeploymentGas     = "10"
+	ethDeploymentGas  = "10"
+	tronDeploymentGas = "10"
+	//bttcDeploymentGas     = "300000000000000"
+	//bttcTestDeploymentGas = "300000000000000"
+	bttcDeploymentGas     = ""
+	bttcTestDeploymentGas = ""
+	//testDeploymentGas     = "10"
+	testDeploymentGas = ""
 
 	//endpoint
 	ethEndpoint      = ""
