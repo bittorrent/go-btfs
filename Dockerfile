@@ -53,7 +53,7 @@ RUN set -eux; \
   && chmod +x tini
 
 # Now comes the actual target image, which aims to be as small as possible.
-FROM busybox:1-glibc
+FROM busybox:1.31.1-glibc
 MAINTAINER TRON-US <support@tron.network>
 
 # Get the btfs binary, entrypoint script, and TLS CAs from the build container.
@@ -73,6 +73,9 @@ RUN chmod 0755 /usr/local/bin/start_btfs
 
 # This shared lib (part of glibc) doesn't seem to be included with busybox.
 COPY --from=0 /lib/*-linux-gnu*/libdl.so.2 /lib/
+COPY --from=0 /lib/*-linux-gnu*/libm.so.6 /lib/
+COPY --from=0 /lib/*-linux-gnu*/libgcc_s.so.1 /lib/
+COPY --from=0 /usr/lib/*-linux-gnu*/libstdc++.so.6 /usr/lib/
 
 # Copy over SSL libraries.
 COPY --from=0 /usr/lib/*-linux-gnu*/libssl.so* /usr/lib/
