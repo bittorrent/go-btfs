@@ -41,6 +41,7 @@ func constructDHTRouting(mode dht.ModeOpt) func(
 				dht.Concurrency(10),
 				dht.Mode(mode),
 				dht.Datastore(dstore),
+				dht.ProtocolPrefix("btfs"),
 				dht.Validator(validator)),
 			dual.WanDHTOption(dht.BootstrapPeers(bootstrapPeers...)),
 		)
