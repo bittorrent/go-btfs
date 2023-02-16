@@ -33,7 +33,7 @@ type P2PHostOut struct {
 	fx.Out
 
 	Host    host.Host
-	Routing BaseIpfsRouting
+	Routing routing.Routing `name:"initialrouting"`
 }
 
 func Host(mctx helpers.MetricsCtx, lc fx.Lifecycle, params P2PHostIn) (out P2PHostOut, err error) {
@@ -62,7 +62,7 @@ func Host(mctx helpers.MetricsCtx, lc fx.Lifecycle, params P2PHostIn) (out P2PHo
 		out.Routing = r
 		return r, err
 	}))
-
+	
 	out.Host, err = params.HostOption(ctx, params.ID, params.Peerstore, opts...)
 	if err != nil {
 		return P2PHostOut{}, err

@@ -1,6 +1,7 @@
 package libp2p
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
@@ -82,4 +83,23 @@ func prioritizeOptions(opts []priorityOption) libp2p.Option {
 		p2pOpts[i] = opt.opt
 	}
 	return libp2p.ChainOptions(p2pOpts...)
+}
+
+func ForceReachability(val *config.OptionalString) func() (opts Libp2pOpts, err error) {
+	return func() (opts Libp2pOpts, err error) {
+		if val.IsDefault() {
+			return
+		}
+		v := val.WithDefault("unrecognized")
+		fmt.Println("========ForceReachability:", v)
+		switch v {
+		case "public":
+			opts.Opts = append(opts.Opts, libp2p.ForceReachabilityPublic())
+		case "private":
+			opts.Opts = append(opts.Opts, libp2p.ForceReachabilityPrivate())
+		default:
+			return opts, fmt.Errorf("unrecognized reachability option: %s", v)
+		}
+		return
+	}
 }

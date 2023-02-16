@@ -98,7 +98,7 @@ var ipnspsSubsCmd = &cmds.Command{
 				// Not necessarily an error.
 				continue
 			}
-			pid, err := peer.Decode(k)
+			pid, err := peer.IDFromBytes([]byte(k))
 			if err != nil {
 				log.Errorf("btns key not a valid peer ID: %s", err)
 				continue

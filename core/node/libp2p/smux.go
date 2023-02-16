@@ -46,7 +46,7 @@ func makeSmuxTransportOption(tptConfig config.Transports) (libp2p.Option, error)
 			}
 			switch tpt {
 			case yamuxID:
-				opts = append(opts, libp2p.Muxer(tpt, yamuxTransport))
+				opts = append(opts, libp2p.Muxer(tpt, yamuxTransport()))
 			case mplexID:
 				opts = append(opts, libp2p.Muxer(tpt, mplex.DefaultTransport))
 			default:
@@ -58,7 +58,7 @@ func makeSmuxTransportOption(tptConfig config.Transports) (libp2p.Option, error)
 		return prioritizeOptions([]priorityOption{{
 			priority:        tptConfig.Multiplexers.Yamux,
 			defaultPriority: 100,
-			opt:             libp2p.Muxer(yamuxID, yamuxTransport),
+			opt:             libp2p.Muxer(yamuxID, yamuxTransport()),
 		}, {
 			priority:        tptConfig.Multiplexers.Mplex,
 			defaultPriority: 200,

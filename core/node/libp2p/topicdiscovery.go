@@ -6,16 +6,15 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/discovery"
 	"github.com/libp2p/go-libp2p/core/host"
-	backoff "github.com/libp2p/go-libp2p/p2p/discovery/backoff"
-	routing "github.com/libp2p/go-libp2p/p2p/discovery/routing"
+	"github.com/libp2p/go-libp2p/p2p/discovery/backoff"
+	disc "github.com/libp2p/go-libp2p/p2p/discovery/routing"
 
-	"github.com/bittorrent/go-btfs/core/node/helpers"
-	"go.uber.org/fx"
+	"github.com/libp2p/go-libp2p/core/routing"
 )
 
 func TopicDiscovery() interface{} {
-	return func(mctx helpers.MetricsCtx, lc fx.Lifecycle, host host.Host, cr BaseIpfsRouting) (service discovery.Discovery, err error) {
-		baseDisc := routing.NewRoutingDiscovery(cr)
+	return func(host host.Host, cr routing.ContentRouting) (service discovery.Discovery, err error) {
+		baseDisc := disc.NewRoutingDiscovery(cr)
 		minBackoff, maxBackoff := time.Second*60, time.Hour
 		rng := rand.New(rand.NewSource(rand.Int63()))
 		d, err := backoff.NewBackoffDiscovery(

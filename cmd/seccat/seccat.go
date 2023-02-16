@@ -23,6 +23,7 @@ import (
 	ci "github.com/libp2p/go-libp2p/core/crypto"
 	peer "github.com/libp2p/go-libp2p/core/peer"
 	pstore "github.com/libp2p/go-libp2p/core/peerstore"
+	"github.com/libp2p/go-libp2p/core/protocol"
 	pstoremem "github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoremem"
 	secio "github.com/libp2p/go-libp2p/p2p/security/noise"
 )
@@ -166,7 +167,7 @@ func connect(args args) error {
 
 	// OK, let's setup the channel.
 	sk := ps.PrivKey(p)
-	sg, err := secio.New(sk)
+	sg, err := secio.New(protocol.ID(secio.ID), sk, nil)
 	if err != nil {
 		return err
 	}

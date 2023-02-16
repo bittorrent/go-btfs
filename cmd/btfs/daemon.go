@@ -82,6 +82,7 @@ const (
 	routingOptionDHTKwd       = "dht"
 	routingOptionDHTServerKwd = "dhtserver"
 	routingOptionNoneKwd      = "none"
+	routingOptionCustomKwd    = "custom"
 	routingOptionDefaultKwd   = "default"
 	unencryptTransportKwd     = "disable-transport-encryption"
 	unrestrictedApiAccessKwd  = "unrestricted-api"
@@ -550,12 +551,7 @@ If the user need to start multiple nodes on the same machine, the configuration 
 
 	routingOption, _ := req.Options[routingOptionKwd].(string)
 	if routingOption == routingOptionDefaultKwd {
-		cfg, err := repo.Config()
-		if err != nil {
-			return err
-		}
-
-		routingOption = cfg.Routing.Type
+		routingOption = cfg.Routing.Type.String()
 		if routingOption == "" {
 			routingOption = routingOptionDHTKwd
 		}
@@ -571,6 +567,14 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		ncfg.Routing = libp2p.DHTServerOption
 	case routingOptionNoneKwd:
 		ncfg.Routing = libp2p.NilRouterOption
+	case routingOptionCustomKwd:
+		ncfg.Routing = libp2p.ConstructDelegatedRouting(
+			cfg.Routing.Routers,
+			cfg.Routing.Methods,
+			cfg.Identity.PeerID,
+			cfg.Addresses.Swarm,
+			cfg.Identity.PrivKey,
+		)
 	default:
 		return fmt.Errorf("unrecognized routing option: %s", routingOption)
 	}

@@ -6,6 +6,7 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	bs "github.com/ipfs/go-ipfs-blockstore"
+	ipld "github.com/ipfs/go-ipld-format"
 	mh "github.com/multiformats/go-multihash"
 )
 
@@ -64,12 +65,13 @@ func (b *blockstore) GetSize(ctx context.Context, c cid.Cid) (int, error) {
 	if err == nil {
 		return size, nil
 	}
-	if err != bs.ErrNotFound {
-		return -1, err
+	var notFound = ipld.ErrNotFound{Cid: c}
+	if !notFound.Is(err) {
+		return -1, ipld.ErrNotFound{Cid: c}
 	}
 	c1 := tryOtherCidVersion(c)
 	if !c1.Defined() {
-		return -1, bs.ErrNotFound
+		return -1, ipld.ErrNotFound{Cid: c}
 	}
 	return b.Blockstore.GetSize(ctx, c1)
 }

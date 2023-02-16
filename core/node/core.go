@@ -6,6 +6,7 @@ import (
 
 	"github.com/bittorrent/go-btfs/core/node/helpers"
 	"github.com/bittorrent/go-btfs/repo"
+	irouting "github.com/bittorrent/go-btfs/routing"
 
 	"github.com/TRON-US/go-mfs"
 	"github.com/TRON-US/go-unixfs"
@@ -22,7 +23,6 @@ import (
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-merkledag"
 	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/routing"
 	"go.uber.org/fx"
 )
 
@@ -88,7 +88,7 @@ func Dag(bs blockservice.BlockService) format.DAGService {
 
 // OnlineExchange creates new LibP2P backed block exchange (BitSwap)
 func OnlineExchange(provide bool) interface{} {
-	return func(mctx helpers.MetricsCtx, lc fx.Lifecycle, host host.Host, rt routing.Routing, bs blockstore.GCBlockstore) exchange.Interface {
+	return func(mctx helpers.MetricsCtx, lc fx.Lifecycle, host host.Host, rt irouting.ProvideManyRouter, bs blockstore.GCBlockstore) exchange.Interface {
 		bitswapNetwork := network.NewFromIpfsHost(host, rt)
 		exch := bitswap.New(helpers.LifecycleCtx(mctx, lc), bitswapNetwork, bs, bitswap.ProvideEnabled(provide))
 		lc.Append(fx.Hook{
