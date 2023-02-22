@@ -57,7 +57,7 @@ require (
 	github.com/ipfs/go-ipfs-exchange-offline v0.3.0
 	github.com/ipfs/go-ipfs-pinner v0.2.1
 	github.com/ipfs/go-ipfs-posinfo v0.0.1
-	github.com/ipfs/go-ipfs-provider v1.0.1
+	github.com/ipfs/go-ipfs-provider v0.8.0
 	github.com/ipfs/go-ipfs-routing v0.3.0
 	github.com/ipfs/go-ipfs-util v0.0.2
 	github.com/ipfs/go-ipld-cbor v0.0.5
@@ -82,7 +82,7 @@ require (
 	github.com/libp2p/go-libp2p-kbucket v0.5.0
 	github.com/libp2p/go-libp2p-loggables v0.1.0
 	github.com/libp2p/go-libp2p-pubsub v0.8.1
-	github.com/libp2p/go-libp2p-pubsub-router v0.5.0
+	github.com/libp2p/go-libp2p-pubsub-router v0.6.0
 	github.com/libp2p/go-libp2p-record v0.2.0
 	github.com/libp2p/go-libp2p-routing-helpers v0.4.0
 	github.com/libp2p/go-libp2p-testing v0.12.0
@@ -387,9 +387,9 @@ replace github.com/TRON-US/go-btfs-api => /Users/shawn.huang/github/Shwan-Huang-
 
 // replace github.com/ipld/go-ipld-prime-proto => /Users/shawn.huang/github/Shwan-Huang-Tron/go-ipld-prime-proto
 
-replace github.com/libp2p/go-libp2p-pubsub-router => /Users/shawn.huang/github/bittorrent/go-libp2p-pubsub-router
+// replace github.com/libp2p/go-libp2p-pubsub-router => /Users/shawn.huang/github/bittorrent/go-libp2p-pubsub-router
 
-replace github.com/ipfs/go-ipfs-provider => /Users/shawn.huang/github/bittorrent/go-ipfs-provider
+// replace github.com/ipfs/go-ipfs-provider => /Users/shawn.huang/github/bittorrent/go-ipfs-provider
 
 // replace github.com/libp2p/go-libp2p => /Users/shawn.huang/github/libp2p/go-libp2p
 
