@@ -35,12 +35,13 @@ func (b *blockstore) Get(ctx context.Context, c cid.Cid) (blocks.Block, error) {
 	if err == nil {
 		return block, nil
 	}
-	if err != bs.ErrNotFound {
-		return nil, err
+	var notFound = ipld.ErrNotFound{Cid: c}
+	if !notFound.Is(err) {
+		return nil, ipld.ErrNotFound{Cid: c}
 	}
 	c1 := tryOtherCidVersion(c)
 	if !c1.Defined() {
-		return nil, bs.ErrNotFound
+		return nil, ipld.ErrNotFound{Cid: c}
 	}
 	block, err = b.Blockstore.Get(ctx, c1)
 	if err != nil {

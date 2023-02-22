@@ -378,7 +378,7 @@ replace github.com/libp2p/go-libp2p-mplex => github.com/libp2p/go-libp2p-mplex v
 
 // replace github.com/libp2p/go-libp2p-core => github.com/libp2p/go-libp2p-core v0.17.0
 
-replace github.com/ipfs/go-ipfs-blockstore => github.com/ipfs/go-ipfs-blockstore v1.1.2
+// replace github.com/ipfs/go-ipfs-blockstore => github.com/ipfs/go-ipfs-blockstore v1.1.2
 
 replace github.com/tron-us/go-btfs-common => /Users/shawn.huang/github/Shwan-Huang-Tron/go-btfs-common
 
