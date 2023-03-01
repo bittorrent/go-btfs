@@ -140,6 +140,9 @@ func (m *backendMock) NonceAt(ctx context.Context, account common.Address, block
 	}
 	return 0, errors.New("backendMock.nonceAt not implemented")
 }
+func (m *backendMock) SuggestGasTipCap(ctx context.Context) (*big.Int, error) {
+	return nil, errors.New("backendMock.SuggestGasTipCap not implemented")
+}
 
 func New(opts ...Option) transaction.Backend {
 	mock := new(backendMock)
