@@ -4,15 +4,15 @@ go 1.18
 
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
-	github.com/TRON-US/go-btfs-api v0.4.0
+	github.com/TRON-US/go-btfs-api v0.4.1-0.20230302072600-2afc74800cfc
 	github.com/TRON-US/go-btfs-chunker v0.3.0
-	github.com/TRON-US/go-btfs-config v0.11.12
+	github.com/TRON-US/go-btfs-config v0.11.13-0.20230302065423-e10f87f21752
 	github.com/TRON-US/go-btfs-files v0.2.0
-	github.com/TRON-US/go-btns v0.1.1
+	github.com/TRON-US/go-btns v0.1.2-0.20230302072552-36250342c5d7
 	github.com/TRON-US/go-eccrypto v0.0.1
 	github.com/TRON-US/go-mfs v0.3.1
 	github.com/TRON-US/go-unixfs v0.6.1
-	github.com/TRON-US/interface-go-btfs-core v0.7.0
+	github.com/TRON-US/interface-go-btfs-core v0.7.1-0.20230302072544-168f42a636aa
 	github.com/Workiva/go-datastructures v1.0.52
 	github.com/alecthomas/units v0.0.0-20210927113745-59d0afb8317a
 	github.com/bittorrent/go-btfs-cmds v0.2.14
@@ -109,7 +109,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
-	github.com/tron-us/go-btfs-common v0.8.10
+	github.com/tron-us/go-btfs-common v0.8.14-0.20230306063429-e60ccd00f2b7
 	github.com/tron-us/go-common/v2 v2.3.2
 	github.com/tron-us/protobuf v1.3.7
 	github.com/tyler-smith/go-bip32 v0.0.0-20170922074101-2c9cfd177564
@@ -355,42 +355,10 @@ require (
 	mellium.im/sasl v0.3.1 // indirect
 )
 
-// replace github.com/ipfs/go-ipld-format => github.com/TRON-US/go-ipld-format v0.2.0
-
-// replace github.com/ipfs/go-cid => github.com/TRON-US/go-cid v0.3.0
-
-// replace github.com/multiformats/go-multiaddr => github.com/TRON-US/go-multiaddr v0.4.0
-
 replace github.com/ipfs/go-path => github.com/TRON-US/go-path v0.2.0
-
-// replace github.com/ipld/go-car => github.com/TRON-US/go-car v0.3.0
 
 replace github.com/libp2p/go-libp2p-yamux => github.com/libp2p/go-libp2p-yamux v0.2.8
 
 replace github.com/libp2p/go-libp2p-mplex => github.com/libp2p/go-libp2p-mplex v0.2.4
-
-// replace github.com/libp2p/go-libp2p-core => github.com/libp2p/go-libp2p-core v0.17.0
-
-// replace github.com/ipfs/go-ipfs-blockstore => github.com/ipfs/go-ipfs-blockstore v1.1.2
-
-replace github.com/tron-us/go-btfs-common => /Users/shawn.huang/github/Shwan-Huang-Tron/go-btfs-common
-
-replace github.com/TRON-US/go-btfs-config => /Users/shawn.huang/github/Shwan-Huang-Tron/go-btfs-config
-
-replace github.com/TRON-US/interface-go-btfs-core => /Users/shawn.huang/github/Shwan-Huang-Tron/interface-go-btfs-core
-
-replace github.com/TRON-US/go-btns => /Users/shawn.huang/github/Shwan-Huang-Tron/go-btns
-
-replace github.com/TRON-US/go-btfs-api => /Users/shawn.huang/github/Shwan-Huang-Tron/go-btfs-api
-
-// replace github.com/ipfs/go-ipfs-pinner => github.com/ipfs/go-ipfs-pinner v0.2.1
-
-// replace github.com/ipld/go-ipld-prime-proto => /Users/shawn.huang/github/Shwan-Huang-Tron/go-ipld-prime-proto
-
-// replace github.com/libp2p/go-libp2p-pubsub-router => /Users/shawn.huang/github/bittorrent/go-libp2p-pubsub-router
-
-// replace github.com/ipfs/go-ipfs-provider => /Users/shawn.huang/github/bittorrent/go-ipfs-provider
-
-// replace github.com/libp2p/go-libp2p => /Users/shawn.huang/github/libp2p/go-libp2p
 
 exclude github.com/anacrolix/dht/v2 v2.15.2-0.20220123034220-0538803801cb
