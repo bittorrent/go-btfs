@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
 	"io"
 	"math/big"
 	"strconv"
@@ -23,12 +24,18 @@ var StatusContractCmd = &cmds.Command{
 report status-contract cmd, total cmd and list cmd.`,
 	},
 	Subcommands: map[string]*cmds.Command{
-		"total":                  TotalCmd,
-		"reportlist":             ReportListCmd,
-		"lastinfo":               LastInfoCmd,
-		"config":                 StatusConfigCmd,
-		"report_online_server":   ReportOnlineServerCmd,
-		"report_status_contract": ReportStatusContractCmd,
+		"total":      TotalCmd,
+		"reportlist": ReportListCmd,
+		"config":     StatusConfigCmd,
+		//"report_status_contract": ReportStatusContractCmd,
+
+		"lastinfo":             LastInfoCmd,
+		"report_online_server": ReportOnlineServerCmd,
+
+		"daily_report_online_server": ReportOnlineDailyCmd,
+		"daily_report_list":          ReportListDailyCmd,
+		"daily_total":                TotalDailyCmd,
+		"daily_last_report_time":     ReportLastTimeDailyCmd,
 	},
 }
 
@@ -41,7 +48,7 @@ type TotalCmdRet struct {
 
 var TotalCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "report status-contract total info, (total count, total gas spend, and contract address)",
+		Tagline: "(old)report status-contract total info, (total count, total gas spend, and contract address)",
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -105,7 +112,7 @@ type ReportListCmdRet struct {
 
 var ReportListCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "report status-contract list, and input from and limit to get its.",
+		Tagline: "(old)report status-contract list, and input from and limit to get its.",
 	},
 	RunTimeout: 5 * time.Minute,
 	Arguments: []cmds.Argument{
@@ -188,11 +195,24 @@ var LastInfoCmd = &cmds.Command{
 			return errors.New("not found. ")
 		}
 
-		return cmds.EmitOnce(res, last)
+		r := chain.LastOnlineInfoRet{
+			LastTime:      last.LastTime,
+			LastSignature: last.LastSignature,
+			LastSignedInfo: onlinePb.SignedInfo{
+				Peer:        last.LastSignedInfo.Peer,
+				CreatedTime: last.LastSignedInfo.CreatedTime,
+				Version:     last.LastSignedInfo.Version,
+				Nonce:       last.LastSignedInfo.Nonce,
+				BttcAddress: last.LastSignedInfo.BttcAddress,
+				SignedTime:  last.LastSignedInfo.SignedTime,
+			},
+		}
+
+		return cmds.EmitOnce(res, &r)
 	},
-	Type: chain.LastOnlineInfo{},
+	Type: chain.LastOnlineInfoRet{},
 	Encoders: cmds.EncoderMap{
-		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *chain.LastOnlineInfo) error {
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *chain.LastOnlineInfoRet) error {
 			marshaled, err := json.MarshalIndent(out, "", "\t")
 			if err != nil {
 				return err
@@ -206,7 +226,7 @@ var LastInfoCmd = &cmds.Command{
 
 var StatusConfigCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "get reporting status-contract config. ",
+		Tagline: "(old)get reporting status-contract config. ",
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -255,7 +275,7 @@ var ReportOnlineServerCmd = &cmds.Command{
 
 var ReportStatusContractCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "report status-contract. ",
+		Tagline: "(old,drop it)report status-contract. ",
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {

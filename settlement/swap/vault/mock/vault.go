@@ -14,28 +14,28 @@ type Service struct {
 	checkBalanceFunc             func(bal *big.Int) (err error)
 	getWithdrawTimeFunc          func(ctx context.Context) (ti *big.Int, err error)
 	liquidBalanceFunc            func(ctx context.Context) (ti *big.Int, err error)
-	totalBalanceFunc             func(ctx context.Context) (ti *big.Int, err error)
-	totalIssuedCountFunc         func() (ti int, err error)
-	totalPaidOutFunc             func(ctx context.Context) (ti *big.Int, err error)
+	totalBalanceFunc             func(ctx context.Context, token common.Address) (ti *big.Int, err error)
+	totalIssuedCountFunc         func(token common.Address) (ti int, err error)
+	totalPaidOutFunc             func(ctx context.Context, token common.Address) (ti *big.Int, err error)
 	wbttBalanceFunc              func(ctx context.Context, add common.Address) (bal *big.Int, err error)
 	waitForDepositFunc           func(ctx context.Context, txHash common.Hash) error
-	totalIssuedFunc              func() (*big.Int, error)
-	totalReceivedCashedCountFunc func() (int, error)
-	totalReceivedCashedFunc      func() (*big.Int, error)
-	totalDailyReceivedFunc       func() (*big.Int, error)
-	totalDailyReceivedCashedFunc func() (*big.Int, error)
+	totalIssuedFunc              func(common.Address) (*big.Int, error)
+	totalReceivedCashedCountFunc func(token common.Address) (int, error)
+	totalReceivedCashedFunc      func(token common.Address) (*big.Int, error)
+	totalDailyReceivedFunc       func(common.Address) (*big.Int, error)
+	totalDailyReceivedCashedFunc func(common.Address) (*big.Int, error)
 
 	vaultBalanceFunc          func(context.Context) (*big.Int, error)
-	vaultAvailableBalanceFunc func(context.Context) (*big.Int, error)
+	vaultAvailableBalanceFunc func(context.Context, common.Address) (*big.Int, error)
 	vaultAddressFunc          func() common.Address
-	vaultIssueFunc            func(ctx context.Context, beneficiary common.Address, amount *big.Int, sendChequeFunc vault.SendChequeFunc) (*big.Int, error)
-	vaultWithdrawFunc         func(ctx context.Context, amount *big.Int) (hash common.Hash, err error)
-	vaultDepositFunc          func(ctx context.Context, amount *big.Int) (hash common.Hash, err error)
-	lastChequeFunc            func(common.Address) (*vault.SignedCheque, error)
-	lastChequesFunc           func() (map[common.Address]*vault.SignedCheque, error)
+	vaultIssueFunc            func(ctx context.Context, beneficiary common.Address, amount *big.Int, token common.Address, sendChequeFunc vault.SendChequeFunc) (*big.Int, error)
+	vaultWithdrawFunc         func(ctx context.Context, amount *big.Int, token common.Address) (hash common.Hash, err error)
+	vaultDepositFunc          func(ctx context.Context, amount *big.Int, token common.Address) (hash common.Hash, err error)
+	lastChequeFunc            func(common.Address, common.Address) (*vault.SignedCheque, error)
+	lastChequesFunc           func(common.Address) (map[common.Address]*vault.SignedCheque, error)
 	bttBalanceFunc            func(context.Context) (*big.Int, error)
-	totalReceivedFunc         func() (*big.Int, error)
-	totalReceivedCountFunc    func() (int, error)
+	totalReceivedFunc         func(token common.Address) (*big.Int, error)
+	totalReceivedCountFunc    func(token common.Address) (int, error)
 }
 
 // WithVault*Functions set the mock vault functions
@@ -45,7 +45,7 @@ func WithVaultBalanceFunc(f func(ctx context.Context) (*big.Int, error)) Option 
 	})
 }
 
-func WithVaultAvailableBalanceFunc(f func(ctx context.Context) (*big.Int, error)) Option {
+func WithVaultAvailableBalanceFunc(f func(ctx context.Context, token common.Address) (*big.Int, error)) Option {
 	return optionFunc(func(s *Service) {
 		s.vaultAvailableBalanceFunc = f
 	})
@@ -57,43 +57,43 @@ func WithVaultAddressFunc(f func() common.Address) Option {
 	})
 }
 
-func WithVaultDepositFunc(f func(ctx context.Context, amount *big.Int) (hash common.Hash, err error)) Option {
+func WithVaultDepositFunc(f func(ctx context.Context, amount *big.Int, token common.Address) (hash common.Hash, err error)) Option {
 	return optionFunc(func(s *Service) {
 		s.vaultDepositFunc = f
 	})
 }
 
-func WithVaultIssueFunc(f func(ctx context.Context, beneficiary common.Address, amount *big.Int, sendChequeFunc vault.SendChequeFunc) (*big.Int, error)) Option {
+func WithVaultIssueFunc(f func(ctx context.Context, beneficiary common.Address, amount *big.Int, token common.Address, sendChequeFunc vault.SendChequeFunc) (*big.Int, error)) Option {
 	return optionFunc(func(s *Service) {
 		s.vaultIssueFunc = f
 	})
 }
 
-func WithVaultWithdrawFunc(f func(ctx context.Context, amount *big.Int) (hash common.Hash, err error)) Option {
+func WithVaultWithdrawFunc(f func(ctx context.Context, amount *big.Int, token common.Address) (hash common.Hash, err error)) Option {
 	return optionFunc(func(s *Service) {
 		s.vaultWithdrawFunc = f
 	})
 }
 
-func WithLastChequeFunc(f func(beneficiary common.Address) (*vault.SignedCheque, error)) Option {
+func WithLastChequeFunc(f func(beneficiary common.Address, token common.Address) (*vault.SignedCheque, error)) Option {
 	return optionFunc(func(s *Service) {
 		s.lastChequeFunc = f
 	})
 }
 
-func WithLastChequesFunc(f func() (map[common.Address]*vault.SignedCheque, error)) Option {
+func WithLastChequesFunc(f func(token common.Address) (map[common.Address]*vault.SignedCheque, error)) Option {
 	return optionFunc(func(s *Service) {
 		s.lastChequesFunc = f
 	})
 }
 
-func WithTotalReceivedFunc(f func() (*big.Int, error)) Option {
+func WithTotalReceivedFunc(f func(token common.Address) (*big.Int, error)) Option {
 	return optionFunc(func(s *Service) {
 		s.totalReceivedFunc = f
 	})
 }
 
-func WithTotalReceivedCountFunc(f func() (int, error)) Option {
+func WithTotalReceivedCountFunc(f func(token common.Address) (int, error)) Option {
 	return optionFunc(func(s *Service) {
 		s.totalReceivedCountFunc = f
 	})
@@ -117,19 +117,19 @@ func WithLiquidBalanceFunc(f func(ctx context.Context) (ti *big.Int, err error))
 	})
 }
 
-func WithTotalBalanceFunc(f func(ctx context.Context) (ti *big.Int, err error)) Option {
+func WithTotalBalanceFunc(f func(ctx context.Context, token common.Address) (ti *big.Int, err error)) Option {
 	return optionFunc(func(s *Service) {
 		s.totalBalanceFunc = f
 	})
 }
 
-func WithTotalIssuedCountFunc(f func() (int, error)) Option {
+func WithTotalIssuedCountFunc(f func(token common.Address) (int, error)) Option {
 	return optionFunc(func(s *Service) {
 		s.totalIssuedCountFunc = f
 	})
 }
 
-func WithTotalPaidOutFunc(f func(ctx context.Context) (ti *big.Int, err error)) Option {
+func WithTotalPaidOutFunc(f func(ctx context.Context, token common.Address) (ti *big.Int, err error)) Option {
 	return optionFunc(func(s *Service) {
 		s.totalPaidOutFunc = f
 	})
@@ -147,31 +147,31 @@ func WithWaitForDepositFunc(f func(ctx context.Context, txHash common.Hash) erro
 	})
 }
 
-func WithTotalIssuedFunc(f func() (*big.Int, error)) Option {
+func WithTotalIssuedFunc(f func(token common.Address) (*big.Int, error)) Option {
 	return optionFunc(func(s *Service) {
 		s.totalIssuedFunc = f
 	})
 }
 
-func WithTotalReceivedCashedCountFunc(f func() (int, error)) Option {
+func WithTotalReceivedCashedCountFunc(f func(token common.Address) (int, error)) Option {
 	return optionFunc(func(s *Service) {
 		s.totalReceivedCashedCountFunc = f
 	})
 }
 
-func WithTotalReceivedCashedFunc(f func() (*big.Int, error)) Option {
+func WithTotalReceivedCashedFunc(f func(token common.Address) (*big.Int, error)) Option {
 	return optionFunc(func(s *Service) {
 		s.totalReceivedCashedFunc = f
 	})
 }
 
-func WithTotalDailyReceivedFunc(f func() (*big.Int, error)) Option {
+func WithTotalDailyReceivedFunc(f func(token common.Address) (*big.Int, error)) Option {
 	return optionFunc(func(s *Service) {
 		s.totalDailyReceivedFunc = f
 	})
 }
 
-func WithTotalDailyReceivedCashedFunc(f func() (*big.Int, error)) Option {
+func WithTotalDailyReceivedCashedFunc(f func(token common.Address) (*big.Int, error)) Option {
 	return optionFunc(func(s *Service) {
 		s.totalDailyReceivedCashedFunc = f
 	})
@@ -184,6 +184,10 @@ func NewVault(opts ...Option) vault.Service {
 		o.apply(mock)
 	}
 	return mock
+}
+
+func (s *Service) TokenBalanceOf(ctx context.Context, addr common.Address, tokenStr string) (*big.Int, error) {
+	return nil, errors.New("vaultMock.TokenBalanceOf not implemented")
 }
 
 // Balance mocks the vault .Balance function
@@ -222,23 +226,23 @@ func (s *Service) LiquidBalance(ctx context.Context) (ti *big.Int, err error) {
 	return nil, errors.New("vaultMock.liquidBalanceFunc not implemented")
 }
 
-func (s *Service) TotalBalance(ctx context.Context) (ti *big.Int, err error) {
+func (s *Service) TotalBalance(ctx context.Context, token common.Address) (ti *big.Int, err error) {
 	if s.totalBalanceFunc != nil {
-		return s.totalBalanceFunc(ctx)
+		return s.totalBalanceFunc(ctx, token)
 	}
 	return nil, errors.New("vaultMock.totalBalanceFunc not implemented")
 }
 
-func (s *Service) TotalIssuedCount() (ti int, err error) {
+func (s *Service) TotalIssuedCount(token common.Address) (ti int, err error) {
 	if s.totalIssuedCountFunc != nil {
-		return s.totalIssuedCountFunc()
+		return s.totalIssuedCountFunc(token)
 	}
 	return 0, errors.New("vaultMock.totalIssuedCountFunc not implemented")
 }
 
-func (s *Service) TotalPaidOut(ctx context.Context) (ti *big.Int, err error) {
+func (s *Service) TotalPaidOut(ctx context.Context, token common.Address) (ti *big.Int, err error) {
 	if s.totalPaidOutFunc != nil {
-		return s.totalPaidOutFunc(ctx)
+		return s.totalPaidOutFunc(ctx, token)
 	}
 	return nil, errors.New("vaultMock.totalPaidOutFunc not implemented")
 }
@@ -250,17 +254,17 @@ func (s *Service) WBTTBalanceOf(ctx context.Context, add common.Address) (bal *b
 	return nil, errors.New("vaultMock.wbttBalanceFunc not implemented")
 }
 
-func (s *Service) AvailableBalance(ctx context.Context) (bal *big.Int, err error) {
+func (s *Service) AvailableBalance(ctx context.Context, token common.Address) (bal *big.Int, err error) {
 	if s.vaultAvailableBalanceFunc != nil {
-		return s.vaultAvailableBalanceFunc(ctx)
+		return s.vaultAvailableBalanceFunc(ctx, token)
 	}
 	return nil, errors.New("vaultMock.vaultAvailableBalanceFunc not implemented")
 }
 
 // Deposit mocks the vault .Deposit function
-func (s *Service) Deposit(ctx context.Context, amount *big.Int) (hash common.Hash, err error) {
+func (s *Service) Deposit(ctx context.Context, amount *big.Int, token common.Address) (hash common.Hash, err error) {
 	if s.vaultDepositFunc != nil {
-		return s.vaultDepositFunc(ctx, amount)
+		return s.vaultDepositFunc(ctx, amount, token)
 	}
 	return common.Hash{}, errors.New("vaultMock.vaultDepositFunc not implemented")
 }
@@ -280,78 +284,78 @@ func (s *Service) Address() common.Address {
 	return common.Address{}
 }
 
-func (s *Service) Issue(ctx context.Context, beneficiary common.Address, amount *big.Int, sendChequeFunc vault.SendChequeFunc) (*big.Int, error) {
+func (s *Service) Issue(ctx context.Context, beneficiary common.Address, amount *big.Int, token common.Address, sendChequeFunc vault.SendChequeFunc) (*big.Int, error) {
 	if s.vaultIssueFunc != nil {
-		return s.vaultIssueFunc(ctx, beneficiary, amount, sendChequeFunc)
+		return s.vaultIssueFunc(ctx, beneficiary, amount, token, sendChequeFunc)
 	}
 	return nil, errors.New("vaultMock.vaultIssueFunc not implemented")
 }
 
-func (s *Service) LastCheque(beneficiary common.Address) (*vault.SignedCheque, error) {
+func (s *Service) LastCheque(beneficiary common.Address, token common.Address) (*vault.SignedCheque, error) {
 	if s.lastChequeFunc != nil {
-		return s.lastChequeFunc(beneficiary)
+		return s.lastChequeFunc(beneficiary, token)
 	}
 	return nil, errors.New("vaultMock.lastChequeFunc not implemented")
 }
 
-func (s *Service) LastCheques() (map[common.Address]*vault.SignedCheque, error) {
+func (s *Service) LastCheques(token common.Address) (map[common.Address]*vault.SignedCheque, error) {
 	if s.lastChequesFunc != nil {
-		return s.lastChequesFunc()
+		return s.lastChequesFunc(token)
 	}
 	return nil, errors.New("vaultMock.lastChequesFunc not implemented")
 }
 
-func (s *Service) Withdraw(ctx context.Context, amount *big.Int) (hash common.Hash, err error) {
+func (s *Service) Withdraw(ctx context.Context, amount *big.Int, token common.Address) (hash common.Hash, err error) {
 	if s.vaultWithdrawFunc != nil {
-		return s.vaultWithdrawFunc(ctx, amount)
+		return s.vaultWithdrawFunc(ctx, amount, token)
 	}
 	return common.Hash{}, errors.New("vaultMock.vaultWithdrawFunc not implemented")
 }
 
-func (s *Service) TotalIssued() (*big.Int, error) {
+func (s *Service) TotalIssued(token common.Address) (*big.Int, error) {
 	if s.totalIssuedFunc != nil {
-		return s.totalIssuedFunc()
+		return s.totalIssuedFunc(token)
 	}
 	return nil, errors.New("vaultMock.totalIssuedFunc not implemented")
 }
 
-func (s *Service) TotalReceived() (*big.Int, error) {
+func (s *Service) TotalReceived(token common.Address) (*big.Int, error) {
 	if s.totalReceivedFunc != nil {
-		return s.totalReceivedFunc()
+		return s.totalReceivedFunc(token)
 	}
 	return nil, errors.New("vaultMock.totalReceivedFunc not implemented")
 }
 
-func (s *Service) TotalReceivedCount() (int, error) {
+func (s *Service) TotalReceivedCount(token common.Address) (int, error) {
 	if s.totalReceivedCountFunc != nil {
-		return s.totalReceivedCountFunc()
+		return s.totalReceivedCountFunc(token)
 	}
 	return 0, errors.New("vaultMock.totalReceivedCountFunc not implemented")
 }
 
-func (s *Service) TotalReceivedCashedCount() (int, error) {
+func (s *Service) TotalReceivedCashedCount(token common.Address) (int, error) {
 	if s.totalReceivedCashedCountFunc != nil {
-		return s.totalReceivedCashedCountFunc()
+		return s.totalReceivedCashedCountFunc(token)
 	}
 	return 0, errors.New("vaultMock.totalReceivedCashedCountFunc not implemented")
 }
 
-func (s *Service) TotalReceivedCashed() (*big.Int, error) {
+func (s *Service) TotalReceivedCashed(token common.Address) (*big.Int, error) {
 	if s.totalReceivedCashedFunc != nil {
-		return s.totalReceivedCashedFunc()
+		return s.totalReceivedCashedFunc(token)
 	}
 	return nil, errors.New("vaultMock.totalReceivedCashedFunc not implemented")
 }
 
-func (s *Service) TotalDailyReceived() (*big.Int, error) {
+func (s *Service) TotalDailyReceived(token common.Address) (*big.Int, error) {
 	if s.totalDailyReceivedFunc != nil {
-		return s.totalDailyReceivedFunc()
+		return s.totalDailyReceivedFunc(token)
 	}
 	return nil, errors.New("vaultMock.totalDailyReceivedFunc not implemented")
 }
-func (s *Service) TotalDailyReceivedCashed() (*big.Int, error) {
+func (s *Service) TotalDailyReceivedCashed(token common.Address) (*big.Int, error) {
 	if s.totalDailyReceivedCashedFunc != nil {
-		return s.totalDailyReceivedCashedFunc()
+		return s.totalDailyReceivedCashedFunc(token)
 	}
 	return nil, errors.New("vaultMock.totalDailyReceivedCashedFunc not implemented")
 }

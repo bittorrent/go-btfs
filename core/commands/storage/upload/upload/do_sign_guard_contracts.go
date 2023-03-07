@@ -36,7 +36,7 @@ type RepairParams struct {
 }
 
 func RenterSignGuardContract(rss *sessions.RenterSession, params *ContractParams, offlineSigning bool,
-	rp *RepairParams) ([]byte,
+	rp *RepairParams, token string) ([]byte,
 	error) {
 	guardPid, escrowPid, err := getGuardAndEscrowPid(rss.CtxParams.Cfg)
 	if err != nil {
@@ -90,6 +90,7 @@ func RenterSignGuardContract(rss *sessions.RenterSession, params *ContractParams
 	uh.GuardChanMaps.Remove(shardId)
 	uh.GuardContractMaps.Remove(shardId)
 	cont.RenterSignature = signedBytes
+	cont.Token = token
 	return proto.Marshal(cont)
 }
 

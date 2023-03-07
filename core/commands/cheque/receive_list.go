@@ -1,7 +1,9 @@
 package cheque
 
 import (
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 	"math/big"
 	"strconv"
@@ -20,7 +22,9 @@ var ListReceiveChequeCmd = &cmds.Command{
 		cmds.StringArg("offset", true, false, "page offset"),
 		cmds.StringArg("limit", true, false, "page limit."),
 	},
-
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		offset, err := strconv.Atoi(req.Arguments[0])
 		if err != nil {
@@ -30,9 +34,16 @@ var ListReceiveChequeCmd = &cmds.Command{
 		if err != nil {
 			return fmt.Errorf("parse limit:%v failed", req.Arguments[1])
 		}
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
+		//fmt.Printf("... token:%+v\n", tokenStr)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
 
 		var listRet ListChequeRet
-		cheques, err := chain.SettleObject.SwapService.LastReceivedCheques()
+		cheques, err := chain.SettleObject.SwapService.LastReceivedCheques(token)
+
 		if err != nil {
 			return err
 		}
@@ -56,11 +67,12 @@ var ListReceiveChequeCmd = &cmds.Command{
 			v := cheques[k]
 			var record cheque
 			record.PeerID = k
+			record.Token = v.Token.String()
 			record.Beneficiary = v.Beneficiary.String()
 			record.Vault = v.Vault.String()
 			record.Payout = v.CumulativePayout
 
-			cashStatus, err := chain.SettleObject.CashoutService.CashoutStatus(context.Background(), v.Vault)
+			cashStatus, err := chain.SettleObject.CashoutService.CashoutStatus(context.Background(), v.Vault, token)
 			if err != nil {
 				return err
 			}
@@ -70,7 +82,6 @@ var ListReceiveChequeCmd = &cmds.Command{
 
 			listRet.Cheques = append(listRet.Cheques, record)
 		}
-
 		listRet.Len = len(listRet.Cheques)
 		return cmds.EmitOnce(res, &listRet)
 	},

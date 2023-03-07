@@ -50,3 +50,8 @@ cmd/.DS_Store
 cmd/btfs/s
 cmd/btfs/btfs
 .DS_Store
+
+cmd/btfs/btfs.upgrade
+cmd/btfs/ttt
+cmd/btfs/tt
+cmd/btfs/t*

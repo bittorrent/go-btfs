@@ -3,6 +3,7 @@ package vault
 import (
 	"bytes"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 
 	"github.com/bittorrent/go-btfs/transaction/crypto"
@@ -13,12 +14,14 @@ import (
 
 // Cheque represents a cheque for a SimpleSwap vault
 type Cheque struct {
+	Token            common.Address
 	Vault            common.Address
 	Beneficiary      common.Address
 	CumulativePayout *big.Int
 }
 
 type ChequeRecord struct {
+	Token       common.Address
 	Vault       common.Address
 	Beneficiary common.Address
 	Amount      *big.Int
@@ -77,6 +80,28 @@ var ChequeTypes = eip712.Types{
 	},
 }
 
+var MutiChequeTypes = eip712.Types{
+	"EIP712Domain": eip712.EIP712DomainType,
+	"MultiTokenCheque": []eip712.Type{
+		{
+			Name: "token",
+			Type: "address",
+		},
+		{
+			Name: "vault",
+			Type: "address",
+		},
+		{
+			Name: "beneficiary",
+			Type: "address",
+		},
+		{
+			Name: "cumulativePayout",
+			Type: "uint256",
+		},
+	},
+}
+
 // ChequeSigner signs cheque
 type ChequeSigner interface {
 	// Sign signs a cheque
@@ -98,15 +123,31 @@ func NewChequeSigner(signer crypto.Signer, chainID int64) ChequeSigner {
 
 // eip712DataForCheque converts a cheque into the correct TypedData structure.
 func eip712DataForCheque(cheque *Cheque, chainID int64) *eip712.TypedData {
+	if tokencfg.IsWBTT(cheque.Token) {
+		fmt.Println("muti token: wbtt sign.", cheque.Token.String())
+		return &eip712.TypedData{
+			Domain: vaultDomain(chainID),
+			Types:  ChequeTypes,
+			Message: eip712.TypedDataMessage{
+				"vault":            cheque.Vault.Hex(),
+				"beneficiary":      cheque.Beneficiary.Hex(),
+				"cumulativePayout": cheque.CumulativePayout.String(),
+			},
+			PrimaryType: "Cheque",
+		}
+	}
+
+	fmt.Println("muti token: other token sign.", cheque.Token.String())
 	return &eip712.TypedData{
 		Domain: vaultDomain(chainID),
-		Types:  ChequeTypes,
+		Types:  MutiChequeTypes,
 		Message: eip712.TypedDataMessage{
+			"token":            cheque.Token.Hex(),
 			"vault":            cheque.Vault.Hex(),
 			"beneficiary":      cheque.Beneficiary.Hex(),
 			"cumulativePayout": cheque.CumulativePayout.String(),
 		},
-		PrimaryType: "Cheque",
+		PrimaryType: "MultiTokenCheque",
 	}
 }
 
@@ -116,7 +157,7 @@ func (s *chequeSigner) Sign(cheque *Cheque) ([]byte, error) {
 }
 
 func (cheque *Cheque) String() string {
-	return fmt.Sprintf("Contract: %x Beneficiary: %x CumulativePayout: %v", cheque.Vault, cheque.Beneficiary, cheque.CumulativePayout)
+	return fmt.Sprintf("Token: %x Contract: %x Beneficiary: %x CumulativePayout: %v", cheque.Token, cheque.Vault, cheque.Beneficiary, cheque.CumulativePayout)
 }
 
 func (cheque *Cheque) Equal(other *Cheque) bool {

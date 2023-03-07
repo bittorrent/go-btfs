@@ -284,6 +284,12 @@ type LastOnlineInfo struct {
 	LastTime       time.Time
 }
 
+type LastOnlineInfoRet struct {
+	LastSignedInfo onlinePb.SignedInfo `json:"last_signed_info"`
+	LastSignature  string              `json:"last_signature"`
+	LastTime       time.Time           `json:"last_time""`
+}
+
 func GetLastOnline() (*LastOnlineInfo, error) {
 	if StateStore == nil {
 		return nil, errors.New("please start btfs node, at first! ")
@@ -315,4 +321,100 @@ func GetOnlineServer(chainId int64) string {
 	} else {
 		return config.DefaultServicesConfigTestnet().OnlineServerDomain
 	}
+}
+
+// GetReportOnlineDailyLast from leveldb
+var keyReportOnlineLastTimeDaily = "keyReportOnlineLastTimeDaily"
+
+type ReportOnlineLastTimeDaily struct {
+	EveryDaySeconds int64
+	LastReportTime  time.Time
+}
+
+func GetReportOnlineLastTimeDaily() (*ReportOnlineLastTimeDaily, error) {
+	if StateStore == nil {
+		return nil, errors.New("please start btfs node, at first! ")
+	}
+
+	var info ReportOnlineLastTimeDaily
+	err := StateStore.Get(keyReportOnlineLastTimeDaily, &info)
+	if err != nil {
+		if err == storage.ErrNotFound {
+			v := ReportOnlineLastTimeDaily{EveryDaySeconds: int64(rand.Intn(100000000) % 86400), LastReportTime: time.Time{}}
+			err := StateStore.Put(keyReportOnlineLastTimeDaily, v)
+			if err != nil {
+				fmt.Println("GetReportOnlineLastTimeDaily: init leveldb err: ", err)
+				return nil, err
+			}
+			return &v, nil
+		} else {
+			return nil, err
+		}
+	}
+	return &info, nil
+}
+func SetReportOnlineLastTimeDailyOK() (*ReportOnlineLastTimeDaily, error) {
+	var info ReportOnlineLastTimeDaily
+	err := StateStore.Get(keyReportOnlineLastTimeDaily, &info)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			// continue
+		} else {
+			return nil, err
+		}
+	}
+	info.LastReportTime = time.Now()
+	err = StateStore.Put(keyReportOnlineLastTimeDaily, info)
+	if err != nil {
+		return nil, err
+	}
+	//fmt.Println("... SetReportOnlineLastTimeDailyOK: ok! ")
+	return &info, nil
+}
+
+// GetReportStatus from leveldb
+var keyReportOnlineListDaily = "keyReportOnlineListDaily"
+
+// SetReportOnlineListDailyOK store online daily list
+func SetReportOnlineListDailyOK(r *LastOnlineInfo) ([]*LastOnlineInfo, error) {
+	if StateStore == nil {
+		return nil, errors.New("please start btfs node, at first! ")
+	}
+
+	rList := make([]*LastOnlineInfo, 0)
+	err := StateStore.Get(keyReportOnlineListDaily, &rList)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			// continue
+		} else {
+			return nil, err
+		}
+	}
+
+	rList = append(rList, r)
+	err = StateStore.Put(keyReportOnlineListDaily, rList)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("SetReportOnlineListDailyOK: ok! nonce =", r.LastSignedInfo.Nonce)
+	return rList, nil
+}
+
+// GetReportOnlineListDailyOK store tx list
+func GetReportOnlineListDailyOK() ([]*LastOnlineInfo, error) {
+	if StateStore == nil {
+		return nil, errors.New("please start btfs node, at first! ")
+	}
+
+	rList := make([]*LastOnlineInfo, 0)
+	err := StateStore.Get(keyReportOnlineListDaily, &rList)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+
+	return rList, nil
 }

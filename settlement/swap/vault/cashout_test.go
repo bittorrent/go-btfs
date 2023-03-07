@@ -89,7 +89,7 @@ func TestCashout(t *testing.T) {
 		),
 	)
 
-	returnedTxHash, err := cashoutService.CashCheque(context.Background(), vaultAddress, recipientAddress)
+	returnedTxHash, err := cashoutService.CashCheque(context.Background(), vaultAddress, recipientAddress, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,7 +98,7 @@ func TestCashout(t *testing.T) {
 		t.Fatalf("returned wrong transaction hash. wanted %v, got %v", txHash, returnedTxHash)
 	}
 
-	status, err := cashoutService.CashoutStatus(context.Background(), vaultAddress)
+	status, err := cashoutService.CashoutStatus(context.Background(), vaultAddress, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,7 +193,7 @@ func TestCashoutBounced(t *testing.T) {
 		),
 	)
 
-	returnedTxHash, err := cashoutService.CashCheque(context.Background(), vaultAddress, recipientAddress)
+	returnedTxHash, err := cashoutService.CashCheque(context.Background(), vaultAddress, recipientAddress, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -202,7 +202,7 @@ func TestCashoutBounced(t *testing.T) {
 		t.Fatalf("returned wrong transaction hash. wanted %v, got %v", txHash, returnedTxHash)
 	}
 
-	status, err := cashoutService.CashoutStatus(context.Background(), vaultAddress)
+	status, err := cashoutService.CashoutStatus(context.Background(), vaultAddress, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -282,7 +282,7 @@ func TestCashoutStatusReverted(t *testing.T) {
 		),
 	)
 
-	returnedTxHash, err := cashoutService.CashCheque(context.Background(), vaultAddress, recipientAddress)
+	returnedTxHash, err := cashoutService.CashCheque(context.Background(), vaultAddress, recipientAddress, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -291,7 +291,7 @@ func TestCashoutStatusReverted(t *testing.T) {
 		t.Fatalf("returned wrong transaction hash. wanted %v, got %v", txHash, returnedTxHash)
 	}
 
-	status, err := cashoutService.CashoutStatus(context.Background(), vaultAddress)
+	status, err := cashoutService.CashoutStatus(context.Background(), vaultAddress, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -351,7 +351,7 @@ func TestCashoutStatusPending(t *testing.T) {
 		),
 	)
 
-	returnedTxHash, err := cashoutService.CashCheque(context.Background(), vaultAddress, recipientAddress)
+	returnedTxHash, err := cashoutService.CashCheque(context.Background(), vaultAddress, recipientAddress, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -360,7 +360,7 @@ func TestCashoutStatusPending(t *testing.T) {
 		t.Fatalf("returned wrong transaction hash. wanted %v, got %v", txHash, returnedTxHash)
 	}
 
-	status, err := cashoutService.CashoutStatus(context.Background(), vaultAddress)
+	status, err := cashoutService.CashoutStatus(context.Background(), vaultAddress, TOKEN)
 	if err != nil {
 		t.Fatal(err)
 	}

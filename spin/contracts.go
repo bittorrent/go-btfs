@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	hostContractsSyncPeriod  = 2 * 60 * time.Minute
+	hostContractsSyncPeriod  = 24 * 60 * time.Minute
 	hostContractsSyncTimeout = 10 * time.Minute
 )
 

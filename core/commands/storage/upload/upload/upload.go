@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"strconv"
 	"strings"
 	"time"
@@ -79,6 +80,7 @@ Use status command to check for completion:
 	},
 	Subcommands: map[string]*cmds.Command{
 		"init":              StorageUploadInitCmd,
+		"supporttokens":     StorageUploadSupportTokensCmd,
 		"cheque":            StorageUploadChequeCmd,
 		"recvcontract":      StorageUploadRecvContractCmd,
 		"status":            StorageUploadStatusCmd,
@@ -104,6 +106,7 @@ Use status command to check for completion:
 		cmds.BoolOption(customizedPayoutOptionName, "Enable file storage customized payout schedule.").WithDefault(false),
 		cmds.IntOption(customizedPayoutPeriodOptionName, "Period of customized payout schedule.").WithDefault(1),
 		cmds.IntOption(copyName, "copy num of file hash.").WithDefault(0),
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 	},
 	RunTimeout: 15 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -141,6 +144,14 @@ Use status command to check for completion:
 		var fileSize int64
 		var shardSize int64
 
+		// token: parse token argument
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
+		fmt.Println("token =", token, tokenStr)
+
 		fileHash := req.Arguments[0]
 		shardHashes, fileSize, shardSize, err = helper.GetShardHashes(ctxParams, fileHash)
 		if len(shardHashes) == 0 && fileSize == -1 && shardSize == -1 &&
@@ -154,22 +165,29 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
-
 		_, storageLength, err := helper.GetPriceAndMinStorageLength(ctxParams)
 		if err != nil {
 			return err
 		}
-		// CheckNewPrice, get latest price when upload.
-		_, err = chain.SettleObject.OracleService.CheckNewPrice()
-		if err != nil {
-			return err
-		}
-		priceObj, err := chain.SettleObject.OracleService.CurrentPrice()
+
+		// token: get new price
+		priceObj, err := chain.SettleObject.OracleService.CurrentPrice(token)
 		if err != nil {
 			return err
 		}
 		price := priceObj.Int64()
+		// token: get new rate
+		rate, err := chain.SettleObject.OracleService.CurrentRate(token)
+		if err != nil {
+			return err
+		}
+		_, err = helper.TotalPay(shardSize, price, storageLength, rate)
+		if err != nil {
+			fmt.Println(err.Error())
+			return err
+		}
 
+		// sync hosts from hub hosts.
 		if !ctxParams.Cfg.Experimental.HostsSyncEnabled {
 			_ = SyncHosts(ctxParams)
 		}
@@ -186,7 +204,7 @@ Use status command to check for completion:
 				hp = helper.GetCustomizedHostsProvider(ctxParams, hostIDs)
 			}
 		}
-		rss, err := sessions.GetRenterSession(ctxParams, ssId, fileHash, shardHashes)
+		rss, err := sessions.GetRenterSessionWithToken(ctxParams, ssId, fileHash, shardHashes, token)
 		if err != nil {
 			return err
 		}
@@ -208,7 +226,7 @@ Use status command to check for completion:
 		for i, _ := range rss.ShardHashes {
 			shardIndexes = append(shardIndexes, i)
 		}
-		UploadShard(rss, hp, price, shardSize, storageLength, offlineSigning, renterId, fileSize, shardIndexes, nil)
+		UploadShard(rss, hp, price, token, shardSize, storageLength, offlineSigning, renterId, fileSize, shardIndexes, nil)
 		seRes := &Res{
 			ID: ssId,
 		}

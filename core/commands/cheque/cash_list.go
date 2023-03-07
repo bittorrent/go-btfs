@@ -16,6 +16,7 @@ import (
 type ChequeCashListRet struct {
 	TxHash   string   `json:"tx_hash"`
 	PeerID   string   `json:"peer_id"`
+	Token    string   `json:"token"`
 	Vault    string   `json:"vault"`
 	Amount   *big.Int `json:"amount"`
 	CashTime int64    `json:"cash_time"`
@@ -76,6 +77,7 @@ var ChequeCashListCmd = &cmds.Command{
 					r := ChequeCashListRet{
 						TxHash:   result.TxHash.String(),
 						PeerID:   peer,
+						Token:    result.Token.String(),
 						Vault:    result.Vault.String(),
 						Amount:   result.Amount,
 						CashTime: result.CashTime,

@@ -241,9 +241,10 @@ var rootRemoteSubcommands = map[string]*cmds.Command{
 			},
 			"upload": &cmds.Command{
 				Subcommands: map[string]*cmds.Command{
-					"init":         upload.StorageUploadInitCmd,
-					"recvcontract": upload.StorageUploadRecvContractCmd,
-					"cheque":       upload.StorageUploadChequeCmd,
+					"init":          upload.StorageUploadInitCmd,
+					"supporttokens": upload.StorageUploadSupportTokensCmd,
+					"recvcontract":  upload.StorageUploadRecvContractCmd,
+					"cheque":        upload.StorageUploadChequeCmd,
 				},
 			},
 			"dcrepair": &cmds.Command{

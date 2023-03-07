@@ -33,8 +33,8 @@ do
             ext=".exe"
         fi
         rm -f ../btfs-binary-releases/${goos}/${goarch}/*
-        GOOS=${goos} GOARCH=${goarch} make build
-        GOOS=${goos} GOARCH=${goarch} go build -o update-${goos}-${goarch}${ext} autoupdate/main.go
+        GOOS=${goos} GOARCH=${goarch} GOFLAGS=-buildvcs=false make build
+        GOOS=${goos} GOARCH=${goarch} GOFLAGS=-buildvcs=false go build -o update-${goos}-${goarch}${ext} autoupdate/main.go
         md5=`openssl md5 ./cmd/btfs/btfs | awk '{print $2}'`
         mv ./cmd/btfs/btfs ../btfs-binary-releases/${goos}/${goarch}/btfs-${goos}-${goarch}${ext}
         mv update-${goos}-${goarch}${ext} ../btfs-binary-releases/${goos}/${goarch}/update-${goos}-${goarch}${ext}

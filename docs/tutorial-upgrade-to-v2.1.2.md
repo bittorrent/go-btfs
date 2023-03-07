@@ -47,7 +47,7 @@ You can run the script again if it failed due to occasional reasons, weak networ
 
 2. Upgrade your Vault to New Version
 
-Upgradation will re-deploy a vault for you, so make sure there are at least 100 BTT in your BTTC address. Note that your original private key and BTTC address won't be changed in this upgradation. Before upgrading, the program will back your `statestore` and `config` up in your `$BTFS_PATH`.
+Upgradation will re-deploy a vault for you, so make sure there are at least 30000 BTT in your BTTC address. Note that your original private key and BTTC address won't be changed in this upgradation. Before upgrading, the program will back your `statestore` and `config` up in your `$BTFS_PATH`.
 
 Upgrade steps:
 
@@ -83,8 +83,8 @@ backup config file successfully to ~/.btfs/config.backup26
 your old vault address is 0xaAFA1cEEF792aF65d68Edb545a542137A69A87Ba
 will re-deploy a vault contract for you
 
-cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on 0x69bbf2d2779f05dadba6947acd94c3e151bb93df 
-cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on 0x69bbf2d2779f05dadba6947acd94c3e151bb93df 
+cannot continue until there is sufficient (30000 Suggested) BTT (for Gas) available on 0x69bbf2d2779f05dadba6947acd94c3e151bb93df 
+cannot continue until there is sufficient (30000 Suggested) BTT (for Gas) available on 0x69bbf2d2779f05dadba6947acd94c3e151bb93df 
 self vault: 0x2d34448026415a7cc65a69f795528915ef685a5f
 ...
 ```

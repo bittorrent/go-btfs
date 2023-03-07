@@ -4,9 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 
@@ -160,9 +164,55 @@ the shard and replies back to client for the next challenge step.`,
 			return err
 		}
 
+		var price int64
+		var amount int64
+		var rate *big.Int
+		{
+			// check renter-token
+			token := common.HexToAddress(halfSignedGuardContract.Token)
+			_, bl := tokencfg.MpTokenStr[token]
+			if !bl {
+				err = errors.New("receive upload init, your input token is not supported. " + token.String())
+				return err
+			}
+
+			// check renter-price
+			price = guardContractMeta.Price
+			priceOnline, err := chain.SettleObject.OracleService.CurrentPrice(token)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("receive init, token[%s] renter-price[%v], online-price[%v],  \n", token.String(), price, priceOnline)
+
+			if price < priceOnline.Int64() {
+				return errors.New(
+					fmt.Sprintf("receive init, your renter-price[%v] is less than online-price[%v]. ",
+						price, priceOnline),
+				)
+			}
+
+			// check renter-amount
+			rate, err = chain.SettleObject.OracleService.CurrentRate(token)
+			if err != nil {
+				return err
+			}
+			amount = guardContractMeta.Amount
+			amountCal, err := uh.TotalPay(guardContractMeta.ShardFileSize, price, storeLen, rate)
+			if err != nil {
+				return err
+			}
+			//fmt.Printf("receive init, renter-amount[%v], cal-amount[%v] \n", amount, amountCal)
+			if amount < amountCal {
+				return errors.New(
+					fmt.Sprintf("receive init, your renter-amount[%v] is less than cal-amount[%v]. ",
+						amount, amountCal),
+				)
+			}
+		}
+
 		go func() {
 			tmp := func() error {
-				shard, err := sessions.GetHostShard(ctxParams, signedGuardContract.ContractId)
+				shard, err := sessions.GetHostShard(ctxParams, signedGuardContract.ContractId, price, amount, rate)
 				if err != nil {
 					return err
 				}
@@ -490,7 +540,7 @@ func downloadShardFromClient(ctxParams *uh.ContextParams, guardContract *guardpb
 }
 
 func setPaidStatus(ctxParams *uh.ContextParams, contractId string) error {
-	shard, err := sessions.GetHostShard(ctxParams, contractId)
+	shard, err := sessions.GetHostShard(ctxParams, contractId, 0, 0, new(big.Int))
 	if err != nil {
 		return err
 	}
@@ -502,6 +552,15 @@ func setPaidStatus(ctxParams *uh.ContextParams, contractId string) error {
 	}
 
 	return nil
+}
+
+func getInputPriceAmountRate(ctxParams *uh.ContextParams, contractId string) (int64, int64, *big.Int, error) {
+	shard, err := sessions.GetHostShard(ctxParams, contractId, 0, 0, new(big.Int))
+	if err != nil {
+		return 0, 0, new(big.Int), err
+	}
+
+	return shard.GetInputPrice(), shard.GetInputAmount(), shard.GetInputRate(), nil
 }
 
 func isPaidin(ctxParams *uh.ContextParams, contractID *escrowpb.SignedContractID) (bool, error) {

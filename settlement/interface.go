@@ -2,6 +2,7 @@ package settlement
 
 import (
 	"errors"
+	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 )
 
@@ -22,7 +23,7 @@ type Interface interface {
 }
 
 type Accounting interface {
-	Settle(peer string, amount *big.Int, contractId string) error
-	NotifyPaymentReceived(peer string, amount *big.Int) error
-	NotifyPaymentSent(peer string, amount *big.Int, receivedError error)
+	Settle(peer string, amount *big.Int, contractId string, token common.Address) error
+	NotifyPaymentReceived(peer string, amount *big.Int, token common.Address) error
+	NotifyPaymentSent(peer string, amount *big.Int, receivedError error, token common.Address)
 }

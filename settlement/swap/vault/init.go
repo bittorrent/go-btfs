@@ -41,7 +41,7 @@ func checkBalance(ctx context.Context, swapBackend transaction.Backend, overlayE
 		minimumEth := gasPrice.Mul(gasPrice, big.NewInt(300000))
 		insufficientETH := ethBalance.Cmp(minimumEth) < 0
 		if insufficientETH {
-			fmt.Printf("cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on 0x%x \n", overlayEthAddress)
+			fmt.Printf("cannot continue until there is sufficient (30000 Suggested) BTT (for Gas) available on 0x%x \n", overlayEthAddress)
 			select {
 			case <-time.After(balanceCheckBackoffDuration):
 				continue
@@ -65,6 +65,7 @@ func Init(
 	chequeSigner ChequeSigner,
 	chequeStore ChequeStore,
 	erc20Service erc20.Service,
+	mpErc20Service map[string]erc20.Service,
 ) (vaultService Service, err error) {
 
 	// verify that the supplied factory is valid
@@ -89,12 +90,20 @@ func Init(
 	}
 
 	// approve to vaultAddress
-	err = erc20tokenApprove(ctx, erc20Service, overlayEthAddress, vaultAddress)
+	err = erc20tokenApprove(ctx, "WBTT", erc20Service, overlayEthAddress, vaultAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	vaultService, err = New(transactionService, vaultAddress, overlayEthAddress, stateStore, chequeSigner, erc20Service, chequeStore)
+	// muti tokens
+	for tokenStr, erc20Svr := range mpErc20Service {
+		err = erc20tokenApprove(ctx, tokenStr, erc20Svr, overlayEthAddress, vaultAddress)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	vaultService, err = New(transactionService, vaultAddress, overlayEthAddress, stateStore, chequeSigner, erc20Service, mpErc20Service, chequeStore)
 	return vaultService, err
 }
 
@@ -170,7 +179,7 @@ func deployVaultIfNotExist(
 	return vaultAddress, err
 }
 
-func erc20tokenApprove(ctx context.Context, erc20Service erc20.Service, issuer, vault common.Address) error {
+func erc20tokenApprove(ctx context.Context, tokenStr string, erc20Service erc20.Service, issuer, vault common.Address) error {
 	allowance, err := erc20Service.Allowance(ctx, issuer, vault)
 	if err != nil {
 		return err
@@ -183,7 +192,7 @@ func erc20tokenApprove(ctx context.Context, erc20Service erc20.Service, issuer, 
 		if err != nil {
 			return err
 		}
-		log.Infof("approve WBTT to vault [0x%x] at tx [0x%x] \n", vault, hash)
+		log.Infof("approve %s to vault [0x%x] at tx [0x%x] \n", tokenStr, vault, hash)
 	}
 	return nil
 }

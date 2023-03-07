@@ -271,7 +271,7 @@ var downloadBTCmd = &cmds.Command{
 		}
 
 		btfsBinaryPath := "btfs"
-		cmd := exec.Command(btfsBinaryPath, "add", "-r", t.Name())
+		cmd := exec.Command(btfsBinaryPath, "add", "-r", "--pin", t.Name())
 
 		go func() {
 			time.Sleep(10 * time.Minute)
@@ -307,6 +307,10 @@ var downloadBTCmd = &cmds.Command{
 		return nil
 	},
 }
+
+var minBTListenPort = 30000
+var maxBTListenPort = 31000
+
 var serveBTCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline:         "Serve as a bittorrent client with the specified files.",
@@ -321,13 +325,24 @@ var serveBTCmd = &cmds.Command{
 			return fmt.Errorf("you must provide the paths of some files that you want to serve as seeds")
 		}
 		cfg := torrent.NewDefaultClientConfig()
-		cfg.ListenPort = 0
+		cfg.ListenPort = minBTListenPort
 		cfg.Seed = true
+	retry:
 		cl, err := torrent.NewClient(cfg)
 		if err != nil {
-			return fmt.Errorf("new torrent client: %w", err)
+			if strings.Contains(err.Error(), "address already in use") {
+				fmt.Println(err)
+				cfg.ListenPort = cfg.ListenPort + 1
+				if cfg.ListenPort > maxBTListenPort {
+					return fmt.Errorf("we have try all the port between %d and %d ,but they are all in used", minBTListenPort, maxBTListenPort)
+				}
+				goto retry
+			} else {
+				return fmt.Errorf("new torrent client: %w", err)
+			}
 		}
 		defer cl.Close()
+
 		for _, filePath := range filePaths {
 			totalLength, err := totalLength(filePath)
 			if err != nil {

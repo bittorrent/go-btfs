@@ -38,6 +38,7 @@ func doGuardAndPay(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult,
 		//contracts.SignedGuardContract.EscrowSignature = res.EscrowSignature
 		//contracts.SignedGuardContract.EscrowSignedTime = res.Result.EscrowSignedTime
 		contracts.SignedGuardContract.LastModifyTime = time.Now()
+		contracts.SignedGuardContract.Token = rss.Token.String()
 		cts = append(cts, contracts.SignedGuardContract)
 		selectedHosts = append(selectedHosts, contracts.SignedGuardContract.HostPid)
 	}
@@ -45,6 +46,7 @@ func doGuardAndPay(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult,
 	if err != nil {
 		return err
 	}
+	fsStatus.FileStoreMeta.Token = rss.Token.String()
 	cb := make(chan []byte)
 	uh.FileMetaChanMaps.Set(rss.SsId, cb)
 	if offlineSigning {

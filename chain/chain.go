@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 	"math/big"
 	"strings"
@@ -140,8 +141,14 @@ func InitSettlement(
 	}
 	erc20Service := erc20.New(chaininfo.Backend, chaininfo.TransactionService, erc20Address)
 
+	// muti tokens
+	mpErc20Service := make(map[string]erc20.Service)
+	for k, tokenAddr := range tokencfg.MpTokenAddr {
+		mpErc20Service[k] = erc20.New(chaininfo.Backend, chaininfo.TransactionService, tokenAddr)
+	}
+
 	// init bttc service
-	bttcService := bttc.New(chaininfo.TransactionService, erc20Service)
+	bttcService := bttc.New(chaininfo.TransactionService, erc20Service, mpErc20Service)
 
 	//initChequeStoreCashout
 	chequeStore, cashoutService := initChequeStoreCashout(
@@ -175,6 +182,7 @@ func InitSettlement(
 		deployGasPrice,
 		chequeStore,
 		erc20Service,
+		mpErc20Service,
 	)
 
 	if err != nil {
@@ -195,7 +203,7 @@ func InitSettlement(
 	)
 
 	if err != nil {
-		return nil, errors.New("init swap service error")
+		return nil, errors.New("init swap service error , " + err.Error())
 	}
 
 	accounting.SetPayFunc(swapService.Pay)
@@ -256,6 +264,7 @@ func initVaultService(
 	deployGasPrice string,
 	chequeStore vault.ChequeStore,
 	erc20Service erc20.Service,
+	mpErc20Service map[string]erc20.Service,
 ) (vault.Service, error) {
 	chequeSigner := vault.NewChequeSigner(signer, chainID)
 
@@ -280,6 +289,7 @@ func initVaultService(
 		chequeSigner,
 		chequeStore,
 		erc20Service,
+		mpErc20Service,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("vault init: %w", err)
@@ -336,9 +346,9 @@ func initSwap(
 	}
 
 	priceOracle := priceoracle.New(currentPriceOracleAddress, transactionService)
-	_, err := priceOracle.CheckNewPrice() // CheckNewPrice when node starts
+	_, err := priceOracle.CheckNewPrice(tokencfg.GetWbttToken()) // CheckNewPrice when node starts
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.New("CheckNewPrice " + err.Error())
 	}
 
 	swapProtocol := swapprotocol.New(overlayEthAddress, priceOracle)

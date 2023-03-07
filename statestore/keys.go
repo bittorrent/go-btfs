@@ -2,6 +2,7 @@ package statestore
 
 import (
 	"fmt"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"time"
 
 	"github.com/bittorrent/go-btfs/utils"
@@ -22,32 +23,32 @@ var (
 	PeerReceivedUncashRecordsCountKeyPrefix = "swap_vault_peer_received_uncashed_records_count_" // 每个peer收到支票未兑现数量
 )
 
-func PeerReceivedUncashRecordsCountKey(vault common.Address) string {
-	return fmt.Sprintf("%s%s", PeerReceivedUncashRecordsCountKeyPrefix, vault.String())
+func PeerReceivedUncashRecordsCountKey(vault common.Address, token common.Address) string {
+	return fmt.Sprintf("%s%s", tokencfg.AddToken(PeerReceivedUncashRecordsCountKeyPrefix, token), vault.String())
 }
 
-func GetTodayTotalDailyReceivedKey() string {
-	return fmt.Sprintf("%s%d", TotalDailyReceivedKey, utils.TodayUnix())
+func GetTodayTotalDailyReceivedKey(token common.Address) string {
+	return fmt.Sprintf("%s%d", tokencfg.AddToken(TotalDailyReceivedKey, token), utils.TodayUnix())
 }
 
-func GetTotalDailyReceivedKeyByTime(timestamp int64) string {
-	return fmt.Sprintf("%s%d", TotalDailyReceivedKey, timestamp)
+func GetTotalDailyReceivedKeyByTime(timestamp int64, token common.Address) string {
+	return fmt.Sprintf("%s%d", tokencfg.AddToken(TotalDailyReceivedKey, token), timestamp)
 }
 
-func GetTodayTotalDailyReceivedCashedKey() string {
-	return fmt.Sprintf("%s%d", TotalDailyReceivedCashedKey, utils.TodayUnix())
+func GetTodayTotalDailyReceivedCashedKey(token common.Address) string {
+	return fmt.Sprintf("%s%d", tokencfg.AddToken(TotalDailyReceivedCashedKey, token), utils.TodayUnix())
 }
 
-func GetTotalDailyReceivedCashedKeyByTime(timestamp int64) string {
-	return fmt.Sprintf("%s%d", TotalDailyReceivedCashedKey, timestamp)
+func GetTotalDailyReceivedCashedKeyByTime(timestamp int64, token common.Address) string {
+	return fmt.Sprintf("%s%d", tokencfg.AddToken(TotalDailyReceivedCashedKey, token), timestamp)
 }
 
-func GetTodayTotalDailySentKey() string {
-	return GetTotalDailySentKeyByTime(utils.TodayUnix())
+func GetTodayTotalDailySentKey(token common.Address) string {
+	return GetTotalDailySentKeyByTime(utils.TodayUnix(), token)
 }
 
-func GetTotalDailySentKeyByTime(timestamp int64) string {
-	return fmt.Sprintf("%s%d", TotalDailySentKey, timestamp)
+func GetTotalDailySentKeyByTime(timestamp int64, token common.Address) string {
+	return fmt.Sprintf("%s%d", tokencfg.AddToken(TotalDailySentKey, token), timestamp)
 }
 
 func CashoutResultPrefixKey() string {
@@ -56,4 +57,8 @@ func CashoutResultPrefixKey() string {
 
 func CashoutResultKey(vault common.Address) string {
 	return fmt.Sprintf("%s%x_%d", CashoutResultPrefixKey(), vault, time.Now().Unix())
+}
+
+func CashoutResultPrefixAllKey() string {
+	return "swap_cashout_result_"
 }

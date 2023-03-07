@@ -3,13 +3,11 @@ package priceoracle
 import (
 	"context"
 	"errors"
-	"math/big"
-	"sync"
-
 	conabi "github.com/bittorrent/go-btfs/chain/abi"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"math/big"
 )
 
 var (
@@ -23,20 +21,21 @@ type service struct {
 
 type Service interface {
 	// CurrentPrice CurrentRate CurrentTotalPrice get cached info from memory.
-	CurrentPrice() (*big.Int, error)
-	CurrentRate() (*big.Int, error)
-	CurrentTotalPrice() (*big.Int, error)
+	CurrentPrice(token common.Address) (*big.Int, error)
+	CurrentRate(token common.Address) (*big.Int, error)
+	CurrentTotalPrice(token common.Address) (*big.Int, error)
+
 	// CheckNewPrice retrieves latest available information from oracle
-	CheckNewPrice() (*big.Int, error)
+	CheckNewPrice(token common.Address) (*big.Int, error)
 }
 
 var (
-	priceOracleABI = transaction.ParseABIUnchecked(conabi.OracleAbi)
+	priceOracleABI = transaction.ParseABIUnchecked(conabi.MutiOracleAbi)
 
-	curMutex      sync.Mutex
-	curPrice      = new(big.Int)
-	curRate       = new(big.Int)
-	curTotalPrice = new(big.Int)
+	//curMutex        sync.Mutex
+	//mpCurPrice      = make(map[common.Address]*big.Int)
+	//mpCurRate       = make(map[common.Address]*big.Int)
+	//mpCurTotalPrice = make(map[common.Address]*big.Int)
 )
 
 func New(priceOracleAddress common.Address, transactionService transaction.Service) Service {
@@ -46,50 +45,63 @@ func New(priceOracleAddress common.Address, transactionService transaction.Servi
 	}
 }
 
-func (s *service) CurrentPrice() (price *big.Int, err error) {
-	curMutex.Lock()
-	price = big.NewInt(0).Set(curPrice)
-	curMutex.Unlock()
-
+func (s *service) CurrentPrice(token common.Address) (price *big.Int, err error) {
+	price, err = s.currentPrice(token)
+	if err != nil {
+		return nil, err
+	}
 	return price, nil
 }
-func (s *service) CurrentRate() (rate *big.Int, err error) {
-	curMutex.Lock()
-	rate = big.NewInt(0).Set(curRate)
-	curMutex.Unlock()
+func (s *service) CurrentRate(token common.Address) (rate *big.Int, err error) {
+	rate, err = s.currentRate(token)
+	if err != nil {
+		return nil, err
+	}
 
 	return rate, nil
 }
-func (s *service) CurrentTotalPrice() (totalPrice *big.Int, err error) {
-	curMutex.Lock()
-	totalPrice = big.NewInt(0).Set(curTotalPrice)
-	curMutex.Unlock()
+func (s *service) CurrentTotalPrice(token common.Address) (totalPrice *big.Int, err error) {
+	price, err := s.currentPrice(token)
+	if err != nil {
+		return nil, err
+	}
 
+	rate, err := s.currentRate(token)
+	if err != nil {
+		return nil, err
+	}
+
+	totalPrice = big.NewInt(0).Mul(price, rate)
 	return totalPrice, nil
 }
 
-func (s *service) CheckNewPrice() (*big.Int, error) {
-	price, err := s.currentPrice()
+func (s *service) CheckNewPrice(token common.Address) (*big.Int, error) {
+	price, err := s.currentPrice(token)
 	if err != nil {
 		return nil, err
 	}
+	//fmt.Println("currentPrice ", price)
 
-	rate, err := s.currentRate()
+	rate, err := s.currentRate(token)
 	if err != nil {
 		return nil, err
 	}
+	//fmt.Println("currentRate ", rate)
 
-	curMutex.Lock()
-	defer curMutex.Unlock()
-	curPrice = price
-	curRate = rate
-	curTotalPrice = big.NewInt(0).Mul(price, rate)
+	totalPrice := big.NewInt(0).Mul(price, rate)
 
-	return big.NewInt(0).Set(curTotalPrice), nil
+	//curMutex.Lock()
+	//defer curMutex.Unlock()
+	//mpCurPrice[token] = price
+	//mpCurRate[token] = rate
+	//mpCurTotalPrice[token] = big.NewInt(0).Mul(price, rate)
+
+	return big.NewInt(0).Set(totalPrice), nil
 }
 
-func (s *service) currentRate() (*big.Int, error) {
-	callData, err := priceOracleABI.Pack("getExchangeRate")
+// call priceOracleABI
+func (s *service) currentRate(token common.Address) (*big.Int, error) {
+	callData, err := priceOracleABI.Pack("getRate", token)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +113,7 @@ func (s *service) currentRate() (*big.Int, error) {
 		return nil, err
 	}
 
-	results, err := priceOracleABI.Unpack("getExchangeRate", result)
+	results, err := priceOracleABI.Unpack("getRate", result)
 	if err != nil {
 		return nil, err
 	}
@@ -115,11 +127,14 @@ func (s *service) currentRate() (*big.Int, error) {
 		return nil, errDecodeABI
 	}
 
+	//fmt.Println("currentRate, rate = ", rate)
+
 	return rate, nil
 }
 
-func (s *service) currentPrice() (*big.Int, error) {
-	callData, err := priceOracleABI.Pack("getPrice")
+// call priceOracleABI
+func (s *service) currentPrice(token common.Address) (*big.Int, error) {
+	callData, err := priceOracleABI.Pack("getPrice", token)
 	if err != nil {
 		return nil, err
 	}
@@ -130,20 +145,19 @@ func (s *service) currentPrice() (*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	results, err := priceOracleABI.Unpack("getPrice", result)
 	if err != nil {
 		return nil, err
 	}
-
 	if len(results) != 1 {
 		return nil, errDecodeABI
 	}
-
 	price, ok := abi.ConvertType(results[0], new(big.Int)).(*big.Int)
 	if !ok || price == nil {
 		return nil, errDecodeABI
 	}
+
+	//fmt.Println("currentPrice, price = ", price)
 
 	return price, nil
 }

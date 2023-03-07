@@ -28,17 +28,21 @@ type Service interface {
 	SendBttTo(ctx context.Context, to common.Address, amount *big.Int) (trx common.Hash, err error)
 	// SendWbttTo transfers `amount` of WBTT to the given address `to`
 	SendWbttTo(ctx context.Context, to common.Address, amount *big.Int) (trx common.Hash, err error)
+	// SendTokenTo transfers `amount` of WBTT to the given address `to`
+	SendTokenTo(ctx context.Context, to common.Address, amount *big.Int, tokenStr string) (trx common.Hash, err error)
 }
 
 type service struct {
-	trxService   transaction.Service
-	erc20Service erc20.Service
+	trxService     transaction.Service
+	erc20Service   erc20.Service
+	mpErc20Service map[string]erc20.Service
 }
 
-func New(trxSvc transaction.Service, erc20Svc erc20.Service) Service {
+func New(trxSvc transaction.Service, erc20Svc erc20.Service, mpErc20Service map[string]erc20.Service) Service {
 	return &service{
-		trxService:   trxSvc,
-		erc20Service: erc20Svc,
+		trxService:     trxSvc,
+		erc20Service:   erc20Svc,
+		mpErc20Service: mpErc20Service,
 	}
 }
 
@@ -90,6 +94,24 @@ func (svc *service) SendWbttTo(ctx context.Context, to common.Address, amount *b
 		return zeroHash, ErrInsufficientWBTT
 	}
 	trx, err = svc.erc20Service.Transfer(ctx, to, amount)
+	return
+}
+
+func (svc *service) SendTokenTo(ctx context.Context, to common.Address, amount *big.Int, tokenStr string) (trx common.Hash, err error) {
+	myAddr := svc.trxService.OverlayEthAddress(ctx)
+	err = validateBeforeTransfer(ctx, myAddr, to, amount)
+	if err != nil {
+		return zeroHash, err
+	}
+	balance, err := svc.mpErc20Service[tokenStr].BalanceOf(ctx, myAddr)
+	if err != nil {
+		return
+	}
+	fmt.Printf("your %s balance is %d, will transfer %d wbtt to address %s\n", tokenStr, balance, amount, to)
+	if balance.Cmp(amount) < 0 {
+		return zeroHash, ErrInsufficientWBTT
+	}
+	trx, err = svc.mpErc20Service[tokenStr].Transfer(ctx, to, amount)
 	return
 }
 

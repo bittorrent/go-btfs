@@ -82,17 +82,17 @@ Repo location: /Users/btfs/.btfs
 Peer identity: 16Uiu2HAmKFQPM72SssFRrqcH1qwUsPwcp7vXSg3SEzfdYua1J5qc
 the address of Bttc format is:  0x7Cf4B71017F0312037D53fe966CE625BF98FFff6
 the address of Tron format is:  TMMuwwxsuQGrDrN3aanc5y5r4FbibgLYDa
-cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on 0x7cf4b71017f0312037d53fe966ce625bf98ffff6
+cannot continue until there is sufficient (30000 Suggested) BTT (for Gas) available on 0x7cf4b71017f0312037d53fe966ce625bf98ffff6
 ```
 
 **Run the Daemon**
 
-When starting the BTFS daemon for the first time, the system will create a node account and at the same time print a string of messages: cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on After seeing such a message, it is necessary to recharge the node account with BTT through an external account, and the system suggests a minimum of 100 BTT, which is used as gas to deploy a node vault contract by the node account.
+When starting the BTFS daemon for the first time, the system will create a node account and at the same time print a string of messages: cannot continue until there is sufficient (30000 Suggested) BTT (for Gas) available on After seeing such a message, it is necessary to recharge the node account with BTT through an external account, and the system suggests a minimum of 30000 BTT, which is used as gas to deploy a node vault contract by the node account.
 After the recharge, the BTFS node will create the vault contract.
 
 Get BTT on BTTC testnet reference [Faucet](#Faucet)
 ```
-cannot continue until there is sufficient (100 Suggested) BTT (for Gas) available on 0x7cf4b71017f0312037d53fe966ce625bf98ffff6 
+cannot continue until there is sufficient (30000 Suggested) BTT (for Gas) available on 0x7cf4b71017f0312037d53fe966ce625bf98ffff6 
 self vault: 0x1f8b3e7e691d733f5eb17e5570c49de3e5aecef9 
 Swarm listening on /ip4/127.0.0.1/tcp/4001
 Swarm listening on /ip4/192.168.21.149/tcp/4001

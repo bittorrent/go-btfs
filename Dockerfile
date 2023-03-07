@@ -31,7 +31,7 @@ ARG IPFS_PLUGINS
 # Also: fix getting HEAD commit hash via git rev-parse.
 RUN cd $SRC_DIR \
   && mkdir .git/objects \
-  && make build GOTAGS=openssl IPFS_PLUGINS=$IPFS_PLUGINS
+  && GOFLAGS=-buildvcs=false make build GOTAGS=openssl IPFS_PLUGINS=$IPFS_PLUGINS
 
 # Get su-exec, a very minimal tool for dropping privileges,
 # and tini, a very minimal init daemon for containers
@@ -53,7 +53,7 @@ RUN set -eux; \
   && chmod +x tini
 
 # Now comes the actual target image, which aims to be as small as possible.
-FROM busybox:1-glibc
+FROM busybox:1.31.1-glibc
 MAINTAINER TRON-US <support@tron.network>
 
 # Get the btfs binary, entrypoint script, and TLS CAs from the build container.
@@ -73,6 +73,9 @@ RUN chmod 0755 /usr/local/bin/start_btfs
 
 # This shared lib (part of glibc) doesn't seem to be included with busybox.
 COPY --from=0 /lib/*-linux-gnu*/libdl.so.2 /lib/
+COPY --from=0 /lib/*-linux-gnu*/libm.so.6 /lib/
+COPY --from=0 /lib/*-linux-gnu*/libgcc_s.so.1 /lib/
+COPY --from=0 /usr/lib/*-linux-gnu*/libstdc++.so.6 /usr/lib/
 
 # Copy over SSL libraries.
 COPY --from=0 /usr/lib/*-linux-gnu*/libssl.so* /usr/lib/

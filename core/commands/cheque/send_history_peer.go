@@ -31,6 +31,7 @@ var ChequeSendHistoryPeerCmd = &cmds.Command{
 		for _, v := range records {
 			recordsRet = append(recordsRet, chequeRecordRet{
 				PeerId:      peer_id,
+				Token:       v.Token,
 				Vault:       v.Vault,
 				Beneficiary: v.Beneficiary,
 				Amount:      v.Amount,

@@ -2,6 +2,7 @@ package bttc_test
 
 import (
 	"context"
+	"github.com/bittorrent/go-btfs/settlement/swap/erc20"
 	"math/big"
 	"testing"
 
@@ -28,6 +29,7 @@ func TestSwapBtt2WbttSucc(t *testing.T) {
 				return common.HexToHash("0x123"), nil
 			}),
 		),
+		make(map[string]erc20.Service),
 	)
 
 	trxHash, err := bttcSvc.SwapBtt2Wbtt(context.Background(), big.NewInt(50))
@@ -48,6 +50,7 @@ func TestSwapBtt2WbttFail(t *testing.T) {
 				return common.HexToHash("0x123"), nil
 			}),
 		),
+		make(map[string]erc20.Service),
 	)
 
 	trxHash, err := bttcSvc.SwapBtt2Wbtt(context.Background(), big.NewInt(101))
@@ -73,6 +76,7 @@ func TestSwapWbtt2BttSucc(t *testing.T) {
 				return big.NewInt(100), nil
 			}),
 		),
+		make(map[string]erc20.Service),
 	)
 
 	trxHash, err := bttcSvc.SwapWbtt2Btt(context.Background(), big.NewInt(50))
@@ -99,6 +103,7 @@ func TestSendWbttToSucc(t *testing.T) {
 				return common.HexToHash("0x123"), nil
 			}),
 		),
+		make(map[string]erc20.Service),
 	)
 
 	trxHash, err := bttcSvc.SendWbttTo(context.Background(), toAddr, big.NewInt(50))
@@ -124,6 +129,7 @@ func TestSendBttToSucc(t *testing.T) {
 			}),
 		),
 		erc20Mock.New(),
+		make(map[string]erc20.Service),
 	)
 
 	trxHash, err := bttcSvc.SendBttTo(context.Background(), toAddr, big.NewInt(50))

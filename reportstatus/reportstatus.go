@@ -63,11 +63,11 @@ func New(statusAddress common.Address, transactionService transaction.Service, c
 		transactionService: transactionService,
 	}
 
-	if isReportStatusEnabled(cfg) {
-		go func() {
-			cycleCheckReport()
-		}()
-	}
+	//if isReportStatusEnabled(cfg) {
+	//	go func() {
+	//		cycleCheckReport()
+	//	}()
+	//}
 	return serv
 }
 
@@ -121,7 +121,15 @@ func (s *service) ReportStatus() (common.Hash, error) {
 	if err != nil {
 		return common.Hash{}, err
 	}
-	gasPrice := getGasPrice(request)
+
+	// todo: already not use, wait to check.
+	//gasPrice := getGasPrice(request)
+	st, err := s.transactionService.StoredTransaction(txHash)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	gasPrice := st.GasPrice
+
 	gasTotal := big.NewInt(1).Mul(gasPrice, big.NewInt(int64(stx.GasUsed)))
 	fmt.Println("... b.ReportStatus-WaitForReceipt, gasPrice, stx.GasUsed, gasTotal = ", gasPrice.String(), stx.GasUsed, gasTotal.String())
 
