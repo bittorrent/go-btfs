@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/ethereum/go-ethereum/common"
-	"time"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
@@ -55,7 +56,7 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 					return nil
 				}
 
-				hostPid, err := peer.IDB58Decode(host)
+				hostPid, err := peer.IDFromBytes([]byte(host))
 				if err != nil {
 					log.Errorf("shard %s decodes host_pid error: %s", h, err.Error())
 					return err
