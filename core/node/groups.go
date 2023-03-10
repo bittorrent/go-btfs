@@ -106,27 +106,27 @@ func LibP2P(bcfg *BuildCfg, cfg *config.Config) fx.Option {
 	// Log error when relay subsystem could not be initialized due to missing dependency
 	if !enableRelayTransport {
 		if enableRelayService {
-			logger.Error("Failed to enable `Swarm.RelayService`, it requires `Swarm.Transports.Network.Relay` to be true.")
+			logger.Warn("Failed to enable `Swarm.RelayService`, it requires `Swarm.Transports.Network.Relay` to be true.")
 		}
 		if enableRelayClient {
-			logger.Error("Failed to enable `Swarm.RelayClient`, it requires `Swarm.Transports.Network.Relay` to be true.")
+			logger.Warn("Failed to enable `Swarm.RelayClient`, it requires `Swarm.Transports.Network.Relay` to be true.")
 		}
 	}
 
-	// Force users to migrate old config.
+	// TODO: Force users to migrate old config.
 	// nolint
 	if cfg.Swarm.DisableRelay {
-		logger.Error("The 'Swarm.DisableRelay' config field was removed." +
+		logger.Warn("The 'Swarm.DisableRelay' config field was removed." +
 			"Use the 'Swarm.Transports.Network.Relay' instead.")
 	}
 	// nolint
 	if cfg.Swarm.EnableAutoRelay {
-		logger.Error("The 'Swarm.EnableAutoRelay' config field was removed." +
+		logger.Warn("The 'Swarm.EnableAutoRelay' config field was removed." +
 			"Use the 'Swarm.RelayClient.Enabled' instead.")
 	}
 	// nolint
 	if cfg.Swarm.EnableRelayHop {
-		logger.Error("The `Swarm.EnableRelayHop` config field was removed.\n" +
+		logger.Warn("The `Swarm.EnableRelayHop` config field was removed.\n" +
 			"Use `Swarm.RelayService` to configure the circuit v2 relay.\n" +
 			"If you want to continue running a circuit v1 relay, please use the standalone relay daemon: https://dist.ipfs.tech/#libp2p-relay-daemon (with RelayV1.Enabled: true)")
 	}

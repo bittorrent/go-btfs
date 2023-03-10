@@ -91,7 +91,6 @@ func ForceReachability(val *config.OptionalString) func() (opts Libp2pOpts, err 
 			return
 		}
 		v := val.WithDefault("unrecognized")
-		fmt.Println("========ForceReachability:", v)
 		switch v {
 		case "public":
 			opts.Opts = append(opts.Opts, libp2p.ForceReachabilityPublic())
