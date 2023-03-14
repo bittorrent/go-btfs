@@ -49,7 +49,7 @@ func ResourceManager(cfg config.SwarmConfig) interface{} {
 
 			repoPath, err := config.PathRoot()
 			if err != nil {
-				return nil, opts, fmt.Errorf("opening IPFS_PATH: %w", err)
+				return nil, opts, fmt.Errorf("opening BTFS_PATH: %w", err)
 			}
 
 			limitConfig, err := createDefaultLimitConfig(cfg)
