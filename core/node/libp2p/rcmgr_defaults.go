@@ -63,14 +63,14 @@ func createDefaultLimitConfig(cfg config.SwarmConfig) (rcmgr.LimitConfig, error)
 
 			// By default, we just limit connections on the inbound side.
 			Conns:         bigEnough,
-			ConnsInbound:  256,
+			ConnsInbound:  512 * 10,
 			ConnsOutbound: bigEnough,
 
 			// We limit streams since they not only take up memory and CPU.
 			// The Memory limit protects us on the memory side,
 			// but a StreamsInbound limit helps protect against unbound CPU consumption from stream processing.
 			Streams:         bigEnough,
-			StreamsInbound:  256 * 16,
+			StreamsInbound:  512 * 10 * 16,
 			StreamsOutbound: bigEnough,
 		},
 		// Most limits don't see an increase because they're already infinite/bigEnough or at their max value.
