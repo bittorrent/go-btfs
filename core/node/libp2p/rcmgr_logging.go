@@ -54,7 +54,7 @@ func (n *loggingResourceManager) start(ctx context.Context) {
 				}
 
 				if len(errs) != 0 {
-					n.logger.Errorf("Consider inspecting logs and raising the resource manager limits. Documentation: https://github.com/ipfs/kubo/blob/master/docs/config.md#swarmresourcemgr")
+					n.logger.Errorf("Consider inspecting logs and raising the resource manager limits.")
 				}
 
 				n.mut.Unlock()
