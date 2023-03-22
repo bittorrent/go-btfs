@@ -262,7 +262,7 @@ func waitOnErrChan(ctx context.Context, errs chan error) error {
 
 func PublishPublicKey(ctx context.Context, r routing.ValueStore, k string, pubk ci.PubKey) error {
 	log.Debugf("Storing pubkey at: %s", k)
-	pkbytes, err := pubk.Raw()
+	pkbytes, err := ci.MarshalPublicKey(pubk)
 	if err != nil {
 		return err
 	}

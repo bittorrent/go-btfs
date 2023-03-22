@@ -160,8 +160,7 @@ func TestInvalidKeyFiles(t *testing.T) {
 	}
 
 	key := privKeyOrFatal(t)
-
-	bytes, err := key.Raw()
+	bytes, err := ci.MarshalPrivateKey(key)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -49,8 +49,7 @@ func (NodeProvider) MakeAPISwarm(ctx context.Context, fullIdentity bool, n int) 
 			if err != nil {
 				return nil, err
 			}
-
-			kbytes, err := sk.Raw()
+			kbytes, err := ci.MarshalPrivateKey(sk)
 			if err != nil {
 				return nil, err
 			}

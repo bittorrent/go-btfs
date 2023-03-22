@@ -172,7 +172,7 @@ func defaultRepo(dstore repo.Datastore) (repo.Repo, error) {
 		return nil, err
 	}
 
-	privkeyb, err := priv.Raw()
+	privkeyb, err := ci.MarshalPrivateKey(priv)
 	if err != nil {
 		return nil, err
 	}
