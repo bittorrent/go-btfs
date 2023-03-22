@@ -14,6 +14,7 @@ import (
 
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/coreunix"
+	ci "github.com/libp2p/go-libp2p/core/crypto"
 
 	chunker "github.com/TRON-US/go-btfs-chunker"
 	files "github.com/TRON-US/go-btfs-files"
@@ -255,9 +256,9 @@ func (api *UnixfsAPI) Add(ctx context.Context, filesNode files.Node, opts ...opt
 		} else {
 			return nil, fmt.Errorf("unexpected files.Directory type [%T]", dir)
 		}
-		nd, err = rsfileAdder.AddAllAndPin(filesNode)
+		nd, err = rsfileAdder.AddAllAndPin(ctx, filesNode)
 	} else {
-		nd, err = fileAdder.AddAllAndPin(filesNode)
+		nd, err = fileAdder.AddAllAndPin(ctx, filesNode)
 	}
 	if err != nil {
 		return nil, err
@@ -288,8 +289,7 @@ func peerId2pubkey(peerId string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	bytes, err := publicKey.Raw()
+	bytes, err := ci.MarshalPublicKey(publicKey)
 	if err != nil {
 		return "", err
 	}
@@ -468,7 +468,7 @@ func (api *UnixfsAPI) getPrivateKey(input string) (string, error) {
 	var bytes []byte
 	var err error
 	if privKey == "" {
-		bytes, err = api.privateKey.Raw()
+		bytes, err = ci.MarshalPrivateKey(api.privateKey)
 		if err != nil {
 			return "", err
 		}

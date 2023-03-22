@@ -29,6 +29,7 @@ import (
 	dag "github.com/ipfs/go-merkledag"
 )
 
+// TODO: FIX ME
 func TestAddMultipleGCLive(t *testing.T) {
 	r := &repo.Mock{
 		C: config.Config{
@@ -67,7 +68,7 @@ func TestAddMultipleGCLive(t *testing.T) {
 
 	go func() {
 		defer close(out)
-		_, _ = adder.AddAllAndPin(slf)
+		_, _ = adder.AddAllAndPin(context.Background(), slf)
 		// Ignore errors for clarity - the real bug would be gc'ing files while adding them, not this resultant error
 	}()
 
@@ -160,6 +161,7 @@ func TestAddMultipleGCLive(t *testing.T) {
 	}
 }
 
+// TODO: FIX ME
 func TestAddGCLive(t *testing.T) {
 	r := &repo.Mock{
 		C: config.Config{
@@ -199,7 +201,7 @@ func TestAddGCLive(t *testing.T) {
 	go func() {
 		defer close(addDone)
 		defer close(out)
-		_, err := adder.AddAllAndPin(slf)
+		_, err := adder.AddAllAndPin(context.Background(), slf)
 
 		if err != nil {
 			t.Error(err)
@@ -312,7 +314,7 @@ func testAddWPosInfo(t *testing.T, rawLeaves bool) {
 
 	go func() {
 		defer close(adder.Out)
-		_, err = adder.AddAllAndPin(file)
+		_, err = adder.AddAllAndPin(context.Background(), file)
 		if err != nil {
 			t.Error(err)
 		}

@@ -363,8 +363,7 @@ func (adder *Adder) addNode(node ipld.Node, path string) error {
 }
 
 // AddAllAndPin adds the given request's files and pin them.
-func (adder *Adder) AddAllAndPin(file files.Node) (ipld.Node, error) {
-	ctx := context.TODO()
+func (adder *Adder) AddAllAndPin(ctx context.Context, file files.Node) (ipld.Node, error) {
 	if adder.Pin {
 		adder.unlocker = adder.gcLocker.PinLock(ctx)
 	}
