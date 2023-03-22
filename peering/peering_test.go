@@ -15,7 +15,7 @@ import (
 )
 
 func newNode(ctx context.Context, t *testing.T) host.Host {
-	m, err := connmgr.NewConnManager(1, 100)
+	m, err := connmgr.NewConnManager(1, 100, connmgr.WithGracePeriod(0))
 	require.NoError(t, err)
 	h, err := libp2p.New(
 		libp2p.ListenAddrStrings("/ip4/127.0.0.1/tcp/0"),
