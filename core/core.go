@@ -14,6 +14,7 @@ import (
 	"io"
 
 	"github.com/bittorrent/go-btfs/peering"
+	irouting "github.com/bittorrent/go-btfs/routing"
 
 	"github.com/bittorrent/go-btfs/core/bootstrap"
 	"github.com/bittorrent/go-btfs/core/node"
@@ -46,7 +47,6 @@ import (
 	metrics "github.com/libp2p/go-libp2p/core/metrics"
 	peer "github.com/libp2p/go-libp2p/core/peer"
 	pstore "github.com/libp2p/go-libp2p/core/peerstore"
-	routing "github.com/libp2p/go-libp2p/core/routing"
 	discovery "github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 	p2pbhost "github.com/libp2p/go-libp2p/p2p/host/basic"
 	ma "github.com/multiformats/go-multiaddr"
@@ -84,16 +84,16 @@ type IpfsNode struct {
 	//Statestore      storage.StateStorer
 
 	// Online
-	PeerHost      p2phost.Host            `optional:"true"` // the network host (server+client)
-	Peering       peering.PeeringService  `optional:"true"`
-	Filters       *ma.Filters             `optional:"true"`
-	Bootstrapper  io.Closer               `optional:"true"` // the periodic bootstrapper
-	Routing       routing.Routing         `optional:"true"` // the routing system. recommend ipfs-dht
-	Exchange      exchange.Interface      // the block exchange + strategy (bitswap)
-	Namesys       namesys.NameSystem      // the name system, resolves paths to hashes
-	Provider      provider.System         // the value provider system
-	IpnsRepub     *ipnsrp.Republisher     `optional:"true"`
-	GraphExchange graphsync.GraphExchange `optional:"true"`
+	PeerHost      p2phost.Host               `optional:"true"` // the network host (server+client)
+	Peering       peering.PeeringService     `optional:"true"`
+	Filters       *ma.Filters                `optional:"true"`
+	Bootstrapper  io.Closer                  `optional:"true"` // the periodic bootstrapper
+	Routing       irouting.ProvideManyRouter `optional:"true"` // the routing system. recommend ipfs-dht
+	Exchange      exchange.Interface         // the block exchange + strategy (bitswap)
+	Namesys       namesys.NameSystem         // the name system, resolves paths to hashes
+	Provider      provider.System            // the value provider system
+	IpnsRepub     *ipnsrp.Republisher        `optional:"true"`
+	GraphExchange graphsync.GraphExchange    `optional:"true"`
 
 	PubSub   *pubsub.PubSub             `optional:"true"`
 	PSRouter *psrouter.PubsubValueStore `optional:"true"`
