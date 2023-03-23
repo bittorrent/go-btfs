@@ -56,7 +56,7 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 					return nil
 				}
 
-				hostPid, err := peer.IDFromBytes([]byte(host))
+				hostPid, err := peer.Decode(host)
 				if err != nil {
 					log.Errorf("shard %s decodes host_pid error: %s", h, err.Error())
 					return err
