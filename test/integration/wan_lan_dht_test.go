@@ -179,7 +179,7 @@ StartupWait:
 	}
 	// That peer will provide a new CID, and we'll validate the test node can find it.
 	provideCid := cid.NewCidV1(cid.Raw, []byte("Lan Provide Record"))
-	provideCtx, cancel := context.WithTimeout(ctx, time.Second)
+	provideCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	if err := lanPeers[i].DHT.Provide(provideCtx, provideCid, true); err != nil {
 		return err
@@ -208,6 +208,8 @@ StartupWait:
 	startupCtx, startupCancel = context.WithTimeout(ctx, time.Second*60)
 WanStartupWait:
 	for {
+		//delay the sleep time so that the LAN can find all each other
+		time.Sleep(3 * time.Second)
 		select {
 		case err := <-testPeer.DHT.WAN.RefreshRoutingTable():
 			//if err != nil {
@@ -216,7 +218,6 @@ WanStartupWait:
 			if testPeer.DHT.WAN.RoutingTable() == nil ||
 				testPeer.DHT.WAN.RoutingTable().Size() == 0 ||
 				err != nil {
-				time.Sleep(100 * time.Millisecond)
 				continue
 			}
 			break WanStartupWait
@@ -239,7 +240,7 @@ WanStartupWait:
 
 	// That peer will provide a new CID, and we'll validate the test node can find it.
 	wanCid := cid.NewCidV1(cid.Raw, []byte("Wan Provide Record"))
-	wanProvideCtx, cancel := context.WithTimeout(ctx, time.Second)
+	wanProvideCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	if err := wanPeers[i].DHT.Provide(wanProvideCtx, wanCid, true); err != nil {
 		return err
@@ -260,7 +261,7 @@ WanStartupWait:
 		testPeer.PeerHost.Peerstore().ClearAddrs(wanPeers[i].Identity)
 	}
 
-	provideCtx, cancel = context.WithTimeout(ctx, time.Second)
+	provideCtx, cancel = context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	if err := wanPeers[i].DHT.Provide(provideCtx, provideCid, true); err != nil {
 		return err
