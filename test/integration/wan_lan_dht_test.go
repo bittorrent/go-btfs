@@ -156,7 +156,8 @@ StartupWait:
 			if testPeer.DHT.LAN.RoutingTable() == nil ||
 				testPeer.DHT.LAN.RoutingTable().Size() == 0 ||
 				err != nil {
-				time.Sleep(100 * time.Millisecond)
+				//delay the sleep time so that the LAN can find all each other
+				time.Sleep(3 * time.Second)
 				continue
 			}
 			break StartupWait
