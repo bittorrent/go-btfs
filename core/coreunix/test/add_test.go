@@ -149,6 +149,7 @@ func TestAddMultipleGCLive(t *testing.T) {
 
 	for r := range gc2out {
 		if r.Error != nil {
+			t.Fatal(r.Error)
 			t.Fatal(err)
 		}
 		removedHashes[r.KeyRemoved.String()] = struct{}{}

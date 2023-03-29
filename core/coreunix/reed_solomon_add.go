@@ -65,7 +65,7 @@ func (rsadder *ReedSolomonAdder) AddAllAndPin(ctx context.Context, file files.No
 		}
 	}()
 
-	n, err := rsadder.addFileNode("", file, fileList, true)
+	n, err := rsadder.addFileNode(ctx, "", file, fileList, true)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (rsadder *ReedSolomonAdder) AddAllAndPin(ctx context.Context, file files.No
 
 	var nd ipld.Node
 	if n.Path() == "" && n.NodeSize() == 0 {
-		nd, err = rsadder.addToMfs(file)
+		nd, err = rsadder.addToMfs(ctx, file)
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +116,7 @@ func (rsadder *ReedSolomonAdder) AddAllAndPin(ctx context.Context, file files.No
 		return nd, nil
 	}
 
-	if err := rsadder.PinRoot(nd); err != nil {
+	if err := rsadder.PinRoot(ctx, nd); err != nil {
 		return nil, err
 	}
 
@@ -125,11 +125,11 @@ func (rsadder *ReedSolomonAdder) AddAllAndPin(ctx context.Context, file files.No
 
 // addFileNode traverses the directory tree under
 // the given `file` in a bottom up DFS way.
-func (rsadder *ReedSolomonAdder) addFileNode(path string, file files.Node, fList *list.List, toplevel bool) (uio.Node, error) {
+func (rsadder *ReedSolomonAdder) addFileNode(ctx context.Context, path string, file files.Node, fList *list.List, toplevel bool) (uio.Node, error) {
 	defer func() {
 		fList.PushFront(file)
 	}()
-	err := rsadder.maybePauseForGC()
+	err := rsadder.maybePauseForGC(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func (rsadder *ReedSolomonAdder) addFileNode(path string, file files.Node, fList
 
 	switch f := file.(type) {
 	case files.Directory:
-		return rsadder.addDir(path, f, fList, toplevel)
+		return rsadder.addDir(ctx, path, f, fList, toplevel)
 	case *files.Symlink:
 		return rsadder.addSymlink(path, f)
 	case files.File:
@@ -152,7 +152,7 @@ func (rsadder *ReedSolomonAdder) addFileNode(path string, file files.Node, fList
 	}
 }
 
-func (rsadder *ReedSolomonAdder) addDir(path string, dir files.Directory, fList *list.List, toplevel bool) (uio.Node, error) {
+func (rsadder *ReedSolomonAdder) addDir(ctx context.Context, path string, dir files.Directory, fList *list.List, toplevel bool) (uio.Node, error) {
 	log.Infof("adding directory: %s", path)
 
 	_, dstName := gopath.Split(path)
@@ -169,7 +169,7 @@ func (rsadder *ReedSolomonAdder) addDir(path string, dir files.Directory, fList 
 	var size uint64
 	for it.Next() {
 		fpath := gopath.Join(path, it.Name())
-		child, err := rsadder.addFileNode(fpath, it.Node(), fList, false)
+		child, err := rsadder.addFileNode(ctx, fpath, it.Node(), fList, false)
 		if err != nil {
 			return nil, err
 		}

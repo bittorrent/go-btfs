@@ -9,7 +9,6 @@ import (
 
 	"github.com/bittorrent/go-btfs/core/node/libp2p"
 	"github.com/bittorrent/go-btfs/p2p"
-
 	"github.com/tron-us/go-btfs-common/crypto"
 
 	config "github.com/TRON-US/go-btfs-config"

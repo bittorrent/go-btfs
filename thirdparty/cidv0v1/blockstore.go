@@ -35,9 +35,8 @@ func (b *blockstore) Get(ctx context.Context, c cid.Cid) (blocks.Block, error) {
 	if err == nil {
 		return block, nil
 	}
-	var notFound = ipld.ErrNotFound{Cid: c}
-	if !notFound.Is(err) {
-		return nil, ipld.ErrNotFound{Cid: c}
+	if !ipld.IsNotFound(err) {
+		return nil, err
 	}
 	c1 := tryOtherCidVersion(c)
 	if !c1.Defined() {
@@ -66,9 +65,8 @@ func (b *blockstore) GetSize(ctx context.Context, c cid.Cid) (int, error) {
 	if err == nil {
 		return size, nil
 	}
-	var notFound = ipld.ErrNotFound{Cid: c}
-	if !notFound.Is(err) {
-		return -1, ipld.ErrNotFound{Cid: c}
+	if !ipld.IsNotFound(err) {
+		return -1, err
 	}
 	c1 := tryOtherCidVersion(c)
 	if !c1.Defined() {

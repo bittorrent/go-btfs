@@ -80,7 +80,7 @@ func (modifier *MetaModifier) AddMetaAndPin(node ipld.Node) (ipld.Node, ipath.Re
 		}
 	}
 
-	return nd, p, modifier.PinRoot(nd)
+	return nd, p, modifier.PinRoot(modifier.ctx, nd)
 }
 
 func (modifier *MetaModifier) updateMfs() (mfs.FSNode, error) {
@@ -125,7 +125,7 @@ func (modifier *MetaModifier) updateMfs() (mfs.FSNode, error) {
 }
 
 func (modifier *MetaModifier) addMetaToFileNode(node ipld.Node) (ipath.Resolved, error) {
-	err := modifier.maybePauseForGC()
+	err := modifier.maybePauseForGC(modifier.ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -251,11 +251,11 @@ func (modifier *MetaModifier) RemoveMetaAndPin(node ipld.Node) (ipld.Node, ipath
 	if !modifier.Pin {
 		return nd, p, nil
 	}
-	return nd, p, modifier.PinRoot(nd)
+	return nd, p, modifier.PinRoot(modifier.ctx, nd)
 }
 
 func (modifier *MetaModifier) removeMetaItemsFromFileNode(node ipld.Node) (ipath.Resolved, error) {
-	err := modifier.maybePauseForGC()
+	err := modifier.maybePauseForGC(modifier.ctx)
 	if err != nil {
 		return nil, err
 	}

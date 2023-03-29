@@ -256,27 +256,27 @@ func (adder *Adder) curRootNode() (ipld.Node, error) {
 
 // Recursively pins the root node of Adder and
 // writes the pin state to the backing datastore.
-func (adder *Adder) PinRoot(root ipld.Node) error {
+func (adder *Adder) PinRoot(ctx context.Context, root ipld.Node) error {
 	if !adder.Pin {
 		return nil
 	}
 
 	rnk := root.Cid()
 
-	err := adder.dagService.Add(adder.ctx, root)
+	err := adder.dagService.Add(ctx, root)
 	if err != nil {
 		return err
 	}
 
 	if adder.tempRoot.Defined() {
-		err := adder.pinning.Unpin(adder.ctx, adder.tempRoot, true)
+		err := adder.pinning.Unpin(ctx, adder.tempRoot, true)
 		if err != nil {
 			return err
 		}
 		adder.tempRoot = rnk
 	}
 	adder.pinning.PinWithMode(rnk, pin.Recursive)
-	return adder.pinning.Flush(adder.ctx)
+	return adder.pinning.Flush(ctx)
 }
 
 // outputDirs outputs directory dagnodes in a postorder DFS pattern.
@@ -373,11 +373,11 @@ func (adder *Adder) AddAllAndPin(ctx context.Context, file files.Node) (ipld.Nod
 		}
 	}()
 
-	if err := adder.addFileNode("", file, true); err != nil {
+	if err := adder.addFileNode(ctx, "", file, true); err != nil {
 		return nil, err
 	}
 
-	nd, err := adder.addToMfs(file)
+	nd, err := adder.addToMfs(ctx, file)
 	if err != nil {
 		return nil, err
 	}
@@ -385,11 +385,11 @@ func (adder *Adder) AddAllAndPin(ctx context.Context, file files.Node) (ipld.Nod
 	if !adder.Pin {
 		return nd, nil
 	}
-	return nd, adder.PinRoot(nd)
+	return nd, adder.PinRoot(ctx, nd)
 }
 
 // addToMfs adds the given file(s) to MFS and return the root.
-func (adder *Adder) addToMfs(file files.Node) (ipld.Node, error) {
+func (adder *Adder) addToMfs(ctx context.Context, file files.Node) (ipld.Node, error) {
 
 	// get root
 	mr, err := adder.mfsRoot()
@@ -453,13 +453,13 @@ func (adder *Adder) addToMfs(file files.Node) (ipld.Node, error) {
 	if !adder.Pin {
 		return nd, nil
 	}
-	return nd, adder.PinRoot(nd)
+	return nd, adder.PinRoot(ctx, nd)
 }
 
-func (adder *Adder) addFileNode(path string, file files.Node, toplevel bool) error {
+func (adder *Adder) addFileNode(ctx context.Context, path string, file files.Node, toplevel bool) error {
 	defer file.Close()
 
-	err := adder.maybePauseForGC()
+	err := adder.maybePauseForGC(ctx)
 	if err != nil {
 		return err
 	}
@@ -480,7 +480,7 @@ func (adder *Adder) addFileNode(path string, file files.Node, toplevel bool) err
 
 	switch f := file.(type) {
 	case files.Directory:
-		return adder.addDir(path, f, toplevel)
+		return adder.addDir(ctx, path, f, toplevel)
 	case *files.Symlink:
 		return adder.addSymlink(path, f)
 	case files.File:
@@ -528,7 +528,7 @@ func (adder *Adder) addFile(path string, file files.File) error {
 	return adder.addNode(dagnode, path)
 }
 
-func (adder *Adder) addDir(path string, dir files.Directory, toplevel bool) error {
+func (adder *Adder) addDir(ctx context.Context, path string, dir files.Directory, toplevel bool) error {
 	log.Infof("adding directory: %s", path)
 
 	if !(toplevel && path == "") { // !toplevel || path != ''
@@ -549,7 +549,7 @@ func (adder *Adder) addDir(path string, dir files.Directory, toplevel bool) erro
 	it := dir.Entries()
 	for it.Next() {
 		fpath := gopath.Join(path, it.Name())
-		err := adder.addFileNode(fpath, it.Node(), false)
+		err := adder.addFileNode(ctx, fpath, it.Node(), false)
 		if err != nil {
 			return err
 		}
@@ -567,8 +567,7 @@ func (adder *Adder) convertMetadataToBytes(checkString bool) ([]byte, error) {
 	// If not, return zero and error.
 	if checkString {
 		var a interface{}
-		var err error
-		err = json.Unmarshal(b, &a)
+		var err = json.Unmarshal(b, &a)
 		if err != nil {
 			return nil, err
 		}
@@ -596,15 +595,14 @@ func (adder *Adder) appendMetadataObject(metadata []byte, o interface{}) ([]byte
 	return append(append(metadata[:len(metadata)-1], ','), b[1:]...), nil
 }
 
-func (adder *Adder) maybePauseForGC() error {
-	ctx := context.TODO()
+func (adder *Adder) maybePauseForGC(ctx context.Context) error {
 	if adder.unlocker != nil && adder.gcLocker.GCRequested(ctx) {
 		rn, err := adder.curRootNode()
 		if err != nil {
 			return err
 		}
 
-		err = adder.PinRoot(rn)
+		err = adder.PinRoot(ctx, rn)
 		if err != nil {
 			return err
 		}
