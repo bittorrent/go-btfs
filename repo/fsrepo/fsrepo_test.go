@@ -2,6 +2,7 @@ package fsrepo
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -74,10 +75,11 @@ func TestDatastoreGetNotAllowedAfterClose(t *testing.T) {
 
 	k := "key"
 	data := []byte(k)
-	assert.Nil(r.Datastore().Put(datastore.NewKey(k), data), t, "Put should be successful")
+	ctx := context.Background()
+	assert.Nil(r.Datastore().Put(ctx, datastore.NewKey(k), data), t, "Put should be successful")
 
 	assert.Nil(r.Close(), t)
-	_, err = r.Datastore().Get(datastore.NewKey(k))
+	_, err = r.Datastore().Get(ctx, datastore.NewKey(k))
 	assert.Err(err, t, "after closer, Get should be fail")
 }
 
@@ -91,12 +93,13 @@ func TestDatastorePersistsFromRepoToRepo(t *testing.T) {
 
 	k := "key"
 	expected := []byte(k)
-	assert.Nil(r1.Datastore().Put(datastore.NewKey(k), expected), t, "using first repo, Put should be successful")
+	ctx := context.Background()
+	assert.Nil(r1.Datastore().Put(ctx, datastore.NewKey(k), expected), t, "using first repo, Put should be successful")
 	assert.Nil(r1.Close(), t)
 
 	r2, err := Open(path)
 	assert.Nil(err, t)
-	actual, err := r2.Datastore().Get(datastore.NewKey(k))
+	actual, err := r2.Datastore().Get(ctx, datastore.NewKey(k))
 	assert.Nil(err, t, "using second repo, Get should be successful")
 	assert.Nil(r2.Close(), t)
 	assert.True(bytes.Equal(expected, actual), t, "data should match")

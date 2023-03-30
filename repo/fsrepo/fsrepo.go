@@ -1,6 +1,7 @@
 package fsrepo
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -676,7 +677,8 @@ func (r *FSRepo) Datastore() repo.Datastore {
 
 // GetStorageUsage computes the storage space taken by the repo in bytes
 func (r *FSRepo) GetStorageUsage() (uint64, error) {
-	return ds.DiskUsage(r.Datastore())
+	ctx := context.Background()
+	return ds.DiskUsage(ctx, r.Datastore())
 }
 
 func (r *FSRepo) SwarmKey() ([]byte, error) {

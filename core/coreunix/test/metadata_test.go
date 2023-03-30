@@ -157,7 +157,7 @@ func addFileToBtfs(node *core.IpfsNode, data []byte, metadata string) (ipath.Pat
 	go func() {
 		defer close(output)
 		defer close(addDone)
-		_, err := adder.AddAllAndPin(file)
+		_, err := adder.AddAllAndPin(ctx, file)
 		if err != nil {
 			output <- err
 		}
@@ -232,10 +232,10 @@ func addDirectoryToBtfs(node *core.IpfsNode, file files.Node, metadata string, r
 		defer close(output)
 		defer close(addDone)
 		if !rs {
-			_, err = adder.AddAllAndPin(file)
+			_, err = adder.AddAllAndPin(ctx, file)
 
 		} else {
-			_, err = rsfileAdder.AddAllAndPin(file)
+			_, err = rsfileAdder.AddAllAndPin(ctx, file)
 		}
 		if err != nil {
 			output <- err

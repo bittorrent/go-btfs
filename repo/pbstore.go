@@ -1,13 +1,16 @@
 package repo
 
 import (
+	"context"
+
 	"github.com/tron-us/protobuf/proto"
 
 	"github.com/ipfs/go-datastore"
 )
 
 func Get(d datastore.Datastore, k string, m proto.Message) (proto.Message, error) {
-	v, err := d.Get(datastore.NewKey(k))
+	ctx := context.TODO()
+	v, err := d.Get(ctx, datastore.NewKey(k))
 	if err != nil {
 		return nil, err
 	}
@@ -23,5 +26,6 @@ func Put(d datastore.Datastore, k string, v proto.Message) error {
 	if err != nil {
 		return err
 	}
-	return d.Put(datastore.NewKey(k), bytes)
+	ctx := context.TODO()
+	return d.Put(ctx, datastore.NewKey(k), bytes)
 }

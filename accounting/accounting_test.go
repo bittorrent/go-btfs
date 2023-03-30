@@ -14,8 +14,9 @@ import (
 
 	"github.com/bittorrent/go-btfs/accounting"
 	"github.com/bittorrent/go-btfs/statestore/mock"
+	"github.com/ethereum/go-ethereum/common"
 
-	peer "github.com/libp2p/go-libp2p-core/peer"
+	peer "github.com/libp2p/go-libp2p/core/peer"
 )
 
 type paymentCall struct {
@@ -24,10 +25,12 @@ type paymentCall struct {
 	contractId string
 }
 
-//TestAccountingCallSettlementTooSoon
+// TestAccountingCallSettlementTooSoon
 func TestAccountingCallSettlementTooSoon(t *testing.T) {
 	store := mock.NewStateStore()
 	defer store.Close()
+
+	addr := common.Address{}
 
 	acc, err := accounting.NewAccounting(store)
 	if err != nil {
@@ -36,7 +39,7 @@ func TestAccountingCallSettlementTooSoon(t *testing.T) {
 
 	paychan := make(chan paymentCall, 1)
 
-	acc.SetPayFunc(func(ctx context.Context, peer string, amount *big.Int, contractId string) {
+	acc.SetPayFunc(func(ctx context.Context, peer string, amount *big.Int, contractId string, addr common.Address) {
 		paychan <- paymentCall{peer: peer, amount: amount, contractId: contractId}
 	})
 
@@ -56,14 +59,15 @@ func TestAccountingCallSettlementTooSoon(t *testing.T) {
 		t.Fatal("payment not sent")
 	}
 
-	acc.NotifyPaymentSent(peer1Addr, big.NewInt(int64(requestPriceTmp)), errors.New("error"))
-	return
+	acc.NotifyPaymentSent(peer1Addr, big.NewInt(int64(requestPriceTmp)), errors.New("error"), addr)
 }
 
 // NotifyPaymentReceived
 func TestAccountingNotifyPaymentReceived(t *testing.T) {
 	store := mock.NewStateStore()
 	defer store.Close()
+
+	addr := common.Address{}
 
 	acc, err := accounting.NewAccounting(store)
 	if err != nil {
@@ -74,10 +78,8 @@ func TestAccountingNotifyPaymentReceived(t *testing.T) {
 
 	var amoutTmp uint64 = 5000
 
-	err = acc.NotifyPaymentReceived(peer1Addr, new(big.Int).SetUint64(amoutTmp))
+	err = acc.NotifyPaymentReceived(peer1Addr, new(big.Int).SetUint64(amoutTmp), addr)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	return
 }

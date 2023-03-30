@@ -13,8 +13,8 @@ import (
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	dag "github.com/ipfs/go-merkledag"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	routing "github.com/libp2p/go-libp2p-core/routing"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	routing "github.com/libp2p/go-libp2p/core/routing"
 )
 
 type DhtAPI CoreAPI
@@ -76,7 +76,7 @@ func (api *DhtAPI) Provide(ctx context.Context, path path.Path, opts ...caopts.D
 
 	c := rp.Cid()
 
-	has, err := api.blockstore.Has(c)
+	has, err := api.blockstore.Has(ctx, c)
 	if err != nil {
 		return err
 	}

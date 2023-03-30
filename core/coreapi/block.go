@@ -9,12 +9,12 @@ import (
 
 	util "github.com/bittorrent/go-btfs/blocks/blockstoreutil"
 
-	pin "github.com/TRON-US/go-btfs-pinner"
 	coreiface "github.com/TRON-US/interface-go-btfs-core"
 	caopts "github.com/TRON-US/interface-go-btfs-core/options"
 	path "github.com/TRON-US/interface-go-btfs-core/path"
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
+	pin "github.com/ipfs/go-ipfs-pinner"
 )
 
 type BlockAPI CoreAPI
@@ -46,16 +46,16 @@ func (api *BlockAPI) Put(ctx context.Context, src io.Reader, opts ...caopts.Bloc
 	}
 
 	if settings.Pin {
-		defer api.blockstore.PinLock().Unlock()
+		defer api.blockstore.PinLock(ctx).Unlock(ctx)
 	}
 
-	err = api.blocks.AddBlock(b)
+	err = api.blocks.AddBlock(ctx, b)
 	if err != nil {
 		return nil, err
 	}
 
 	if settings.Pin {
-		api.pinning.PinWithMode(b.Cid(), pin.DefaultDurationCount, pin.Recursive)
+		api.pinning.PinWithMode(b.Cid(), pin.Recursive)
 		if err := api.pinning.Flush(ctx); err != nil {
 			return nil, err
 		}

@@ -10,9 +10,9 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	humanize "github.com/dustin/go-humanize"
-	metrics "github.com/libp2p/go-libp2p-core/metrics"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	protocol "github.com/libp2p/go-libp2p-core/protocol"
+	metrics "github.com/libp2p/go-libp2p/core/metrics"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	protocol "github.com/libp2p/go-libp2p/core/protocol"
 )
 
 var StatsCmd = &cmds.Command{

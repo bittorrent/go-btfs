@@ -16,7 +16,7 @@ import (
 	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
 	nodepb "github.com/tron-us/go-btfs-common/protos/node"
 
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 const (
@@ -36,14 +36,14 @@ type CustomizedHostsProvider struct {
 }
 
 func (p *CustomizedHostsProvider) NextValidHost() (string, error) {
-	myPeerId, err := peer.IDB58Decode(p.cp.Cfg.Identity.PeerID)
+	myPeerId, err := peer.Decode(p.cp.Cfg.Identity.PeerID)
 	if err != nil {
 		return "", err
 	}
 
 	for true {
 		if index, err := p.AddIndex(); err == nil {
-			id, err := peer.IDB58Decode(p.hosts[index])
+			id, err := peer.Decode(p.hosts[index])
 			if err != nil {
 				continue
 			}
@@ -169,7 +169,7 @@ func (p *HostsProvider) AddIndex() (int, error) {
 }
 
 func (p *HostsProvider) PickFromBackupHosts() (string, error) {
-	myPeerId, err := peer.IDB58Decode(p.cp.Cfg.Identity.PeerID)
+	myPeerId, err := peer.Decode(p.cp.Cfg.Identity.PeerID)
 	if err != nil {
 		return "", err
 	}
@@ -191,7 +191,7 @@ func (p *HostsProvider) PickFromBackupHosts() (string, error) {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		id, err := peer.IDB58Decode(host)
+		id, err := peer.Decode(host)
 		if err != nil {
 			continue
 		}
@@ -227,7 +227,7 @@ func (p *HostsProvider) PickFromBackupHosts() (string, error) {
 }
 
 func (p *HostsProvider) NextValidHost() (string, error) {
-	myPeerId, err := peer.IDB58Decode(p.cp.Cfg.Identity.PeerID)
+	myPeerId, err := peer.Decode(p.cp.Cfg.Identity.PeerID)
 	if err != nil {
 		return "", err
 	}
@@ -251,7 +251,7 @@ LOOP:
 					continue LOOP
 				}
 			}
-			id, err := peer.IDB58Decode(host.NodeId)
+			id, err := peer.Decode(host.NodeId)
 			//if err != nil || int64(host.StoragePriceAsk) > price {
 			//	p.needHigherPrice = true
 			//	continue

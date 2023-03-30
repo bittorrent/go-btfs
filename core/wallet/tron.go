@@ -6,12 +6,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/thedevsaddam/gojsonq/v2"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/thedevsaddam/gojsonq/v2"
 
 	"github.com/bittorrent/go-btfs/core"
 	walletpb "github.com/bittorrent/go-btfs/protos/wallet"
@@ -25,7 +26,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/ipfs/go-datastore"
-	ic "github.com/libp2p/go-libp2p-core/crypto"
+	ic "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/mr-tron/base58/base58"
 	"github.com/status-im/keycard-go/hexutils"
 )
@@ -42,7 +43,7 @@ func SyncTxFromTronGrid(ctx context.Context, cfg *config.Config, ds datastore.Da
 		return nil, err
 	}
 	url := fmt.Sprintf(txUrlTemplate, cfg.Services.TrongridDomain, keys.Base58Address, 0)
-	if v, err := ds.Get(datastore.NewKey(fmt.Sprintf(curBlockTimestampKey, keys.Base58Address))); err == nil {
+	if v, err := ds.Get(ctx, datastore.NewKey(fmt.Sprintf(curBlockTimestampKey, keys.Base58Address))); err == nil {
 		blockTimestamp, err := strconv.ParseInt(string(v), 10, 64)
 		url = fmt.Sprintf(txUrlTemplate, cfg.Services.TrongridDomain, keys.Base58Address, blockTimestamp)
 		if err != nil {
@@ -115,7 +116,7 @@ func SyncTxFromTronGrid(ctx context.Context, cfg *config.Config, ds datastore.Da
 		}
 	}
 	if len(tds) > 0 {
-		err := ds.Put(datastore.NewKey(fmt.Sprintf(curBlockTimestampKey, keys.Base58Address)),
+		err := ds.Put(ctx, datastore.NewKey(fmt.Sprintf(curBlockTimestampKey, keys.Base58Address)),
 			[]byte(strconv.FormatInt(lastBlockTimestamp, 10)))
 		if err != nil {
 			log.Debug(err)

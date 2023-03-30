@@ -7,13 +7,14 @@ import (
 
 	"github.com/bittorrent/go-btfs/core/node/helpers"
 	"github.com/bittorrent/go-btfs/repo"
+	irouting "github.com/bittorrent/go-btfs/routing"
 
-	"github.com/TRON-US/go-btfs-pinner"
-	"github.com/ipfs/go-ipfs-provider"
+	"github.com/ipfs/go-fetcher"
+	pin "github.com/ipfs/go-ipfs-pinner"
+	provider "github.com/ipfs/go-ipfs-provider"
+	"github.com/ipfs/go-ipfs-provider/batched"
 	q "github.com/ipfs/go-ipfs-provider/queue"
 	"github.com/ipfs/go-ipfs-provider/simple"
-	ipld "github.com/ipfs/go-ipld-format"
-	"github.com/libp2p/go-libp2p-core/routing"
 	"go.uber.org/fx"
 )
 
@@ -27,13 +28,13 @@ func ProviderQueue(mctx helpers.MetricsCtx, lc fx.Lifecycle, repo repo.Repo) (*q
 }
 
 // SimpleProvider creates new record provider
-func SimpleProvider(mctx helpers.MetricsCtx, lc fx.Lifecycle, queue *q.Queue, rt routing.Routing) provider.Provider {
+func SimpleProvider(mctx helpers.MetricsCtx, lc fx.Lifecycle, queue *q.Queue, rt irouting.ProvideManyRouter) provider.Provider {
 	return simple.NewProvider(helpers.LifecycleCtx(mctx, lc), queue, rt)
 }
 
 // SimpleReprovider creates new reprovider
 func SimpleReprovider(reproviderInterval time.Duration) interface{} {
-	return func(mctx helpers.MetricsCtx, lc fx.Lifecycle, rt routing.Routing, keyProvider simple.KeyChanFunc) (provider.Reprovider, error) {
+	return func(mctx helpers.MetricsCtx, lc fx.Lifecycle, rt irouting.ProvideManyRouter, keyProvider simple.KeyChanFunc) (provider.Reprovider, error) {
 		return simple.NewReprovider(helpers.LifecycleCtx(mctx, lc), reproviderInterval, rt, keyProvider), nil
 	}
 }
@@ -59,44 +60,63 @@ func SimpleProviderSys(isOnline bool) interface{} {
 	}
 }
 
+// BatchedProviderSys creates new provider system
+func BatchedProviderSys(isOnline bool, reprovideInterval time.Duration) interface{} {
+	return func(lc fx.Lifecycle, cr irouting.ProvideManyRouter, q *q.Queue, keyProvider simple.KeyChanFunc, repo repo.Repo) (provider.System, error) {
+		sys, err := batched.New(cr, q,
+			batched.ReproviderInterval(reprovideInterval),
+			batched.Datastore(repo.Datastore()),
+			batched.KeyProvider(keyProvider))
+		if err != nil {
+			return nil, err
+		}
+
+		if isOnline {
+			lc.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					sys.Run()
+					return nil
+				},
+				OnStop: func(ctx context.Context) error {
+					return sys.Close()
+				},
+			})
+		}
+
+		return sys, nil
+	}
+}
+
 // ONLINE/OFFLINE
 
 // OnlineProviders groups units managing provider routing records online
-func OnlineProviders(useStrategicProviding bool, reprovideStrategy string, reprovideInterval string) fx.Option {
+func OnlineProviders(useStrategicProviding bool, useBatchedProviding bool, reprovideStrategy string, reprovideInterval time.Duration) fx.Option {
 	if useStrategicProviding {
 		return fx.Provide(provider.NewOfflineProvider)
 	}
 
 	return fx.Options(
 		SimpleProviders(reprovideStrategy, reprovideInterval),
-		fx.Provide(SimpleProviderSys(true)),
+		maybeProvide(SimpleProviderSys(true), !useBatchedProviding),
+		maybeProvide(BatchedProviderSys(true, reprovideInterval), useBatchedProviding),
 	)
 }
 
 // OfflineProviders groups units managing provider routing records offline
-func OfflineProviders(useStrategicProviding bool, reprovideStrategy string, reprovideInterval string) fx.Option {
+func OfflineProviders(useStrategicProviding bool, useBatchedProviding bool, reprovideStrategy string, reprovideInterval time.Duration) fx.Option {
 	if useStrategicProviding {
 		return fx.Provide(provider.NewOfflineProvider)
 	}
 
 	return fx.Options(
 		SimpleProviders(reprovideStrategy, reprovideInterval),
-		fx.Provide(SimpleProviderSys(false)),
+		maybeProvide(SimpleProviderSys(false), true),
+		//maybeProvide(BatchedProviderSys(false, reprovideInterval), useBatchedProviding),
 	)
 }
 
 // SimpleProviders creates the simple provider/reprovider dependencies
-func SimpleProviders(reprovideStrategy string, reprovideInterval string) fx.Option {
-	reproviderInterval := kReprovideFrequency
-	if reprovideInterval != "" {
-		dur, err := time.ParseDuration(reprovideInterval)
-		if err != nil {
-			return fx.Error(err)
-		}
-
-		reproviderInterval = dur
-	}
-
+func SimpleProviders(reprovideStrategy string, reproviderInterval time.Duration) fx.Option {
 	var keyProvider fx.Option
 	switch reprovideStrategy {
 	case "all":
@@ -120,7 +140,12 @@ func SimpleProviders(reprovideStrategy string, reprovideInterval string) fx.Opti
 }
 
 func pinnedProviderStrategy(onlyRoots bool) interface{} {
-	return func(pinner pin.Pinner, dag ipld.DAGService) simple.KeyChanFunc {
-		return simple.NewPinnedProvider(onlyRoots, pinner, dag)
+	type input struct {
+		fx.In
+		Pinner      pin.Pinner
+		IPLDFetcher fetcher.Factory `name:"ipldFetcher"`
+	}
+	return func(in input) simple.KeyChanFunc {
+		return simple.NewPinnedProvider(onlyRoots, in.Pinner, in.IPLDFetcher)
 	}
 }

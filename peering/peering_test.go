@@ -6,21 +6,22 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p"
-	connmgr "github.com/libp2p/go-libp2p-connmgr"
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peer"
+	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
 
 	"github.com/stretchr/testify/require"
 )
 
 func newNode(ctx context.Context, t *testing.T) host.Host {
+	m, err := connmgr.NewConnManager(1, 100, connmgr.WithGracePeriod(0))
+	require.NoError(t, err)
 	h, err := libp2p.New(
-		ctx,
 		libp2p.ListenAddrStrings("/ip4/127.0.0.1/tcp/0"),
 		// We'd like to set the connection manager low water to 0, but
 		// that would disable the connection manager.
-		libp2p.ConnectionManager(connmgr.NewConnManager(1, 100, 0)),
+		libp2p.ConnectionManager(m),
 	)
 	require.NoError(t, err)
 	return h
@@ -90,7 +91,7 @@ func TestPeeringService(t *testing.T) {
 	// All conns to peer should eventually close.
 	for _, c := range conns {
 		require.Eventually(t, func() bool {
-			s, err := c.NewStream()
+			s, err := c.NewStream(ctx)
 			if s != nil {
 				_ = s.Reset()
 			}

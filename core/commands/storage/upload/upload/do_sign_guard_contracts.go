@@ -13,7 +13,7 @@ import (
 	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
 	"github.com/tron-us/protobuf/proto"
 
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 type ContractParams struct {

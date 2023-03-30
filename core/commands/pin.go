@@ -12,11 +12,11 @@ import (
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	e "github.com/bittorrent/go-btfs/core/commands/e"
 
-	pin "github.com/TRON-US/go-btfs-pinner"
 	coreiface "github.com/TRON-US/interface-go-btfs-core"
 	options "github.com/TRON-US/interface-go-btfs-core/options"
 	"github.com/TRON-US/interface-go-btfs-core/path"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	pin "github.com/ipfs/go-ipfs-pinner"
 
 	bserv "github.com/ipfs/go-blockservice"
 	cid "github.com/ipfs/go-cid"
@@ -82,7 +82,7 @@ var addPinCmd = &cmds.Command{
 		// set options
 		recursive, _ := req.Options[pinRecursiveOptionName].(bool)
 		showProgress, _ := req.Options[pinProgressOptionName].(bool)
-		duration := req.Options[pinAddDurationCountOptionName].(int)
+		// duration := req.Options[pinAddDurationCountOptionName].(int)
 
 		if err := req.ParseBodyArgs(); err != nil {
 			return err
@@ -94,7 +94,7 @@ var addPinCmd = &cmds.Command{
 		}
 
 		if !showProgress {
-			added, err := pinAddMany(req.Context, api, enc, req.Arguments, pin.DefaultDurationUnit, recursive, int64(duration))
+			added, err := pinAddMany(req.Context, api, enc, req.Arguments, recursive)
 			if err != nil {
 				return err
 			}
@@ -112,7 +112,7 @@ var addPinCmd = &cmds.Command{
 
 		ch := make(chan pinResult, 1)
 		go func() {
-			added, err := pinAddMany(ctx, api, enc, req.Arguments, pin.DefaultDurationUnit, recursive, int64(duration))
+			added, err := pinAddMany(ctx, api, enc, req.Arguments, recursive)
 			ch <- pinResult{pins: added, err: err}
 		}()
 
@@ -188,7 +188,7 @@ var addPinCmd = &cmds.Command{
 	},
 }
 
-func pinAddMany(ctx context.Context, api coreiface.CoreAPI, enc cidenc.Encoder, paths []string, unit time.Duration, recursive bool, dur int64) ([]string, error) {
+func pinAddMany(ctx context.Context, api coreiface.CoreAPI, enc cidenc.Encoder, paths []string, recursive bool) ([]string, error) {
 	added := make([]string, len(paths))
 	for i, b := range paths {
 		rp, err := api.ResolvePath(ctx, path.New(b))
@@ -196,7 +196,7 @@ func pinAddMany(ctx context.Context, api coreiface.CoreAPI, enc cidenc.Encoder, 
 			return nil, err
 		}
 
-		if err := api.Pin().Add(ctx, rp, options.Pin.Recursive(recursive), options.Pin.DurationCount(dur)); err != nil {
+		if err := api.Pin().Add(ctx, rp, options.Pin.Recursive(recursive)); err != nil {
 			return nil, err
 		}
 		added[i] = enc.Encode(rp.Cid())

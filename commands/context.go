@@ -13,7 +13,7 @@ import (
 	config "github.com/TRON-US/go-btfs-config"
 	coreiface "github.com/TRON-US/interface-go-btfs-core"
 	options "github.com/TRON-US/interface-go-btfs-core/options"
-	"github.com/bittorrent/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	logging "github.com/ipfs/go-log"
 )
 

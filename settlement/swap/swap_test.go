@@ -16,7 +16,7 @@ import (
 	mockstore "github.com/bittorrent/go-btfs/statestore/mock"
 	"github.com/ethereum/go-ethereum/common"
 
-	peerInfo "github.com/libp2p/go-libp2p-core/peer"
+	peerInfo "github.com/libp2p/go-libp2p/core/peer"
 )
 
 var TOKEN = common.HexToAddress("0x000")
@@ -347,7 +347,7 @@ func TestReceiveChequeWrongVault(t *testing.T) {
 
 }
 
-//TODO: FIX ME(checks if pay case is right and workable)
+// TODO: FIX ME(checks if pay case is right and workable)
 func TestPay(t *testing.T) {
 	store := mockstore.NewStateStore()
 

@@ -6,17 +6,17 @@ import (
 	"sync"
 	"time"
 
-	pin "github.com/TRON-US/go-btfs-pinner"
 	ipns "github.com/TRON-US/go-btns"
 	pb "github.com/TRON-US/go-btns/pb"
 	ft "github.com/TRON-US/go-unixfs"
 	proto "github.com/gogo/protobuf/proto"
 	ds "github.com/ipfs/go-datastore"
 	dsquery "github.com/ipfs/go-datastore/query"
+	pin "github.com/ipfs/go-ipfs-pinner"
 	path "github.com/ipfs/go-path"
-	ci "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	routing "github.com/libp2p/go-libp2p-core/routing"
+	ci "github.com/libp2p/go-libp2p/core/crypto"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	routing "github.com/libp2p/go-libp2p/core/routing"
 	base32 "github.com/whyrusleeping/base32"
 )
 
@@ -59,7 +59,7 @@ func IpnsDsKey(id peer.ID) ds.Key {
 // This method will not search the routing system for records published by other
 // nodes.
 func (p *IpnsPublisher) ListPublished(ctx context.Context) (map[peer.ID]*pb.IpnsEntry, error) {
-	query, err := p.ds.Query(dsquery.Query{
+	query, err := p.ds.Query(ctx, dsquery.Query{
 		Prefix: ipnsPrefix,
 	})
 	if err != nil {
@@ -109,7 +109,7 @@ func (p *IpnsPublisher) GetPublished(ctx context.Context, id peer.ID, checkRouti
 	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
 
-	value, err := p.ds.Get(IpnsDsKey(id))
+	value, err := p.ds.Get(ctx, IpnsDsKey(id))
 	switch err {
 	case nil:
 	case ds.ErrNotFound:
@@ -179,10 +179,10 @@ func (p *IpnsPublisher) updateRecord(ctx context.Context, k ci.PrivKey, value pa
 
 	// Put the new record.
 	key := IpnsDsKey(id)
-	if err := p.ds.Put(key, data); err != nil {
+	if err := p.ds.Put(ctx, key, data); err != nil {
 		return nil, err
 	}
-	if err := p.ds.Sync(key); err != nil {
+	if err := p.ds.Sync(ctx, key); err != nil {
 		return nil, err
 	}
 	return entry, nil
@@ -262,7 +262,7 @@ func waitOnErrChan(ctx context.Context, errs chan error) error {
 
 func PublishPublicKey(ctx context.Context, r routing.ValueStore, k string, pubk ci.PubKey) error {
 	log.Debugf("Storing pubkey at: %s", k)
-	pkbytes, err := pubk.Bytes()
+	pkbytes, err := ci.MarshalPublicKey(pubk)
 	if err != nil {
 		return err
 	}
@@ -290,7 +290,7 @@ func InitializeKeyspace(ctx context.Context, pub Publisher, pins pin.Pinner, key
 
 	// pin recursively because this might already be pinned
 	// and doing a direct pin would throw an error in that case
-	err := pins.Pin(ctx, emptyDir, true, 0)
+	err := pins.Pin(ctx, emptyDir, true)
 	if err != nil {
 		return err
 	}

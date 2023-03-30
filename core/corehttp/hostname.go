@@ -19,7 +19,7 @@ import (
 	nsopts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
 	cid "github.com/ipfs/go-cid"
 	isd "github.com/jbenet/go-is-domain"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 	mbase "github.com/multiformats/go-multibase"
 )
 

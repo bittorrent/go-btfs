@@ -13,12 +13,12 @@ import (
 
 	"github.com/bittorrent/go-btfs/core/coreunix"
 
-	"github.com/TRON-US/go-btfs-pinner"
 	ft "github.com/TRON-US/go-unixfs"
 	coreiface "github.com/TRON-US/interface-go-btfs-core"
 	caopts "github.com/TRON-US/interface-go-btfs-core/options"
 	ipath "github.com/TRON-US/interface-go-btfs-core/path"
 	cid "github.com/ipfs/go-cid"
+	pin "github.com/ipfs/go-ipfs-pinner"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/ipfs/go-merkledag/dagutils"
@@ -110,7 +110,7 @@ func (api *ObjectAPI) Put(ctx context.Context, src io.Reader, opts ...caopts.Obj
 	}
 
 	if options.Pin {
-		defer api.blockstore.PinLock().Unlock()
+		defer api.blockstore.PinLock(ctx).Unlock(ctx)
 	}
 
 	err = api.dag.Add(ctx, dagnode)
@@ -119,7 +119,7 @@ func (api *ObjectAPI) Put(ctx context.Context, src io.Reader, opts ...caopts.Obj
 	}
 
 	if options.Pin {
-		api.pinning.PinWithMode(dagnode.Cid(), pin.DefaultDurationCount, pin.Recursive)
+		api.pinning.PinWithMode(dagnode.Cid(), pin.Recursive)
 		err = api.pinning.Flush(ctx)
 		if err != nil {
 			return nil, err

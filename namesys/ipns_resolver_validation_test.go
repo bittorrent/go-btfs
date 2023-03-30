@@ -14,14 +14,14 @@ import (
 	mockrouting "github.com/ipfs/go-ipfs-routing/mock"
 	offline "github.com/ipfs/go-ipfs-routing/offline"
 	path "github.com/ipfs/go-path"
-	ci "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	pstore "github.com/libp2p/go-libp2p-core/peerstore"
-	routing "github.com/libp2p/go-libp2p-core/routing"
-	"github.com/libp2p/go-libp2p-core/test"
-	pstoremem "github.com/libp2p/go-libp2p-peerstore/pstoremem"
 	record "github.com/libp2p/go-libp2p-record"
 	testutil "github.com/libp2p/go-libp2p-testing/net"
+	ci "github.com/libp2p/go-libp2p/core/crypto"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	pstore "github.com/libp2p/go-libp2p/core/peerstore"
+	routing "github.com/libp2p/go-libp2p/core/routing"
+	"github.com/libp2p/go-libp2p/core/test"
+	pstoremem "github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoremem"
 )
 
 func TestResolverValidation(t *testing.T) {
@@ -47,8 +47,10 @@ func testResolverValidation(t *testing.T, keyType int) {
 	ctx := context.Background()
 	rid := testutil.RandIdentityOrFatal(t)
 	dstore := dssync.MutexWrap(ds.NewMapDatastore())
-	peerstore := pstoremem.NewPeerstore()
-
+	peerstore, err := pstoremem.NewPeerstore()
+	if err != nil {
+		t.Fatal(err)
+	}
 	vstore := newMockValueStore(rid, dstore, peerstore)
 	resolver := NewIpnsResolver(vstore)
 

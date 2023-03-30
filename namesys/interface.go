@@ -7,15 +7,15 @@ That works well for many use cases, but doesn't allow you to answer
 questions like "what is Alice's current homepage?".  The mutable name
 system allows Alice to publish information like:
 
-  The current homepage for alice.example.com is
-  /ipfs/Qmcqtw8FfrVSBaRmbWwHxt3AuySBhJLcvmFYi3Lbc4xnwj
+	The current homepage for alice.example.com is
+	/ipfs/Qmcqtw8FfrVSBaRmbWwHxt3AuySBhJLcvmFYi3Lbc4xnwj
 
 or:
 
-  The current homepage for node
-  QmatmE9msSfkKxoffpHwNLNKgwZG8eT9Bud6YoPab52vpy
-  is
-  /ipfs/Qmcqtw8FfrVSBaRmbWwHxt3AuySBhJLcvmFYi3Lbc4xnwj
+	The current homepage for node
+	QmatmE9msSfkKxoffpHwNLNKgwZG8eT9Bud6YoPab52vpy
+	is
+	/ipfs/Qmcqtw8FfrVSBaRmbWwHxt3AuySBhJLcvmFYi3Lbc4xnwj
 
 The mutable name system also allows users to resolve those references
 to find the immutable IPFS object currently referenced by a given
@@ -23,9 +23,9 @@ mutable name.
 
 For command-line bindings to this functionality, see:
 
-  ipfs name
-  ipfs dns
-  ipfs resolve
+	ipfs name
+	ipfs dns
+	ipfs resolve
 */
 package namesys
 
@@ -37,7 +37,7 @@ import (
 
 	opts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
 	path "github.com/ipfs/go-path"
-	ci "github.com/libp2p/go-libp2p-core/crypto"
+	ci "github.com/libp2p/go-libp2p/core/crypto"
 )
 
 // ErrResolveFailed signals an error when attempting to resolve.

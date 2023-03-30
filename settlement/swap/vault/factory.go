@@ -12,7 +12,7 @@ import (
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/patrickmn/go-cache"
 	"golang.org/x/net/context"
 )
@@ -85,7 +85,7 @@ func (c *factory) Deploy(
 	erc20Address common.Address,
 ) (vault common.Address, trx common.Hash, err error) {
 
-	_peerId, err := peer.IDB58Decode(peerId)
+	_peerId, err := peer.Decode(peerId)
 	if err != nil {
 		return
 	}

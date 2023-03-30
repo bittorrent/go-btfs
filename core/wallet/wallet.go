@@ -20,7 +20,7 @@ import (
 	"github.com/tron-us/protobuf/proto"
 
 	logging "github.com/ipfs/go-log"
-	ic "github.com/libp2p/go-libp2p-core/crypto"
+	ic "github.com/libp2p/go-libp2p/core/crypto"
 )
 
 var log = logging.Logger("core/wallet")
@@ -123,7 +123,7 @@ func WalletDeposit(ctx context.Context, configuration *config.Config, n *core.Ip
 	return nil
 }
 
-//GetBalance both on ledger and Tron.
+// GetBalance both on ledger and Tron.
 func GetBalance(ctx context.Context, configuration *config.Config) (int64, int64, error) {
 	err := Init(ctx, configuration)
 	if err != nil {
@@ -209,7 +209,7 @@ func Init(ctx context.Context, configuration *config.Config) error {
 	addBytes := addr.Bytes()
 	hostWallet.tronAddress = addBytes
 
-	ledgerAddress, err := ic.RawFull(privKeyIC.GetPublic())
+	ledgerAddress, err := ic.MarshalPublicKey(privKeyIC.GetPublic())
 	if err != nil {
 		fmt.Println("get ledger address failed, ERR: \n", err)
 		return err

@@ -400,7 +400,7 @@ func WithdrawRequest(ctx context.Context, channelId *ledgerPb.ChannelID, ledgerA
 	return withdrawResponse, nil
 }
 
-//Get the token balance on tron blockchain
+// Get the token balance on tron blockchain
 func GetTokenBalance(ctx context.Context, addr []byte, tokenId string) (int64, error) {
 	var tokenBalance int64 = 0
 	err := grpc.SolidityClient(solidityService).WithContext(ctx,
@@ -568,7 +568,7 @@ func CloseLedgerChannel(ctx context.Context, d ds.Datastore, conf *config.Config
 					errors = append(errors, err)
 					continue
 				}
-				if err := rm(d, e.State.Id.Id); err != nil {
+				if err := rm(ctx, d, e.State.Id.Id); err != nil {
 					errors = append(errors, err)
 				}
 			}

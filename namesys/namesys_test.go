@@ -13,10 +13,10 @@ import (
 	dssync "github.com/ipfs/go-datastore/sync"
 	offroute "github.com/ipfs/go-ipfs-routing/offline"
 	path "github.com/ipfs/go-path"
-	ci "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	pstoremem "github.com/libp2p/go-libp2p-peerstore/pstoremem"
 	record "github.com/libp2p/go-libp2p-record"
+	ci "github.com/libp2p/go-libp2p/core/crypto"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	pstoremem "github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoremem"
 )
 
 type mockResolver struct {
@@ -94,7 +94,10 @@ func TestPublishWithCache0(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ps := pstoremem.NewPeerstore()
+	ps, err := pstoremem.NewPeerstore()
+	if err != nil {
+		t.Fatal(err)
+	}
 	pid, err := peer.IDFromPrivateKey(priv)
 	if err != nil {
 		t.Fatal(err)
@@ -126,7 +129,10 @@ func TestPublishWithTTL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ps := pstoremem.NewPeerstore()
+	ps, err := pstoremem.NewPeerstore()
+	if err != nil {
+		t.Fatal(err)
+	}
 	pid, err := peer.IDFromPrivateKey(priv)
 	if err != nil {
 		t.Fatal(err)

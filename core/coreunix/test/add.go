@@ -54,10 +54,11 @@ func HelpTestMockRepo(t *testing.T, cfg *config.Config) *core.IpfsNode {
 // and also a helper to add a reed solomon file for other features.
 // It returns a mock node, api, and added hash (cid).
 func HelpTestAddWithReedSolomonMetadata(t *testing.T) (*core.IpfsNode, coreiface.CoreAPI, cid.Cid, []byte) {
+	ctx := context.Background()
 	node := HelpTestMockRepo(t, nil)
 
 	out := make(chan interface{})
-	adder, err := coreunix.NewAdder(context.Background(), node.Pinning, node.Blockstore, node.DAG)
+	adder, err := coreunix.NewAdder(ctx, node.Pinning, node.Blockstore, node.DAG)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +73,7 @@ func HelpTestAddWithReedSolomonMetadata(t *testing.T) (*core.IpfsNode, coreiface
 
 	go func() {
 		defer close(out)
-		_, err := adder.AddAllAndPin(rfa)
+		_, err := adder.AddAllAndPin(ctx, rfa)
 
 		if err != nil {
 			t.Fatal(err)
