@@ -237,7 +237,7 @@ const (
 // GetHostStatsFromDatastore retrieves host storage stats based on node id
 func GetHostStatsFromDatastore(ctx context.Context, node *core.IpfsNode, nodeId string) (*nodepb.StorageStat_Host, error) {
 	rds := node.Repo.Datastore()
-	qr, err := rds.Get(GetHostStatStorageKey(nodeId))
+	qr, err := rds.Get(ctx, GetHostStatStorageKey(nodeId))
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +265,7 @@ func ListHostStatsFromDatastore(ctx context.Context, node *core.IpfsNode, nodeId
 	hosts := make([]*Stat_HostWithTimeStamp, 0)
 	ly, lm, ld := -1, "", -1
 	for _, k := range keys {
-		qr, err := rds.Get(ds.NewKey(k))
+		qr, err := rds.Get(ctx, ds.NewKey(k))
 		if err != nil {
 			continue
 		}
@@ -308,11 +308,11 @@ func SaveHostStatsIntoDatastore(ctx context.Context, node *core.IpfsNode, nodeId
 	if err != nil {
 		return err
 	}
-	err = rds.Put(GetHostStatStorageKey(nodeId), b)
+	err = rds.Put(ctx, GetHostStatStorageKey(nodeId), b)
 	if err != nil {
 		return err
 	}
-	err = rds.Put(GetHostStatStorageKeyWithTimestamp(nodeId), b)
+	err = rds.Put(ctx, GetHostStatStorageKeyWithTimestamp(nodeId), b)
 	if err != nil {
 		return err
 	}

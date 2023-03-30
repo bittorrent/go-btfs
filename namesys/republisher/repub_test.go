@@ -19,7 +19,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-path"
 	"github.com/jbenet/goprocess"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 	mocknet "github.com/libp2p/go-libp2p/p2p/net/mock"
 )
 
@@ -30,7 +30,7 @@ func TestRepublish(t *testing.T) {
 	defer cancel()
 
 	// create network
-	mn := mocknet.New(ctx)
+	mn := mocknet.New()
 
 	var nodes []*core.IpfsNode
 	for i := 0; i < 10; i++ {
@@ -125,7 +125,7 @@ func TestLongEOLRepublish(t *testing.T) {
 	defer cancel()
 
 	// create network
-	mn := mocknet.New(ctx)
+	mn := mocknet.New()
 
 	var nodes []*core.IpfsNode
 	for i := 0; i < 10; i++ {
@@ -207,7 +207,8 @@ func TestLongEOLRepublish(t *testing.T) {
 
 func getLastIPNSEntry(dstore ds.Datastore, id peer.ID) (*pb.IpnsEntry, error) {
 	// Look for it locally only
-	val, err := dstore.Get(namesys.IpnsDsKey(id))
+	ctx := context.Background()
+	val, err := dstore.Get(ctx, namesys.IpnsDsKey(id))
 	if err != nil {
 		return nil, err
 	}

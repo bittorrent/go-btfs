@@ -10,13 +10,12 @@ import (
 
 	core "github.com/bittorrent/go-btfs/core"
 	coreapi "github.com/bittorrent/go-btfs/core/coreapi"
-	coredag "github.com/bittorrent/go-btfs/core/coredag"
 	plugin "github.com/bittorrent/go-btfs/plugin"
 	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
+	"github.com/ipld/go-ipld-prime/multicodec"
 
 	config "github.com/TRON-US/go-btfs-config"
 	cserialize "github.com/TRON-US/go-btfs-config/serialize"
-	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log"
 	opentracing "github.com/opentracing/opentracing-go"
 )
@@ -79,12 +78,12 @@ func (ls loaderState) String() string {
 // PluginLoader keeps track of loaded plugins.
 //
 // To use:
-// 1. Load any desired plugins with Load and LoadDirectory. Preloaded plugins
-//    will automatically be loaded.
-// 2. Call Initialize to run all initialization logic.
-// 3. Call Inject to register the plugins.
-// 4. Optionally call Start to start plugins.
-// 5. Call Close to close all plugins.
+//  1. Load any desired plugins with Load and LoadDirectory. Preloaded plugins
+//     will automatically be loaded.
+//  2. Call Initialize to run all initialization logic.
+//  3. Call Inject to register the plugins.
+//  4. Optionally call Start to start plugins.
+//  5. Call Close to close all plugins.
 type PluginLoader struct {
 	state   loaderState
 	plugins map[string]plugin.Plugin
@@ -334,11 +333,7 @@ func injectDatastorePlugin(pl plugin.PluginDatastore) error {
 }
 
 func injectIPLDPlugin(pl plugin.PluginIPLD) error {
-	err := pl.RegisterBlockDecoders(ipld.DefaultBlockDecoder)
-	if err != nil {
-		return err
-	}
-	return pl.RegisterInputEncParsers(coredag.DefaultInputEncParsers)
+	return pl.Register(multicodec.DefaultRegistry)
 }
 
 func injectTracerPlugin(pl plugin.PluginTracer) error {

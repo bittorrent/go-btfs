@@ -16,8 +16,8 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	path "github.com/ipfs/go-path"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	routing "github.com/libp2p/go-libp2p-core/routing"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	routing "github.com/libp2p/go-libp2p/core/routing"
 )
 
 var ErrNotDHT = errors.New("routing service is not a DHT")
@@ -86,7 +86,7 @@ var queryDhtCmd = &cmds.Command{
 			defer cancel()
 			closestPeers, err := dht.GetClosestPeers(ctx, string(id))
 			if closestPeers != nil {
-				for p := range closestPeers {
+				for _, p := range closestPeers {
 					routing.PublishQueryEvent(ctx, &routing.QueryEvent{
 						ID:   p,
 						Type: routing.FinalPeer,
@@ -261,7 +261,7 @@ var provideRefDhtCmd = &cmds.Command{
 				return err
 			}
 
-			has, err := nd.Blockstore.Has(c)
+			has, err := nd.Blockstore.Has(req.Context, c)
 			if err != nil {
 				return err
 			}

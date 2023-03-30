@@ -4,8 +4,8 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	ic "github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/peer"
+	ic "github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 func ConvertPubKeyFromString(pubKeyStr string) (ic.PubKey, error) {

@@ -3,7 +3,7 @@ package eip712
 import (
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/signer/core"
+	core "github.com/ethereum/go-ethereum/signer/core/apitypes"
 )
 
 // type aliases to avoid importing "core" everywhere

@@ -17,7 +17,7 @@ import (
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/tron-us/go-btfs-common/crypto"
 
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 var WalletCmd = &cmds.Command{

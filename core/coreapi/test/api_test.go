@@ -16,15 +16,15 @@ import (
 	"github.com/bittorrent/go-btfs/keystore"
 	"github.com/bittorrent/go-btfs/repo"
 
-	"github.com/TRON-US/go-btfs-config"
+	config "github.com/TRON-US/go-btfs-config"
 	coreiface "github.com/TRON-US/interface-go-btfs-core"
 	"github.com/TRON-US/interface-go-btfs-core/tests"
 	"github.com/ipfs/go-datastore"
 	syncds "github.com/ipfs/go-datastore/sync"
 	"github.com/ipfs/go-filestore"
-	ci "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p/p2p/net/mock"
+	ci "github.com/libp2p/go-libp2p/core/crypto"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	mocknet "github.com/libp2p/go-libp2p/p2p/net/mock"
 )
 
 const testPeerID = "QmTFauExutTsy4XP6JbMFcw2Wa9645HJt2bTqL6qYDCKfe"
@@ -32,7 +32,7 @@ const testPeerID = "QmTFauExutTsy4XP6JbMFcw2Wa9645HJt2bTqL6qYDCKfe"
 type NodeProvider struct{}
 
 func (NodeProvider) MakeAPISwarm(ctx context.Context, fullIdentity bool, n int) ([]coreiface.CoreAPI, error) {
-	mn := mocknet.New(ctx)
+	mn := mocknet.New()
 
 	nodes := make([]*core.IpfsNode, n)
 	apis := make([]coreiface.CoreAPI, n)
@@ -49,8 +49,7 @@ func (NodeProvider) MakeAPISwarm(ctx context.Context, fullIdentity bool, n int) 
 			if err != nil {
 				return nil, err
 			}
-
-			kbytes, err := sk.Bytes()
+			kbytes, err := ci.MarshalPrivateKey(sk)
 			if err != nil {
 				return nil, err
 			}

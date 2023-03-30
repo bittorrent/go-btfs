@@ -5,12 +5,12 @@ import (
 	"io"
 	"strings"
 
-	"github.com/bittorrent/go-btfs-cmds"
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	ke "github.com/bittorrent/go-btfs/core/commands/keyencode"
 
-	"github.com/libp2p/go-libp2p-core/peer"
 	record "github.com/libp2p/go-libp2p-record"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 type ipnsPubsubState struct {
@@ -98,7 +98,7 @@ var ipnspsSubsCmd = &cmds.Command{
 				// Not necessarily an error.
 				continue
 			}
-			pid, err := peer.IDFromString(k)
+			pid, err := peer.IDFromBytes([]byte(k))
 			if err != nil {
 				log.Errorf("btns key not a valid peer ID: %s", err)
 				continue

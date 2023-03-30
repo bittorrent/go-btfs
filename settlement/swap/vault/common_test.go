@@ -5,7 +5,7 @@ import (
 
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 type chequeSignerMock struct {

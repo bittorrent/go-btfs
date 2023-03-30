@@ -21,7 +21,7 @@ import (
 	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
 
 	"github.com/ethereum/go-ethereum/common"
-	peerInfo "github.com/libp2p/go-libp2p-core/peer"
+	peerInfo "github.com/libp2p/go-libp2p/core/peer"
 )
 
 type TestOutput struct {
@@ -171,7 +171,7 @@ var testP2pShakeCmd = &cmds.Command{
 		peer := "16Uiu2HAm5TZ8547Xzbqoynt4cXGg6mjkCGoLBWnNxSXcoW7eTBdW"
 		//peer := nodes[0].NodeId
 
-		peerhostPid, err := peerInfo.IDB58Decode(peer)
+		peerhostPid, err := peerInfo.Decode(peer)
 		if err != nil {
 			log.Infof("peer.IDB58Decode(peer:%s) error: %s", peer, err)
 			return err

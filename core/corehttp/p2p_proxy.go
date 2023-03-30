@@ -10,8 +10,8 @@ import (
 
 	core "github.com/bittorrent/go-btfs/core"
 
-	protocol "github.com/libp2p/go-libp2p-core/protocol"
 	p2phttp "github.com/libp2p/go-libp2p-http"
+	protocol "github.com/libp2p/go-libp2p/core/protocol"
 )
 
 // P2PProxyOption is an endpoint for proxying a HTTP request to another btfs peer

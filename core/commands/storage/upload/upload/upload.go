@@ -23,7 +23,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
 	logging "github.com/ipfs/go-log"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 	cmap "github.com/orcaman/concurrent-map"
 )
 
@@ -124,7 +124,7 @@ Use status command to check for completion:
 			if len(req.Arguments) < 4 {
 				return fmt.Errorf("not enough arguments, expect: %v, actual:%v", 4, len(req.Arguments))
 			}
-			renterId, err = peer.IDB58Decode(req.Arguments[1])
+			renterId, err = peer.Decode(req.Arguments[1])
 			if err != nil {
 				return err
 			}

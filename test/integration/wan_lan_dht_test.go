@@ -15,9 +15,9 @@ import (
 	libp2p2 "github.com/bittorrent/go-btfs/core/node/libp2p"
 	"github.com/ipfs/go-cid"
 
-	corenet "github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peerstore"
 	testutil "github.com/libp2p/go-libp2p-testing/net"
+	corenet "github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peerstore"
 	mocknet "github.com/libp2p/go-libp2p/p2p/net/mock"
 
 	ma "github.com/multiformats/go-multiaddr"
@@ -72,7 +72,7 @@ func RunDHTConnectivity(conf testutil.LatencyConfig, numPeers int) error {
 	defer cancel()
 
 	// create network
-	mn := mocknet.New(ctx)
+	mn := mocknet.New()
 	mn.SetLinkDefaults(mocknet.LinkOptions{
 		Latency:   conf.NetworkLatency,
 		Bandwidth: math.MaxInt32,
@@ -156,7 +156,8 @@ StartupWait:
 			if testPeer.DHT.LAN.RoutingTable() == nil ||
 				testPeer.DHT.LAN.RoutingTable().Size() == 0 ||
 				err != nil {
-				time.Sleep(100 * time.Millisecond)
+				//delay the sleep time so that the LAN can find all each other
+				time.Sleep(3 * time.Second)
 				continue
 			}
 			break StartupWait
@@ -178,7 +179,7 @@ StartupWait:
 	}
 	// That peer will provide a new CID, and we'll validate the test node can find it.
 	provideCid := cid.NewCidV1(cid.Raw, []byte("Lan Provide Record"))
-	provideCtx, cancel := context.WithTimeout(ctx, time.Second)
+	provideCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	if err := lanPeers[i].DHT.Provide(provideCtx, provideCid, true); err != nil {
 		return err
@@ -207,6 +208,8 @@ StartupWait:
 	startupCtx, startupCancel = context.WithTimeout(ctx, time.Second*60)
 WanStartupWait:
 	for {
+		//delay the sleep time so that the LAN can find all each other
+		time.Sleep(3 * time.Second)
 		select {
 		case err := <-testPeer.DHT.WAN.RefreshRoutingTable():
 			//if err != nil {
@@ -215,7 +218,6 @@ WanStartupWait:
 			if testPeer.DHT.WAN.RoutingTable() == nil ||
 				testPeer.DHT.WAN.RoutingTable().Size() == 0 ||
 				err != nil {
-				time.Sleep(100 * time.Millisecond)
 				continue
 			}
 			break WanStartupWait
@@ -238,7 +240,7 @@ WanStartupWait:
 
 	// That peer will provide a new CID, and we'll validate the test node can find it.
 	wanCid := cid.NewCidV1(cid.Raw, []byte("Wan Provide Record"))
-	wanProvideCtx, cancel := context.WithTimeout(ctx, time.Second)
+	wanProvideCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	if err := wanPeers[i].DHT.Provide(wanProvideCtx, wanCid, true); err != nil {
 		return err
@@ -259,7 +261,7 @@ WanStartupWait:
 		testPeer.PeerHost.Peerstore().ClearAddrs(wanPeers[i].Identity)
 	}
 
-	provideCtx, cancel = context.WithTimeout(ctx, time.Second)
+	provideCtx, cancel = context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	if err := wanPeers[i].DHT.Provide(provideCtx, provideCid, true); err != nil {
 		return err

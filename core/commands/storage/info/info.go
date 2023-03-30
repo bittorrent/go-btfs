@@ -41,7 +41,7 @@ By default it shows local host node information.`,
 		var peerID string
 		if len(req.Arguments) > 0 {
 			peerID = req.Arguments[0]
-			data, err = helper.GetHostStorageConfigForPeer(n, peerID)
+			data, err = helper.GetHostStorageConfigForPeer(req.Context, n, peerID)
 		} else {
 			data, err = helper.GetHostStorageConfig(req.Context, n)
 		}

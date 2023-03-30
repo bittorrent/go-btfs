@@ -7,9 +7,9 @@ import (
 	coreiface "github.com/TRON-US/interface-go-btfs-core"
 	caopts "github.com/TRON-US/interface-go-btfs-core/options"
 
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	routing "github.com/libp2p/go-libp2p-core/routing"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	routing "github.com/libp2p/go-libp2p/core/routing"
 )
 
 type PubSubAPI CoreAPI
@@ -119,5 +119,5 @@ func (msg *pubSubMessage) Seq() []byte {
 }
 
 func (msg *pubSubMessage) Topics() []string {
-	return msg.msg.TopicIDs
+	return []string{msg.msg.GetTopic()}
 }

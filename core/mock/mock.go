@@ -14,10 +14,10 @@ import (
 	"github.com/ipfs/go-datastore"
 	syncds "github.com/ipfs/go-datastore/sync"
 	"github.com/libp2p/go-libp2p"
-	host "github.com/libp2p/go-libp2p-core/host"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	pstore "github.com/libp2p/go-libp2p-core/peerstore"
 	testutil "github.com/libp2p/go-libp2p-testing/net"
+	host "github.com/libp2p/go-libp2p/core/host"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	pstore "github.com/libp2p/go-libp2p/core/peerstore"
 
 	mocknet "github.com/libp2p/go-libp2p/p2p/net/mock"
 )
@@ -29,7 +29,7 @@ func NewMockNode() (*core.IpfsNode, error) {
 	// effectively offline, only peer in its network
 	return core.NewNode(ctx, &core.BuildCfg{
 		Online: true,
-		Host:   MockHostOption(mocknet.New(ctx)),
+		Host:   MockHostOption(mocknet.New()),
 	})
 }
 

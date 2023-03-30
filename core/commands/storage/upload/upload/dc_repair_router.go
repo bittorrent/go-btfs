@@ -27,7 +27,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
 	logging "github.com/ipfs/go-log"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -461,7 +461,7 @@ func downloadAndSignContracts(contract *guardpb.Contract, rss *sessions.RenterSe
 				return err
 			}
 
-			hostPid, err := peer.IDB58Decode(host)
+			hostPid, err := peer.Decode(host)
 			if err != nil {
 				logger.Errorf("shard %s decodes host_pid error: %s", shardHash, err.Error())
 				return err

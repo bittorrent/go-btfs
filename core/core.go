@@ -5,7 +5,7 @@ Packages underneath core/ provide a (relatively) stable, low-level API
 to carry out most IPFS-related tasks.  For more details on the other
 interfaces and how core/... fits into the bigger BTFS picture, see:
 
-  $ godoc github.com/TRON-US/go-btfs
+	$ godoc github.com/TRON-US/go-btfs
 */
 package core
 
@@ -14,6 +14,7 @@ import (
 	"io"
 
 	"github.com/bittorrent/go-btfs/peering"
+	irouting "github.com/bittorrent/go-btfs/routing"
 
 	"github.com/bittorrent/go-btfs/core/bootstrap"
 	"github.com/bittorrent/go-btfs/core/node"
@@ -24,30 +25,29 @@ import (
 	"github.com/bittorrent/go-btfs/p2p"
 	"github.com/bittorrent/go-btfs/repo"
 
-	pin "github.com/TRON-US/go-btfs-pinner"
 	mfs "github.com/TRON-US/go-mfs"
 	bserv "github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-filestore"
 	"github.com/ipfs/go-graphsync"
 	bstore "github.com/ipfs/go-ipfs-blockstore"
 	exchange "github.com/ipfs/go-ipfs-exchange-interface"
+	pin "github.com/ipfs/go-ipfs-pinner"
 	provider "github.com/ipfs/go-ipfs-provider"
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log"
 	resolver "github.com/ipfs/go-path/resolver"
 	goprocess "github.com/jbenet/goprocess"
-	connmgr "github.com/libp2p/go-libp2p-core/connmgr"
-	ic "github.com/libp2p/go-libp2p-core/crypto"
-	p2phost "github.com/libp2p/go-libp2p-core/host"
-	metrics "github.com/libp2p/go-libp2p-core/metrics"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	pstore "github.com/libp2p/go-libp2p-core/peerstore"
-	routing "github.com/libp2p/go-libp2p-core/routing"
 	ddht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	psrouter "github.com/libp2p/go-libp2p-pubsub-router"
 	record "github.com/libp2p/go-libp2p-record"
-	"github.com/libp2p/go-libp2p/p2p/discovery"
+	connmgr "github.com/libp2p/go-libp2p/core/connmgr"
+	ic "github.com/libp2p/go-libp2p/core/crypto"
+	p2phost "github.com/libp2p/go-libp2p/core/host"
+	metrics "github.com/libp2p/go-libp2p/core/metrics"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	pstore "github.com/libp2p/go-libp2p/core/peerstore"
+	discovery "github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 	p2pbhost "github.com/libp2p/go-libp2p/p2p/host/basic"
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -84,16 +84,16 @@ type IpfsNode struct {
 	//Statestore      storage.StateStorer
 
 	// Online
-	PeerHost      p2phost.Host            `optional:"true"` // the network host (server+client)
-	Peering       peering.PeeringService  `optional:"true"`
-	Filters       *ma.Filters             `optional:"true"`
-	Bootstrapper  io.Closer               `optional:"true"` // the periodic bootstrapper
-	Routing       routing.Routing         `optional:"true"` // the routing system. recommend ipfs-dht
-	Exchange      exchange.Interface      // the block exchange + strategy (bitswap)
-	Namesys       namesys.NameSystem      // the name system, resolves paths to hashes
-	Provider      provider.System         // the value provider system
-	IpnsRepub     *ipnsrp.Republisher     `optional:"true"`
-	GraphExchange graphsync.GraphExchange `optional:"true"`
+	PeerHost      p2phost.Host               `optional:"true"` // the network host (server+client)
+	Peering       peering.PeeringService     `optional:"true"`
+	Filters       *ma.Filters                `optional:"true"`
+	Bootstrapper  io.Closer                  `optional:"true"` // the periodic bootstrapper
+	Routing       irouting.ProvideManyRouter `optional:"true"` // the routing system. recommend ipfs-dht
+	Exchange      exchange.Interface         // the block exchange + strategy (bitswap)
+	Namesys       namesys.NameSystem         // the name system, resolves paths to hashes
+	Provider      provider.System            // the value provider system
+	IpnsRepub     *ipnsrp.Republisher        `optional:"true"`
+	GraphExchange graphsync.GraphExchange    `optional:"true"`
 
 	PubSub   *pubsub.PubSub             `optional:"true"`
 	PSRouter *psrouter.PubsubValueStore `optional:"true"`

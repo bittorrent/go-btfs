@@ -13,9 +13,9 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	path "github.com/ipfs/go-path"
 	isd "github.com/jbenet/go-is-domain"
-	ci "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	routing "github.com/libp2p/go-libp2p-core/routing"
+	ci "github.com/libp2p/go-libp2p/core/crypto"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	routing "github.com/libp2p/go-libp2p/core/routing"
 )
 
 // mpns (a multi-protocol NameSystem) implements generic BTFS naming.
@@ -26,7 +26,6 @@ import (
 // (c) proquints: interprets string as the raw byte data.
 //
 // It can only publish to: (a) BTFS routing naming.
-//
 type mpns struct {
 	dnsResolver, proquintResolver, ipnsResolver resolver
 	ipnsPublisher                               Publisher

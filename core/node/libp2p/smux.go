@@ -7,9 +7,9 @@ import (
 
 	config "github.com/TRON-US/go-btfs-config"
 	"github.com/libp2p/go-libp2p"
-	smux "github.com/libp2p/go-libp2p-core/mux"
-	mplex "github.com/libp2p/go-libp2p-mplex"
-	yamux "github.com/libp2p/go-libp2p-yamux"
+	smux "github.com/libp2p/go-libp2p/core/network"
+	mplex "github.com/libp2p/go-libp2p/p2p/muxer/mplex"
+	yamux "github.com/libp2p/go-libp2p/p2p/muxer/yamux"
 )
 
 func yamuxTransport() smux.Multiplexer {
@@ -46,7 +46,7 @@ func makeSmuxTransportOption(tptConfig config.Transports) (libp2p.Option, error)
 			}
 			switch tpt {
 			case yamuxID:
-				opts = append(opts, libp2p.Muxer(tpt, yamuxTransport))
+				opts = append(opts, libp2p.Muxer(tpt, yamuxTransport()))
 			case mplexID:
 				opts = append(opts, libp2p.Muxer(tpt, mplex.DefaultTransport))
 			default:
@@ -58,7 +58,7 @@ func makeSmuxTransportOption(tptConfig config.Transports) (libp2p.Option, error)
 		return prioritizeOptions([]priorityOption{{
 			priority:        tptConfig.Multiplexers.Yamux,
 			defaultPriority: 100,
-			opt:             libp2p.Muxer(yamuxID, yamuxTransport),
+			opt:             libp2p.Muxer(yamuxID, yamuxTransport()),
 		}, {
 			priority:        tptConfig.Multiplexers.Mplex,
 			defaultPriority: 200,

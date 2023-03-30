@@ -11,7 +11,6 @@ import (
 	core "github.com/bittorrent/go-btfs/core"
 
 	chunker "github.com/TRON-US/go-btfs-chunker"
-	"github.com/TRON-US/go-btfs-pinner"
 	"github.com/TRON-US/go-mfs"
 	ft "github.com/TRON-US/go-unixfs"
 	ihelper "github.com/TRON-US/go-unixfs/importer/helpers"
@@ -22,6 +21,7 @@ import (
 	ipath "github.com/TRON-US/interface-go-btfs-core/path"
 	cid "github.com/ipfs/go-cid"
 	bstore "github.com/ipfs/go-ipfs-blockstore"
+	pin "github.com/ipfs/go-ipfs-pinner"
 	posinfo "github.com/ipfs/go-ipfs-posinfo"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
@@ -29,6 +29,7 @@ import (
 
 // MetaModifier contains the options to the `metadata` command.
 type MetaModifier struct {
+	ctx context.Context
 	*Adder
 	Overwrite bool
 }
@@ -39,17 +40,17 @@ func NewMetaModifier(ctx context.Context, p pin.Pinner, bs bstore.GCLocker, ds i
 		return nil, err
 	}
 
-	return &MetaModifier{adder, false}, nil
+	return &MetaModifier{ctx, adder, false}, nil
 }
 
 // Add metadata to the given DAG root node for a BTFS file.
 func (modifier *MetaModifier) AddMetaAndPin(node ipld.Node) (ipld.Node, ipath.Resolved, error) {
 	if modifier.Pin {
-		modifier.unlocker = modifier.gcLocker.PinLock()
+		modifier.unlocker = modifier.gcLocker.PinLock(modifier.ctx)
 	}
 	defer func() {
 		if modifier.unlocker != nil {
-			modifier.unlocker.Unlock()
+			modifier.unlocker.Unlock(modifier.ctx)
 		}
 	}()
 
@@ -79,7 +80,7 @@ func (modifier *MetaModifier) AddMetaAndPin(node ipld.Node) (ipld.Node, ipath.Re
 		}
 	}
 
-	return nd, p, modifier.PinRoot(nd)
+	return nd, p, modifier.PinRoot(modifier.ctx, nd)
 }
 
 func (modifier *MetaModifier) updateMfs() (mfs.FSNode, error) {
@@ -124,7 +125,7 @@ func (modifier *MetaModifier) updateMfs() (mfs.FSNode, error) {
 }
 
 func (modifier *MetaModifier) addMetaToFileNode(node ipld.Node) (ipath.Resolved, error) {
-	err := modifier.maybePauseForGC()
+	err := modifier.maybePauseForGC(modifier.ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -218,11 +219,11 @@ func (modifier *MetaModifier) addMeta(nd ipld.Node) (ipld.Node, error) {
 // of the given `node` root node of a BTFS file.
 func (modifier *MetaModifier) RemoveMetaAndPin(node ipld.Node) (ipld.Node, ipath.Resolved, error) {
 	if modifier.Pin {
-		modifier.unlocker = modifier.gcLocker.PinLock()
+		modifier.unlocker = modifier.gcLocker.PinLock(modifier.ctx)
 	}
 	defer func() {
 		if modifier.unlocker != nil {
-			modifier.unlocker.Unlock()
+			modifier.unlocker.Unlock(modifier.ctx)
 		}
 	}()
 	p, err := modifier.removeMetaItemsFromFileNode(node)
@@ -250,11 +251,11 @@ func (modifier *MetaModifier) RemoveMetaAndPin(node ipld.Node) (ipld.Node, ipath
 	if !modifier.Pin {
 		return nd, p, nil
 	}
-	return nd, p, modifier.PinRoot(nd)
+	return nd, p, modifier.PinRoot(modifier.ctx, nd)
 }
 
 func (modifier *MetaModifier) removeMetaItemsFromFileNode(node ipld.Node) (ipath.Resolved, error) {
-	err := modifier.maybePauseForGC()
+	err := modifier.maybePauseForGC(modifier.ctx)
 	if err != nil {
 		return nil, err
 	}

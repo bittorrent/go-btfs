@@ -14,7 +14,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gogo/protobuf/proto"
-	ic "github.com/libp2p/go-libp2p-crypto"
+	ic "github.com/libp2p/go-libp2p/core/crypto"
 )
 
 func isReportOnlineEnabled(cfg *config.Config) bool {

@@ -1,6 +1,7 @@
 package libp2p
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
@@ -10,10 +11,10 @@ import (
 
 	logging "github.com/ipfs/go-log"
 	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p-connmgr"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p-core/peerstore"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/peerstore"
+	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
 	"go.uber.org/fx"
 )
 
@@ -31,7 +32,10 @@ var UserAgent = simpleOpt(libp2p.UserAgent(version.UserAgent))
 
 func ConnectionManager(low, high int, grace time.Duration) func() (opts Libp2pOpts, err error) {
 	return func() (opts Libp2pOpts, err error) {
-		cm := connmgr.NewConnManager(low, high, grace)
+		cm, err := connmgr.NewConnManager(low, high, connmgr.WithGracePeriod(grace))
+		if err != nil {
+			return opts, err
+		}
 		opts.Opts = append(opts.Opts, libp2p.ConnectionManager(cm))
 		return
 	}
@@ -79,4 +83,22 @@ func prioritizeOptions(opts []priorityOption) libp2p.Option {
 		p2pOpts[i] = opt.opt
 	}
 	return libp2p.ChainOptions(p2pOpts...)
+}
+
+func ForceReachability(val *config.OptionalString) func() (opts Libp2pOpts, err error) {
+	return func() (opts Libp2pOpts, err error) {
+		if val.IsDefault() {
+			return
+		}
+		v := val.WithDefault("unrecognized")
+		switch v {
+		case "public":
+			opts.Opts = append(opts.Opts, libp2p.ForceReachabilityPublic())
+		case "private":
+			opts.Opts = append(opts.Opts, libp2p.ForceReachabilityPrivate())
+		default:
+			return opts, fmt.Errorf("unrecognized reachability option: %s", v)
+		}
+		return
+	}
 }

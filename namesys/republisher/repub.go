@@ -17,8 +17,8 @@ import (
 	path "github.com/ipfs/go-path"
 	goprocess "github.com/jbenet/goprocess"
 	gpctx "github.com/jbenet/goprocess/context"
-	ic "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
+	ic "github.com/libp2p/go-libp2p/core/crypto"
+	peer "github.com/libp2p/go-libp2p/core/peer"
 )
 
 var errNoEntry = errors.New("no previous entry")
@@ -151,8 +151,9 @@ func (rp *Republisher) republishEntry(ctx context.Context, priv ic.PrivKey) erro
 }
 
 func (rp *Republisher) getLastIPNSEntry(id peer.ID) (*pb.IpnsEntry, error) {
+	ctx := context.TODO()
 	// Look for it locally only
-	val, err := rp.ds.Get(namesys.IpnsDsKey(id))
+	val, err := rp.ds.Get(ctx, namesys.IpnsDsKey(id))
 	switch err {
 	case nil:
 	case ds.ErrNotFound:

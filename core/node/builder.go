@@ -15,8 +15,8 @@ import (
 	cfg "github.com/TRON-US/go-btfs-config"
 	ds "github.com/ipfs/go-datastore"
 	dsync "github.com/ipfs/go-datastore/sync"
-	ci "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
+	ci "github.com/libp2p/go-libp2p/core/crypto"
+	peer "github.com/libp2p/go-libp2p/core/peer"
 )
 
 type BuildCfg struct {
@@ -172,7 +172,7 @@ func defaultRepo(dstore repo.Datastore) (repo.Repo, error) {
 		return nil, err
 	}
 
-	privkeyb, err := priv.Bytes()
+	privkeyb, err := ci.MarshalPrivateKey(priv)
 	if err != nil {
 		return nil, err
 	}

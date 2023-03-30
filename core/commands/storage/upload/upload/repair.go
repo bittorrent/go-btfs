@@ -16,7 +16,7 @@ import (
 	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
 	"github.com/tron-us/go-btfs-common/utils/grpc"
 
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 var StorageUploadRepairCmd = &cmds.Command{
@@ -82,7 +82,7 @@ This command repairs the given shards of a file.`,
 		}
 		hp := uh.GetHostsProvider(ctxParams, strings.Split(req.Arguments[3], ","))
 		m := contracts[0].ContractMeta
-		renterPid, err := peer.IDB58Decode(req.Arguments[2])
+		renterPid, err := peer.Decode(req.Arguments[2])
 		if err != nil {
 			return err
 		}

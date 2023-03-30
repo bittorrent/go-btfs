@@ -10,7 +10,7 @@ require (
 	github.com/ipfs/go-ipfs v0.7.0
 	github.com/ipfs/go-ipfs-config v0.9.0
 	github.com/ipfs/go-ipfs-files v0.0.8
-	github.com/ipfs/interface-go-ipfs-core v0.4.0
+	github.com/TRON-US/interface-go-btfs-core v0.4.0
 	github.com/libp2p/go-libp2p-core v0.9.0
 	github.com/libp2p/go-libp2p-peerstore v0.2.7
 	github.com/multiformats/go-multiaddr v0.3.3

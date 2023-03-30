@@ -1,16 +1,17 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	core "github.com/bittorrent/go-btfs/core"
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	e "github.com/bittorrent/go-btfs/core/commands/e"
 	filestore "github.com/ipfs/go-filestore"
 
-	"github.com/bittorrent/go-btfs-cmds"
 	"github.com/ipfs/go-cid"
 )
 
@@ -60,13 +61,13 @@ The output is:
 		}
 
 		fileOrder, _ := req.Options[fileOrderOptionName].(bool)
-		next, err := filestore.ListAll(fs, fileOrder)
+		next, err := filestore.ListAll(req.Context, fs, fileOrder)
 		if err != nil {
 			return err
 		}
 
 		for {
-			r := next()
+			r := next(req.Context)
 			if r == nil {
 				break
 			}
@@ -137,13 +138,13 @@ For ERROR entries the error will also be printed to stderr.
 		}
 
 		fileOrder, _ := req.Options[fileOrderOptionName].(bool)
-		next, err := filestore.VerifyAll(fs, fileOrder)
+		next, err := filestore.VerifyAll(req.Context, fs, fileOrder)
 		if err != nil {
 			return err
 		}
 
 		for {
-			r := next()
+			r := next(req.Context)
 			if r == nil {
 				break
 			}
@@ -206,7 +207,7 @@ var dupsFileStore = &cmds.Command{
 		}
 
 		for cid := range ch {
-			have, err := fs.MainBlockstore().Has(cid)
+			have, err := fs.MainBlockstore().Has(req.Context, cid)
 			if err != nil {
 				return res.Emit(&RefWrapper{Err: err.Error()})
 			}
@@ -248,7 +249,8 @@ func listByArgs(res cmds.ResponseEmitter, fs *filestore.Filestore, args []string
 			}
 			continue
 		}
-		r := filestore.Verify(fs, c)
+		ctx := context.TODO()
+		r := filestore.Verify(ctx, fs, c)
 		if err := res.Emit(r); err != nil {
 			return err
 		}

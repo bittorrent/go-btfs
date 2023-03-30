@@ -16,7 +16,7 @@ import (
 
 	files "github.com/TRON-US/go-btfs-files"
 	"github.com/TRON-US/interface-go-btfs-core/options"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 	mocknet "github.com/libp2p/go-libp2p/p2p/net/mock"
 	"github.com/libp2p/go-testutil"
 )
@@ -44,7 +44,7 @@ func directAddCat(data []byte, conf testutil.LatencyConfig, addOpts []options.Un
 	defer cancel()
 
 	// create network
-	mn := mocknet.New(ctx)
+	mn := mocknet.New()
 	mn.SetLinkDefaults(mocknet.LinkOptions{
 		Latency: conf.NetworkLatency,
 		// TODO add to conf. This is tricky because we want 0 values to be functional.

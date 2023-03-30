@@ -10,10 +10,10 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 
-	"github.com/libp2p/go-libp2p-core/network"
-	pstore "github.com/libp2p/go-libp2p-core/peerstore"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	kbucket "github.com/libp2p/go-libp2p-kbucket"
+	"github.com/libp2p/go-libp2p/core/network"
+	pstore "github.com/libp2p/go-libp2p/core/peerstore"
 )
 
 type dhtPeerInfo struct {

@@ -15,7 +15,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/ipfs/go-bitswap"
 	logging "github.com/ipfs/go-log"
-	ic "github.com/libp2p/go-libp2p-crypto"
+	ic "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/shirou/gopsutil/v3/cpu"
 	nodepb "github.com/tron-us/go-btfs-common/protos/node"
 	pb "github.com/tron-us/go-btfs-common/protos/status"
@@ -28,7 +28,7 @@ type dcWrap struct {
 	config *config.Config
 }
 
-//Server URL for data collection
+// Server URL for data collection
 var (
 	log = logging.Logger("spin")
 	DC  *dcWrap
@@ -50,7 +50,7 @@ const (
 	updateTimeout = 30 * time.Second
 )
 
-//Go doesn't have a built in Max function? simple function to not have negatives values
+// Go doesn't have a built in Max function? simple function to not have negatives values
 func valOrZero(x uint64) uint64 {
 	if x < 0 {
 		return 0

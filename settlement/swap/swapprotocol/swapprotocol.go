@@ -22,7 +22,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	logging "github.com/ipfs/go-log"
-	peerInfo "github.com/libp2p/go-libp2p-core/peer"
+	peerInfo "github.com/libp2p/go-libp2p/core/peer"
 )
 
 var log = logging.Logger("swapprotocol")
@@ -122,7 +122,7 @@ func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, 
 
 	sentAmount := amount
 
-	peerhostPid, err := peerInfo.IDB58Decode(peer)
+	peerhostPid, err := peerInfo.Decode(peer)
 	if err != nil {
 		log.Infof("peer.IDB58Decode(peer:%s) error: %s", peer, err)
 		return nil, err
@@ -207,7 +207,7 @@ func (s *Service) EmitCheque(ctx context.Context, peer string, amount *big.Int, 
 		// sending cheque
 		log.Infof("sending cheque message to peer %v (%v)", peer, cheque)
 		{
-			hostPid, err := peerInfo.IDB58Decode(peer)
+			hostPid, err := peerInfo.Decode(peer)
 			if err != nil {
 				log.Infof("peer.IDB58Decode(peer:%s) error: %s", peer, err)
 				return err

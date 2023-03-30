@@ -12,6 +12,7 @@ import (
 	cidutil "github.com/ipfs/go-cidutil"
 	verifcid "github.com/ipfs/go-verifcid"
 	mbase "github.com/multiformats/go-multibase"
+	mc "github.com/multiformats/go-multicodec"
 	mhash "github.com/multiformats/go-multihash"
 )
 
@@ -68,11 +69,12 @@ The optional format string is a printf style format string:
 		opts.fmtStr = fmtStr
 
 		if codecStr != "" {
-			codec, ok := cid.Codecs[codecStr]
-			if !ok {
-				return fmt.Errorf("unknown IPLD codec: %s", codecStr)
+			var codec mc.Code
+			err := codec.Set(codecStr)
+			if err != nil {
+				return err
 			}
-			opts.newCodec = codec
+			opts.newCodec = uint64(codec)
 		} // otherwise, leave it as 0 (not a valid IPLD codec)
 
 		switch verStr {
@@ -308,9 +310,10 @@ var codecsCmd = &cmds.Command{
 	},
 	Run: func(req *cmds.Request, resp cmds.ResponseEmitter, env cmds.Environment) error {
 		var res []CodeAndName
-		// use CodecToStr as there are multiple names for a given code
-		for code, name := range cid.CodecToStr {
-			res = append(res, CodeAndName{int(code), name})
+		for _, code := range mc.KnownCodes() {
+			if code.Tag() == "ipld" {
+				res = append(res, CodeAndName{int(code), mc.Code(code).String()})
+			}
 		}
 		return cmds.EmitOnce(resp, res)
 	},

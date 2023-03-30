@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"io"
 
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	tar "github.com/bittorrent/go-btfs/tar"
 
 	path "github.com/TRON-US/interface-go-btfs-core/path"
-	"github.com/bittorrent/go-btfs-cmds"
 	dag "github.com/ipfs/go-merkledag"
 )
 

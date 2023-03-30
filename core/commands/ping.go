@@ -11,8 +11,8 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	pstore "github.com/libp2p/go-libp2p-core/peerstore"
+	peer "github.com/libp2p/go-libp2p/core/peer"
+	pstore "github.com/libp2p/go-libp2p/core/peerstore"
 	ping "github.com/libp2p/go-libp2p/p2p/protocol/ping"
 	ma "github.com/multiformats/go-multiaddr"
 )
