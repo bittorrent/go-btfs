@@ -150,7 +150,7 @@ var swarmPeersCmd = &cmds.Command{
 	Encoders: cmds.EncoderMap{
 		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, ci *connInfos) error {
 			for _, info := range ci.Peers {
-				fmt.Fprintf(w, "%s/%s/%s/%s/%s", info.Addr, "btfs", info.Peer, "country_short", info.CountryShort)
+				fmt.Fprintf(w, "%s/%s/%s/%s/%s", info.Addr, "p2p", info.Peer, "country_short", info.CountryShort)
 				if info.Latency != "" {
 					fmt.Fprintf(w, " %s", info.Latency)
 				}

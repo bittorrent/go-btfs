@@ -92,7 +92,6 @@ require (
 	github.com/markbates/pkger v0.17.0
 	github.com/mholt/archiver/v3 v3.3.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mr-tron/base58 v1.2.0
 	github.com/multiformats/go-multiaddr v0.8.0
 	github.com/multiformats/go-multiaddr-dns v0.3.1
 	github.com/multiformats/go-multibase v0.1.1
@@ -108,7 +107,6 @@ require (
 	github.com/status-im/keycard-go v0.2.0
 	github.com/stretchr/testify v1.8.1
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
-	github.com/thedevsaddam/gojsonq/v2 v2.5.2
 	github.com/tron-us/go-btfs-common v0.8.14-0.20230322132332-b16546817ed8
 	github.com/tron-us/go-common/v2 v2.3.2
 	github.com/tron-us/protobuf v1.3.7
@@ -185,6 +183,7 @@ require (
 	github.com/marten-seemann/qtls-go1-19 v0.1.1 // indirect
 	github.com/marten-seemann/webtransport-go v0.4.3 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect
+	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.5.1 // indirect
 	github.com/opencontainers/runtime-spec v1.0.2 // indirect
@@ -362,7 +361,3 @@ replace github.com/libp2p/go-libp2p-yamux => github.com/libp2p/go-libp2p-yamux v
 replace github.com/libp2p/go-libp2p-mplex => github.com/libp2p/go-libp2p-mplex v0.2.4
 
 exclude github.com/anacrolix/dht/v2 v2.15.2-0.20220123034220-0538803801cb
-
-// replace github.com/tron-us/go-btfs-common => /Users/shawn.huang/github/Shwan-Huang-Tron/go-btfs-common
-
-// replace github.com/TRON-US/interface-go-btfs-core => /Users/shawn.huang/github/Shwan-Huang-Tron/interface-go-btfs-core
