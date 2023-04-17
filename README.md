@@ -14,20 +14,28 @@ These are exactly what BTFS aims to clear up. Besides, underpinned by BTTC, BTFS
 ![Architecture Diagram](https://files.readme.io/a21e9fb--min.png)
 
 ## Table of Contents
-- [Faucet](#Faucet)
-- [Install](#install)
-  - [System Requirements](#system-requirements)
-- [Build from Source](#build-from-source)
-  - [MacOS](#macos)
-  - [Linux VM](#linux-vm)
-  - [Docker](#docker)
-- [Getting Started](#getting-started)
-  - [Some things to try](#some-things-to-try)
-  - [Usage](#usage)
-- [Development](#development)
-  - [Development Dependencies](#development-dependencies)
-  - [BTFS Gateway](#btfs-gateway)
-- [License](#license)
+- [go-btfs](#go-btfs)
+  - [What is BTFS 2.0?](#what-is-btfs-20)
+  - [BTFS 2.0 Architecture Diagram](#btfs-20-architecture-diagram)
+  - [Table of Contents](#table-of-contents)
+  - [Faucet](#faucet)
+  - [Install BTFS](#install-btfs)
+    - [System Requirements](#system-requirements)
+    - [Install Pre-Built Packages](#install-pre-built-packages)
+      - [Initialize a BTFS Daemon](#initialize-a-btfs-daemon)
+      - [Start the Daemon](#start-the-daemon)
+    - [Build from Source](#build-from-source)
+      - [Requires](#requires)
+      - [Install Go](#install-go)
+    - [Docker](#docker)
+    - [Notices](#notices)
+  - [Getting Started](#getting-started)
+    - [Some things to try](#some-things-to-try)
+    - [Usage](#usage)
+  - [Development](#development)
+    - [Development Dependencies](#development-dependencies)
+    - [BTFS Gateway](#btfs-gateway)
+  - [License](#license)
 
 ## Faucet
 
@@ -223,6 +231,14 @@ Execute commands within the docker container:
 docker exec CONTAINER btfs add FILE
 ```
 
+### Notices
+After upgrade to go-btfs v2.3.1, if you find that your node connectivity has deteriorated, you can execute the following command:
+
+```
+btfs config Swarm.ResourceMgr.Limits.System --json '{"ConnsInbound":0}'
+```
+Then restart your btfs node.
+This command will help you unblock the inbound connections to improve connectivity and thus increase the chances of getting a contract.
 ## Getting Started
 
 ### Some things to try
