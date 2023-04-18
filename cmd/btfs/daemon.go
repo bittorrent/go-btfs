@@ -398,17 +398,19 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	fmt.Println("the address of Bttc format is: ", address0x)
 	fmt.Println("the address of Tron format is: ", keys.Base58Address)
 
-	// guide server init
-	optionApiAddr, _ := req.Options[commands.ApiOption].(string)
-	guide.SetServerAddr(cfg.Addresses.API, optionApiAddr)
-	guide.SetInfo(&guide.Info{
-		BtfsVersion: version.CurrentVersionNumber,
-		HostID:      cfg.Identity.PeerID,
-		BttcAddress: address0x.String(),
-		PrivateKey:  hex.EncodeToString(pkbytesOri[4:]),
-	})
-	guide.StartServer()
-	defer guide.TryShutdownServer()
+	if SimpleMode == false {
+		// guide server init
+		optionApiAddr, _ := req.Options[commands.ApiOption].(string)
+		guide.SetServerAddr(cfg.Addresses.API, optionApiAddr)
+		guide.SetInfo(&guide.Info{
+			BtfsVersion: version.CurrentVersionNumber,
+			HostID:      cfg.Identity.PeerID,
+			BttcAddress: address0x.String(),
+			PrivateKey:  hex.EncodeToString(pkbytesOri[4:]),
+		})
+		guide.StartServer()
+		defer guide.TryShutdownServer()
+	}
 
 	//chain init
 	configRoot := cctx.ConfigRoot
@@ -422,7 +424,6 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	}()
 
 	if SimpleMode == false {
-
 		chainid, stored, err := getChainID(req, cfg, statestore)
 		if err != nil {
 			return err
@@ -523,8 +524,8 @@ If the user need to start multiple nodes on the same machine, the configuration 
 			fmt.Println("check report status, err: ", err)
 			return err
 		}
-
 	}
+
 	// init ip2location db
 	if err := bindata.Init(); err != nil {
 		// log init ip2location err
@@ -644,8 +645,10 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	}
 	node.Process.AddChild(goprocess.WithTeardown(cctx.Plugins.Close))
 
-	// if the guide server was started, shutdown it
-	guide.TryShutdownServer()
+	if SimpleMode == false {
+		// if the guide server was started, shutdown it
+		guide.TryShutdownServer()
+	}
 
 	// construct api endpoint - every time
 	apiErrc, err := serveHTTPApi(req, cctx)
