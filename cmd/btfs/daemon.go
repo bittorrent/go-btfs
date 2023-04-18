@@ -250,9 +250,10 @@ func wrapDaemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environ
 	return
 }
 
+var SimpleMode bool
+
 func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) (_err error) {
-	//swapprotocol.Req = req
-	//swapprotocol.Env = env
+	SimpleMode = true
 
 	cctx := env.(*oldcmds.Context)
 	_, b := os.LookupEnv(path.BtfsPathKey)
@@ -420,115 +421,110 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		statestore.Close()
 	}()
 
-	chainid, stored, err := getChainID(req, cfg, statestore)
-	if err != nil {
-		return err
-	}
-	chainCfg, err := chainconfig.InitChainConfig(cfg, stored, chainid)
-	if err != nil {
-		return err
-	}
+	if SimpleMode == false {
 
-	// upgrade factory to v2 if necessary
-	needUpdateFactory := false
-	needUpdateFactory, err = doIfNeedUpgradeFactoryToV2(chainid, chainCfg, statestore, repo, cfg, configRoot)
-	if err != nil {
-		fmt.Printf("upgrade vault contract failed, err=%s\n", err)
-		return err
-	}
-	if needUpdateFactory { // no error means upgrade preparation done, re-init the statestore
-		statestore, err = chain.InitStateStore(configRoot)
+		chainid, stored, err := getChainID(req, cfg, statestore)
 		if err != nil {
-			fmt.Println("init statestore err: ", err)
 			return err
 		}
-		err = chain.StoreChainIdIfNotExists(chainid, statestore)
+		chainCfg, err := chainconfig.InitChainConfig(cfg, stored, chainid)
 		if err != nil {
-			fmt.Printf("save chainid failed, err: %s\n", err)
-			return
+			return err
 		}
-	}
 
-	tokencfg.InitToken(chainid)
-
-	//endpoint
-	chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000),
-		chainid, cfg.Identity.PeerID, chainCfg)
-	if err != nil {
-		return err
-	}
-
-	// Sync the with the given Ethereum backend:
-	isSynced, _, err := transaction.IsSynced(context.Background(), chainInfo.Backend, chain.MaxDelay)
-	if err != nil {
-		return fmt.Errorf("is synced: %w", err)
-	}
-
-	if !isSynced {
-		log.Infof("waiting to sync with the Ethereum backend")
-
-		err := transaction.WaitSynced(context.Background(), chainInfo.Backend, chain.MaxDelay)
+		// upgrade factory to v2 if necessary
+		needUpdateFactory := false
+		needUpdateFactory, err = doIfNeedUpgradeFactoryToV2(chainid, chainCfg, statestore, repo, cfg, configRoot)
 		if err != nil {
-			return fmt.Errorf("waiting backend sync: %w", err)
+			fmt.Printf("upgrade vault contract failed, err=%s\n", err)
+			return err
 		}
-	}
-
-	deployGasPrice, found := req.Options[deploymentGasPrice].(string)
-	if !found {
-		deployGasPrice = chainInfo.Chainconfig.DeploymentGas
-	}
-
-	/*settleinfo*/
-	settleInfo, err := chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
-	if err != nil {
-		fmt.Println("init settlement err: ", err)
-		if strings.Contains(err.Error(), "insufficient funds") {
-			fmt.Println("Please recharge BTT to your address to solve this error")
-		}
-		if strings.Contains(err.Error(), "contract deployment failed") {
-			fmt.Println(`Solution1: It is recommended to check if the balance is sufficient. If the balance is low, it is recommended to top up.`)
-			fmt.Println(`Solution2: Suggest to redeploy.`)
+		if needUpdateFactory { // no error means upgrade preparation done, re-init the statestore
+			statestore, err = chain.InitStateStore(configRoot)
+			if err != nil {
+				fmt.Println("init statestore err: ", err)
+				return err
+			}
+			err = chain.StoreChainIdIfNotExists(chainid, statestore)
+			if err != nil {
+				fmt.Printf("save chainid failed, err: %s\n", err)
+				return
+			}
 		}
 
-		return err
-	}
+		tokencfg.InitToken(chainid)
 
-	/*upgrade vault implementation*/
-	oldImpl, newImpl, err := settleInfo.VaultService.UpgradeTo(context.Background(), chainInfo.Chainconfig.VaultLogicAddress)
-	if err != nil {
-		emsg := err.Error()
-		if strings.Contains(emsg, "already upgraded") {
-			fmt.Printf("vault implementation is updated: %s\n", chainInfo.Chainconfig.VaultLogicAddress)
-			err = nil
+		//endpoint
+		chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000),
+			chainid, cfg.Identity.PeerID, chainCfg)
+		if err != nil {
+			return err
+		}
+
+		// Sync the with the given Ethereum backend:
+		isSynced, _, err := transaction.IsSynced(context.Background(), chainInfo.Backend, chain.MaxDelay)
+		if err != nil {
+			return fmt.Errorf("is synced: %w", err)
+		}
+
+		if !isSynced {
+			log.Infof("waiting to sync with the Ethereum backend")
+
+			err := transaction.WaitSynced(context.Background(), chainInfo.Backend, chain.MaxDelay)
+			if err != nil {
+				return fmt.Errorf("waiting backend sync: %w", err)
+			}
+		}
+
+		deployGasPrice, found := req.Options[deploymentGasPrice].(string)
+		if !found {
+			deployGasPrice = chainInfo.Chainconfig.DeploymentGas
+		}
+
+		/*settleinfo*/
+		settleInfo, err := chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
+		if err != nil {
+			fmt.Println("init settlement err: ", err)
+			if strings.Contains(err.Error(), "insufficient funds") {
+				fmt.Println("Please recharge BTT to your address to solve this error")
+			}
+			if strings.Contains(err.Error(), "contract deployment failed") {
+				fmt.Println(`Solution1: It is recommended to check if the balance is sufficient. If the balance is low, it is recommended to top up.`)
+				fmt.Println(`Solution2: Suggest to redeploy.`)
+			}
+
+			return err
+		}
+
+		/*upgrade vault implementation*/
+		oldImpl, newImpl, err := settleInfo.VaultService.UpgradeTo(context.Background(), chainInfo.Chainconfig.VaultLogicAddress)
+		if err != nil {
+			emsg := err.Error()
+			if strings.Contains(emsg, "already upgraded") {
+				fmt.Printf("vault implementation is updated: %s\n", chainInfo.Chainconfig.VaultLogicAddress)
+				err = nil
+			} else {
+				fmt.Println("upgrade vault implementation err: ", err)
+				return err
+			}
 		} else {
-			fmt.Println("upgrade vault implementation err: ", err)
+			fmt.Printf("vault logic implementation upgrade from %s to %s\n", oldImpl, newImpl)
+		}
+
+		// init report online info
+		err = CheckExistLastOnlineReportV2(cfg, configRoot, chainid)
+		if err != nil {
+			fmt.Println("check report status, err: ", err)
 			return err
 		}
-	} else {
-		fmt.Printf("vault logic implementation upgrade from %s to %s\n", oldImpl, newImpl)
+
+		err = CheckHubDomainConfig(cfg, configRoot, chainid)
+		if err != nil {
+			fmt.Println("check report status, err: ", err)
+			return err
+		}
+
 	}
-
-	// init report status contract
-	//reportStatusServ := reportstatus.Init(chainInfo.TransactionService, cfg, chainCfg.StatusAddress)
-	//err = CheckExistLastOnlineReport(cfg, configRoot, chainid, reportStatusServ)
-	//if err != nil {
-	//	fmt.Println("check report status, err: ", err)
-	//	return err
-	//}
-
-	// init report online info
-	err = CheckExistLastOnlineReportV2(cfg, configRoot, chainid)
-	if err != nil {
-		fmt.Println("check report status, err: ", err)
-		return err
-	}
-
-	err = CheckHubDomainConfig(cfg, configRoot, chainid)
-	if err != nil {
-		fmt.Println("check report status, err: ", err)
-		return err
-	}
-
 	// init ip2location db
 	if err := bindata.Init(); err != nil {
 		// log init ip2location err
@@ -716,19 +712,22 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		functest(cfg.Services.OnlineServerDomain, cfg.Identity.PeerID, hValue)
 	}
 
-	// set Analytics flag if specified
-	if dc, ok := req.Options[enableDataCollection]; ok == true {
-		node.Repo.SetConfigKey("Experimental.Analytics", dc)
+	if SimpleMode == false {
+		// set Analytics flag if specified
+		if dc, ok := req.Options[enableDataCollection]; ok == true {
+			node.Repo.SetConfigKey("Experimental.Analytics", dc)
+		}
+		// Spin jobs in the background
+		spin.RenterSessions(req, env)
+		api, err := cmdenv.GetApi(env, req)
+		if err != nil {
+			return err
+		}
+
+		spin.Analytics(api, cctx.ConfigRoot, node, version.CurrentVersionNumber, hValue)
+		spin.Hosts(node, env)
+		spin.Contracts(node, req, env, nodepb.ContractStat_HOST.String())
 	}
-	// Spin jobs in the background
-	spin.RenterSessions(req, env)
-	api, err := cmdenv.GetApi(env, req)
-	if err != nil {
-		return err
-	}
-	spin.Analytics(api, cctx.ConfigRoot, node, version.CurrentVersionNumber, hValue)
-	spin.Hosts(node, env)
-	spin.Contracts(node, req, env, nodepb.ContractStat_HOST.String())
 
 	// Give the user some immediate feedback when they hit C-c
 	go func() {
