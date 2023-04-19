@@ -108,6 +108,8 @@ type IpfsNode struct {
 	// Flags
 	IsOnline bool `optional:"true"` // Online is set when networking is enabled.
 	IsDaemon bool `optional:"true"` // Daemon is set when running on a long-running daemon.
+
+	IsSimpleMode bool `optional:"true"` // simple mode only run without chain, upload ... api
 }
 
 // Mounts defines what the node's mount state is. This should

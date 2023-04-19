@@ -264,13 +264,20 @@ func printSelf(keyEnc ke.KeyEncoder, node *core.IpfsNode, env cmds.Environment) 
 	info.TronAddress = keys.Base58Address
 
 	if node.IsDaemon {
+		fmt.Println("id 2.1.2 -1")
 		info.DaemonProcessID = os.Getpid()
+		fmt.Println("id 2.1.2 -2", node.IsSimpleMode)
 
-		info.BttcAddress = chain.ChainObject.OverlayAddress.Hex()
-		info.VaultAddress = chain.SettleObject.VaultService.Address().Hex()
+		if !node.IsSimpleMode {
+			info.BttcAddress = chain.ChainObject.OverlayAddress.Hex()
+			info.VaultAddress = chain.SettleObject.VaultService.Address().Hex()
+			fmt.Println("id 2.1.2 -3")
 
-		// show chain id only local peer and in daemon mode
-		info.ChainID = chain.ChainObject.ChainID
+			// show chain id only local peer and in daemon mode
+			info.ChainID = chain.ChainObject.ChainID
+			fmt.Println("id 2.1.2 -4")
+		}
+
 	} else {
 		info.DaemonProcessID = -1
 
