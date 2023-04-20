@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
 	"io"
 	"math/big"
@@ -52,6 +53,11 @@ var TotalCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err

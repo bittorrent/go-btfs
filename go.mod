@@ -361,3 +361,5 @@ replace github.com/libp2p/go-libp2p-yamux => github.com/libp2p/go-libp2p-yamux v
 replace github.com/libp2p/go-libp2p-mplex => github.com/libp2p/go-libp2p-mplex v0.2.4
 
 exclude github.com/anacrolix/dht/v2 v2.15.2-0.20220123034220-0538803801cb
+
+replace github.com/TRON-US/go-btfs-config => /Users/laocheng/go/src/github.com/TRON-US/go-btfs-config

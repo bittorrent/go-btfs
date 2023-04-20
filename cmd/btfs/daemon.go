@@ -97,7 +97,6 @@ const (
 	swarmPortKwd              = "swarm-port"
 	deploymentGasPrice        = "deployment-gasPrice"
 	chainID                   = "chain-id"
-	simpleMode                = "simple-mode"
 	// apiAddrKwd    = "address-api"
 	// swarmAddrKwd  = "address-swarm"
 )
@@ -224,7 +223,6 @@ Headers.
 		cmds.StringOption(swarmPortKwd, "Override existing announced swarm address with external port in the format of [WAN:LAN]."),
 		cmds.StringOption(deploymentGasPrice, "gas price in unit to use for deployment and funding."),
 		cmds.StringOption(chainID, "The ID of blockchain to deploy."),
-		cmds.BoolOption(simpleMode, "Run with simple mode or not."),
 		// TODO: add way to override addresses. tricky part: updating the config if also --init.
 		// cmds.StringOption(apiAddrKwd, "Address for the daemon rpc API (overrides config)"),
 		// cmds.StringOption(swarmAddrKwd, "Address for the swarm socket (overrides config)"),
@@ -253,8 +251,6 @@ func wrapDaemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environ
 }
 
 func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) (_err error) {
-	isSimpleMode, _ := req.Options[simpleMode].(bool)
-
 	cctx := env.(*oldcmds.Context)
 	_, b := os.LookupEnv(path.BtfsPathKey)
 	if !b {
@@ -322,7 +318,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 			}
 
 			if err = doInit(os.Stdout, cfg, false, utilmain.NBitsForKeypairDefault, profiles, conf,
-				keyTypeDefault, "", "", false); err != nil {
+				keyTypeDefault, "", "", false, false); err != nil {
 				return err
 			}
 
@@ -398,7 +394,8 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	fmt.Println("the address of Bttc format is: ", address0x)
 	fmt.Println("the address of Tron format is: ", keys.Base58Address)
 
-	if isSimpleMode == false {
+	SimpleMode := cfg.SimpleMode
+	if SimpleMode == false {
 		// guide server init
 		optionApiAddr, _ := req.Options[commands.ApiOption].(string)
 		guide.SetServerAddr(cfg.Addresses.API, optionApiAddr)
@@ -423,7 +420,7 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		statestore.Close()
 	}()
 
-	if isSimpleMode == false {
+	if SimpleMode == false {
 		chainid, stored, err := getChainID(req, cfg, statestore)
 		if err != nil {
 			return err
@@ -611,7 +608,6 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		return err
 	}
 	node.IsDaemon = true
-	node.IsSimpleMode = isSimpleMode
 
 	//Check if there is a swarm.key at btfs loc. This would still print fingerprint if they created a swarm.key with the same values
 	spath := filepath.Join(cctx.ConfigRoot, "swarm.key")
@@ -646,7 +642,7 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	}
 	node.Process.AddChild(goprocess.WithTeardown(cctx.Plugins.Close))
 
-	if isSimpleMode == false {
+	if SimpleMode == false {
 		// if the guide server was started, shutdown it
 		guide.TryShutdownServer()
 	}
@@ -716,7 +712,7 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		functest(cfg.Services.OnlineServerDomain, cfg.Identity.PeerID, hValue)
 	}
 
-	if isSimpleMode == false {
+	if SimpleMode == false {
 		// set Analytics flag if specified
 		if dc, ok := req.Options[enableDataCollection]; ok == true {
 			node.Repo.SetConfigKey("Experimental.Analytics", dc)

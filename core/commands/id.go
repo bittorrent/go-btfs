@@ -47,6 +47,7 @@ type IdOutput struct {
 	BttcAddress     string
 	VaultAddress    string
 	ChainID         int64
+	SimpleMode      bool
 }
 
 const (
@@ -229,6 +230,11 @@ func printPeer(keyEnc ke.KeyEncoder, ps pstore.Peerstore, p peer.ID, node *core.
 
 // printing self is special cased as we get values differently.
 func printSelf(keyEnc ke.KeyEncoder, node *core.IpfsNode, env cmds.Environment) (interface{}, error) {
+	conf, err := cmdenv.GetConfig(env)
+	if err != nil {
+		return nil, err
+	}
+
 	info := new(IdOutput)
 	info.ID = keyEnc.FormatID(node.Identity)
 
@@ -262,20 +268,17 @@ func printSelf(keyEnc ke.KeyEncoder, node *core.IpfsNode, env cmds.Environment) 
 		return nil, err
 	}
 	info.TronAddress = keys.Base58Address
+	info.SimpleMode = conf.SimpleMode
 
 	if node.IsDaemon {
-		fmt.Println("id 2.1.2 -1")
 		info.DaemonProcessID = os.Getpid()
-		fmt.Println("id 2.1.2 -2", node.IsSimpleMode)
 
-		if !node.IsSimpleMode {
+		if !conf.SimpleMode {
 			info.BttcAddress = chain.ChainObject.OverlayAddress.Hex()
 			info.VaultAddress = chain.SettleObject.VaultService.Address().Hex()
-			fmt.Println("id 2.1.2 -3")
 
 			// show chain id only local peer and in daemon mode
 			info.ChainID = chain.ChainObject.ChainID
-			fmt.Println("id 2.1.2 -4")
 		}
 
 	} else {
