@@ -115,7 +115,7 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
-		
+
 		swapprotocol.Req = req
 		swapprotocol.Env = env
 

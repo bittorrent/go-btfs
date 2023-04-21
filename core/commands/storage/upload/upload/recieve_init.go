@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	"math/big"
 	"strconv"
 	"sync"
@@ -58,6 +59,11 @@ the shard and replies back to client for the next challenge step.`,
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		ctxParams, err := uh.ExtractContextParams(req, env)
 		if err != nil {
 			return err

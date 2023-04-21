@@ -3,6 +3,7 @@ package offline
 import (
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -30,6 +31,11 @@ to the upload session.`,
 		cmds.StringArg("signed", true, false, "signed json data."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		ssId := req.Arguments[0]
 		ctxParams, err := uh.ExtractContextParams(req, env)
 		if err != nil {
