@@ -55,7 +55,7 @@ var ChequeStatsCmd = &cmds.Command{
 			TotalReceivedDailyUncashed: big.NewInt(0),
 		}
 
-		err := GetChequeStatsToken(&cs, token)
+		err = GetChequeStatsToken(&cs, token)
 		if err != nil {
 
 		}
