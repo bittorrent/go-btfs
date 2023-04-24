@@ -2,8 +2,6 @@ package utils
 
 import (
 	"errors"
-	"fmt"
-
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 )
@@ -14,7 +12,7 @@ func CheckSimpleMode(env cmds.Environment) error {
 		return err
 	}
 
-	fmt.Println("CheckSimpleMode ... ", conf.SimpleMode)
+	//fmt.Println("CheckSimpleMode ... ", conf.SimpleMode)
 
 	if conf.SimpleMode {
 		return errors.New("this api is not support in simple mode, please check the node's simple mode! ")
