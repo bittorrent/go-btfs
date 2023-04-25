@@ -58,3 +58,4 @@ cmd/btfs/t*
 cmd/btfs/btfs.1.*
 cmd/btfs/btfs.2.*
 cmd/btfs/btfs.3.*
+btfs.linux.*
