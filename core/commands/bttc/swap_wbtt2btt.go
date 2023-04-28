@@ -26,6 +26,11 @@ var BttcWbtt2BttCmd = &cmds.Command{
 	RunTimeout: 5 * time.Minute,
 	Type:       &BttcWbtt2BttCmdRet{},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) (err error) {
+		err = utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		amountStr := utils.RemoveSpaceAndComma(req.Arguments[0])
 		amount, ok := new(big.Int).SetString(amountStr, 10)
 		if !ok {

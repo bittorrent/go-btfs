@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	"strconv"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
@@ -31,6 +32,11 @@ This command reads all the unsigned contracts from the upload session
 		cmds.StringArg("signed-data-items", true, false, "signed data items."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		ssID := req.Arguments[0]
 		ctxParams, err := uh.ExtractContextParams(req, env)
 		if err != nil {

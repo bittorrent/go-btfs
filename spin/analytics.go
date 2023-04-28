@@ -130,7 +130,6 @@ func Analytics(api iface.CoreAPI, cfgRoot string, node *core.IpfsNode, BTFSVersi
 	}
 
 	dc.setRoles()
-	//go dc.collectionAgent(node)
 	go dc.collectionAgentOnline(node)
 	go dc.collectionAgentOnlineDaily(node)
 }

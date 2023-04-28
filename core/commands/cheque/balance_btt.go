@@ -2,6 +2,7 @@ package cheque
 
 import (
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	"io"
 	"math/big"
 	"time"
@@ -25,6 +26,11 @@ var ChequeBttBalanceCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		addr := req.Arguments[0]
 		balance, err := chain.SettleObject.VaultService.BTTBalanceOf(context.Background(), common.HexToAddress(addr), nil)
 		if err != nil {

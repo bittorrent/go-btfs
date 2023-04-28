@@ -2,6 +2,7 @@ package info
 
 import (
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
@@ -21,6 +22,11 @@ By default it shows local host node information.`,
 		cmds.StringArg("peer-id", false, false, "Peer ID to show storage-related information. Default to self."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		cfg, err := cmdenv.GetConfig(env)
 		if err != nil {
 			return err

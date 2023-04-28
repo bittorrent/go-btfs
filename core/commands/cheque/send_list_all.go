@@ -5,6 +5,7 @@ import (
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/utils"
 	"io"
 )
 
@@ -13,6 +14,11 @@ var ListSendChequesAllCmd = &cmds.Command{
 		Tagline: "List cheque(s) send to peers.",
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		listRet := ListChequeRet{}
 		listRet.Cheques = make([]cheque, 0, 0)
 		listRet.Len = 0

@@ -2,6 +2,7 @@ package cheque
 
 import (
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	"io"
 	"time"
 
@@ -17,6 +18,11 @@ var ChequeReceiveHistoryPeerCmd = &cmds.Command{
 		cmds.StringArg("peer-id", true, false, "The peer id of cheques received."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		var listRet ChequeRecords
 		peer_id := req.Arguments[0]
 		fmt.Println("ChequeReceiveHistoryPeerCmd peer_id = ", peer_id)

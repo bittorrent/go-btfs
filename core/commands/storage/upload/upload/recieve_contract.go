@@ -2,6 +2,7 @@ package upload
 
 import (
 	"errors"
+	"github.com/bittorrent/go-btfs/utils"
 	"strconv"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -26,6 +27,11 @@ var StorageUploadRecvContractCmd = &cmds.Command{
 		cmds.StringArg("guard-contract", true, false, "Signed Guard contract."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		contractId, err := doRecv(req, env)
 		if contractId != "" {
 			if ch, ok := ShardErrChanMap.Get(contractId); ok {
