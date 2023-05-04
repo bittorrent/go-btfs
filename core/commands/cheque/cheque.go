@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/utils"
 	"io"
 	"math/big"
 	"time"
@@ -114,6 +115,11 @@ var StorePriceCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		// token: parse token option
 		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
 		//fmt.Println("... use token = ", tokenStr)
@@ -155,6 +161,10 @@ var StorePriceAllCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
 
 		mp := make(map[string]*PriceInfo, 0)
 		for k, token := range tokencfg.MpTokenAddr {
@@ -201,6 +211,10 @@ var CashChequeCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
 
 		// get the peer id
 		peerID := req.Arguments[0]

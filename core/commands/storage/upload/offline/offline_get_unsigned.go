@@ -2,6 +2,7 @@ package offline
 
 import (
 	"errors"
+	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -25,6 +26,11 @@ This command obtains the upload signing input data for from the upload session
 		cmds.StringArg("session-status", true, false, "current upload session status."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		ssId := req.Arguments[0]
 		ctxParams, err := uh.ExtractContextParams(req, env)
 		if err != nil {

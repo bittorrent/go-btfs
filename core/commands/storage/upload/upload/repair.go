@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/utils"
 	"strings"
 	"time"
 
@@ -33,6 +34,11 @@ This command repairs the given shards of a file.`,
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		ctxParams, err := uh.ExtractContextParams(req, env)
 		if err != nil {
 			return err

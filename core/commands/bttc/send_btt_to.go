@@ -28,6 +28,11 @@ var BttcSendBttToCmd = &cmds.Command{
 	RunTimeout: 5 * time.Minute,
 	Type:       &BttcSendBttToCmdRet{},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) (err error) {
+		err = utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		addressStr := req.Arguments[0]
 		if !common.IsHexAddress(addressStr) {
 			return fmt.Errorf("invalid bttc address %s", addressStr)

@@ -3,6 +3,7 @@ package cheque
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	"io"
 	"sort"
 	"strconv"
@@ -25,6 +26,11 @@ var ChequeReceiveHistoryListCmd = &cmds.Command{
 		cmds.StringArg("limit", true, false, "page limit."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		from, err := strconv.Atoi(req.Arguments[0])
 		if err != nil {
 			return fmt.Errorf("parse from:%v failed", req.Arguments[0])

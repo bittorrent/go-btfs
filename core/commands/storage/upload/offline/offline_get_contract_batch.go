@@ -2,6 +2,7 @@ package offline
 
 import (
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -31,6 +32,11 @@ the contracts to the caller.`,
 		cmds.StringArg("contracts-type", true, false, "get guard or escrow contracts"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		ssId := req.Arguments[0]
 		ctxParams, err := uh.ExtractContextParams(req, env)
 		if err != nil {
