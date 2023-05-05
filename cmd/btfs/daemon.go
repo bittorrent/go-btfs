@@ -648,7 +648,7 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	}
 
 	// construct api endpoint - every time
-	apiErrc, err := serveHTTPApi(req, cctx)
+	apiErrc, err := serveHTTPApi(req, cctx, SimpleMode)
 	if err != nil {
 		return err
 	}
@@ -750,7 +750,7 @@ If the user need to start multiple nodes on the same machine, the configuration 
 }
 
 // serveHTTPApi collects options, creates listener, prints status message and starts serving requests
-func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, error) {
+func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context, SimpleMode bool) (<-chan error, error) {
 	cfg, err := cctx.GetConfig()
 	if err != nil {
 		return nil, fmt.Errorf("serveHTTPApi: GetConfig() failed: %s", err)
@@ -798,7 +798,9 @@ func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, error
 		// Browsers require TCP.
 		switch listener.Addr().Network() {
 		case "tcp", "tcp4", "tcp6":
-			fmt.Printf("Dashboard: http://%s/dashboard\n", listener.Addr())
+			if SimpleMode == false {
+				fmt.Printf("Dashboard: http://%s/dashboard\n", listener.Addr())
+			}
 		}
 	}
 
