@@ -6,7 +6,7 @@ require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
 	github.com/TRON-US/go-btfs-api v0.4.1-0.20230302072600-2afc74800cfc
 	github.com/TRON-US/go-btfs-chunker v0.3.0
-	github.com/TRON-US/go-btfs-config v0.11.13-0.20230302065423-e10f87f21752
+	github.com/TRON-US/go-btfs-config v0.11.13-pre1
 	github.com/TRON-US/go-btfs-files v0.2.0
 	github.com/TRON-US/go-btns v0.1.2-0.20230302072552-36250342c5d7
 	github.com/TRON-US/go-eccrypto v0.0.1

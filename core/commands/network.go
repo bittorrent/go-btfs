@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	"io"
 	"time"
 
@@ -28,8 +29,13 @@ var NetworkCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		timeoutCtx, _ := context.WithTimeout(context.Background(), CheckBackoffDuration*time.Duration(CheckMaxRetries))
-		_, err := chain.ChainObject.Backend.BlockNumber(timeoutCtx)
+		_, err = chain.ChainObject.Backend.BlockNumber(timeoutCtx)
 		if err != nil {
 			chain.CodeBttc = chain.ConstCodeError
 			chain.ErrBttc = err

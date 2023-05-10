@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	"sort"
 	"strings"
 	"time"
@@ -94,6 +95,11 @@ This command contracts stats based on role from network(hub) to local node data 
 	},
 	RunTimeout: 10 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
@@ -133,6 +139,11 @@ This command get contracts stats based on role from the local node data store.`,
 	},
 	RunTimeout: 3 * time.Second,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		cr, err := checkContractStatRole(req.Arguments[0])
 		if err != nil {
 			return err
@@ -209,6 +220,11 @@ This command get contracts list based on role from the local node data store.`,
 	},
 	RunTimeout: 3 * time.Second,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err

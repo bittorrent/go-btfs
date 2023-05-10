@@ -5,6 +5,7 @@ import (
 	"fmt"
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/utils"
 	"io"
 	"time"
 )
@@ -37,6 +38,11 @@ upgrade your vault contract's version, and won't modify any data in your vault.`
 		}),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		oldImpl, newImpl, err := chain.SettleObject.VaultService.UpgradeTo(context.Background(), chain.ChainObject.Chainconfig.VaultLogicAddress)
 		upgraded := true
 		description := ""
