@@ -177,7 +177,6 @@ var rootSubcommands = map[string]*cmds.Command{
 	"settlement": settlement.SettlementCmd,
 	//"update":    ExternalBinary(),
 	"network":        NetworkCmd,
-	"wallet":         WalletCmd,
 	"statuscontract": StatusContractCmd,
 	"bittorrent":     bittorrentCmd,
 }
