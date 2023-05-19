@@ -8,6 +8,7 @@ import (
 	"github.com/bittorrent/go-btfs/namesys/republisher"
 	"github.com/bittorrent/go-btfs/repo"
 	irouting "github.com/bittorrent/go-btfs/routing"
+	madns "github.com/multiformats/go-multiaddr-dns"
 
 	"github.com/TRON-US/go-btns"
 	util "github.com/ipfs/go-ipfs-util"
@@ -27,9 +28,18 @@ func RecordValidator(ps peerstore.Peerstore) record.Validator {
 }
 
 // Namesys creates new name system
-func Namesys(cacheSize int) func(rt irouting.ProvideManyRouter, repo repo.Repo) (namesys.NameSystem, error) {
-	return func(rt irouting.ProvideManyRouter, repo repo.Repo) (namesys.NameSystem, error) {
-		return namesys.NewNameSystem(rt, repo.Datastore(), cacheSize), nil
+func Namesys(cacheSize int) func(rt irouting.ProvideManyRouter, rslv *madns.Resolver, repo repo.Repo) (namesys.NameSystem, error) {
+	return func(rt irouting.ProvideManyRouter, rslv *madns.Resolver, repo repo.Repo) (namesys.NameSystem, error) {
+		opts := []namesys.Option{
+			namesys.WithDatastore(repo.Datastore()),
+			namesys.WithDNSResolver(rslv),
+		}
+
+		if cacheSize > 0 {
+			opts = append(opts, namesys.WithCache(cacheSize))
+		}
+
+		return namesys.NewNameSystem(rt, opts...)
 	}
 }
 

@@ -8,10 +8,8 @@ import (
 
 	"github.com/bittorrent/go-btfs/namesys"
 
-	"github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log"
 	"github.com/ipfs/go-path"
-	"github.com/ipfs/go-path/resolver"
 )
 
 var log = logging.Logger("nsresolv")
@@ -68,7 +66,7 @@ func ResolveIPNS(ctx context.Context, nsys namesys.NameSystem, p path.Path) (pat
 // Resolve resolves the given path by parsing out protocol-specific
 // entries (e.g. /btns/<node-key>) and then going through the /btfs/
 // entries and returning the final node.
-func Resolve(ctx context.Context, nsys namesys.NameSystem, r *resolver.Resolver, p path.Path) (format.Node, error) {
+/* func Resolve(ctx context.Context, nsys namesys.NameSystem, r *resolver.Resolver, p path.Path) (format.Node, error) {
 	p, err := ResolveIPNS(ctx, nsys, p)
 	if err != nil {
 		return nil, err
@@ -77,3 +75,4 @@ func Resolve(ctx context.Context, nsys namesys.NameSystem, r *resolver.Resolver,
 	// ok, we have an BTFS path now (or what we'll treat as one)
 	return r.ResolvePath(ctx, p)
 }
+*/

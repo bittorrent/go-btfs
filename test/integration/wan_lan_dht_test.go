@@ -150,14 +150,14 @@ StartupWait:
 	for {
 		select {
 		case err := <-testPeer.DHT.LAN.RefreshRoutingTable():
-			if err != nil {
-				fmt.Printf("Error refreshing routing table: %v\n", err)
-			}
+			// if err != nil {
+			// 	fmt.Printf("Error refreshing routing table: %v\n", err)
+			// }
 			if testPeer.DHT.LAN.RoutingTable() == nil ||
 				testPeer.DHT.LAN.RoutingTable().Size() == 0 ||
 				err != nil {
 				//delay the sleep time so that the LAN can find all each other
-				time.Sleep(3 * time.Second)
+				time.Sleep(100 * time.Millisecond)
 				continue
 			}
 			break StartupWait
@@ -179,7 +179,7 @@ StartupWait:
 	}
 	// That peer will provide a new CID, and we'll validate the test node can find it.
 	provideCid := cid.NewCidV1(cid.Raw, []byte("Lan Provide Record"))
-	provideCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	provideCtx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 	if err := lanPeers[i].DHT.Provide(provideCtx, provideCid, true); err != nil {
 		return err
@@ -187,7 +187,7 @@ StartupWait:
 	provChan := testPeer.DHT.FindProvidersAsync(provideCtx, provideCid, 0)
 	prov, ok := <-provChan
 	if !ok || prov.ID == "" {
-		return fmt.Errorf("Expected provider. stream closed early")
+		return fmt.Errorf("Expected provider. stream closed early, ok is: %t, prov is %+v", ok, prov)
 	}
 	if prov.ID != lanPeers[i].Identity {
 		return fmt.Errorf("Unexpected lan peer provided record")
@@ -208,8 +208,6 @@ StartupWait:
 	startupCtx, startupCancel = context.WithTimeout(ctx, time.Second*60)
 WanStartupWait:
 	for {
-		//delay the sleep time so that the LAN can find all each other
-		time.Sleep(3 * time.Second)
 		select {
 		case err := <-testPeer.DHT.WAN.RefreshRoutingTable():
 			//if err != nil {
@@ -240,7 +238,7 @@ WanStartupWait:
 
 	// That peer will provide a new CID, and we'll validate the test node can find it.
 	wanCid := cid.NewCidV1(cid.Raw, []byte("Wan Provide Record"))
-	wanProvideCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	wanProvideCtx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 	if err := wanPeers[i].DHT.Provide(wanProvideCtx, wanCid, true); err != nil {
 		return err
@@ -261,7 +259,7 @@ WanStartupWait:
 		testPeer.PeerHost.Peerstore().ClearAddrs(wanPeers[i].Identity)
 	}
 
-	provideCtx, cancel = context.WithTimeout(ctx, 3*time.Second)
+	provideCtx, cancel = context.WithTimeout(ctx, time.Second)
 	defer cancel()
 	if err := wanPeers[i].DHT.Provide(provideCtx, provideCid, true); err != nil {
 		return err

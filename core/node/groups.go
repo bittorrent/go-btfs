@@ -17,7 +17,6 @@ import (
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	util "github.com/ipfs/go-ipfs-util"
 	log "github.com/ipfs/go-log"
-	"github.com/ipfs/go-path/resolver"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	peer "github.com/libp2p/go-libp2p/core/peer"
 	"go.uber.org/fx"
@@ -334,7 +333,7 @@ func Offline(cfg *config.Config) fx.Option {
 var Core = fx.Options(
 	fx.Provide(BlockService),
 	fx.Provide(Dag),
-	fx.Provide(resolver.NewBasicResolver),
+	fx.Provide(FetcherConfig),
 	fx.Provide(Pinning),
 	fx.Provide(Files),
 )

@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 
 	"github.com/bittorrent/go-btfs/statestore"
 	"github.com/bittorrent/go-btfs/transaction"
@@ -257,8 +258,8 @@ func (s *chequeStore) ReceivedChequeRecordsByPeer(vault common.Address) ([]Chequ
 	return records, nil
 }
 
-//store cheque record
-//Beneficiary common.Address
+// store cheque record
+// Beneficiary common.Address
 func (s *chequeStore) storeChequeRecord(vault common.Address, amount *big.Int, token common.Address) error {
 	var indexRange IndexRange
 	err := s.store.Get(historyReceivedChequeIndexKey(vault), &indexRange)
@@ -524,8 +525,8 @@ func historySendChequeKey(beneficiary common.Address, index uint64) string {
 	return fmt.Sprintf("%s_%x", beneficiaryStr, index)
 }
 
-//store cheque record
-//Beneficiary common.Address
+// store cheque record
+// Beneficiary common.Address
 func (s *chequeStore) StoreSendChequeRecord(vault, beneficiary common.Address, amount *big.Int, token common.Address) error {
 	var indexRange IndexRange
 	err := s.store.Get(historySendChequeIndexKey(beneficiary), &indexRange)

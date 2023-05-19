@@ -810,9 +810,9 @@ func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context, SimpleMode bool) (<-
 	// only the webui objects are allowed.
 	// if you know what you're doing, go ahead and pass --unrestricted-api.
 	unrestricted, _ := req.Options[unrestrictedApiAccessKwd].(bool)
-	gatewayOpt := corehttp.GatewayOption(false, corehttp.WebUIPaths...)
+	gatewayOpt := corehttp.GatewayOption(corehttp.WebUIPaths...)
 	if unrestricted {
-		gatewayOpt = corehttp.GatewayOption(true, "/btfs", "/btns")
+		gatewayOpt = corehttp.GatewayOption("/btfs", "/btns")
 	}
 
 	var opts = []corehttp.ServeOption{
@@ -965,7 +965,9 @@ func serveHTTPGateway(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, e
 	if !writableOptionFound {
 		writable = cfg.Gateway.Writable
 	}
-
+	if writable {
+		log.Errorf("Support for Gateway.Writable and --writable has been REMOVED. Please remove it from your config file or CLI.")
+	}
 	listeners, err := sockets.TakeListeners("io.ipfs.gateway")
 	if err != nil {
 		return nil, fmt.Errorf("serveHTTPGateway: socket activation failed: %s", err)
@@ -995,14 +997,8 @@ func serveHTTPGateway(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, e
 		listeners = append(listeners, gwLis)
 	}
 
-	// we might have listened to /tcp/0 - let's see what we are listing on
-	gwType := "readonly"
-	if writable {
-		gwType = "writable"
-	}
-
 	for _, listener := range listeners {
-		fmt.Printf("Gateway (%s) server listening on %s\n", gwType, listener.Multiaddr())
+		fmt.Printf("Gateway server listening on %s\n", listener.Multiaddr())
 	}
 
 	cmdctx := *cctx
@@ -1011,7 +1007,8 @@ func serveHTTPGateway(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, e
 	var opts = []corehttp.ServeOption{
 		corehttp.MetricsCollectionOption("gateway"),
 		corehttp.HostnameOption(),
-		corehttp.GatewayOption(writable, "/btfs", "/btns"),
+		// TODO: rm writable
+		corehttp.GatewayOption("/btfs", "/btns"),
 		corehttp.VersionOption(),
 		corehttp.CheckVersionOption(),
 		corehttp.CommandsROOption(cmdctx),
@@ -1029,7 +1026,9 @@ func serveHTTPGateway(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, e
 	if err != nil {
 		return nil, fmt.Errorf("serveHTTPGateway: ConstructNode() failed: %s", err)
 	}
-
+	if len(cfg.Gateway.PathPrefixes) > 0 {
+		log.Errorf("Support for custom Gateway.PathPrefixes was removed")
+	}
 	errc := make(chan error)
 	var wg sync.WaitGroup
 	for _, lis := range listeners {
