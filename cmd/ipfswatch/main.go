@@ -92,7 +92,7 @@ func run(ipfsPath, watchPath string) error {
 	if *http {
 		addr := "/ip4/127.0.0.1/tcp/5001"
 		var opts = []corehttp.ServeOption{
-			corehttp.GatewayOption(true, "/btfs", "/btns"),
+			corehttp.GatewayOption("/btfs", "/btns"),
 			corehttp.WebUIOption,
 			corehttp.DashboardOption,
 			corehttp.HostUIOption,

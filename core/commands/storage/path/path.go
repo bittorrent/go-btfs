@@ -3,7 +3,6 @@ package path
 import (
 	"errors"
 	"fmt"
-	"github.com/bittorrent/go-btfs/utils"
 	"io"
 	"io/ioutil"
 	"os"
@@ -14,6 +13,8 @@ import (
 	"sync/atomic"
 	"time"
 	"unsafe"
+
+	"github.com/bittorrent/go-btfs/utils"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 
@@ -35,7 +36,9 @@ var (
 	srcProperties      string
 )
 
-/* can be dir of `btfs` or path like `/private/var/folders/q0/lc8cmwd93gv50ygrsy3bwfyc0000gn/T`,
+/*
+	can be dir of `btfs` or path like `/private/var/folders/q0/lc8cmwd93gv50ygrsy3bwfyc0000gn/T`,
+
 depends on how `btfs` is called
 */
 func init() {
