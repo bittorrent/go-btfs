@@ -117,7 +117,7 @@ func TestErrorBubblingFromAPI(t *testing.T) {
 			ts := newTestServer(t, api)
 			t.Logf("test server url: %s", ts.URL)
 
-			req, err := http.NewRequest(http.MethodGet, ts.URL+"/ipns/en.wikipedia-on-ipfs.org", nil)
+			req, err := http.NewRequest(http.MethodGet, ts.URL+"/btns/en.wikipedia-on-ipfs.org", nil)
 			assert.Nil(t, err)
 
 			res, err := ts.Client().Do(req)
@@ -142,7 +142,7 @@ func TestErrorBubblingFromAPI(t *testing.T) {
 		ts := newTestServer(t, api)
 		t.Logf("test server url: %s", ts.URL)
 
-		req, err := http.NewRequest(http.MethodGet, ts.URL+"/ipns/en.wikipedia-on-ipfs.org", nil)
+		req, err := http.NewRequest(http.MethodGet, ts.URL+"/btns/en.wikipedia-on-ipfs.org", nil)
 		assert.Nil(t, err)
 
 		res, err := ts.Client().Do(req)

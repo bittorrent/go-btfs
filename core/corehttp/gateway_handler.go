@@ -979,8 +979,8 @@ package corehttp
 // 			return "application/vnd.ipld.dag-json", nil, nil
 // 		case "dag-cbor":
 // 			return "application/vnd.ipld.dag-cbor", nil, nil
-// 		case "ipns-record":
-// 			return "application/vnd.ipfs.ipns-record", nil, nil
+// 		case "btns-record":
+// 			return "application/vnd.ipfs.btns-record", nil, nil
 // 		}
 // 	}
 // 	// Browsers and other user agents will send Accept header with generic types like:

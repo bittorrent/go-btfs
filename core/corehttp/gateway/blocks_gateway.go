@@ -382,12 +382,12 @@ func (api *BlocksGateway) GetIPNSRecord(ctx context.Context, c cid.Cid) ([]byte,
 		return nil, err
 	}
 
-	return api.routing.GetValue(ctx, "/ipns/"+string(id))
+	return api.routing.GetValue(ctx, "/btns/"+string(id))
 }
 
 func (api *BlocksGateway) GetDNSLinkRecord(ctx context.Context, hostname string) (ifacepath.Path, error) {
 	if api.namesys != nil {
-		p, err := api.namesys.Resolve(ctx, "/ipns/"+hostname, nsopts.Depth(1))
+		p, err := api.namesys.Resolve(ctx, "/btns/"+hostname, nsopts.Depth(1))
 		if err == namesys.ErrResolveRecursion {
 			err = nil
 		}
