@@ -159,12 +159,12 @@ func Breadcrumbs(urlPath string, dnslinkOrigin bool) []Breadcrumb {
 		}
 	}
 
-	// Drop the /ipns/<fqdn> prefix from assets.Breadcrumb Paths when directory
+	// Drop the /btns/<fqdn> prefix from assets.Breadcrumb Paths when directory
 	// listing on a DNSLink website (loaded due to Host header in HTTP
 	// request).  Necessary because the hostname most likely won't have a
 	// public gateway mounted.
 	if dnslinkOrigin {
-		prefix := "/ipns/" + contentRoot
+		prefix := "/btns/" + contentRoot
 		for i, crumb := range ret {
 			if strings.HasPrefix(crumb.Path, prefix) {
 				ret[i].Path = strings.Replace(crumb.Path, prefix, "", 1)
@@ -185,11 +185,11 @@ func ShortHash(hash string) string {
 }
 
 // helper to detect DNSLink website context
-// (when hostname from gwURL is matching /ipns/<fqdn> in path)
+// (when hostname from gwURL is matching /btns/<fqdn> in path)
 func HasDNSLinkOrigin(gwURL string, path string) bool {
 	if gwURL != "" {
 		fqdn := stripPort(strings.TrimPrefix(gwURL, "//"))
-		return strings.HasPrefix(path, "/ipns/"+fqdn)
+		return strings.HasPrefix(path, "/btns/"+fqdn)
 	}
 	return false
 }

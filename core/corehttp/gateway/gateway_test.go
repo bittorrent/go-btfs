@@ -39,7 +39,7 @@ func (m mockNamesys) Resolve(ctx context.Context, name string, opts ...nsopts.Re
 		// max uint
 		depth = ^uint(0)
 	}
-	for strings.HasPrefix(name, "/ipns/") {
+	for strings.HasPrefix(name, "/btns/") {
 		if depth == 0 {
 			return value, namesys.ErrResolveRecursion
 		}
@@ -140,7 +140,7 @@ func (api *mockAPI) GetIPNSRecord(ctx context.Context, c cid.Cid) ([]byte, error
 
 func (api *mockAPI) GetDNSLinkRecord(ctx context.Context, hostname string) (ipath.Path, error) {
 	if api.namesys != nil {
-		p, err := api.namesys.Resolve(ctx, "/ipns/"+hostname, nsopts.Depth(1))
+		p, err := api.namesys.Resolve(ctx, "/btns/"+hostname, nsopts.Depth(1))
 		if err == namesys.ErrResolveRecursion {
 			err = nil
 		}
@@ -206,8 +206,8 @@ func newTestServer(t *testing.T, api IPFSBackend) *httptest.Server {
 
 	handler := NewHandler(config, api)
 	mux := http.NewServeMux()
-	mux.Handle("/ipfs/", handler)
-	mux.Handle("/ipns/", handler)
+	mux.Handle("/btfs/", handler)
+	mux.Handle("/btns/", handler)
 	handler = WithHostname(mux, api, map[string]*Specification{}, false)
 
 	ts := httptest.NewServer(handler)
@@ -231,11 +231,11 @@ func TestGatewayGet(t *testing.T) {
 	k, err := api.resolvePathNoRootsReturned(ctx, ipath.Join(ipath.IpfsPath(root), t.Name(), "fnord"))
 	assert.Nil(t, err)
 
-	api.namesys["/ipns/example.com"] = path.FromCid(k.Cid())
-	api.namesys["/ipns/working.example.com"] = path.FromString(k.String())
-	api.namesys["/ipns/double.example.com"] = path.FromString("/ipns/working.example.com")
-	api.namesys["/ipns/triple.example.com"] = path.FromString("/ipns/double.example.com")
-	api.namesys["/ipns/broken.example.com"] = path.FromString("/ipns/" + k.Cid().String())
+	api.namesys["/btns/example.com"] = path.FromCid(k.Cid())
+	api.namesys["/btns/working.example.com"] = path.FromString(k.String())
+	api.namesys["/btns/double.example.com"] = path.FromString("/btns/working.example.com")
+	api.namesys["/btns/triple.example.com"] = path.FromString("/btns/double.example.com")
+	api.namesys["/btns/broken.example.com"] = path.FromString("/btns/" + k.Cid().String())
 	// We picked .man because:
 	// 1. It's a valid TLD.
 	// 2. Go treats it as the file extension for "man" files (even though
@@ -243,7 +243,7 @@ func TestGatewayGet(t *testing.T) {
 	//
 	// Unfortunately, this may not work on all platforms as file type
 	// detection is platform dependent.
-	api.namesys["/ipns/example.man"] = path.FromString(k.String())
+	api.namesys["/btns/example.man"] = path.FromString(k.String())
 
 	t.Log(ts.URL)
 	for _, test := range []struct {
@@ -253,23 +253,23 @@ func TestGatewayGet(t *testing.T) {
 		text   string
 	}{
 		{"127.0.0.1:8080", "/", http.StatusNotFound, "404 page not found\n"},
-		{"127.0.0.1:8080", "/ipfs", http.StatusBadRequest, "invalid path \"/ipfs/\": not enough path components\n"},
-		{"127.0.0.1:8080", "/ipns", http.StatusBadRequest, "invalid path \"/ipns/\": not enough path components\n"},
+		{"127.0.0.1:8080", "/btfs", http.StatusBadRequest, "invalid path \"/btfs/\": not enough path components\n"},
+		{"127.0.0.1:8080", "/btns", http.StatusBadRequest, "invalid path \"/btns/\": not enough path components\n"},
 		{"127.0.0.1:8080", "/" + k.Cid().String(), http.StatusNotFound, "404 page not found\n"},
-		{"127.0.0.1:8080", "/ipfs/this-is-not-a-cid", http.StatusBadRequest, "invalid path \"/ipfs/this-is-not-a-cid\": invalid CID: invalid cid: illegal base32 data at input byte 3\n"},
+		{"127.0.0.1:8080", "/btfs/this-is-not-a-cid", http.StatusBadRequest, "invalid path \"/btfs/this-is-not-a-cid\": invalid CID: invalid cid: illegal base32 data at input byte 3\n"},
 		{"127.0.0.1:8080", k.String(), http.StatusOK, "fnord"},
-		{"127.0.0.1:8080", "/ipns/nxdomain.example.com", http.StatusInternalServerError, "failed to resolve /ipns/nxdomain.example.com: " + namesys.ErrResolveFailed.Error() + "\n"},
-		{"127.0.0.1:8080", "/ipns/%0D%0A%0D%0Ahello", http.StatusInternalServerError, "failed to resolve /ipns/\\r\\n\\r\\nhello: " + namesys.ErrResolveFailed.Error() + "\n"},
-		{"127.0.0.1:8080", "/ipns/k51qzi5uqu5djucgtwlxrbfiyfez1nb0ct58q5s4owg6se02evza05dfgi6tw5", http.StatusInternalServerError, "failed to resolve /ipns/k51qzi5uqu5djucgtwlxrbfiyfez1nb0ct58q5s4owg6se02evza05dfgi6tw5: " + namesys.ErrResolveFailed.Error() + "\n"},
-		{"127.0.0.1:8080", "/ipns/example.com", http.StatusOK, "fnord"},
+		{"127.0.0.1:8080", "/btns/nxdomain.example.com", http.StatusInternalServerError, "failed to resolve /btns/nxdomain.example.com: " + namesys.ErrResolveFailed.Error() + "\n"},
+		{"127.0.0.1:8080", "/btns/%0D%0A%0D%0Ahello", http.StatusInternalServerError, "failed to resolve /btns/\\r\\n\\r\\nhello: " + namesys.ErrResolveFailed.Error() + "\n"},
+		{"127.0.0.1:8080", "/btns/k51qzi5uqu5djucgtwlxrbfiyfez1nb0ct58q5s4owg6se02evza05dfgi6tw5", http.StatusInternalServerError, "failed to resolve /btns/k51qzi5uqu5djucgtwlxrbfiyfez1nb0ct58q5s4owg6se02evza05dfgi6tw5: " + namesys.ErrResolveFailed.Error() + "\n"},
+		{"127.0.0.1:8080", "/btns/example.com", http.StatusOK, "fnord"},
 		{"example.com", "/", http.StatusOK, "fnord"},
 
 		{"working.example.com", "/", http.StatusOK, "fnord"},
 		{"double.example.com", "/", http.StatusOK, "fnord"},
 		{"triple.example.com", "/", http.StatusOK, "fnord"},
-		{"working.example.com", k.String(), http.StatusNotFound, "failed to resolve /ipns/working.example.com" + k.String() + ": no link named \"ipfs\" under " + k.Cid().String() + "\n"},
-		{"broken.example.com", "/", http.StatusInternalServerError, "failed to resolve /ipns/broken.example.com/: " + namesys.ErrResolveFailed.Error() + "\n"},
-		{"broken.example.com", k.String(), http.StatusInternalServerError, "failed to resolve /ipns/broken.example.com" + k.String() + ": " + namesys.ErrResolveFailed.Error() + "\n"},
+		{"working.example.com", k.String(), http.StatusNotFound, "failed to resolve /btns/working.example.com" + k.String() + ": no link named \"btfs\" under " + k.Cid().String() + "\n"},
+		{"broken.example.com", "/", http.StatusInternalServerError, "failed to resolve /btns/broken.example.com/: " + namesys.ErrResolveFailed.Error() + "\n"},
+		{"broken.example.com", k.String(), http.StatusInternalServerError, "failed to resolve /btns/broken.example.com" + k.String() + ": " + namesys.ErrResolveFailed.Error() + "\n"},
 		// This test case ensures we don't treat the TLD as a file extension.
 		{"example.man", "/", http.StatusOK, "fnord"},
 	} {
@@ -303,19 +303,19 @@ func TestUriQueryRedirect(t *testing.T) {
 		// - Browsers will send original URI in URL-escaped form
 		// - We expect query parameters to be persisted
 		// - We drop fragments, as those should not be sent by a browser
-		{"/ipfs/?uri=ipfs%3A%2F%2FQmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco%2Fwiki%2FFoo_%C4%85%C4%99.html%3Ffilename%3Dtest-%C4%99.html%23header-%C4%85", http.StatusMovedPermanently, "/ipfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/wiki/Foo_%c4%85%c4%99.html?filename=test-%c4%99.html"},
-		{"/ipfs/?uri=ipns%3A%2F%2Fexample.com%2Fwiki%2FFoo_%C4%85%C4%99.html%3Ffilename%3Dtest-%C4%99.html", http.StatusMovedPermanently, "/ipns/example.com/wiki/Foo_%c4%85%c4%99.html?filename=test-%c4%99.html"},
-		{"/ipfs/?uri=ipfs://" + cid, http.StatusMovedPermanently, "/ipfs/" + cid},
-		{"/ipfs?uri=ipfs://" + cid, http.StatusMovedPermanently, "/ipfs/?uri=ipfs://" + cid},
-		{"/ipfs/?uri=ipns://" + cid, http.StatusMovedPermanently, "/ipns/" + cid},
-		{"/ipns/?uri=ipfs%3A%2F%2FQmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco%2Fwiki%2FFoo_%C4%85%C4%99.html%3Ffilename%3Dtest-%C4%99.html%23header-%C4%85", http.StatusMovedPermanently, "/ipfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/wiki/Foo_%c4%85%c4%99.html?filename=test-%c4%99.html"},
-		{"/ipns/?uri=ipns%3A%2F%2Fexample.com%2Fwiki%2FFoo_%C4%85%C4%99.html%3Ffilename%3Dtest-%C4%99.html", http.StatusMovedPermanently, "/ipns/example.com/wiki/Foo_%c4%85%c4%99.html?filename=test-%c4%99.html"},
-		{"/ipns?uri=ipns://" + cid, http.StatusMovedPermanently, "/ipns/?uri=ipns://" + cid},
-		{"/ipns/?uri=ipns://" + cid, http.StatusMovedPermanently, "/ipns/" + cid},
-		{"/ipns/?uri=ipfs://" + cid, http.StatusMovedPermanently, "/ipfs/" + cid},
-		{"/ipfs/?uri=unsupported://" + cid, http.StatusBadRequest, ""},
-		{"/ipfs/?uri=invaliduri", http.StatusBadRequest, ""},
-		{"/ipfs/?uri=" + cid, http.StatusBadRequest, ""},
+		{"/btfs/?uri=btfs%3A%2F%2FQmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco%2Fwiki%2FFoo_%C4%85%C4%99.html%3Ffilename%3Dtest-%C4%99.html%23header-%C4%85", http.StatusMovedPermanently, "/btfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/wiki/Foo_%c4%85%c4%99.html?filename=test-%c4%99.html"},
+		{"/btfs/?uri=btns%3A%2F%2Fexample.com%2Fwiki%2FFoo_%C4%85%C4%99.html%3Ffilename%3Dtest-%C4%99.html", http.StatusMovedPermanently, "/btns/example.com/wiki/Foo_%c4%85%c4%99.html?filename=test-%c4%99.html"},
+		{"/btfs/?uri=btfs://" + cid, http.StatusMovedPermanently, "/btfs/" + cid},
+		{"/btfs?uri=btfs://" + cid, http.StatusMovedPermanently, "/btfs/?uri=btfs://" + cid},
+		{"/btfs/?uri=btns://" + cid, http.StatusMovedPermanently, "/btns/" + cid},
+		{"/btns/?uri=btfs%3A%2F%2FQmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco%2Fwiki%2FFoo_%C4%85%C4%99.html%3Ffilename%3Dtest-%C4%99.html%23header-%C4%85", http.StatusMovedPermanently, "/btfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/wiki/Foo_%c4%85%c4%99.html?filename=test-%c4%99.html"},
+		{"/btns/?uri=btns%3A%2F%2Fexample.com%2Fwiki%2FFoo_%C4%85%C4%99.html%3Ffilename%3Dtest-%C4%99.html", http.StatusMovedPermanently, "/btns/example.com/wiki/Foo_%c4%85%c4%99.html?filename=test-%c4%99.html"},
+		{"/btns?uri=btns://" + cid, http.StatusMovedPermanently, "/btns/?uri=btns://" + cid},
+		{"/btns/?uri=btns://" + cid, http.StatusMovedPermanently, "/btns/" + cid},
+		{"/btns/?uri=btfs://" + cid, http.StatusMovedPermanently, "/btfs/" + cid},
+		{"/btfs/?uri=unsupported://" + cid, http.StatusBadRequest, ""},
+		{"/btfs/?uri=invaliduri", http.StatusBadRequest, ""},
+		{"/btfs/?uri=" + cid, http.StatusBadRequest, ""},
 	} {
 		testName := ts.URL + test.path
 		t.Run(testName, func(t *testing.T) {
@@ -341,7 +341,7 @@ func TestIPNSHostnameRedirect(t *testing.T) {
 	assert.Nil(t, err)
 
 	t.Logf("k: %s\n", k)
-	api.namesys["/ipns/example.net"] = path.FromString(k.String())
+	api.namesys["/btns/example.net"] = path.FromString(k.String())
 
 	// make request to directory containing index.html
 	req, err := http.NewRequest(http.MethodGet, ts.URL+"/foo", nil)
@@ -395,7 +395,7 @@ func TestIPNSHostnameBacklinks(t *testing.T) {
 	k, err := api.resolvePathNoRootsReturned(ctx, ipath.Join(ipath.IpfsPath(root), t.Name()))
 	assert.Nil(t, err)
 
-	// create /ipns/example.net/foo/
+	// create /btns/example.net/foo/
 	k2, err := api.resolvePathNoRootsReturned(ctx, ipath.Join(k, "foo? #<'"))
 	assert.Nil(t, err)
 
@@ -403,7 +403,7 @@ func TestIPNSHostnameBacklinks(t *testing.T) {
 	assert.Nil(t, err)
 
 	t.Logf("k: %s\n", k)
-	api.namesys["/ipns/example.net"] = path.FromString(k.String())
+	api.namesys["/btns/example.net"] = path.FromString(k.String())
 
 	// make request to directory listing
 	req, err := http.NewRequest(http.MethodGet, ts.URL+"/foo%3F%20%23%3C%27/", nil)
@@ -419,9 +419,9 @@ func TestIPNSHostnameBacklinks(t *testing.T) {
 	s := string(body)
 	t.Logf("body: %s\n", string(body))
 
-	assert.True(t, matchPathOrBreadcrumbs(s, "/ipns/<a href=\"//example.net/\">example.net</a>/<a href=\"//example.net/foo%3F%20%23%3C%27\">foo? #&lt;&#39;</a>"), "expected a path in directory listing")
-	// https://github.com/ipfs/dir-index-html/issues/42
-	assert.Contains(t, s, "<a class=\"ipfs-hash\" translate=\"no\" href=\"https://cid.ipfs.tech/#", "expected links to cid.ipfs.tech in CID column when on DNSLink website")
+	assert.True(t, matchPathOrBreadcrumbs(s, "/btns/<a href=\"//example.net/\">example.net</a>/<a href=\"//example.net/foo%3F%20%23%3C%27\">foo? #&lt;&#39;</a>"), "expected a path in directory listing")
+	// https://github.com/btfs/dir-index-html/issues/42
+	assert.Contains(t, s, "<a class=\"btfs-hash\" translate=\"no\" href=\"https://cid.btfs.tech/#", "expected links to cid.btfs.tech in CID column when on DNSLink website")
 	assert.Contains(t, s, "<a href=\"/foo%3F%20%23%3C%27/..\">", "expected backlink in directory listing")
 	assert.Contains(t, s, "<a href=\"/foo%3F%20%23%3C%27/file.txt\">", "expected file in directory listing")
 	assert.Contains(t, s, s, k2.Cid().String(), "expected hash in directory listing")
@@ -444,8 +444,8 @@ func TestIPNSHostnameBacklinks(t *testing.T) {
 	assert.True(t, matchPathOrBreadcrumbs(s, "/"), "expected a path in directory listing")
 	assert.NotContains(t, s, "<a href=\"/\">", "expected no backlink in directory listing of the root CID")
 	assert.Contains(t, s, "<a href=\"/file.txt\">", "expected file in directory listing")
-	// https://github.com/ipfs/dir-index-html/issues/42
-	assert.Contains(t, s, "<a class=\"ipfs-hash\" translate=\"no\" href=\"https://cid.ipfs.tech/#", "expected links to cid.ipfs.tech in CID column when on DNSLink website")
+	// https://github.com/btfs/dir-index-html/issues/42
+	assert.Contains(t, s, "<a class=\"btfs-hash\" translate=\"no\" href=\"https://cid.btfs.tech/#", "expected links to cid.btfs.tech in CID column when on DNSLink website")
 	assert.Contains(t, s, k.Cid().String(), "expected hash in directory listing")
 
 	// make request to directory listing
@@ -463,7 +463,7 @@ func TestIPNSHostnameBacklinks(t *testing.T) {
 	s = string(body)
 	t.Logf("body: %s\n", string(body))
 
-	assert.True(t, matchPathOrBreadcrumbs(s, "/ipns/<a href=\"//example.net/\">example.net</a>/<a href=\"//example.net/foo%3F%20%23%3C%27\">foo? #&lt;&#39;</a>/<a href=\"//example.net/foo%3F%20%23%3C%27/bar\">bar</a>"), "expected a path in directory listing")
+	assert.True(t, matchPathOrBreadcrumbs(s, "/btns/<a href=\"//example.net/\">example.net</a>/<a href=\"//example.net/foo%3F%20%23%3C%27\">foo? #&lt;&#39;</a>/<a href=\"//example.net/foo%3F%20%23%3C%27/bar\">bar</a>"), "expected a path in directory listing")
 	assert.Contains(t, s, "<a href=\"/foo%3F%20%23%3C%27/bar/..\">", "expected backlink in directory listing")
 	assert.Contains(t, s, "<a href=\"/foo%3F%20%23%3C%27/bar/file.txt\">", "expected file in directory listing")
 	assert.Contains(t, s, k3.Cid().String(), "expected hash in directory listing")
@@ -480,7 +480,7 @@ func TestPretty404(t *testing.T) {
 	assert.Nil(t, err)
 
 	host := "example.net"
-	api.namesys["/ipns/"+host] = path.FromString(k.String())
+	api.namesys["/btns/"+host] = path.FromString(k.String())
 
 	for _, test := range []struct {
 		path   string
@@ -492,7 +492,7 @@ func TestPretty404(t *testing.T) {
 		{"/nope", "text/html", http.StatusNotFound, "Custom 404"},
 		{"/nope", "text/*", http.StatusNotFound, "Custom 404"},
 		{"/nope", "*/*", http.StatusNotFound, "Custom 404"},
-		{"/nope", "application/json", http.StatusNotFound, fmt.Sprintf("failed to resolve /ipns/example.net/nope: no link named \"nope\" under %s\n", k.Cid().String())},
+		{"/nope", "application/json", http.StatusNotFound, fmt.Sprintf("failed to resolve /btns/example.net/nope: no link named \"nope\" under %s\n", k.Cid().String())},
 		{"/deeper/nope", "text/html", http.StatusNotFound, "Deep custom 404"},
 		{"/deeper/", "text/html", http.StatusOK, ""},
 		{"/deeper", "text/html", http.StatusOK, ""},
@@ -522,7 +522,7 @@ func TestCacheControlImmutable(t *testing.T) {
 	ts, _, root := newTestServerAndNode(t, nil)
 	t.Logf("test server url: %s", ts.URL)
 
-	req, err := http.NewRequest(http.MethodGet, ts.URL+"/ipfs/"+root.String()+"/", nil)
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/btfs/"+root.String()+"/", nil)
 	assert.Nil(t, err)
 
 	res, err := doWithoutRedirect(req)
@@ -542,7 +542,7 @@ func TestGoGetSupport(t *testing.T) {
 	t.Logf("test server url: %s", ts.URL)
 
 	// mimic go-get
-	req, err := http.NewRequest(http.MethodGet, ts.URL+"/ipfs/"+root.String()+"?go-get=1", nil)
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/btfs/"+root.String()+"?go-get=1", nil)
 	assert.Nil(t, err)
 
 	res, err := doWithoutRedirect(req)

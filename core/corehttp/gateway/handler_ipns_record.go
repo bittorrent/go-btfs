@@ -23,17 +23,17 @@ func (i *handler) serveIpnsRecord(ctx context.Context, w http.ResponseWriter, r 
 	ctx, span := spanTrace(ctx, "Handler.ServeIPNSRecord", trace.WithAttributes(attribute.String("path", contentPath.String())))
 	defer span.End()
 
-	if contentPath.Namespace() != "ipns" {
-		err := fmt.Errorf("%s is not an IPNS link", contentPath.String())
+	if contentPath.Namespace() != "btns" {
+		err := fmt.Errorf("%s is not an BTNS link", contentPath.String())
 		webError(w, err, http.StatusBadRequest)
 		return false
 	}
 
 	key := contentPath.String()
 	key = strings.TrimSuffix(key, "/")
-	key = strings.TrimPrefix(key, "/ipns/")
+	key = strings.TrimPrefix(key, "/btns/")
 	if strings.Count(key, "/") != 0 {
-		err := errors.New("cannot find ipns key for subpath")
+		err := errors.New("cannot find btns key for subpath")
 		webError(w, err, http.StatusBadRequest)
 		return false
 	}
@@ -75,11 +75,11 @@ func (i *handler) serveIpnsRecord(ctx context.Context, w http.ResponseWriter, r 
 	if urlFilename := r.URL.Query().Get("filename"); urlFilename != "" {
 		name = urlFilename
 	} else {
-		name = key + ".ipns-record"
+		name = key + ".btns-record"
 	}
 	setContentDispositionHeader(w, name, "attachment")
 
-	w.Header().Set("Content-Type", "application/vnd.ipfs.ipns-record")
+	w.Header().Set("Content-Type", "application/vnd.ipfs.btns-record")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
 	_, err = w.Write(rawRecord)
