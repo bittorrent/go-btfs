@@ -14,8 +14,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/bittorrent/go-btfs/utils"
-
 	cmds "github.com/bittorrent/go-btfs-cmds"
 
 	"github.com/dustin/go-humanize"
@@ -193,11 +191,6 @@ var PathStatusCmd = &cmds.Command{
 		ShortDescription: "Get status of resetting path.",
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		err := utils.CheckSimpleMode(env)
-		if err != nil {
-			return err
-		}
-
 		tryLock := lock.TryLock()
 		if tryLock {
 			lock.Unlock()
@@ -225,17 +218,11 @@ var PathCapacityCmd = &cmds.Command{
 			"New BTFS Path. Should be absolute path."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		err := utils.CheckSimpleMode(env)
-		if err != nil {
-			return err
-		}
-
 		path := strings.Trim(req.Arguments[0], " ")
 		if path == "" {
 			return fmt.Errorf("path is not defined")
 		}
-
-		//var err error
+		var err error
 		if !filepath.IsAbs(path) {
 			path, err = filepath.Abs(path)
 			if err != nil {
@@ -286,11 +273,6 @@ var PathMigrateCmd = &cmds.Command{
 			"Current BTFS Path. Should be absolute path."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		err := utils.CheckSimpleMode(env)
-		if err != nil {
-			return err
-		}
-
 		if _, k := os.LookupEnv(BtfsPathKey); k || CheckExist(srcProperties) || CheckExist(PropertiesFileName) {
 			return errors.New("no need to migrate")
 		}
@@ -309,11 +291,6 @@ var PathListCmd = &cmds.Command{
 			"parent path, should be absolute path."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		err := utils.CheckSimpleMode(env)
-		if err != nil {
-			return err
-		}
-
 		list, err := list(req.Arguments[0])
 		if err != nil {
 			return err
@@ -330,11 +307,6 @@ var PathVolumesCmd = &cmds.Command{
 	},
 	Arguments: []cmds.Argument{},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		err := utils.CheckSimpleMode(env)
-		if err != nil {
-			return err
-		}
-
 		ps, err := volumes()
 		if err != nil {
 			return err
@@ -365,11 +337,6 @@ var PathMkdirCmd = &cmds.Command{
 			"path name"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		err := utils.CheckSimpleMode(env)
-		if err != nil {
-			return err
-		}
-
 		return add(req.Arguments[0], req.Arguments[1])
 	},
 }
