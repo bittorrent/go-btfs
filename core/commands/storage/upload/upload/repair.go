@@ -13,9 +13,9 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	"github.com/tron-us/go-btfs-common/crypto"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
-	"github.com/tron-us/go-btfs-common/utils/grpc"
+	"github.com/bittorrent/go-btfs-common/crypto"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	"github.com/bittorrent/go-btfs-common/utils/grpc"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 )

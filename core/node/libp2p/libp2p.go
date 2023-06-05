@@ -7,7 +7,7 @@ import (
 
 	version "github.com/bittorrent/go-btfs"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 
 	logging "github.com/ipfs/go-log"
 	"github.com/libp2p/go-libp2p"

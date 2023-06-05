@@ -9,9 +9,9 @@ import (
 
 	util "github.com/bittorrent/go-btfs/blocks/blockstoreutil"
 
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	caopts "github.com/TRON-US/interface-go-btfs-core/options"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	caopts "github.com/bittorrent/interface-go-btfs-core/options"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	pin "github.com/ipfs/go-ipfs-pinner"

@@ -3,7 +3,7 @@ package repo
 import (
 	"testing"
 
-	"github.com/tron-us/go-btfs-common/protos/hub"
+	"github.com/bittorrent/go-btfs-common/protos/hub"
 
 	"github.com/ipfs/go-datastore"
 	syncds "github.com/ipfs/go-datastore/sync"

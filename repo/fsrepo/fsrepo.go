@@ -17,8 +17,8 @@ import (
 	mfsr "github.com/bittorrent/go-btfs/repo/fsrepo/migrations"
 	dir "github.com/bittorrent/go-btfs/thirdparty/dir"
 
-	config "github.com/TRON-US/go-btfs-config"
-	serialize "github.com/TRON-US/go-btfs-config/serialize"
+	config "github.com/bittorrent/go-btfs-config"
+	serialize "github.com/bittorrent/go-btfs-config/serialize"
 	ds "github.com/ipfs/go-datastore"
 	measure "github.com/ipfs/go-ds-measure"
 	filestore "github.com/ipfs/go-filestore"

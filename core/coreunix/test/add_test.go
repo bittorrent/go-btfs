@@ -16,9 +16,9 @@ import (
 	"github.com/bittorrent/go-btfs/gc"
 	"github.com/bittorrent/go-btfs/repo"
 
-	config "github.com/TRON-US/go-btfs-config"
-	files "github.com/TRON-US/go-btfs-files"
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
+	config "github.com/bittorrent/go-btfs-config"
+	files "github.com/bittorrent/go-btfs-files"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"

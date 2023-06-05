@@ -11,7 +11,7 @@ import (
 
 	"github.com/bittorrent/go-btfs/core"
 
-	iface "github.com/TRON-US/interface-go-btfs-core"
+	iface "github.com/bittorrent/interface-go-btfs-core"
 
 	p2phttp "github.com/libp2p/go-libp2p-http"
 	"github.com/libp2p/go-libp2p/core/peer"

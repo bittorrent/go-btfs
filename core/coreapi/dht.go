@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	caopts "github.com/TRON-US/interface-go-btfs-core/options"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	caopts "github.com/bittorrent/interface-go-btfs-core/options"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 	blockservice "github.com/ipfs/go-blockservice"
 	cid "github.com/ipfs/go-cid"
 	cidutil "github.com/ipfs/go-cidutil"

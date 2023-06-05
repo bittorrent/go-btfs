@@ -10,12 +10,12 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
-	config "github.com/TRON-US/go-btfs-config"
-	cc "github.com/tron-us/go-btfs-common/config"
-	"github.com/tron-us/go-btfs-common/crypto"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
-	cgrpc "github.com/tron-us/go-btfs-common/utils/grpc"
-	"github.com/tron-us/protobuf/proto"
+	cc "github.com/bittorrent/go-btfs-common/config"
+	"github.com/bittorrent/go-btfs-common/crypto"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	cgrpc "github.com/bittorrent/go-btfs-common/utils/grpc"
+	config "github.com/bittorrent/go-btfs-config"
+	"github.com/bittorrent/protobuf/proto"
 
 	cidlib "github.com/ipfs/go-cid"
 )

@@ -10,7 +10,7 @@ import (
 	libp2p2 "github.com/bittorrent/go-btfs/core/node/libp2p"
 	"github.com/bittorrent/go-btfs/repo"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	"github.com/ipfs/go-datastore"
 	syncds "github.com/ipfs/go-datastore/sync"
 	"github.com/libp2p/go-libp2p"
@@ -24,17 +24,24 @@ import (
 
 // NewMockNode constructs an IpfsNode for use in tests.
 func NewMockNode() (*core.IpfsNode, error) {
-	ctx := context.Background()
-
 	// effectively offline, only peer in its network
-	return core.NewNode(ctx, &core.BuildCfg{
+	return core.NewNode(context.Background(), &core.BuildCfg{
 		Online: true,
 		Host:   MockHostOption(mocknet.New()),
 	})
 }
 
 func MockHostOption(mn mocknet.Mocknet) libp2p2.HostOption {
-	return func(ctx context.Context, id peer.ID, ps pstore.Peerstore, _ ...libp2p.Option) (host.Host, error) {
+	return func(id peer.ID, ps pstore.Peerstore, opts ...libp2p.Option) (host.Host, error) {
+		var cfg libp2p.Config
+		if err := cfg.Apply(opts...); err != nil {
+			return nil, err
+		}
+
+		// The mocknet does not use the provided libp2p.Option. This options include
+		// the listening addresses we want our peer listening on. Therefore, we have
+		// to manually parse the configuration and add them here.
+		ps.AddAddrs(id, cfg.ListenAddrs, pstore.PermanentAddrTTL)
 		return mn.AddPeerWithPeerstore(id, ps)
 	}
 }

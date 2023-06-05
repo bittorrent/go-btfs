@@ -3,7 +3,7 @@ package libp2p
 import (
 	"time"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	"github.com/libp2p/go-libp2p"
 )
 

@@ -5,11 +5,11 @@ package sessionpb
 
 import (
 	fmt "fmt"
+	_ "github.com/bittorrent/protobuf/gogoproto"
+	proto "github.com/bittorrent/protobuf/proto"
+	github_com_tron_us_protobuf_types "github.com/bittorrent/protobuf/types"
 	_ "github.com/gogo/protobuf/types"
 	golang_proto "github.com/golang/protobuf/proto"
-	_ "github.com/tron-us/protobuf/gogoproto"
-	proto "github.com/tron-us/protobuf/proto"
-	github_com_tron_us_protobuf_types "github.com/tron-us/protobuf/types"
 	io "io"
 	math "math"
 	math_bits "math/bits"

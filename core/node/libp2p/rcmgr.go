@@ -19,7 +19,7 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.uber.org/fx"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	"github.com/bittorrent/go-btfs/core/node/helpers"
 	"github.com/bittorrent/go-btfs/repo"
 )

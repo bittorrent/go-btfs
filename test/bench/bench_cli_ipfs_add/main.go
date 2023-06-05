@@ -12,7 +12,7 @@ import (
 
 	"github.com/bittorrent/go-btfs/thirdparty/unit"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	random "github.com/jbenet/go-random"
 )
 

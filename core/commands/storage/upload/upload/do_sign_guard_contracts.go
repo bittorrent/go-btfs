@@ -8,10 +8,10 @@ import (
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 
-	config "github.com/TRON-US/go-btfs-config"
-	"github.com/tron-us/go-btfs-common/crypto"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
-	"github.com/tron-us/protobuf/proto"
+	"github.com/bittorrent/go-btfs-common/crypto"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	config "github.com/bittorrent/go-btfs-config"
+	"github.com/bittorrent/protobuf/proto"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 )

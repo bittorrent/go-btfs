@@ -11,9 +11,9 @@ import (
 	"container/list"
 	"encoding/json"
 
-	files "github.com/TRON-US/go-btfs-files"
-	"github.com/TRON-US/go-unixfs"
-	uio "github.com/TRON-US/go-unixfs/io"
+	files "github.com/bittorrent/go-btfs-files"
+	"github.com/bittorrent/go-unixfs"
+	uio "github.com/bittorrent/go-unixfs/io"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 )

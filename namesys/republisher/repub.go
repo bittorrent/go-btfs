@@ -8,8 +8,8 @@ import (
 	keystore "github.com/bittorrent/go-btfs/keystore"
 	namesys "github.com/bittorrent/go-btfs/namesys"
 
-	btns "github.com/TRON-US/go-btns"
-	pb "github.com/TRON-US/go-btns/pb"
+	btns "github.com/bittorrent/go-btns"
+	pb "github.com/bittorrent/go-btns/pb"
 
 	proto "github.com/gogo/protobuf/proto"
 	ds "github.com/ipfs/go-datastore"

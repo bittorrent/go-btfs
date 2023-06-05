@@ -9,9 +9,9 @@ import (
 	"github.com/bittorrent/go-btfs/keystore"
 	"github.com/bittorrent/go-btfs/namesys"
 
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	caopts "github.com/TRON-US/interface-go-btfs-core/options"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	caopts "github.com/bittorrent/interface-go-btfs-core/options"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 	ipath "github.com/ipfs/go-path"
 	ci "github.com/libp2p/go-libp2p/core/crypto"
 	peer "github.com/libp2p/go-libp2p/core/peer"
@@ -95,7 +95,11 @@ func (api *NameAPI) Search(ctx context.Context, name string, opts ...caopts.Name
 	var resolver namesys.Resolver = api.namesys
 
 	if !options.Cache {
-		resolver = namesys.NewNameSystem(api.routing, api.repo.Datastore(), 0)
+		resolver, err = namesys.NewNameSystem(api.routing,
+			namesys.WithDatastore(api.repo.Datastore()))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if !strings.HasPrefix(name, "/btns/") {

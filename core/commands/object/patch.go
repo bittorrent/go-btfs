@@ -6,9 +6,9 @@ import (
 
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
-	"github.com/TRON-US/interface-go-btfs-core/options"
-	"github.com/TRON-US/interface-go-btfs-core/path"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	"github.com/bittorrent/interface-go-btfs-core/options"
+	"github.com/bittorrent/interface-go-btfs-core/path"
 )
 
 var ObjectPatchCmd = &cmds.Command{

@@ -5,7 +5,7 @@ Packages underneath core/ provide a (relatively) stable, low-level API
 to carry out most IPFS-related tasks.  For more details on the other
 interfaces and how core/... fits into the bigger BTFS picture, see:
 
-	$ godoc github.com/TRON-US/go-btfs
+	$ godoc github.com/bittorrent/go-btfs
 */
 package core
 
@@ -24,9 +24,9 @@ import (
 	ipnsrp "github.com/bittorrent/go-btfs/namesys/republisher"
 	"github.com/bittorrent/go-btfs/p2p"
 	"github.com/bittorrent/go-btfs/repo"
-
-	mfs "github.com/TRON-US/go-mfs"
+	mfs "github.com/bittorrent/go-mfs"
 	bserv "github.com/ipfs/go-blockservice"
+	"github.com/ipfs/go-fetcher"
 	"github.com/ipfs/go-filestore"
 	"github.com/ipfs/go-graphsync"
 	bstore "github.com/ipfs/go-ipfs-blockstore"
@@ -35,7 +35,6 @@ import (
 	provider "github.com/ipfs/go-ipfs-provider"
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log"
-	resolver "github.com/ipfs/go-path/resolver"
 	goprocess "github.com/jbenet/goprocess"
 	ddht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -50,6 +49,7 @@ import (
 	discovery "github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 	p2pbhost "github.com/libp2p/go-libp2p/p2p/host/basic"
 	ma "github.com/multiformats/go-multiaddr"
+	madns "github.com/multiformats/go-multiaddr-dns"
 )
 
 var log = logging.Logger("core")
@@ -69,18 +69,19 @@ type IpfsNode struct {
 	PNetFingerprint libp2p.PNetFingerprint `optional:"true"` // fingerprint of private network
 
 	// Services
-	Peerstore       pstore.Peerstore          `optional:"true"` // storage for other Peer instances
-	Blockstore      bstore.GCBlockstore       // the block store (lower level)
-	Filestore       *filestore.Filestore      `optional:"true"` // the filestore blockstore
-	BaseBlocks      node.BaseBlocks           // the raw blockstore, no filestore wrapping
-	GCLocker        bstore.GCLocker           // the locker used to protect the blockstore during gc
-	Blocks          bserv.BlockService        // the block service, get/add blocks.
-	DAG             ipld.DAGService           // the merkle dag service, get/add objects.
-	Resolver        *resolver.Resolver        // the path resolution system
-	Reporter        *metrics.BandwidthCounter `optional:"true"`
-	Discovery       discovery.Service         `optional:"true"`
-	FilesRoot       *mfs.Root
-	RecordValidator record.Validator
+	Peerstore            pstore.Peerstore          `optional:"true"` // storage for other Peer instances
+	Blockstore           bstore.GCBlockstore       // the block store (lower level)
+	Filestore            *filestore.Filestore      `optional:"true"` // the filestore blockstore
+	BaseBlocks           node.BaseBlocks           // the raw blockstore, no filestore wrapping
+	GCLocker             bstore.GCLocker           // the locker used to protect the blockstore during gc
+	Blocks               bserv.BlockService        // the block service, get/add blocks.
+	DAG                  ipld.DAGService           // the merkle dag service, get/add objects.
+	IPLDFetcherFactory   fetcher.Factory           `name:"ipldFetcher"`   // fetcher that paths over the IPLD data model
+	UnixFSFetcherFactory fetcher.Factory           `name:"unixfsFetcher"` // fetcher that interprets UnixFS data
+	Reporter             *metrics.BandwidthCounter `optional:"true"`
+	Discovery            discovery.Service         `optional:"true"`
+	FilesRoot            *mfs.Root
+	RecordValidator      record.Validator
 	//Statestore      storage.StateStorer
 
 	// Online
@@ -89,6 +90,7 @@ type IpfsNode struct {
 	Filters       *ma.Filters                `optional:"true"`
 	Bootstrapper  io.Closer                  `optional:"true"` // the periodic bootstrapper
 	Routing       irouting.ProvideManyRouter `optional:"true"` // the routing system. recommend ipfs-dht
+	DNSResolver   *madns.Resolver            // the DNS resolver
 	Exchange      exchange.Interface         // the block exchange + strategy (bitswap)
 	Namesys       namesys.NameSystem         // the name system, resolves paths to hashes
 	Provider      provider.System            // the value provider system

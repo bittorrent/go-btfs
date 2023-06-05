@@ -23,9 +23,10 @@ import (
 	"github.com/bittorrent/go-btfs/namesys"
 	"github.com/bittorrent/go-btfs/repo"
 
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	"github.com/TRON-US/interface-go-btfs-core/options"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	"github.com/bittorrent/interface-go-btfs-core/options"
 	bserv "github.com/ipfs/go-blockservice"
+	"github.com/ipfs/go-fetcher"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	exchange "github.com/ipfs/go-ipfs-exchange-interface"
 	offlinexch "github.com/ipfs/go-ipfs-exchange-offline"
@@ -54,13 +55,14 @@ type CoreAPI struct {
 	baseBlocks blockstore.Blockstore
 	pinning    pin.Pinner
 
-	blocks bserv.BlockService
-	dag    ipld.DAGService
-
-	peerstore       pstore.Peerstore
-	peerHost        p2phost.Host
-	recordValidator record.Validator
-	exchange        exchange.Interface
+	blocks               bserv.BlockService
+	dag                  ipld.DAGService
+	ipldFetcherFactory   fetcher.Factory
+	unixFSFetcherFactory fetcher.Factory
+	peerstore            pstore.Peerstore
+	peerHost             p2phost.Host
+	recordValidator      record.Validator
+	exchange             exchange.Interface
 
 	namesys namesys.NameSystem
 	routing routing.Routing
@@ -165,8 +167,10 @@ func (api *CoreAPI) WithOptions(opts ...options.ApiOption) (coreiface.CoreAPI, e
 		baseBlocks: n.BaseBlocks,
 		pinning:    n.Pinning,
 
-		blocks: n.Blocks,
-		dag:    n.DAG,
+		blocks:               n.Blocks,
+		dag:                  n.DAG,
+		ipldFetcherFactory:   n.IPLDFetcherFactory,
+		unixFSFetcherFactory: n.UnixFSFetcherFactory,
 
 		peerstore:       n.Peerstore,
 		peerHost:        n.PeerHost,
@@ -212,7 +216,12 @@ func (api *CoreAPI) WithOptions(opts ...options.ApiOption) (coreiface.CoreAPI, e
 		}
 
 		subApi.routing = offlineroute.NewOfflineRouter(subApi.repo.Datastore(), subApi.recordValidator)
-		subApi.namesys = namesys.NewNameSystem(subApi.routing, subApi.repo.Datastore(), cs)
+		subApi.namesys, err = namesys.NewNameSystem(subApi.routing,
+			namesys.WithDatastore(subApi.repo.Datastore()),
+			namesys.WithCache(cs))
+		if err != nil {
+			return nil, fmt.Errorf("error constructing namesys: %w", err)
+		}
 		subApi.provider = provider.NewOfflineProvider()
 
 		subApi.peerstore = nil

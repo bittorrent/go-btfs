@@ -63,7 +63,7 @@ func Host(mctx helpers.MetricsCtx, lc fx.Lifecycle, params P2PHostIn) (out P2PHo
 		return r, err
 	}))
 
-	out.Host, err = params.HostOption(ctx, params.ID, params.Peerstore, opts...)
+	out.Host, err = params.HostOption(params.ID, params.Peerstore, opts...)
 	if err != nil {
 		return P2PHostOut{}, err
 	}

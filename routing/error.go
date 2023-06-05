@@ -3,7 +3,7 @@ package routing
 import (
 	"fmt"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 )
 
 type ParamNeededError struct {

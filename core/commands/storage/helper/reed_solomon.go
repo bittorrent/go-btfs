@@ -7,10 +7,10 @@ import (
 
 	"github.com/bittorrent/go-btfs/core"
 
-	chunker "github.com/TRON-US/go-btfs-chunker"
-	"github.com/TRON-US/go-unixfs"
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	"github.com/TRON-US/interface-go-btfs-core/path"
+	chunker "github.com/bittorrent/go-btfs-chunker"
+	"github.com/bittorrent/go-unixfs"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	"github.com/bittorrent/interface-go-btfs-core/path"
 	cid "github.com/ipfs/go-cid"
 )
 

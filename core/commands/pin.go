@@ -12,10 +12,10 @@ import (
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	e "github.com/bittorrent/go-btfs/core/commands/e"
 
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	options "github.com/TRON-US/interface-go-btfs-core/options"
-	"github.com/TRON-US/interface-go-btfs-core/path"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	options "github.com/bittorrent/interface-go-btfs-core/options"
+	"github.com/bittorrent/interface-go-btfs-core/path"
 	pin "github.com/ipfs/go-ipfs-pinner"
 
 	bserv "github.com/ipfs/go-blockservice"

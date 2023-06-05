@@ -14,7 +14,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/hub"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	cconfig "github.com/tron-us/go-btfs-common/config"
+	cconfig "github.com/bittorrent/go-btfs-common/config"
 
 	"github.com/ipfs/go-cid"
 )

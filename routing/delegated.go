@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	"github.com/ipfs/go-datastore"
 	drc "github.com/ipfs/go-delegated-routing/client"
 	drp "github.com/ipfs/go-delegated-routing/gen/proto"

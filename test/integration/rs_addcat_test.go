@@ -3,11 +3,11 @@ package integrationtest
 import (
 	"github.com/bittorrent/go-btfs/thirdparty/unit"
 
-	files "github.com/TRON-US/go-btfs-files"
+	files "github.com/bittorrent/go-btfs-files"
 
 	"testing"
 
-	"github.com/TRON-US/interface-go-btfs-core/options"
+	"github.com/bittorrent/interface-go-btfs-core/options"
 	"github.com/stretchr/testify/assert"
 
 	testutil "github.com/libp2p/go-libp2p-testing/net"

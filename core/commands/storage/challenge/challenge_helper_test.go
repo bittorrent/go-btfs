@@ -6,8 +6,8 @@ import (
 
 	unixtest "github.com/bittorrent/go-btfs/core/coreunix/test"
 
-	unixfs "github.com/TRON-US/go-unixfs"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
+	unixfs "github.com/bittorrent/go-unixfs"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 )
 
 func TestGenAndSolveChallenge(t *testing.T) {

@@ -10,7 +10,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	"github.com/tron-us/go-common/v2/json"
+	"github.com/bittorrent/go-common/v2/json"
 
 	cidlib "github.com/ipfs/go-cid"
 )

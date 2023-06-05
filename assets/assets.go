@@ -13,9 +13,9 @@ import (
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/coreapi"
 
-	files "github.com/TRON-US/go-btfs-files"
-	options "github.com/TRON-US/interface-go-btfs-core/options"
-	"github.com/TRON-US/interface-go-btfs-core/path"
+	files "github.com/bittorrent/go-btfs-files"
+	options "github.com/bittorrent/interface-go-btfs-core/options"
+	"github.com/bittorrent/interface-go-btfs-core/path"
 	cid "github.com/ipfs/go-cid"
 )
 

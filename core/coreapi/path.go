@@ -6,14 +6,13 @@ import (
 	gopath "path"
 
 	"github.com/bittorrent/go-btfs/namesys/resolve"
-
-	uio "github.com/TRON-US/go-unixfs/io"
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 	"github.com/ipfs/go-cid"
+	"github.com/ipfs/go-fetcher"
 	ipld "github.com/ipfs/go-ipld-format"
 	ipfspath "github.com/ipfs/go-path"
-	"github.com/ipfs/go-path/resolver"
+	ipfspathresolver "github.com/ipfs/go-path/resolver"
 )
 
 // ResolveNode resolves the path `p` using Unixfs resolver, gets and returns the
@@ -37,29 +36,27 @@ func (api *CoreAPI) ResolvePath(ctx context.Context, p path.Path) (path.Resolved
 	if _, ok := p.(path.Resolved); ok {
 		return p.(path.Resolved), nil
 	}
-
-	ipath, err := api.ResolveIpnsPath(ctx, p)
-	if err != nil {
+	ipath := ipfspath.Path(p.String())
+	ipath, err := resolve.ResolveIPNS(ctx, api.namesys, ipath)
+	if err == resolve.ErrNoNamesys {
+		return nil, coreiface.ErrOffline
+	} else if err != nil {
 		return nil, err
 	}
 
-	var resolveOnce resolver.ResolveOnce
-
+	var dataFetcher fetcher.Factory
 	switch ipath.Segments()[0] {
 	case "btfs":
-		resolveOnce = uio.ResolveUnixfsOnce
+		dataFetcher = api.unixFSFetcherFactory
 	case "ipld":
-		resolveOnce = resolver.ResolveSingle
+		dataFetcher = api.ipldFetcherFactory
 	default:
 		return nil, fmt.Errorf("unsupported path namespace: %s", p.Namespace())
 	}
 
-	r := &resolver.Resolver{
-		DAG:         api.dag,
-		ResolveOnce: resolveOnce,
-	}
+	r := ipfspathresolver.NewBasicResolver(dataFetcher)
 
-	node, rest, err := r.ResolveToLastNode(ctx, *ipath)
+	node, rest, err := r.ResolveToLastNode(ctx, ipath)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +66,7 @@ func (api *CoreAPI) ResolvePath(ctx context.Context, p path.Path) (path.Resolved
 		return nil, err
 	}
 
-	return path.NewResolvedPath(*ipath, node, root, gopath.Join(rest...)), nil
+	return path.NewResolvedPath(ipath, node, root, gopath.Join(rest...)), nil
 }
 
 // ResolveIpnsPath resolves only the IPNS path `p` using the Unixfs resolver and returns the

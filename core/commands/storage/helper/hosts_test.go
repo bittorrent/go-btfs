@@ -10,11 +10,11 @@ import (
 	unixtest "github.com/bittorrent/go-btfs/core/coreunix/test"
 	"github.com/bittorrent/go-btfs/repo"
 
-	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
+	hubpb "github.com/bittorrent/go-btfs-common/protos/hub"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
 
-	config "github.com/TRON-US/go-btfs-config"
 	"github.com/alecthomas/units"
+	config "github.com/bittorrent/go-btfs-config"
 	"github.com/gogo/protobuf/proto"
 )
 

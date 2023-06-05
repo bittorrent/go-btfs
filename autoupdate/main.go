@@ -11,7 +11,7 @@ import (
 
 	"github.com/bittorrent/go-btfs/logger"
 
-	"github.com/TRON-US/go-btfs-api"
+	"github.com/bittorrent/go-btfs-api"
 )
 
 var log = logger.InitLogger("update.log").Sugar()

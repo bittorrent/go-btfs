@@ -7,7 +7,7 @@ import (
 
 	"github.com/bittorrent/go-btfs/repo"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	datastore "github.com/ipfs/go-datastore"
 	syncds "github.com/ipfs/go-datastore/sync"
 )

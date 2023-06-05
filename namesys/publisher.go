@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	ipns "github.com/TRON-US/go-btns"
-	pb "github.com/TRON-US/go-btns/pb"
-	ft "github.com/TRON-US/go-unixfs"
+	ipns "github.com/bittorrent/go-btns"
+	pb "github.com/bittorrent/go-btns/pb"
+	ft "github.com/bittorrent/go-unixfs"
 	proto "github.com/gogo/protobuf/proto"
 	ds "github.com/ipfs/go-datastore"
 	dsquery "github.com/ipfs/go-datastore/query"

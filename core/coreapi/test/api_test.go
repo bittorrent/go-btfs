@@ -16,9 +16,9 @@ import (
 	"github.com/bittorrent/go-btfs/keystore"
 	"github.com/bittorrent/go-btfs/repo"
 
-	config "github.com/TRON-US/go-btfs-config"
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	"github.com/TRON-US/interface-go-btfs-core/tests"
+	config "github.com/bittorrent/go-btfs-config"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	"github.com/bittorrent/interface-go-btfs-core/tests"
 	"github.com/ipfs/go-datastore"
 	syncds "github.com/ipfs/go-datastore/sync"
 	"github.com/ipfs/go-filestore"

@@ -8,9 +8,9 @@ import (
 
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
-	unixfs "github.com/TRON-US/go-unixfs"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	unixfs "github.com/bittorrent/go-unixfs"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 	merkledag "github.com/ipfs/go-merkledag"
 )
 

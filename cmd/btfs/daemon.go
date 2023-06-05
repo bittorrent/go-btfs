@@ -7,7 +7,6 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
-	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -22,12 +21,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
+
 	"github.com/bittorrent/go-btfs/guide"
 
-	config "github.com/TRON-US/go-btfs-config"
-	cserial "github.com/TRON-US/go-btfs-config/serialize"
 	version "github.com/bittorrent/go-btfs"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	config "github.com/bittorrent/go-btfs-config"
+	cserial "github.com/bittorrent/go-btfs-config/serialize"
 	"github.com/bittorrent/go-btfs/bindata"
 	"github.com/bittorrent/go-btfs/chain"
 	cc "github.com/bittorrent/go-btfs/chain/config"
@@ -53,6 +54,8 @@ import (
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/ethereum/go-ethereum/common"
 
+	cp "github.com/bittorrent/go-btfs-common/crypto"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
 	multierror "github.com/hashicorp/go-multierror"
 	util "github.com/ipfs/go-ipfs-util"
 	mprome "github.com/ipfs/go-metrics-prometheus"
@@ -62,8 +65,6 @@ import (
 	manet "github.com/multiformats/go-multiaddr/net"
 	prometheus "github.com/prometheus/client_golang/prometheus"
 	promauto "github.com/prometheus/client_golang/prometheus/promauto"
-	cp "github.com/tron-us/go-btfs-common/crypto"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
 )
 
 const (
@@ -809,9 +810,9 @@ func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context, SimpleMode bool) (<-
 	// only the webui objects are allowed.
 	// if you know what you're doing, go ahead and pass --unrestricted-api.
 	unrestricted, _ := req.Options[unrestrictedApiAccessKwd].(bool)
-	gatewayOpt := corehttp.GatewayOption(false, corehttp.WebUIPaths...)
+	gatewayOpt := corehttp.GatewayOption(corehttp.WebUIPaths...)
 	if unrestricted {
-		gatewayOpt = corehttp.GatewayOption(true, "/btfs", "/btns")
+		gatewayOpt = corehttp.GatewayOption("/btfs", "/btns")
 	}
 
 	var opts = []corehttp.ServeOption{
@@ -825,7 +826,9 @@ func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context, SimpleMode bool) (<-
 		corehttp.VersionOption(),
 		defaultMux("/debug/vars"),
 		defaultMux("/debug/pprof/"),
+		defaultMux("/debug/stack"),
 		corehttp.MutexFractionOption("/debug/pprof-mutex/"),
+		corehttp.BlockProfileRateOption("/debug/pprof-block/"),
 		corehttp.MetricsScrapingOption("/debug/metrics/prometheus"),
 		corehttp.LogOption(),
 	}
@@ -962,7 +965,9 @@ func serveHTTPGateway(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, e
 	if !writableOptionFound {
 		writable = cfg.Gateway.Writable
 	}
-
+	if writable {
+		log.Errorf("Support for Gateway.Writable and --writable has been REMOVED. Please remove it from your config file or CLI.")
+	}
 	listeners, err := sockets.TakeListeners("io.ipfs.gateway")
 	if err != nil {
 		return nil, fmt.Errorf("serveHTTPGateway: socket activation failed: %s", err)
@@ -992,14 +997,8 @@ func serveHTTPGateway(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, e
 		listeners = append(listeners, gwLis)
 	}
 
-	// we might have listened to /tcp/0 - let's see what we are listing on
-	gwType := "readonly"
-	if writable {
-		gwType = "writable"
-	}
-
 	for _, listener := range listeners {
-		fmt.Printf("Gateway (%s) server listening on %s\n", gwType, listener.Multiaddr())
+		fmt.Printf("Gateway server listening on %s\n", listener.Multiaddr())
 	}
 
 	cmdctx := *cctx
@@ -1008,7 +1007,8 @@ func serveHTTPGateway(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, e
 	var opts = []corehttp.ServeOption{
 		corehttp.MetricsCollectionOption("gateway"),
 		corehttp.HostnameOption(),
-		corehttp.GatewayOption(writable, "/btfs", "/btns"),
+		// TODO: rm writable
+		corehttp.GatewayOption("/btfs", "/btns"),
 		corehttp.VersionOption(),
 		corehttp.CheckVersionOption(),
 		corehttp.CommandsROOption(cmdctx),
@@ -1026,7 +1026,9 @@ func serveHTTPGateway(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, e
 	if err != nil {
 		return nil, fmt.Errorf("serveHTTPGateway: ConstructNode() failed: %s", err)
 	}
-
+	if len(cfg.Gateway.PathPrefixes) > 0 {
+		log.Errorf("Support for custom Gateway.PathPrefixes was removed")
+	}
 	errc := make(chan error)
 	var wg sync.WaitGroup
 	for _, lis := range listeners {

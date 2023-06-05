@@ -3,22 +3,24 @@ package corehttp
 import (
 	"errors"
 	"fmt"
-	"github.com/TRON-US/go-btfs-api"
 	"net"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
+	shell "github.com/bittorrent/go-btfs-api"
+
 	version "github.com/bittorrent/go-btfs"
 	oldcmds "github.com/bittorrent/go-btfs/commands"
 	"github.com/bittorrent/go-btfs/core"
 	corecommands "github.com/bittorrent/go-btfs/core/commands"
 
-	config "github.com/TRON-US/go-btfs-config"
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	cmdsHttp "github.com/bittorrent/go-btfs-cmds/http"
+	config "github.com/bittorrent/go-btfs-config"
 	path "github.com/ipfs/go-path"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -47,6 +49,8 @@ var redirectPaths = []string{
 var defaultLocalhostOrigins = []string{
 	"http://127.0.0.1:<port>",
 	"https://127.0.0.1:<port>",
+	"http://[::1]:<port>",
+	"https://[::1]:<port>",
 	"http://localhost:<port>",
 	"https://localhost:<port>",
 }
@@ -148,6 +152,7 @@ func commandsOption(cctx oldcmds.Context, command *cmds.Command, allowGet bool) 
 		patchCORSVars(cfg, l.Addr())
 
 		cmdHandler := cmdsHttp.NewHandler(&cctx, command, cfg)
+		cmdHandler = otelhttp.NewHandler(cmdHandler, "corehttp.cmdsHandler")
 		mux.Handle(APIPath+"/", cmdHandler)
 		for _, rp := range redirectPaths {
 			mux.Handle(rp+"/", cmdHandler)

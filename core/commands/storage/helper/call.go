@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	shell "github.com/TRON-US/go-btfs-api"
-	"github.com/TRON-US/go-btfs-config"
+	shell "github.com/bittorrent/go-btfs-api"
+	"github.com/bittorrent/go-btfs-config"
 )
 
 func Call(ctx context.Context, cfg *config.Config, sub string) error {

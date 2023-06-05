@@ -12,9 +12,9 @@ import (
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	shardpb "github.com/bittorrent/go-btfs/protos/shard"
 
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
-	"github.com/tron-us/protobuf/proto"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
+	"github.com/bittorrent/protobuf/proto"
 
 	"github.com/ipfs/go-datastore"
 	logging "github.com/ipfs/go-log"

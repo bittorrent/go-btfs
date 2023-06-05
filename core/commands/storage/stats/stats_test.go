@@ -7,7 +7,7 @@ import (
 
 	unixtest "github.com/bittorrent/go-btfs/core/coreunix/test"
 
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
 
 	"github.com/gogo/protobuf/proto"
 )

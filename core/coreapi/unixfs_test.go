@@ -3,7 +3,7 @@ package coreapi
 import (
 	"testing"
 
-	"github.com/TRON-US/interface-go-btfs-core/path"
+	"github.com/bittorrent/interface-go-btfs-core/path"
 
 	"github.com/stretchr/testify/assert"
 )
