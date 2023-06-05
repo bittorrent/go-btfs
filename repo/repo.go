@@ -6,7 +6,7 @@ import (
 
 	keystore "github.com/bittorrent/go-btfs/keystore"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	ds "github.com/ipfs/go-datastore"
 	filestore "github.com/ipfs/go-filestore"
 	ma "github.com/multiformats/go-multiaddr"

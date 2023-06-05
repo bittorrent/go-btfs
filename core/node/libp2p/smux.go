@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	"github.com/libp2p/go-libp2p"
 	smux "github.com/libp2p/go-libp2p/core/network"
 	mplex "github.com/libp2p/go-libp2p/p2p/muxer/mplex"

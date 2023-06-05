@@ -13,9 +13,9 @@ import (
 
 	fuse "bazil.org/fuse"
 	fs "bazil.org/fuse/fs"
-	ft "github.com/TRON-US/go-unixfs"
-	uio "github.com/TRON-US/go-unixfs/io"
 	core "github.com/bittorrent/go-btfs/core"
+	ft "github.com/bittorrent/go-unixfs"
+	uio "github.com/bittorrent/go-unixfs/io"
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log"

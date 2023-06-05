@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	ipath "github.com/TRON-US/interface-go-btfs-core/path"
 	"github.com/bittorrent/go-btfs/core/corehttp/gateway/assets"
+	ipath "github.com/bittorrent/interface-go-btfs-core/path"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/multicodec"
 	"github.com/ipld/go-ipld-prime/node/basicnode"

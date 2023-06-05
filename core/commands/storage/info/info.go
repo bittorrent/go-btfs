@@ -8,7 +8,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
 )
 
 var StorageInfoCmd = &cmds.Command{

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	ipath "github.com/TRON-US/interface-go-btfs-core/path"
+	ipath "github.com/bittorrent/interface-go-btfs-core/path"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

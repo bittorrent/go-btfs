@@ -6,9 +6,9 @@ package contractspb
 import (
 	fmt "fmt"
 	golang_proto "github.com/golang/protobuf/proto"
-	node "github.com/tron-us/go-btfs-common/protos/node"
-	_ "github.com/tron-us/protobuf/gogoproto"
-	proto "github.com/tron-us/protobuf/proto"
+	node "github.com/bittorrent/go-btfs-common/protos/node"
+	_ "github.com/bittorrent/protobuf/gogoproto"
+	proto "github.com/bittorrent/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"

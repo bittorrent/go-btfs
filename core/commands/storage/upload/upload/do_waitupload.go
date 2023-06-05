@@ -12,9 +12,9 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
-	"github.com/tron-us/go-btfs-common/crypto"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
-	"github.com/tron-us/go-btfs-common/utils/grpc"
+	"github.com/bittorrent/go-btfs-common/crypto"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	"github.com/bittorrent/go-btfs-common/utils/grpc"
 
 	"github.com/alecthomas/units"
 	"github.com/cenkalti/backoff/v4"

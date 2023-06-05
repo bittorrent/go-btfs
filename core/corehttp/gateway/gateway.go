@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"sort"
 
-	files "github.com/TRON-US/go-btfs-files"
-	"github.com/TRON-US/go-unixfs"
-	"github.com/TRON-US/interface-go-btfs-core/path"
+	files "github.com/bittorrent/go-btfs-files"
+	"github.com/bittorrent/go-unixfs"
+	"github.com/bittorrent/interface-go-btfs-core/path"
 	"github.com/ipfs/go-cid"
 )
 

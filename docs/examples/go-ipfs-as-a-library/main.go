@@ -15,11 +15,11 @@ import (
 	"github.com/bittorrent/go-btfs/plugin/loader" // This package is needed so that all the preloaded plugins are loaded automatically
 	"github.com/bittorrent/go-btfs/repo/fsrepo"
 
-	config "github.com/TRON-US/go-btfs-config"
-	files "github.com/TRON-US/go-btfs-files"
-	icore "github.com/TRON-US/interface-go-btfs-core"
-	icorepath "github.com/TRON-US/interface-go-btfs-core/path"
+	config "github.com/bittorrent/go-btfs-config"
+	files "github.com/bittorrent/go-btfs-files"
 	libp2p "github.com/bittorrent/go-btfs/core/node/libp2p"
+	icore "github.com/bittorrent/interface-go-btfs-core"
+	icorepath "github.com/bittorrent/interface-go-btfs-core/path"
 	"github.com/libp2p/go-libp2p/core/peer"
 	peerstore "github.com/libp2p/go-libp2p/p2p/host/peerstore"
 	ma "github.com/multiformats/go-multiaddr"

@@ -4,7 +4,7 @@ package corehttp
 // 	"fmt"
 // 	"strings"
 
-// 	files "github.com/TRON-US/go-btfs-files"
+// 	files "github.com/bittorrent/go-btfs-files"
 // 	gopath "path"
 // )
 

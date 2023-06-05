@@ -10,7 +10,7 @@ import (
 	irouting "github.com/bittorrent/go-btfs/routing"
 	madns "github.com/multiformats/go-multiaddr-dns"
 
-	"github.com/TRON-US/go-btns"
+	"github.com/bittorrent/go-btns"
 	util "github.com/ipfs/go-ipfs-util"
 	record "github.com/libp2p/go-libp2p-record"
 	"github.com/libp2p/go-libp2p/core/crypto"

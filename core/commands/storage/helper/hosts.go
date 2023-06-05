@@ -9,8 +9,8 @@ import (
 	"github.com/bittorrent/go-btfs/core/hub"
 	"github.com/bittorrent/go-btfs/repo"
 
-	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
+	hubpb "github.com/bittorrent/go-btfs-common/protos/hub"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
 
 	"github.com/dustin/go-humanize"
 	"github.com/gogo/protobuf/proto"

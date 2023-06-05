@@ -14,8 +14,8 @@ import (
 	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 	"github.com/ipld/go-ipld-prime/multicodec"
 
-	config "github.com/TRON-US/go-btfs-config"
-	cserialize "github.com/TRON-US/go-btfs-config/serialize"
+	config "github.com/bittorrent/go-btfs-config"
+	cserialize "github.com/bittorrent/go-btfs-config/serialize"
 	logging "github.com/ipfs/go-log"
 	opentracing "github.com/opentracing/opentracing-go"
 )

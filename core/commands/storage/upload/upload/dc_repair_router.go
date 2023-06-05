@@ -19,10 +19,10 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 
-	"github.com/tron-us/go-btfs-common/crypto"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
-	"github.com/tron-us/go-btfs-common/utils/grpc"
-	"github.com/tron-us/protobuf/proto"
+	"github.com/bittorrent/go-btfs-common/crypto"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	"github.com/bittorrent/go-btfs-common/utils/grpc"
+	"github.com/bittorrent/protobuf/proto"
 
 	"github.com/alecthomas/units"
 	"github.com/cenkalti/backoff/v4"

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	gopath "path"
 
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
 	"github.com/bittorrent/go-btfs/namesys/resolve"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-fetcher"
 	ipld "github.com/ipfs/go-ipld-format"

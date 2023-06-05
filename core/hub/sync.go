@@ -9,8 +9,8 @@ import (
 
 	"github.com/bittorrent/go-btfs/core"
 
-	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
-	"github.com/tron-us/go-btfs-common/utils/grpc"
+	hubpb "github.com/bittorrent/go-btfs-common/protos/hub"
+	"github.com/bittorrent/go-btfs-common/utils/grpc"
 )
 
 const (

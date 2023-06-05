@@ -9,10 +9,10 @@ import (
 	util "github.com/bittorrent/go-btfs/blocks/blockstoreutil"
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
-	files "github.com/TRON-US/go-btfs-files"
-	options "github.com/TRON-US/interface-go-btfs-core/options"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	files "github.com/bittorrent/go-btfs-files"
+	options "github.com/bittorrent/interface-go-btfs-core/options"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 	mh "github.com/multiformats/go-multihash"
 )
 

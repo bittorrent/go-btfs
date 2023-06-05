@@ -7,27 +7,19 @@ import (
 	"log"
 	"os"
 
-	uio "github.com/TRON-US/go-unixfs/io"
-	"github.com/ipfs/go-blockservice"
-	"github.com/ipfs/go-cid"
-	"github.com/ipfs/go-datastore"
+	uio "github.com/bittorrent/go-unixfs/io"
 	dssync "github.com/ipfs/go-datastore/sync"
-	"github.com/ipfs/go-graphsync"
 	gsimpl "github.com/ipfs/go-graphsync/impl"
 	"github.com/ipfs/go-graphsync/network"
 	"github.com/ipfs/go-graphsync/storeutil"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
-	"github.com/ipfs/go-merkledag"
-	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	basicnode "github.com/ipld/go-ipld-prime/node/basic"
 	ipldselector "github.com/ipld/go-ipld-prime/traversal/selector"
 	"github.com/ipld/go-ipld-prime/traversal/selector/builder"
-	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/multiformats/go-multiaddr"
 )
 
 func newGraphsync(ctx context.Context, p2p host.Host, bs blockstore.Blockstore) (graphsync.GraphExchange, error) {

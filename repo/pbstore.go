@@ -3,7 +3,7 @@ package repo
 import (
 	"context"
 
-	"github.com/tron-us/protobuf/proto"
+	"github.com/bittorrent/protobuf/proto"
 
 	"github.com/ipfs/go-datastore"
 )

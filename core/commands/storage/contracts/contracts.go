@@ -19,12 +19,12 @@ import (
 	contractspb "github.com/bittorrent/go-btfs/protos/contracts"
 	shardpb "github.com/bittorrent/go-btfs/protos/shard"
 
-	config "github.com/TRON-US/go-btfs-config"
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	"github.com/tron-us/go-btfs-common/crypto"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
-	"github.com/tron-us/go-btfs-common/utils/grpc"
+	"github.com/bittorrent/go-btfs-common/crypto"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
+	"github.com/bittorrent/go-btfs-common/utils/grpc"
+	config "github.com/bittorrent/go-btfs-config"
 
 	"github.com/ipfs/go-datastore"
 	logging "github.com/ipfs/go-log"

@@ -10,7 +10,7 @@ import (
 	libp2p2 "github.com/bittorrent/go-btfs/core/node/libp2p"
 	"github.com/bittorrent/go-btfs/repo"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	"github.com/ipfs/go-datastore"
 	syncds "github.com/ipfs/go-datastore/sync"
 	"github.com/libp2p/go-libp2p"

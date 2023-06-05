@@ -23,8 +23,8 @@ import (
 	"github.com/bittorrent/go-btfs/namesys"
 	"github.com/bittorrent/go-btfs/repo"
 
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	"github.com/TRON-US/interface-go-btfs-core/options"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	"github.com/bittorrent/interface-go-btfs-core/options"
 	bserv "github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-fetcher"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"

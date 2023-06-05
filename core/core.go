@@ -5,7 +5,7 @@ Packages underneath core/ provide a (relatively) stable, low-level API
 to carry out most IPFS-related tasks.  For more details on the other
 interfaces and how core/... fits into the bigger BTFS picture, see:
 
-	$ godoc github.com/TRON-US/go-btfs
+	$ godoc github.com/bittorrent/go-btfs
 */
 package core
 
@@ -16,7 +16,6 @@ import (
 	"github.com/bittorrent/go-btfs/peering"
 	irouting "github.com/bittorrent/go-btfs/routing"
 
-	mfs "github.com/TRON-US/go-mfs"
 	"github.com/bittorrent/go-btfs/core/bootstrap"
 	"github.com/bittorrent/go-btfs/core/node"
 	"github.com/bittorrent/go-btfs/core/node/libp2p"
@@ -25,6 +24,7 @@ import (
 	ipnsrp "github.com/bittorrent/go-btfs/namesys/republisher"
 	"github.com/bittorrent/go-btfs/p2p"
 	"github.com/bittorrent/go-btfs/repo"
+	mfs "github.com/bittorrent/go-mfs"
 	bserv "github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-fetcher"
 	"github.com/ipfs/go-filestore"

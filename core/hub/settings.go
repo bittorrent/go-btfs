@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
-	"github.com/tron-us/go-btfs-common/utils/grpc"
+	hubpb "github.com/bittorrent/go-btfs-common/protos/hub"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
+	"github.com/bittorrent/go-btfs-common/utils/grpc"
 )
 
 func GetHostSettings(ctx context.Context, addr, peerId string) (*nodepb.Node_Settings, error) {

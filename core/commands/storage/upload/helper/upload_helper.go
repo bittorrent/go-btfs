@@ -13,10 +13,10 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 
-	config "github.com/TRON-US/go-btfs-config"
-	iface "github.com/TRON-US/interface-go-btfs-core"
-	"github.com/TRON-US/interface-go-btfs-core/path"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	config "github.com/bittorrent/go-btfs-config"
+	iface "github.com/bittorrent/interface-go-btfs-core"
+	"github.com/bittorrent/interface-go-btfs-core/path"
 
 	"github.com/alecthomas/units"
 	"github.com/cenkalti/backoff/v4"

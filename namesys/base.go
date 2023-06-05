@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	opts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
+	opts "github.com/bittorrent/interface-go-btfs-core/options/namesys"
 	path "github.com/ipfs/go-path"
 )
 

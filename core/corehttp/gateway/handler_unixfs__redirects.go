@@ -10,8 +10,8 @@ import (
 
 	"go.uber.org/zap"
 
-	files "github.com/TRON-US/go-btfs-files"
-	ipath "github.com/TRON-US/interface-go-btfs-core/path"
+	files "github.com/bittorrent/go-btfs-files"
+	ipath "github.com/bittorrent/interface-go-btfs-core/path"
 
 	redirects "github.com/ipfs/go-ipfs-redirects-file"
 )

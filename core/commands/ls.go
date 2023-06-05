@@ -9,12 +9,12 @@ import (
 
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
-	unixfs "github.com/TRON-US/go-unixfs"
-	unixfs_pb "github.com/TRON-US/go-unixfs/pb"
-	iface "github.com/TRON-US/interface-go-btfs-core"
-	options "github.com/TRON-US/interface-go-btfs-core/options"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	unixfs "github.com/bittorrent/go-unixfs"
+	unixfs_pb "github.com/bittorrent/go-unixfs/pb"
+	iface "github.com/bittorrent/interface-go-btfs-core"
+	options "github.com/bittorrent/interface-go-btfs-core/options"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 )
 
 // LsLink contains printable data for a single ipld link in ls output

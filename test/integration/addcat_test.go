@@ -17,9 +17,9 @@ import (
 	mock "github.com/bittorrent/go-btfs/core/mock"
 	"github.com/bittorrent/go-btfs/thirdparty/unit"
 
-	files "github.com/TRON-US/go-btfs-files"
-	"github.com/TRON-US/interface-go-btfs-core/options"
-	"github.com/TRON-US/interface-go-btfs-core/path"
+	files "github.com/bittorrent/go-btfs-files"
+	"github.com/bittorrent/interface-go-btfs-core/options"
+	"github.com/bittorrent/interface-go-btfs-core/path"
 
 	logging "github.com/ipfs/go-log"
 	random "github.com/jbenet/go-random"

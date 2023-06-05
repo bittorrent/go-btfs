@@ -9,10 +9,10 @@ import (
 	"math/big"
 	"sync"
 
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	options "github.com/TRON-US/interface-go-btfs-core/options"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
 	core "github.com/bittorrent/go-btfs/core"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	options "github.com/bittorrent/interface-go-btfs-core/options"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 	uuid "github.com/google/uuid"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"

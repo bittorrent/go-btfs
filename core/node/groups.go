@@ -7,12 +7,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/bittorrent/go-btfs-common/crypto"
 	"github.com/bittorrent/go-btfs/core/node/libp2p"
 	"github.com/bittorrent/go-btfs/p2p"
-	"github.com/tron-us/go-btfs-common/crypto"
 
-	config "github.com/TRON-US/go-btfs-config"
-	uio "github.com/TRON-US/go-unixfs/io"
+	config "github.com/bittorrent/go-btfs-config"
+	uio "github.com/bittorrent/go-unixfs/io"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	util "github.com/ipfs/go-ipfs-util"

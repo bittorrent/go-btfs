@@ -8,8 +8,8 @@ import (
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	ke "github.com/bittorrent/go-btfs/core/commands/keyencode"
 
-	options "github.com/TRON-US/interface-go-btfs-core/options"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	options "github.com/bittorrent/interface-go-btfs-core/options"
 )
 
 var KeyCmd = &cmds.Command{

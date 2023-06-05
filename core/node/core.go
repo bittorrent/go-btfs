@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/TRON-US/go-mfs"
-	"github.com/TRON-US/go-unixfs"
 	"github.com/bittorrent/go-btfs/core/node/helpers"
 	"github.com/bittorrent/go-btfs/repo"
 	irouting "github.com/bittorrent/go-btfs/routing"
+	"github.com/bittorrent/go-mfs"
+	"github.com/bittorrent/go-unixfs"
 	"github.com/ipfs/go-bitswap"
 	"github.com/ipfs/go-bitswap/network"
 	"github.com/ipfs/go-blockservice"

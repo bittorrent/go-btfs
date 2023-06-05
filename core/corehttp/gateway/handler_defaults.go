@@ -12,8 +12,8 @@ import (
 
 	mc "github.com/multiformats/go-multicodec"
 
-	files "github.com/TRON-US/go-btfs-files"
-	ipath "github.com/TRON-US/interface-go-btfs-core/path"
+	files "github.com/bittorrent/go-btfs-files"
+	ipath "github.com/bittorrent/interface-go-btfs-core/path"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"

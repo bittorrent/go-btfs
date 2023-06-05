@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	iface "github.com/TRON-US/interface-go-btfs-core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	iface "github.com/bittorrent/interface-go-btfs-core"
 	"github.com/cheggaaa/pb"
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"

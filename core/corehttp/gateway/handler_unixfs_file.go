@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	files "github.com/TRON-US/go-btfs-files"
-	ipath "github.com/TRON-US/interface-go-btfs-core/path"
+	files "github.com/bittorrent/go-btfs-files"
+	ipath "github.com/bittorrent/interface-go-btfs-core/path"
 	"github.com/gabriel-vasile/mimetype"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"

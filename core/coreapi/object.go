@@ -13,10 +13,10 @@ import (
 
 	"github.com/bittorrent/go-btfs/core/coreunix"
 
-	ft "github.com/TRON-US/go-unixfs"
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	caopts "github.com/TRON-US/interface-go-btfs-core/options"
-	ipath "github.com/TRON-US/interface-go-btfs-core/path"
+	ft "github.com/bittorrent/go-unixfs"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	caopts "github.com/bittorrent/interface-go-btfs-core/options"
+	ipath "github.com/bittorrent/interface-go-btfs-core/path"
 	cid "github.com/ipfs/go-cid"
 	pin "github.com/ipfs/go-ipfs-pinner"
 	ipld "github.com/ipfs/go-ipld-format"

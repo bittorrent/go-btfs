@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
-	files "github.com/TRON-US/go-btfs-files"
-	nsopts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
-	ipath "github.com/TRON-US/interface-go-btfs-core/path"
+	files "github.com/bittorrent/go-btfs-files"
 	"github.com/bittorrent/go-btfs/namesys"
+	nsopts "github.com/bittorrent/interface-go-btfs-core/options/namesys"
+	ipath "github.com/bittorrent/interface-go-btfs-core/path"
 	"github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"

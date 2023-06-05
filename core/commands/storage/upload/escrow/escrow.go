@@ -5,10 +5,10 @@ import (
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 
-	config "github.com/TRON-US/go-btfs-config"
-	"github.com/tron-us/go-btfs-common/crypto"
-	escrowpb "github.com/tron-us/go-btfs-common/protos/escrow"
-	"github.com/tron-us/protobuf/proto"
+	"github.com/bittorrent/go-btfs-common/crypto"
+	escrowpb "github.com/bittorrent/go-btfs-common/protos/escrow"
+	config "github.com/bittorrent/go-btfs-config"
+	"github.com/bittorrent/protobuf/proto"
 )
 
 func NewSignedContract(contract *escrowpb.EscrowContract) *escrowpb.SignedEscrowContract {

@@ -25,10 +25,10 @@ import (
 
 	"github.com/bittorrent/go-btfs/guide"
 
-	config "github.com/TRON-US/go-btfs-config"
-	cserial "github.com/TRON-US/go-btfs-config/serialize"
 	version "github.com/bittorrent/go-btfs"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	config "github.com/bittorrent/go-btfs-config"
+	cserial "github.com/bittorrent/go-btfs-config/serialize"
 	"github.com/bittorrent/go-btfs/bindata"
 	"github.com/bittorrent/go-btfs/chain"
 	cc "github.com/bittorrent/go-btfs/chain/config"
@@ -54,6 +54,8 @@ import (
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/ethereum/go-ethereum/common"
 
+	cp "github.com/bittorrent/go-btfs-common/crypto"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
 	multierror "github.com/hashicorp/go-multierror"
 	util "github.com/ipfs/go-ipfs-util"
 	mprome "github.com/ipfs/go-metrics-prometheus"
@@ -63,8 +65,6 @@ import (
 	manet "github.com/multiformats/go-multiaddr/net"
 	prometheus "github.com/prometheus/client_golang/prometheus"
 	promauto "github.com/prometheus/client_golang/prometheus/promauto"
-	cp "github.com/tron-us/go-btfs-common/crypto"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
 )
 
 const (

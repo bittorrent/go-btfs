@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	config "github.com/TRON-US/go-btfs-config"
+	onlinePb "github.com/bittorrent/go-btfs-common/protos/online"
+	cgrpc "github.com/bittorrent/go-btfs-common/utils/grpc"
+	config "github.com/bittorrent/go-btfs-config"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core"
-	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
-	cgrpc "github.com/tron-us/go-btfs-common/utils/grpc"
 
 	"github.com/cenkalti/backoff/v4"
 )

@@ -11,7 +11,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/hub"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
+	hubpb "github.com/bittorrent/go-btfs-common/protos/hub"
 
 	logging "github.com/ipfs/go-log"
 )

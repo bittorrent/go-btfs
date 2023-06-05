@@ -16,13 +16,13 @@ import (
 	"github.com/bittorrent/go-btfs/core/corerepo"
 	"github.com/bittorrent/go-btfs/core/hub"
 
-	config "github.com/TRON-US/go-btfs-config"
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
+	config "github.com/bittorrent/go-btfs-config"
 
+	"github.com/bittorrent/protobuf/proto"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/shirou/gopsutil/v3/disk"
-	"github.com/tron-us/protobuf/proto"
 )
 
 const (

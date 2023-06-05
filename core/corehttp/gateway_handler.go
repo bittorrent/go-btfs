@@ -15,10 +15,10 @@ package corehttp
 // 	"strings"
 // 	"time"
 
-// 	files "github.com/TRON-US/go-btfs-files"
-// 	mfs "github.com/TRON-US/go-mfs"
-// 	coreiface "github.com/TRON-US/interface-go-btfs-core"
-// 	ipath "github.com/TRON-US/interface-go-btfs-core/path"
+// 	files "github.com/bittorrent/go-btfs-files"
+// 	mfs "github.com/bittorrent/go-mfs"
+// 	coreiface "github.com/bittorrent/interface-go-btfs-core"
+// 	ipath "github.com/bittorrent/interface-go-btfs-core/path"
 // 	"github.com/bittorrent/go-btfs/assets"
 // 	"go.uber.org/zap"
 

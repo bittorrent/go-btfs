@@ -14,7 +14,7 @@ import (
 	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 	sessionpb "github.com/bittorrent/go-btfs/protos/session"
 
-	"github.com/tron-us/protobuf/proto"
+	"github.com/bittorrent/protobuf/proto"
 
 	"github.com/ipfs/go-datastore"
 	"github.com/looplab/fsm"

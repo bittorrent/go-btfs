@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	ipns "github.com/TRON-US/go-btns"
+	ipns "github.com/bittorrent/go-btns"
 	ds "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
 	mockrouting "github.com/ipfs/go-ipfs-routing/mock"

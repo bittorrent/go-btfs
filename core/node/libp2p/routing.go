@@ -10,7 +10,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/node/helpers"
 	irouting "github.com/bittorrent/go-btfs/routing"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	"github.com/bittorrent/go-btfs/repo"
 	ds "github.com/ipfs/go-datastore"
 	offroute "github.com/ipfs/go-ipfs-routing/offline"

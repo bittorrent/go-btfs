@@ -8,7 +8,7 @@ import (
 	rcmgr "github.com/libp2p/go-libp2p/p2p/host/resource-manager"
 	"github.com/pbnjay/memory"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	"github.com/bittorrent/go-btfs/core/node/libp2p/fd"
 )
 

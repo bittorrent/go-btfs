@@ -6,7 +6,7 @@ import (
 	"github.com/bittorrent/go-btfs/core"
 	nsys "github.com/bittorrent/go-btfs/namesys"
 
-	ft "github.com/TRON-US/go-unixfs"
+	ft "github.com/bittorrent/go-unixfs"
 	path "github.com/ipfs/go-path"
 	ci "github.com/libp2p/go-libp2p/core/crypto"
 )

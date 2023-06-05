@@ -2,7 +2,7 @@ package config
 
 import (
 	"errors"
-	cfg "github.com/TRON-US/go-btfs-config"
+	cfg "github.com/bittorrent/go-btfs-config"
 	"github.com/ethereum/go-ethereum/common"
 )
 

@@ -1,6 +1,6 @@
 package helper
 
-import guardpb "github.com/tron-us/go-btfs-common/protos/guard"
+import guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
 
 var ContractFilterMap = map[string]map[guardpb.Contract_ContractState]bool{
 	"active": {

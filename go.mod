@@ -4,17 +4,20 @@ go 1.18
 
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
-	github.com/TRON-US/go-btfs-api v0.4.1-0.20230302072600-2afc74800cfc
-	github.com/TRON-US/go-btfs-chunker v0.3.0
-	github.com/TRON-US/go-btfs-config v0.11.13-pre1.0.20230519100945-f9cba997b648
-	github.com/TRON-US/go-btfs-files v0.2.0
-	github.com/TRON-US/go-btns v0.1.2-0.20230302072552-36250342c5d7
-	github.com/TRON-US/go-eccrypto v0.0.1
-	github.com/TRON-US/go-mfs v0.3.1
-	github.com/TRON-US/go-unixfs v0.6.1
-	github.com/TRON-US/interface-go-btfs-core v0.7.1-0.20230519085458-340c8243266e
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137
-	github.com/bittorrent/go-btfs-cmds v0.2.14
+	github.com/bittorrent/go-btfs-api v0.5.0
+	github.com/bittorrent/go-btfs-chunker v0.4.0
+	github.com/bittorrent/go-btfs-cmds v0.3.0
+	github.com/bittorrent/go-btfs-common v0.9.0
+	github.com/bittorrent/go-btfs-config v0.12.0
+	github.com/bittorrent/go-btfs-files v0.3.0
+	github.com/bittorrent/go-btns v0.2.0
+	github.com/bittorrent/go-common/v2 v2.4.0
+	github.com/bittorrent/go-eccrypto v0.1.0
+	github.com/bittorrent/go-mfs v0.4.0
+	github.com/bittorrent/go-unixfs v0.7.0
+	github.com/bittorrent/interface-go-btfs-core v0.8.2
+	github.com/bittorrent/protobuf v1.4.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8
 	github.com/bren2010/proquint v0.0.0-20160323162903-38337c27106d
@@ -29,7 +32,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.1
 	github.com/go-bindata/go-bindata/v3 v3.1.3
 	github.com/gogo/protobuf v1.3.2
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.3
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d
@@ -76,7 +79,7 @@ require (
 	github.com/jbenet/go-random v0.0.0-20190219211222-123a90aedc0c
 	github.com/jbenet/go-temp-err-catcher v0.1.0
 	github.com/jbenet/goprocess v0.1.4
-	github.com/klauspost/reedsolomon v1.9.9
+	github.com/klauspost/reedsolomon v1.9.14
 	github.com/libp2p/go-libp2p v0.24.2
 	github.com/libp2p/go-libp2p-http v0.4.0
 	github.com/libp2p/go-libp2p-kad-dht v0.20.0
@@ -103,14 +106,11 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.14.0
+	github.com/prometheus/client_golang v1.15.1
 	github.com/shirou/gopsutil/v3 v3.20.12
 	github.com/status-im/keycard-go v0.2.0
 	github.com/stretchr/testify v1.8.2
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
-	github.com/tron-us/go-btfs-common v0.8.14-0.20230322132332-b16546817ed8
-	github.com/tron-us/go-common/v2 v2.3.2
-	github.com/tron-us/protobuf v1.3.7
 	github.com/tyler-smith/go-bip32 v0.0.0-20170922074101-2c9cfd177564
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/whyrusleeping/base32 v0.0.0-20170828182744-c30ac30633cc
@@ -125,17 +125,11 @@ require (
 	golang.org/x/crypto v0.6.0
 	golang.org/x/net v0.7.0
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.5.0
+	golang.org/x/sys v0.6.0
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
-)
-
-replace (
-	github.com/TRON-US/go-btfs-files v0.2.0 => github.com/imstevez/go-btfs-files v0.3.0-pre
-	github.com/TRON-US/go-mfs v0.3.1 => github.com/imstevez/go-mfs v0.4.0-pre
-	github.com/TRON-US/go-unixfs v0.6.1 => github.com/imstevez/go-unixfs v0.7.0-pre
 )
 
 require (
@@ -291,7 +285,6 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kisielk/errcheck v1.5.0 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
-	github.com/klauspost/cpuid v1.2.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/klauspost/pgzip v1.2.1 // indirect
 	github.com/koron/go-ssdp v0.0.3 // indirect
@@ -318,7 +311,6 @@ require (
 	github.com/mikioh/tcpinfo v0.0.0-20190314235526-30a79bb1804b // indirect
 	github.com/mikioh/tcpopt v0.0.0-20190314235656-172688c1accc // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
-	github.com/mmcloughlin/avo v0.0.0-20200523190732-4439b6b2c061 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/multiformats/go-base32 v0.1.0 // indirect
@@ -331,7 +323,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/polydawn/refmt v0.0.0-20201211092308-30ac6d18308e // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
-	github.com/prometheus/common v0.39.0 // indirect
+	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/segmentio/encoding v0.3.6 // indirect
@@ -365,14 +357,14 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230221151758-ace64dc21148 // indirect
 	google.golang.org/grpc v1.53.0 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
+	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
 	mellium.im/sasl v0.3.1 // indirect
 )
 
-replace github.com/ipfs/go-path => github.com/TRON-US/go-path v0.3.2
+replace github.com/ipfs/go-path => github.com/bittorrent/go-path v0.4.1
 
 replace github.com/libp2p/go-libp2p-yamux => github.com/libp2p/go-libp2p-yamux v0.2.8
 

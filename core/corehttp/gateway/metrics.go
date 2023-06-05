@@ -6,8 +6,8 @@ import (
 	"io"
 	"time"
 
-	files "github.com/TRON-US/go-btfs-files"
-	"github.com/TRON-US/interface-go-btfs-core/path"
+	files "github.com/bittorrent/go-btfs-files"
+	"github.com/bittorrent/interface-go-btfs-core/path"
 	"github.com/ipfs/go-cid"
 	prometheus "github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"

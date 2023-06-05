@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	config "github.com/TRON-US/go-btfs-config"
+	onlinePb "github.com/bittorrent/go-btfs-common/protos/online"
+	config "github.com/bittorrent/go-btfs-config"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/reportstatus/abi"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/ethereum/go-ethereum/common"
-	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
 
 	"github.com/cenkalti/backoff/v4"
 	logging "github.com/ipfs/go-log"

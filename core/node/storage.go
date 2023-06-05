@@ -6,7 +6,7 @@ import (
 	"github.com/bittorrent/go-btfs/thirdparty/cidv0v1"
 	"github.com/bittorrent/go-btfs/thirdparty/verifbs"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-filestore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	hubpb "github.com/bittorrent/go-btfs-common/protos/hub"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -18,7 +19,6 @@ import (
 	"github.com/bittorrent/go-btfs/core/hub"
 	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
 	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol/pb"
-	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
 
 	"github.com/ethereum/go-ethereum/common"
 	peerInfo "github.com/libp2p/go-libp2p/core/peer"

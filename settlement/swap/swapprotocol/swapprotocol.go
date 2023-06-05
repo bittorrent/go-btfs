@@ -12,13 +12,13 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 	"github.com/bittorrent/go-btfs/settlement/swap/priceoracle"
 	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol/pb"
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
 
 	"github.com/ethereum/go-ethereum/common"
 	logging "github.com/ipfs/go-log"

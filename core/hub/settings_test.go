@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
 )
 
 func TestGetSettings(t *testing.T) {

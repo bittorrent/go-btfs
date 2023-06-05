@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	opts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
+	opts "github.com/bittorrent/interface-go-btfs-core/options/namesys"
 	lru "github.com/hashicorp/golang-lru"
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"

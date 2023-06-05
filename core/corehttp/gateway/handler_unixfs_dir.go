@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	files "github.com/TRON-US/go-btfs-files"
-	ipath "github.com/TRON-US/interface-go-btfs-core/path"
+	files "github.com/bittorrent/go-btfs-files"
 	"github.com/bittorrent/go-btfs/core/corehttp/gateway/assets"
+	ipath "github.com/bittorrent/interface-go-btfs-core/path"
 	"github.com/dustin/go-humanize"
 	cid "github.com/ipfs/go-cid"
 	path "github.com/ipfs/go-path"

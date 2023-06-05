@@ -12,8 +12,8 @@ import (
 	"github.com/bittorrent/go-btfs/namesys"
 	. "github.com/bittorrent/go-btfs/namesys/republisher"
 
-	"github.com/TRON-US/go-btns"
-	pb "github.com/TRON-US/go-btns/pb"
+	"github.com/bittorrent/go-btns"
+	pb "github.com/bittorrent/go-btns/pb"
 
 	"github.com/gogo/protobuf/proto"
 	ds "github.com/ipfs/go-datastore"

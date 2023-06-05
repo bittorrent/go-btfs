@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/TRON-US/go-btfs-files"
-	ipath "github.com/TRON-US/interface-go-btfs-core/path"
+	"github.com/bittorrent/go-btfs-files"
+	ipath "github.com/bittorrent/interface-go-btfs-core/path"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-path/resolver"

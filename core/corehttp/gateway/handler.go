@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	ipath "github.com/TRON-US/interface-go-btfs-core/path"
+	ipath "github.com/bittorrent/interface-go-btfs-core/path"
 	cid "github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log"
 	prometheus "github.com/prometheus/client_golang/prometheus"

@@ -4,21 +4,21 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	"io/ioutil"
 	"math/rand"
 	"os"
 	"time"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	"github.com/bittorrent/go-btfs-common/crypto"
+	onlinePb "github.com/bittorrent/go-btfs-common/protos/online"
 	oldcmds "github.com/bittorrent/go-btfs/commands"
 	"github.com/bittorrent/go-btfs/core/commands/storage/path"
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 	cpt "github.com/bittorrent/go-btfs/transaction/crypto"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/tron-us/go-btfs-common/crypto"
-	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
 )
 
 // after btfs init

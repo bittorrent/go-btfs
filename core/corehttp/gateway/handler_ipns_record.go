@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	ipns_pb "github.com/TRON-US/go-btns/pb"
-	ipath "github.com/TRON-US/interface-go-btfs-core/path"
+	ipns_pb "github.com/bittorrent/go-btns/pb"
+	ipath "github.com/bittorrent/interface-go-btfs-core/path"
 	"github.com/cespare/xxhash"
 	"github.com/gogo/protobuf/proto"
 	"github.com/ipfs/go-cid"

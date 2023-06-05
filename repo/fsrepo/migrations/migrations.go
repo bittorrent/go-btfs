@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-var DistPath = "https://raw.githubusercontent.com/TRON-US/btfs-distributions/master"
+var DistPath = "https://raw.githubusercontent.com/bittorrent/btfs-distributions/master"
 
 func init() {
 	// Possible for the download path to be overwritten from command line

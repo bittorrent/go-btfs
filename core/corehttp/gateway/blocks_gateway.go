@@ -11,13 +11,13 @@ import (
 
 	"go.uber.org/multierr"
 
-	files "github.com/TRON-US/go-btfs-files"
-	ufile "github.com/TRON-US/go-unixfs/file"
-	uio "github.com/TRON-US/go-unixfs/io"
-	nsopts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
-	ifacepath "github.com/TRON-US/interface-go-btfs-core/path"
+	files "github.com/bittorrent/go-btfs-files"
 	"github.com/bittorrent/go-btfs/namesys"
 	"github.com/bittorrent/go-btfs/namesys/resolve"
+	ufile "github.com/bittorrent/go-unixfs/file"
+	uio "github.com/bittorrent/go-unixfs/io"
+	nsopts "github.com/bittorrent/interface-go-btfs-core/options/namesys"
+	ifacepath "github.com/bittorrent/interface-go-btfs-core/path"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"

@@ -10,7 +10,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
 
 	"github.com/gogo/protobuf/proto"
 )
