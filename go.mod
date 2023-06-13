@@ -111,7 +111,7 @@ require (
 	github.com/status-im/keycard-go v0.2.0
 	github.com/stretchr/testify v1.8.2
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
-	github.com/tyler-smith/go-bip32 v0.0.0-20170922074101-2c9cfd177564
+	github.com/tyler-smith/go-bip32 v1.0.0
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/whyrusleeping/base32 v0.0.0-20170828182744-c30ac30633cc
 	github.com/whyrusleeping/go-sysinfo v0.0.0-20190219211824-4a357d4b90b1
@@ -242,7 +242,6 @@ require (
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cheggaaa/pb v1.0.29
-	github.com/cmars/basen v0.0.0-20150613233007-fe3947df716e // indirect
 	github.com/codemodus/kace v0.5.1 // indirect
 	github.com/crackcomm/go-gitignore v0.0.0-20170627025303-887ab5e44cc3 // indirect
 	github.com/cskr/pubsub v1.0.2 // indirect
@@ -360,7 +359,6 @@ require (
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
 	mellium.im/sasl v0.3.1 // indirect
 )
 
