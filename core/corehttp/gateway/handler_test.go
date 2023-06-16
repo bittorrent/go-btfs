@@ -90,7 +90,7 @@ func TestGatewayBadRequestInvalidPath(t *testing.T) {
 	ts := newTestServer(t, api)
 	t.Logf("test server url: %s", ts.URL)
 
-	req, err := http.NewRequest(http.MethodGet, ts.URL+"/ipfs/QmInvalid/Path", nil)
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/btfs/QmInvalid/Path", nil)
 	assert.Nil(t, err)
 
 	res, err := ts.Client().Do(req)
@@ -117,7 +117,7 @@ func TestErrorBubblingFromAPI(t *testing.T) {
 			ts := newTestServer(t, api)
 			t.Logf("test server url: %s", ts.URL)
 
-			req, err := http.NewRequest(http.MethodGet, ts.URL+"/btns/en.wikipedia-on-ipfs.org", nil)
+			req, err := http.NewRequest(http.MethodGet, ts.URL+"/btns/en.wikipedia-on-btfs.org", nil)
 			assert.Nil(t, err)
 
 			res, err := ts.Client().Do(req)
@@ -142,7 +142,7 @@ func TestErrorBubblingFromAPI(t *testing.T) {
 		ts := newTestServer(t, api)
 		t.Logf("test server url: %s", ts.URL)
 
-		req, err := http.NewRequest(http.MethodGet, ts.URL+"/btns/en.wikipedia-on-ipfs.org", nil)
+		req, err := http.NewRequest(http.MethodGet, ts.URL+"/btns/en.wikipedia-on-btfs.org", nil)
 		assert.Nil(t, err)
 
 		res, err := ts.Client().Do(req)
@@ -209,7 +209,7 @@ func TestGatewayStatusCodeOnPanic(t *testing.T) {
 	ts := newTestServer(t, api)
 	t.Logf("test server url: %s", ts.URL)
 
-	req, err := http.NewRequest(http.MethodGet, ts.URL+"/ipfs/bafkreifzjut3te2nhyekklss27nh3k72ysco7y32koao5eei66wof36n5e", nil)
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/btfs/bafkreifzjut3te2nhyekklss27nh3k72ysco7y32koao5eei66wof36n5e", nil)
 	assert.Nil(t, err)
 
 	res, err := ts.Client().Do(req)
@@ -222,7 +222,7 @@ func TestGatewayStatusCodeOnHostnamePanic(t *testing.T) {
 	ts := newTestServer(t, api)
 	t.Logf("test server url: %s", ts.URL)
 
-	req, err := http.NewRequest(http.MethodGet, ts.URL+"/ipfs/bafkreifzjut3te2nhyekklss27nh3k72ysco7y32koao5eei66wof36n5e", nil)
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/btfs/bafkreifzjut3te2nhyekklss27nh3k72ysco7y32koao5eei66wof36n5e", nil)
 	assert.Nil(t, err)
 
 	res, err := ts.Client().Do(req)
