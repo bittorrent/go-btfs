@@ -7,7 +7,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"sort"
 
 	version "github.com/bittorrent/go-btfs"
 	config "github.com/bittorrent/go-btfs-config"
@@ -26,32 +25,6 @@ import (
 	id "github.com/libp2p/go-libp2p/p2p/protocol/identify"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
-
-type GatewayConfig struct {
-	Headers      map[string][]string
-	Writable     bool
-	PathPrefixes []string
-}
-
-// A helper function to clean up a set of headers:
-// 1. Canonicalizes.
-// 2. Deduplicates.
-// 3. Sorts.
-func cleanHeaderSet(headers []string) []string {
-	// Deduplicate and canonicalize.
-	m := make(map[string]struct{}, len(headers))
-	for _, h := range headers {
-		m[http.CanonicalHeaderKey(h)] = struct{}{}
-	}
-	result := make([]string, 0, len(m))
-	for k := range m {
-		result = append(result, k)
-	}
-
-	// Sort
-	sort.Strings(result)
-	return result
-}
 
 func GatewayOption(paths ...string) ServeOption {
 	return func(n *core.IpfsNode, _ net.Listener, mux *http.ServeMux) (*http.ServeMux, error) {
@@ -89,6 +62,7 @@ func GatewayOption(paths ...string) ServeOption {
 		return mux, nil
 	}
 }
+
 func HostnameOption() ServeOption {
 	return func(n *core.IpfsNode, _ net.Listener, mux *http.ServeMux) (*http.ServeMux, error) {
 		cfg, err := n.Repo.Config()
@@ -107,6 +81,7 @@ func HostnameOption() ServeOption {
 		return childMux, nil
 	}
 }
+
 func VersionOption() ServeOption {
 	return func(_ *core.IpfsNode, _ net.Listener, mux *http.ServeMux) (*http.ServeMux, error) {
 		mux.HandleFunc("/version", func(w http.ResponseWriter, r *http.Request) {
