@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -214,11 +213,6 @@ func newTestServer(t *testing.T, api IPFSBackend) *httptest.Server {
 	t.Cleanup(func() { ts.Close() })
 
 	return ts
-}
-
-func matchPathOrBreadcrumbs(s string, expected string) bool {
-	matched, _ := regexp.MatchString("Index of(\n|\r\n)[\t ]*"+regexp.QuoteMeta(expected), s)
-	return matched
 }
 
 func TestGatewayGet(t *testing.T) {

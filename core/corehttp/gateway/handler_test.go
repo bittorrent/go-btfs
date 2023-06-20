@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bittorrent/go-btfs-files"
+	files "github.com/bittorrent/go-btfs-files"
 	ipath "github.com/bittorrent/interface-go-btfs-core/path"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
