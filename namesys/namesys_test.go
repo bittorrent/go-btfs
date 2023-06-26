@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	btns "github.com/TRON-US/go-btns"
-	unixfs "github.com/TRON-US/go-unixfs"
-	opts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
+	btns "github.com/bittorrent/go-btns"
+	unixfs "github.com/bittorrent/go-unixfs"
+	opts "github.com/bittorrent/interface-go-btfs-core/options/namesys"
 	ds "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
 	offroute "github.com/ipfs/go-ipfs-routing/offline"
@@ -112,7 +112,10 @@ func TestPublishWithCache0(t *testing.T) {
 		"pk":   record.PublicKeyValidator{},
 	})
 
-	nsys := NewNameSystem(routing, dst, 0)
+	nsys, err := NewNameSystem(routing, WithDatastore(dst))
+	if err != nil {
+		t.Fatal(err)
+	}
 	p, err := path.ParsePath(unixfs.EmptyDirNode().Cid().String())
 	if err != nil {
 		t.Fatal(err)
@@ -147,7 +150,11 @@ func TestPublishWithTTL(t *testing.T) {
 		"pk":   record.PublicKeyValidator{},
 	})
 
-	nsys := NewNameSystem(routing, dst, 128)
+	nsys, err := NewNameSystem(routing, WithDatastore(dst), WithCache(128))
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	p, err := path.ParsePath(unixfs.EmptyDirNode().Cid().String())
 	if err != nil {
 		t.Fatal(err)

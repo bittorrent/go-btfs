@@ -5,10 +5,10 @@ package shardpb
 
 import (
 	fmt "fmt"
+	guard "github.com/bittorrent/go-btfs-common/protos/guard"
+	_ "github.com/bittorrent/protobuf/gogoproto"
+	proto "github.com/bittorrent/protobuf/proto"
 	golang_proto "github.com/golang/protobuf/proto"
-	guard "github.com/tron-us/go-btfs-common/protos/guard"
-	_ "github.com/tron-us/protobuf/gogoproto"
-	proto "github.com/tron-us/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"

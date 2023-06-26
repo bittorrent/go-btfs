@@ -3,9 +3,9 @@ package upload
 import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/contracts"
 
-	config "github.com/TRON-US/go-btfs-config"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
-	"github.com/tron-us/go-btfs-common/protos/node"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	"github.com/bittorrent/go-btfs-common/protos/node"
+	config "github.com/bittorrent/go-btfs-config"
 
 	"github.com/ipfs/go-datastore"
 )

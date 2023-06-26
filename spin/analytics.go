@@ -9,16 +9,16 @@ import (
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 
-	config "github.com/TRON-US/go-btfs-config"
-	iface "github.com/TRON-US/interface-go-btfs-core"
 	"github.com/alecthomas/units"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
+	pb "github.com/bittorrent/go-btfs-common/protos/status"
+	config "github.com/bittorrent/go-btfs-config"
+	iface "github.com/bittorrent/interface-go-btfs-core"
 	"github.com/gogo/protobuf/proto"
 	"github.com/ipfs/go-bitswap"
 	logging "github.com/ipfs/go-log"
 	ic "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/shirou/gopsutil/v3/cpu"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
-	pb "github.com/tron-us/go-btfs-common/protos/status"
 )
 
 type dcWrap struct {
@@ -130,7 +130,6 @@ func Analytics(api iface.CoreAPI, cfgRoot string, node *core.IpfsNode, BTFSVersi
 	}
 
 	dc.setRoles()
-	//go dc.collectionAgent(node)
 	go dc.collectionAgentOnline(node)
 	go dc.collectionAgentOnlineDaily(node)
 }

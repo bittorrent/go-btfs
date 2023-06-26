@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	btns "github.com/TRON-US/go-btns"
-	pb "github.com/TRON-US/go-btns/pb"
-	opts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
+	btns "github.com/bittorrent/go-btns"
+	pb "github.com/bittorrent/go-btns/pb"
+	opts "github.com/bittorrent/interface-go-btfs-core/options/namesys"
 
 	ds "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"

@@ -2,6 +2,7 @@ package challenge
 
 import (
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	"strconv"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	"github.com/tron-us/go-common/v2/json"
+	"github.com/bittorrent/go-common/v2/json"
 
 	cidlib "github.com/ipfs/go-cid"
 )
@@ -41,6 +42,11 @@ still store a piece of file (usually a shard) as agreed in storage contract.`,
 	}, StorageChallengeResponseCmd.Arguments...), // append pass-through arguments
 	RunTimeout: 20 * time.Second,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		cfg, err := cmdenv.GetConfig(env)
 		if err != nil {
 			return err
@@ -109,6 +115,11 @@ the challenge request back to the caller.`,
 	},
 	RunTimeout: 1 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		cfg, err := cmdenv.GetConfig(env)
 		if err != nil {
 			return err

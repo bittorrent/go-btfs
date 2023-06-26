@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/utils"
 	"math/big"
 	"time"
 
@@ -36,6 +37,10 @@ var ChequeCashStatusCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
 
 		// get the peer id
 		peerID := req.Arguments[0]

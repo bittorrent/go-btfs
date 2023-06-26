@@ -8,11 +8,11 @@ import (
 
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
-	files "github.com/TRON-US/go-btfs-files"
-	iface "github.com/TRON-US/interface-go-btfs-core"
-	"github.com/TRON-US/interface-go-btfs-core/options"
-	"github.com/TRON-US/interface-go-btfs-core/path"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	files "github.com/bittorrent/go-btfs-files"
+	iface "github.com/bittorrent/interface-go-btfs-core"
+	"github.com/bittorrent/interface-go-btfs-core/options"
+	"github.com/bittorrent/interface-go-btfs-core/path"
 )
 
 const (

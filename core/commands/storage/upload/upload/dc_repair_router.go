@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,10 +19,10 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 
-	"github.com/tron-us/go-btfs-common/crypto"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
-	"github.com/tron-us/go-btfs-common/utils/grpc"
-	"github.com/tron-us/protobuf/proto"
+	"github.com/bittorrent/go-btfs-common/crypto"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	"github.com/bittorrent/go-btfs-common/utils/grpc"
+	"github.com/bittorrent/protobuf/proto"
 
 	"github.com/alecthomas/units"
 	"github.com/cenkalti/backoff/v4"
@@ -76,6 +77,11 @@ This command sends request to mining host to negotiate the repair works.`,
 	}, HostRepairResponseCmd.Arguments...), // append pass-through arguments
 	RunTimeout: 20 * time.Second,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		fileHash := req.Arguments[1]
 		lostShardHashes := strings.Split(req.Arguments[2], ",")
 		fileSize, err := strconv.ParseInt(req.Arguments[3], 10, 64)
@@ -157,6 +163,11 @@ returns the repairer's signed contract to the invoker.`,
 	},
 	RunTimeout: 1 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		ctxParams, err := uh.ExtractContextParams(req, env)
 		repairId := ctxParams.N.Identity.Pretty()
 		fileHash := req.Arguments[0]

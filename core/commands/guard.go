@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	"strings"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/hub"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	cconfig "github.com/tron-us/go-btfs-common/config"
+	cconfig "github.com/bittorrent/go-btfs-common/config"
 
 	"github.com/ipfs/go-cid"
 )
@@ -66,6 +67,12 @@ to the guard service.`,
 	},
 	RunTimeout: 30 * time.Second,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+		fmt.Println("CheckSimpleMode ", err)
+
 		// get config settings
 		cfg, err := cmdenv.GetConfig(env)
 		if err != nil {

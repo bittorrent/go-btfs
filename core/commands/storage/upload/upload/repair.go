@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/utils"
 	"strings"
 	"time"
 
@@ -12,9 +13,9 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	"github.com/tron-us/go-btfs-common/crypto"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
-	"github.com/tron-us/go-btfs-common/utils/grpc"
+	"github.com/bittorrent/go-btfs-common/crypto"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	"github.com/bittorrent/go-btfs-common/utils/grpc"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 )
@@ -33,6 +34,11 @@ This command repairs the given shards of a file.`,
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		ctxParams, err := uh.ExtractContextParams(req, env)
 		if err != nil {
 			return err

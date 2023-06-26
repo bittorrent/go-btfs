@@ -3,6 +3,7 @@ package hosts
 import (
 	"context"
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
@@ -10,7 +11,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/hub"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
+	hubpb "github.com/bittorrent/go-btfs-common/protos/hub"
 
 	logging "github.com/ipfs/go-log"
 )
@@ -46,6 +47,11 @@ Mode options include:` + hub.AllModeHelpText,
 		cmds.StringOption(hostInfoModeOptionName, "m", "Hosts info showing mode. Default: mode set in config option Experimental.HostsSyncMode."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		cfg, err := cmdenv.GetConfig(env)
 		if err != nil {
 			return err
@@ -91,6 +97,11 @@ Mode options include:` + hub.AllModeHelpText,
 		cmds.StringOption(hostSyncModeOptionName, "m", "Hosts syncing mode. Default: mode set in config option Experimental.HostsSyncMode."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		cfg, err := cmdenv.GetConfig(env)
 		if err != nil {
 			return err

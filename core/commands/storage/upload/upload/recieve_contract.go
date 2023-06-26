@@ -2,6 +2,7 @@ package upload
 
 import (
 	"errors"
+	"github.com/bittorrent/go-btfs/utils"
 	"strconv"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -9,7 +10,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
 
 	"github.com/gogo/protobuf/proto"
 )
@@ -26,6 +27,11 @@ var StorageUploadRecvContractCmd = &cmds.Command{
 		cmds.StringArg("guard-contract", true, false, "Signed Guard contract."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		contractId, err := doRecv(req, env)
 		if contractId != "" {
 			if ch, ok := ShardErrChanMap.Get(contractId); ok {

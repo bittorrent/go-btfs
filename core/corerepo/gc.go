@@ -11,7 +11,7 @@ import (
 	"github.com/bittorrent/go-btfs/gc"
 	"github.com/bittorrent/go-btfs/repo"
 
-	mfs "github.com/TRON-US/go-mfs"
+	mfs "github.com/bittorrent/go-mfs"
 	humanize "github.com/dustin/go-humanize"
 	cid "github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log"

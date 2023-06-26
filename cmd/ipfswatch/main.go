@@ -15,8 +15,8 @@ import (
 	corehttp "github.com/bittorrent/go-btfs/core/corehttp"
 	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 
-	config "github.com/TRON-US/go-btfs-config"
-	files "github.com/TRON-US/go-btfs-files"
+	config "github.com/bittorrent/go-btfs-config"
+	files "github.com/bittorrent/go-btfs-files"
 	fsnotify "github.com/fsnotify/fsnotify"
 	process "github.com/jbenet/goprocess"
 	homedir "github.com/mitchellh/go-homedir"
@@ -92,7 +92,7 @@ func run(ipfsPath, watchPath string) error {
 	if *http {
 		addr := "/ip4/127.0.0.1/tcp/5001"
 		var opts = []corehttp.ServeOption{
-			corehttp.GatewayOption(true, "/btfs", "/btns"),
+			corehttp.GatewayOption("/btfs", "/btns"),
 			corehttp.WebUIOption,
 			corehttp.DashboardOption,
 			corehttp.HostUIOption,

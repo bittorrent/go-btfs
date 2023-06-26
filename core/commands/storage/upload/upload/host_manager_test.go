@@ -6,8 +6,8 @@ import (
 
 	coremock "github.com/bittorrent/go-btfs/core/mock"
 
-	config "github.com/TRON-US/go-btfs-config"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	config "github.com/bittorrent/go-btfs-config"
 
 	"github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/assert"

@@ -2,6 +2,7 @@ package cheque
 
 import (
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	"io"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -18,6 +19,11 @@ var ReceiveChequesCountCmd = &cmds.Command{
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		count, err := chain.SettleObject.SwapService.ReceivedChequeRecordsCount()
 		if err != nil {
 			return err

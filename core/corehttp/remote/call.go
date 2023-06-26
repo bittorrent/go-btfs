@@ -3,7 +3,7 @@ package remote
 import (
 	"context"
 
-	"github.com/TRON-US/go-btfs-api"
+	"github.com/bittorrent/go-btfs-api"
 	logging "github.com/ipfs/go-log"
 )
 

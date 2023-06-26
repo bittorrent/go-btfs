@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	"math/big"
 	"strconv"
 	"sync"
@@ -23,12 +24,12 @@ import (
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	"github.com/tron-us/go-btfs-common/crypto"
-	"github.com/tron-us/go-btfs-common/ledger"
-	escrowpb "github.com/tron-us/go-btfs-common/protos/escrow"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
-	"github.com/tron-us/go-btfs-common/utils/grpc"
-	"github.com/tron-us/protobuf/proto"
+	"github.com/bittorrent/go-btfs-common/crypto"
+	"github.com/bittorrent/go-btfs-common/ledger"
+	escrowpb "github.com/bittorrent/go-btfs-common/protos/escrow"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	"github.com/bittorrent/go-btfs-common/utils/grpc"
+	"github.com/bittorrent/protobuf/proto"
 
 	"github.com/alecthomas/units"
 	"github.com/cenkalti/backoff/v4"
@@ -58,6 +59,11 @@ the shard and replies back to client for the next challenge step.`,
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		ctxParams, err := uh.ExtractContextParams(req, env)
 		if err != nil {
 			return err

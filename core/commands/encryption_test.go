@@ -14,8 +14,8 @@ import (
 	"github.com/bittorrent/go-btfs/core/coreapi"
 	coremock "github.com/bittorrent/go-btfs/core/mock"
 
-	files "github.com/TRON-US/go-btfs-files"
-	"github.com/TRON-US/interface-go-btfs-core/options"
+	files "github.com/bittorrent/go-btfs-files"
+	"github.com/bittorrent/interface-go-btfs-core/options"
 	"github.com/libp2p/go-libp2p/core/peer"
 	mocknet "github.com/libp2p/go-libp2p/p2p/net/mock"
 	"github.com/libp2p/go-testutil"

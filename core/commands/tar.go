@@ -8,7 +8,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	tar "github.com/bittorrent/go-btfs/tar"
 
-	path "github.com/TRON-US/interface-go-btfs-core/path"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 	dag "github.com/ipfs/go-merkledag"
 )
 

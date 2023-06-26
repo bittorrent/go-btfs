@@ -10,7 +10,7 @@ import (
 	"github.com/bittorrent/go-btfs/plugin/loader"
 	"github.com/bittorrent/go-btfs/repo/fsrepo"
 
-	"github.com/TRON-US/go-btfs-config"
+	"github.com/bittorrent/go-btfs-config"
 )
 
 // note: to test sorting of the mountpoints in the disk spec they are

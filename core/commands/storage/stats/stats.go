@@ -3,6 +3,7 @@ package stats
 import (
 	"context"
 	"errors"
+	"github.com/bittorrent/go-btfs/utils"
 	"sort"
 	"strconv"
 	"strings"
@@ -15,13 +16,13 @@ import (
 	"github.com/bittorrent/go-btfs/core/corerepo"
 	"github.com/bittorrent/go-btfs/core/hub"
 
-	config "github.com/TRON-US/go-btfs-config"
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
+	config "github.com/bittorrent/go-btfs-config"
 
+	"github.com/bittorrent/protobuf/proto"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/shirou/gopsutil/v3/disk"
-	"github.com/tron-us/protobuf/proto"
 )
 
 const (
@@ -54,6 +55,11 @@ This command synchronize node stats from network(hub) to local node data store.`
 	},
 	Arguments: []cmds.Argument{},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		cfg, err := cmdenv.GetConfig(env)
 		if err != nil {
 			return err
@@ -138,6 +144,11 @@ This command get node stats in the network from the local node data store.`,
 	},
 	RunTimeout: 30 * time.Second,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		cfg, err := cmdenv.GetConfig(env)
 		if err != nil {
 			return err
@@ -206,6 +217,11 @@ This command list node stats in the network from the local node data store.`,
 	},
 	RunTimeout: 30 * time.Second,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err

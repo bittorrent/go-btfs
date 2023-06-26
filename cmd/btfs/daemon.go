@@ -7,7 +7,6 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
-	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -22,12 +21,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
+
 	"github.com/bittorrent/go-btfs/guide"
 
-	config "github.com/TRON-US/go-btfs-config"
-	cserial "github.com/TRON-US/go-btfs-config/serialize"
 	version "github.com/bittorrent/go-btfs"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	config "github.com/bittorrent/go-btfs-config"
+	cserial "github.com/bittorrent/go-btfs-config/serialize"
 	"github.com/bittorrent/go-btfs/bindata"
 	"github.com/bittorrent/go-btfs/chain"
 	cc "github.com/bittorrent/go-btfs/chain/config"
@@ -53,6 +54,8 @@ import (
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/ethereum/go-ethereum/common"
 
+	cp "github.com/bittorrent/go-btfs-common/crypto"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
 	multierror "github.com/hashicorp/go-multierror"
 	util "github.com/ipfs/go-ipfs-util"
 	mprome "github.com/ipfs/go-metrics-prometheus"
@@ -62,8 +65,6 @@ import (
 	manet "github.com/multiformats/go-multiaddr/net"
 	prometheus "github.com/prometheus/client_golang/prometheus"
 	promauto "github.com/prometheus/client_golang/prometheus/promauto"
-	cp "github.com/tron-us/go-btfs-common/crypto"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
 )
 
 const (
@@ -251,9 +252,6 @@ func wrapDaemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environ
 }
 
 func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) (_err error) {
-	//swapprotocol.Req = req
-	//swapprotocol.Env = env
-
 	cctx := env.(*oldcmds.Context)
 	_, b := os.LookupEnv(path.BtfsPathKey)
 	if !b {
@@ -321,7 +319,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 			}
 
 			if err = doInit(os.Stdout, cfg, false, utilmain.NBitsForKeypairDefault, profiles, conf,
-				keyTypeDefault, "", "", false); err != nil {
+				keyTypeDefault, "", "", false, false); err != nil {
 				return err
 			}
 
@@ -397,17 +395,20 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	fmt.Println("the address of Bttc format is: ", address0x)
 	fmt.Println("the address of Tron format is: ", keys.Base58Address)
 
-	// guide server init
-	optionApiAddr, _ := req.Options[commands.ApiOption].(string)
-	guide.SetServerAddr(cfg.Addresses.API, optionApiAddr)
-	guide.SetInfo(&guide.Info{
-		BtfsVersion: version.CurrentVersionNumber,
-		HostID:      cfg.Identity.PeerID,
-		BttcAddress: address0x.String(),
-		PrivateKey:  hex.EncodeToString(pkbytesOri[4:]),
-	})
-	guide.StartServer()
-	defer guide.TryShutdownServer()
+	SimpleMode := cfg.SimpleMode
+	if SimpleMode == false {
+		// guide server init
+		optionApiAddr, _ := req.Options[commands.ApiOption].(string)
+		guide.SetServerAddr(cfg.Addresses.API, optionApiAddr)
+		guide.SetInfo(&guide.Info{
+			BtfsVersion: version.CurrentVersionNumber,
+			HostID:      cfg.Identity.PeerID,
+			BttcAddress: address0x.String(),
+			PrivateKey:  hex.EncodeToString(pkbytesOri[4:]),
+		})
+		guide.StartServer()
+		defer guide.TryShutdownServer()
+	}
 
 	//chain init
 	configRoot := cctx.ConfigRoot
@@ -420,113 +421,107 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		statestore.Close()
 	}()
 
-	chainid, stored, err := getChainID(req, cfg, statestore)
-	if err != nil {
-		return err
-	}
-	chainCfg, err := chainconfig.InitChainConfig(cfg, stored, chainid)
-	if err != nil {
-		return err
-	}
-
-	// upgrade factory to v2 if necessary
-	needUpdateFactory := false
-	needUpdateFactory, err = doIfNeedUpgradeFactoryToV2(chainid, chainCfg, statestore, repo, cfg, configRoot)
-	if err != nil {
-		fmt.Printf("upgrade vault contract failed, err=%s\n", err)
-		return err
-	}
-	if needUpdateFactory { // no error means upgrade preparation done, re-init the statestore
-		statestore, err = chain.InitStateStore(configRoot)
+	if SimpleMode == false {
+		chainid, stored, err := getChainID(req, cfg, statestore)
 		if err != nil {
-			fmt.Println("init statestore err: ", err)
 			return err
 		}
-		err = chain.StoreChainIdIfNotExists(chainid, statestore)
+		chainCfg, err := chainconfig.InitChainConfig(cfg, stored, chainid)
 		if err != nil {
-			fmt.Printf("save chainid failed, err: %s\n", err)
-			return
+			return err
 		}
-	}
 
-	tokencfg.InitToken(chainid)
-
-	//endpoint
-	chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000),
-		chainid, cfg.Identity.PeerID, chainCfg)
-	if err != nil {
-		return err
-	}
-
-	// Sync the with the given Ethereum backend:
-	isSynced, _, err := transaction.IsSynced(context.Background(), chainInfo.Backend, chain.MaxDelay)
-	if err != nil {
-		return fmt.Errorf("is synced: %w", err)
-	}
-
-	if !isSynced {
-		log.Infof("waiting to sync with the Ethereum backend")
-
-		err := transaction.WaitSynced(context.Background(), chainInfo.Backend, chain.MaxDelay)
+		// upgrade factory to v2 if necessary
+		needUpdateFactory := false
+		needUpdateFactory, err = doIfNeedUpgradeFactoryToV2(chainid, chainCfg, statestore, repo, cfg, configRoot)
 		if err != nil {
-			return fmt.Errorf("waiting backend sync: %w", err)
+			fmt.Printf("upgrade vault contract failed, err=%s\n", err)
+			return err
 		}
-	}
-
-	deployGasPrice, found := req.Options[deploymentGasPrice].(string)
-	if !found {
-		deployGasPrice = chainInfo.Chainconfig.DeploymentGas
-	}
-
-	/*settleinfo*/
-	settleInfo, err := chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
-	if err != nil {
-		fmt.Println("init settlement err: ", err)
-		if strings.Contains(err.Error(), "insufficient funds") {
-			fmt.Println("Please recharge BTT to your address to solve this error")
-		}
-		if strings.Contains(err.Error(), "contract deployment failed") {
-			fmt.Println(`Solution1: It is recommended to check if the balance is sufficient. If the balance is low, it is recommended to top up.`)
-			fmt.Println(`Solution2: Suggest to redeploy.`)
+		if needUpdateFactory { // no error means upgrade preparation done, re-init the statestore
+			statestore, err = chain.InitStateStore(configRoot)
+			if err != nil {
+				fmt.Println("init statestore err: ", err)
+				return err
+			}
+			err = chain.StoreChainIdIfNotExists(chainid, statestore)
+			if err != nil {
+				fmt.Printf("save chainid failed, err: %s\n", err)
+				return
+			}
 		}
 
-		return err
-	}
+		tokencfg.InitToken(chainid)
 
-	/*upgrade vault implementation*/
-	oldImpl, newImpl, err := settleInfo.VaultService.UpgradeTo(context.Background(), chainInfo.Chainconfig.VaultLogicAddress)
-	if err != nil {
-		emsg := err.Error()
-		if strings.Contains(emsg, "already upgraded") {
-			fmt.Printf("vault implementation is updated: %s\n", chainInfo.Chainconfig.VaultLogicAddress)
-			err = nil
+		//endpoint
+		chainInfo, err := chain.InitChain(context.Background(), statestore, singer, time.Duration(1000000000),
+			chainid, cfg.Identity.PeerID, chainCfg)
+		if err != nil {
+			return err
+		}
+
+		// Sync the with the given Ethereum backend:
+		isSynced, _, err := transaction.IsSynced(context.Background(), chainInfo.Backend, chain.MaxDelay)
+		if err != nil {
+			return fmt.Errorf("is synced: %w", err)
+		}
+
+		if !isSynced {
+			log.Infof("waiting to sync with the Ethereum backend")
+
+			err := transaction.WaitSynced(context.Background(), chainInfo.Backend, chain.MaxDelay)
+			if err != nil {
+				return fmt.Errorf("waiting backend sync: %w", err)
+			}
+		}
+
+		deployGasPrice, found := req.Options[deploymentGasPrice].(string)
+		if !found {
+			deployGasPrice = chainInfo.Chainconfig.DeploymentGas
+		}
+
+		/*settleinfo*/
+		settleInfo, err := chain.InitSettlement(context.Background(), statestore, chainInfo, deployGasPrice, chainInfo.ChainID)
+		if err != nil {
+			fmt.Println("init settlement err: ", err)
+			if strings.Contains(err.Error(), "insufficient funds") {
+				fmt.Println("Please recharge BTT to your address to solve this error")
+			}
+			if strings.Contains(err.Error(), "contract deployment failed") {
+				fmt.Println(`Solution1: It is recommended to check if the balance is sufficient. If the balance is low, it is recommended to top up.`)
+				fmt.Println(`Solution2: Suggest to redeploy.`)
+			}
+
+			return err
+		}
+
+		/*upgrade vault implementation*/
+		oldImpl, newImpl, err := settleInfo.VaultService.UpgradeTo(context.Background(), chainInfo.Chainconfig.VaultLogicAddress)
+		if err != nil {
+			emsg := err.Error()
+			if strings.Contains(emsg, "already upgraded") {
+				fmt.Printf("vault implementation is updated: %s\n", chainInfo.Chainconfig.VaultLogicAddress)
+				err = nil
+			} else {
+				fmt.Println("upgrade vault implementation err: ", err)
+				return err
+			}
 		} else {
-			fmt.Println("upgrade vault implementation err: ", err)
+			fmt.Printf("vault logic implementation upgrade from %s to %s\n", oldImpl, newImpl)
+		}
+
+		// init report online info
+		err = CheckExistLastOnlineReportV2(cfg, configRoot, chainid)
+		if err != nil {
+			fmt.Println("check report status, err: ", err)
 			return err
 		}
-	} else {
-		fmt.Printf("vault logic implementation upgrade from %s to %s\n", oldImpl, newImpl)
-	}
 
-	// init report status contract
-	//reportStatusServ := reportstatus.Init(chainInfo.TransactionService, cfg, chainCfg.StatusAddress)
-	//err = CheckExistLastOnlineReport(cfg, configRoot, chainid, reportStatusServ)
-	//if err != nil {
-	//	fmt.Println("check report status, err: ", err)
-	//	return err
-	//}
-
-	// init report online info
-	err = CheckExistLastOnlineReportV2(cfg, configRoot, chainid)
-	if err != nil {
-		fmt.Println("check report status, err: ", err)
-		return err
-	}
-
-	err = CheckHubDomainConfig(cfg, configRoot, chainid)
-	if err != nil {
-		fmt.Println("check report status, err: ", err)
-		return err
+		err = CheckHubDomainConfig(cfg, configRoot, chainid)
+		if err != nil {
+			fmt.Println("check report status, err: ", err)
+			return err
+		}
 	}
 
 	// init ip2location db
@@ -648,11 +643,13 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	}
 	node.Process.AddChild(goprocess.WithTeardown(cctx.Plugins.Close))
 
-	// if the guide server was started, shutdown it
-	guide.TryShutdownServer()
+	if SimpleMode == false {
+		// if the guide server was started, shutdown it
+		guide.TryShutdownServer()
+	}
 
 	// construct api endpoint - every time
-	apiErrc, err := serveHTTPApi(req, cctx)
+	apiErrc, err := serveHTTPApi(req, cctx, SimpleMode)
 	if err != nil {
 		return err
 	}
@@ -716,19 +713,22 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		functest(cfg.Services.OnlineServerDomain, cfg.Identity.PeerID, hValue)
 	}
 
-	// set Analytics flag if specified
-	if dc, ok := req.Options[enableDataCollection]; ok == true {
-		node.Repo.SetConfigKey("Experimental.Analytics", dc)
+	if SimpleMode == false {
+		// set Analytics flag if specified
+		if dc, ok := req.Options[enableDataCollection]; ok == true {
+			node.Repo.SetConfigKey("Experimental.Analytics", dc)
+		}
+		// Spin jobs in the background
+		spin.RenterSessions(req, env)
+		api, err := cmdenv.GetApi(env, req)
+		if err != nil {
+			return err
+		}
+
+		spin.Analytics(api, cctx.ConfigRoot, node, version.CurrentVersionNumber, hValue)
+		spin.Hosts(node, env)
+		spin.Contracts(node, req, env, nodepb.ContractStat_HOST.String())
 	}
-	// Spin jobs in the background
-	spin.RenterSessions(req, env)
-	api, err := cmdenv.GetApi(env, req)
-	if err != nil {
-		return err
-	}
-	spin.Analytics(api, cctx.ConfigRoot, node, version.CurrentVersionNumber, hValue)
-	spin.Hosts(node, env)
-	spin.Contracts(node, req, env, nodepb.ContractStat_HOST.String())
 
 	// Give the user some immediate feedback when they hit C-c
 	go func() {
@@ -751,7 +751,7 @@ If the user need to start multiple nodes on the same machine, the configuration 
 }
 
 // serveHTTPApi collects options, creates listener, prints status message and starts serving requests
-func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, error) {
+func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context, SimpleMode bool) (<-chan error, error) {
 	cfg, err := cctx.GetConfig()
 	if err != nil {
 		return nil, fmt.Errorf("serveHTTPApi: GetConfig() failed: %s", err)
@@ -799,7 +799,9 @@ func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, error
 		// Browsers require TCP.
 		switch listener.Addr().Network() {
 		case "tcp", "tcp4", "tcp6":
-			fmt.Printf("Dashboard: http://%s/dashboard\n", listener.Addr())
+			if SimpleMode == false {
+				fmt.Printf("Dashboard: http://%s/dashboard\n", listener.Addr())
+			}
 		}
 	}
 
@@ -808,9 +810,9 @@ func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, error
 	// only the webui objects are allowed.
 	// if you know what you're doing, go ahead and pass --unrestricted-api.
 	unrestricted, _ := req.Options[unrestrictedApiAccessKwd].(bool)
-	gatewayOpt := corehttp.GatewayOption(false, corehttp.WebUIPaths...)
+	gatewayOpt := corehttp.GatewayOption(corehttp.WebUIPaths...)
 	if unrestricted {
-		gatewayOpt = corehttp.GatewayOption(true, "/btfs", "/btns")
+		gatewayOpt = corehttp.GatewayOption("/btfs", "/btns")
 	}
 
 	var opts = []corehttp.ServeOption{
@@ -824,7 +826,9 @@ func serveHTTPApi(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, error
 		corehttp.VersionOption(),
 		defaultMux("/debug/vars"),
 		defaultMux("/debug/pprof/"),
+		defaultMux("/debug/stack"),
 		corehttp.MutexFractionOption("/debug/pprof-mutex/"),
+		corehttp.BlockProfileRateOption("/debug/pprof-block/"),
 		corehttp.MetricsScrapingOption("/debug/metrics/prometheus"),
 		corehttp.LogOption(),
 	}
@@ -961,7 +965,9 @@ func serveHTTPGateway(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, e
 	if !writableOptionFound {
 		writable = cfg.Gateway.Writable
 	}
-
+	if writable {
+		log.Errorf("Support for Gateway.Writable and --writable has been REMOVED. Please remove it from your config file or CLI.")
+	}
 	listeners, err := sockets.TakeListeners("io.ipfs.gateway")
 	if err != nil {
 		return nil, fmt.Errorf("serveHTTPGateway: socket activation failed: %s", err)
@@ -991,14 +997,8 @@ func serveHTTPGateway(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, e
 		listeners = append(listeners, gwLis)
 	}
 
-	// we might have listened to /tcp/0 - let's see what we are listing on
-	gwType := "readonly"
-	if writable {
-		gwType = "writable"
-	}
-
 	for _, listener := range listeners {
-		fmt.Printf("Gateway (%s) server listening on %s\n", gwType, listener.Multiaddr())
+		fmt.Printf("Gateway server listening on %s\n", listener.Multiaddr())
 	}
 
 	cmdctx := *cctx
@@ -1007,7 +1007,8 @@ func serveHTTPGateway(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, e
 	var opts = []corehttp.ServeOption{
 		corehttp.MetricsCollectionOption("gateway"),
 		corehttp.HostnameOption(),
-		corehttp.GatewayOption(writable, "/btfs", "/btns"),
+		// TODO: rm writable
+		corehttp.GatewayOption("/btfs", "/btns"),
 		corehttp.VersionOption(),
 		corehttp.CheckVersionOption(),
 		corehttp.CommandsROOption(cmdctx),
@@ -1025,7 +1026,9 @@ func serveHTTPGateway(req *cmds.Request, cctx *oldcmds.Context) (<-chan error, e
 	if err != nil {
 		return nil, fmt.Errorf("serveHTTPGateway: ConstructNode() failed: %s", err)
 	}
-
+	if len(cfg.Gateway.PathPrefixes) > 0 {
+		log.Errorf("Support for custom Gateway.PathPrefixes was removed")
+	}
 	errc := make(chan error)
 	var wg sync.WaitGroup
 	for _, lis := range listeners {

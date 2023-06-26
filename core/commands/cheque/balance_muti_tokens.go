@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/utils"
 	"io"
 	"math/big"
 	"time"
@@ -23,6 +24,11 @@ var ChequeAllTokenBalanceCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		addr := req.Arguments[0]
 
 		mp := make(map[string]*big.Int, 0)
@@ -58,6 +64,11 @@ var ChequeTokenBalanceCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		addr := req.Arguments[0]
 
 		tokenStr := req.Options[tokencfg.TokenTypeName].(string)

@@ -21,9 +21,9 @@ import (
 	"github.com/bittorrent/go-btfs/namesys"
 	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 
-	config "github.com/TRON-US/go-btfs-config"
-	files "github.com/TRON-US/go-btfs-files"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	config "github.com/bittorrent/go-btfs-config"
+	files "github.com/bittorrent/go-btfs-files"
 )
 
 const (
@@ -35,6 +35,7 @@ const (
 	importKeyOptionName = "import"
 	rmOnUnpinOptionName = "rm-on-unpin"
 	seedOptionName      = "seed"
+	simpleMode          = "simple-mode"
 	/*
 		passWordOptionName     = "password"
 		passwordFileoptionName = "password-file"
@@ -70,6 +71,7 @@ environment variable:
 		cmds.StringOption(importKeyOptionName, "i", "Import TRON private key to generate btfs PeerID."),
 		cmds.BoolOption(rmOnUnpinOptionName, "r", "Remove unpinned files.").WithDefault(false),
 		cmds.StringOption(seedOptionName, "s", "Import seed phrase"),
+		cmds.BoolOption(simpleMode, "sm", "init with simple mode or not."),
 		/*
 			cmds.StringOption(passWordOptionName, "", "password for decrypting keys."),
 			cmds.StringOption(passwordFileoptionName, "", "path to a file that contains password for decrypting keys"),
@@ -133,12 +135,13 @@ environment variable:
 		importKey, _ := req.Options[importKeyOptionName].(string)
 		keyType, _ := req.Options[keyTypeOptionName].(string)
 		seedPhrase, _ := req.Options[seedOptionName].(string)
+		simpleModeIn, _ := req.Options[simpleMode].(bool)
 		/*
 			password, _ := req.Options[passWordOptionName].(string)
 			passwordFile, _ := req.Options[passwordFileoptionName].(string)
 		*/
 
-		return doInit(os.Stdout, cctx.ConfigRoot, empty, nBitsForKeypair, profile, conf, keyType, importKey, seedPhrase, rmOnUnpin)
+		return doInit(os.Stdout, cctx.ConfigRoot, empty, nBitsForKeypair, profile, conf, keyType, importKey, seedPhrase, rmOnUnpin, simpleModeIn)
 	},
 }
 
@@ -147,7 +150,7 @@ Reinitializing would overwrite your keys.
 `)
 
 func doInit(out io.Writer, repoRoot string, empty bool, nBitsForKeypair int, confProfiles string, conf *config.Config,
-	keyType string, importKey string, mnemonic string, rmOnUnpin bool) error {
+	keyType string, importKey string, mnemonic string, rmOnUnpin bool, simpleModeIn bool) error {
 
 	importKey, mnemonic, err := util.GenerateKey(importKey, keyType, mnemonic)
 	if err != nil {
@@ -193,6 +196,8 @@ func doInit(out io.Writer, repoRoot string, empty bool, nBitsForKeypair int, con
 	if err := storeChainId(conf, repoRoot); err != nil {
 		return err
 	}
+
+	conf.SimpleMode = simpleModeIn
 
 	if err := fsrepo.Init(repoRoot, conf); err != nil {
 		return err

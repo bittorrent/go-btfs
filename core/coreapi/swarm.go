@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
 	inet "github.com/libp2p/go-libp2p/core/network"
 	peer "github.com/libp2p/go-libp2p/core/peer"
 	pstore "github.com/libp2p/go-libp2p/core/peerstore"

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	doh "github.com/libp2p/go-doh-resolver"
 	madns "github.com/multiformats/go-multiaddr-dns"
 

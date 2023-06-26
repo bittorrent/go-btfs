@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/utils"
 	"io"
 	"math/big"
 	"strconv"
@@ -26,6 +27,11 @@ var ListReceiveChequeCmd = &cmds.Command{
 		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		offset, err := strconv.Atoi(req.Arguments[0])
 		if err != nil {
 			return fmt.Errorf("parse offset:%v failed", req.Arguments[0])

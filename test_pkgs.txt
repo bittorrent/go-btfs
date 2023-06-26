@@ -16,8 +16,8 @@ github.com/bittorrent/go-btfs/core/commands/storage/upload/upload
 github.com/bittorrent/go-btfs/core/coreapi
 github.com/bittorrent/go-btfs/core/coreapi/test
 github.com/bittorrent/go-btfs/core/corehttp
+github.com/bittorrent/go-btfs/core/corehttp/gateway
 github.com/bittorrent/go-btfs/core/hub
-github.com/bittorrent/go-btfs/core/wallet
 github.com/bittorrent/go-btfs/keystore
 github.com/bittorrent/go-btfs/namesys
 github.com/bittorrent/go-btfs/namesys/republisher

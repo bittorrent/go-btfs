@@ -10,7 +10,7 @@ import (
 
 	"github.com/bittorrent/go-btfs/thirdparty/assert"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	datastore "github.com/ipfs/go-datastore"
 )
 

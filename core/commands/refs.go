@@ -9,9 +9,9 @@ import (
 
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
-	iface "github.com/TRON-US/interface-go-btfs-core"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	iface "github.com/bittorrent/interface-go-btfs-core"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 	cid "github.com/ipfs/go-cid"
 	cidenc "github.com/ipfs/go-cidutil/cidenc"
 	ipld "github.com/ipfs/go-ipld-format"

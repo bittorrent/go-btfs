@@ -1,17 +1,18 @@
 package namesys
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
-	opts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
+	opts "github.com/bittorrent/interface-go-btfs-core/options/namesys"
 )
 
 type mockDNS struct {
 	entries map[string][]string
 }
 
-func (m *mockDNS) lookupTXT(name string) (txt []string, err error) {
+func (m *mockDNS) lookupTXT(ctx context.Context, name string) (txt []string, err error) {
 	txt, ok := m.entries[name]
 	if !ok {
 		return nil, fmt.Errorf("no TXT entry for %s", name)

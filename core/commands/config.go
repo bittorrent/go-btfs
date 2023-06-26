@@ -17,8 +17,8 @@ import (
 	"github.com/bittorrent/go-btfs/repo/fsrepo"
 	"github.com/ethereum/go-ethereum/common"
 
-	config "github.com/TRON-US/go-btfs-config"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	config "github.com/bittorrent/go-btfs-config"
 	"github.com/elgris/jsondiff"
 )
 
@@ -70,6 +70,7 @@ Set the value of the 'Datastore.Path' key:
 		//"profile":             configProfileCmd,
 		"storage-host-enable": storageHostEnableCmd,
 		"sync-chain-info":     SyncChainInfoCmd,
+		"sync-simple-mode":    SyncSimpleModeCmd,
 		"optin":               optInCmd,
 		"optout":              optOutCmd,
 	},
@@ -422,6 +423,40 @@ var SyncChainInfoCmd = &cmds.Command{
 		}
 
 		out := fmt.Sprintf("sync chain info ok. \n")
+		return cmds.EmitOnce(res, &out)
+	},
+	Encoders: cmds.EncoderMap{
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *string) error {
+			_, err := w.Write([]byte(*out))
+			return err
+		}),
+	},
+}
+
+var SyncSimpleModeCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "simple mode is true or not.",
+	},
+	Arguments: []cmds.Argument{
+		cmds.StringArg("value", true, false, "simple mode is true or not."),
+	},
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		enable, err := strconv.ParseBool(req.Arguments[0])
+		if err != nil {
+			return err
+		}
+
+		cfgRoot, err := cmdenv.GetConfigRoot(env)
+		if err != nil {
+			return err
+		}
+
+		err = SetSimpleMode(cfgRoot, enable)
+		if err != nil {
+			return err
+		}
+
+		out := fmt.Sprintf("set simple mode = %v \n    please restart the node to use it!\n", enable)
 		return cmds.EmitOnce(res, &out)
 	},
 	Encoders: cmds.EncoderMap{
@@ -796,6 +831,27 @@ func SetConfigStorageHostEnable(configRoot string, enable bool) error {
 		return err
 	}
 	cfg.Experimental.StorageHostEnabled = enable
+
+	err = r.SetConfig(cfg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func SetSimpleMode(configRoot string, enable bool) error {
+	r, err := fsrepo.Open(configRoot)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	cfg, err := r.Config()
+	if err != nil {
+		return err
+	}
+	cfg.SimpleMode = enable
 
 	err = r.SetConfig(cfg)
 	if err != nil {

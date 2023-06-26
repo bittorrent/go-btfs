@@ -11,16 +11,19 @@ import (
 	"os"
 	"syscall"
 
-	ft "github.com/TRON-US/go-unixfs"
-	uio "github.com/TRON-US/go-unixfs/io"
-	core "github.com/bittorrent/go-btfs/core"
-	mdag "github.com/ipfs/go-merkledag"
-	path "github.com/ipfs/go-path"
-
 	fuse "bazil.org/fuse"
 	fs "bazil.org/fuse/fs"
+	core "github.com/bittorrent/go-btfs/core"
+	ft "github.com/bittorrent/go-unixfs"
+	uio "github.com/bittorrent/go-unixfs/io"
+	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log"
+	mdag "github.com/ipfs/go-merkledag"
+	path "github.com/ipfs/go-path"
+	"github.com/ipfs/go-path/resolver"
+	ipldprime "github.com/ipld/go-ipld-prime"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 )
 
 var log = logging.Logger("fuse/btfs")
@@ -66,20 +69,47 @@ func (s *Root) Lookup(ctx context.Context, name string) (fs.Node, error) {
 		return nil, fuse.ENOENT
 	}
 
-	nd, err := s.Ipfs.Resolver.ResolvePath(ctx, p)
+	nd, ndLnk, err := resolver.NewBasicResolver(s.Ipfs.UnixFSFetcherFactory).ResolvePath(ctx, p)
 	if err != nil {
 		// todo: make this error more versatile.
 		return nil, fuse.ENOENT
 	}
 
-	switch nd := nd.(type) {
-	case *mdag.ProtoNode, *mdag.RawNode:
-		return &Node{Ipfs: s.Ipfs, Nd: nd}, nil
-	default:
-		log.Error("fuse node was not a protobuf node")
-		return nil, fuse.ENOTSUP
+	cidLnk, ok := ndLnk.(cidlink.Link)
+	if !ok {
+		log.Debugf("non-cidlink returned from ResolvePath: %v", ndLnk)
+		return nil, fuse.ENOENT
 	}
 
+	// convert ipld-prime node to universal node
+	blk, err := s.Ipfs.Blockstore.Get(ctx, cidLnk.Cid)
+	if err != nil {
+		log.Debugf("fuse failed to retrieve block: %v: %s", cidLnk, err)
+		return nil, fuse.ENOENT
+	}
+
+	var fnd ipld.Node
+	switch cidLnk.Cid.Prefix().Codec {
+	case cid.DagProtobuf:
+		adl, ok := nd.(ipldprime.ADL)
+		if ok {
+			substrate := adl.Substrate()
+			fnd, err = mdag.ProtoNodeConverter(blk, substrate)
+		} else {
+			fnd, err = mdag.ProtoNodeConverter(blk, nd)
+		}
+	case cid.Raw:
+		fnd, err = mdag.RawNodeConverter(blk, nd)
+	default:
+		log.Error("fuse node was not a supported type")
+		return nil, fuse.ENOTSUP
+	}
+	if err != nil {
+		log.Error("could not convert protobuf or raw node")
+		return nil, fuse.ENOENT
+	}
+
+	return &Node{Ipfs: s.Ipfs, Nd: fnd}, nil
 }
 
 // ReadDirAll reads a particular directory. Disallowed for root.

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	opts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
+	opts "github.com/bittorrent/interface-go-btfs-core/options/namesys"
 	proquint "github.com/bren2010/proquint"
 	path "github.com/ipfs/go-path"
 )

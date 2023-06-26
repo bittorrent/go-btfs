@@ -9,10 +9,10 @@ import (
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	ke "github.com/bittorrent/go-btfs/core/commands/keyencode"
 
-	iface "github.com/TRON-US/interface-go-btfs-core"
-	options "github.com/TRON-US/interface-go-btfs-core/options"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	iface "github.com/bittorrent/interface-go-btfs-core"
+	options "github.com/bittorrent/interface-go-btfs-core/options"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 
 	peer "github.com/libp2p/go-libp2p/core/peer"
 )

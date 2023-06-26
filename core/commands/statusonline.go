@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	onlinePb "github.com/bittorrent/go-btfs-common/protos/online"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/spin"
-	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
+	"github.com/bittorrent/go-btfs/utils"
 	"io"
 	"strconv"
 	"time"
@@ -20,6 +21,11 @@ var ReportOnlineDailyCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		node, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
@@ -57,6 +63,11 @@ var ReportListDailyCmd = &cmds.Command{
 		cmds.StringArg("limit", true, false, "page limit."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
@@ -155,6 +166,11 @@ var TotalDailyCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
@@ -201,6 +217,11 @@ var ReportLastTimeDailyCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		last, err := chain.GetReportOnlineLastTimeDaily()
 		if err != nil {
 			return err

@@ -55,3 +55,7 @@ cmd/btfs/btfs.upgrade
 cmd/btfs/ttt
 cmd/btfs/tt
 cmd/btfs/t*
+cmd/btfs/btfs.1.*
+cmd/btfs/btfs.2.*
+cmd/btfs/btfs.3.*
+btfs.linux.*

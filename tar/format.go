@@ -8,9 +8,9 @@ import (
 	"io"
 	"strings"
 
-	chunker "github.com/TRON-US/go-btfs-chunker"
-	importer "github.com/TRON-US/go-unixfs/importer"
-	uio "github.com/TRON-US/go-unixfs/io"
+	chunker "github.com/bittorrent/go-btfs-chunker"
+	importer "github.com/bittorrent/go-unixfs/importer"
+	uio "github.com/bittorrent/go-unixfs/io"
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log"
 	dag "github.com/ipfs/go-merkledag"

@@ -3,7 +3,7 @@ package libp2p
 import (
 	"context"
 
-	config "github.com/TRON-US/go-btfs-config"
+	config "github.com/bittorrent/go-btfs-config"
 	irouting "github.com/bittorrent/go-btfs/routing"
 	"github.com/ipfs/go-datastore"
 	dht "github.com/libp2p/go-libp2p-kad-dht"

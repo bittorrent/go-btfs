@@ -30,6 +30,11 @@ var VaultDepositCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		argAmount := utils.RemoveSpaceAndComma(req.Arguments[0])
 		amount, ok := new(big.Int).SetString(argAmount, 10)
 		if !ok {

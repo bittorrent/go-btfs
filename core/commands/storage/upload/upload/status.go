@@ -3,15 +3,16 @@ package upload
 import (
 	"context"
 	"fmt"
+	"github.com/bittorrent/go-btfs/utils"
 	"time"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	"github.com/tron-us/go-btfs-common/crypto"
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
-	"github.com/tron-us/go-btfs-common/utils/grpc"
+	"github.com/bittorrent/go-btfs-common/crypto"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	"github.com/bittorrent/go-btfs-common/utils/grpc"
 
 	"github.com/ipfs/go-datastore"
 )
@@ -26,6 +27,11 @@ This command print upload and payment status by the time queried.`,
 		cmds.StringArg("session-id", true, false, "ID for the entire storage upload session.").EnableStdin(),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		status := &StatusRes{}
 		// check and get session info from sessionMap
 		ssId := req.Arguments[0]

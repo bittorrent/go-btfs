@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/utils"
 	"io"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -18,6 +19,11 @@ var ListSendChequesCmd = &cmds.Command{
 		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
 		//fmt.Printf("... token:%+v\n", tokenStr)
 		token, bl := tokencfg.MpTokenAddr[tokenStr]

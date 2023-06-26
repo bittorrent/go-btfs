@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	onlinePb "github.com/tron-us/go-btfs-common/protos/online"
+	onlinePb "github.com/bittorrent/go-btfs-common/protos/online"
+	"github.com/bittorrent/go-btfs/utils"
 	"io"
 	"math/big"
 	"strconv"
@@ -52,6 +53,11 @@ var TotalCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
@@ -120,6 +126,11 @@ var ReportListCmd = &cmds.Command{
 		cmds.StringArg("limit", true, false, "page limit."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
@@ -187,6 +198,11 @@ var LastInfoCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		last, err := chain.GetLastOnline()
 		if err != nil {
 			return err
@@ -230,6 +246,11 @@ var StatusConfigCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		rs, err := chain.GetReportStatus()
 		if err != nil {
 			return err
@@ -257,6 +278,11 @@ var ReportOnlineServerCmd = &cmds.Command{
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
 		node, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err

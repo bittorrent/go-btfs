@@ -8,8 +8,8 @@ import (
 
 	unixtest "github.com/bittorrent/go-btfs/core/coreunix/test"
 
-	uio "github.com/TRON-US/go-unixfs/io"
-	"github.com/TRON-US/interface-go-btfs-core/path"
+	uio "github.com/bittorrent/go-unixfs/io"
+	"github.com/bittorrent/interface-go-btfs-core/path"
 	rs "github.com/klauspost/reedsolomon"
 )
 

@@ -16,18 +16,18 @@ import (
 	"github.com/bittorrent/go-btfs/core/coreunix"
 	ci "github.com/libp2p/go-libp2p/core/crypto"
 
-	chunker "github.com/TRON-US/go-btfs-chunker"
-	files "github.com/TRON-US/go-btfs-files"
-	ecies "github.com/TRON-US/go-eccrypto"
-	mfs "github.com/TRON-US/go-mfs"
-	ft "github.com/TRON-US/go-unixfs"
-	unixfile "github.com/TRON-US/go-unixfs/file"
-	"github.com/TRON-US/go-unixfs/importer/helpers"
-	uio "github.com/TRON-US/go-unixfs/io"
-	ftutil "github.com/TRON-US/go-unixfs/util"
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	options "github.com/TRON-US/interface-go-btfs-core/options"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
+	chunker "github.com/bittorrent/go-btfs-chunker"
+	files "github.com/bittorrent/go-btfs-files"
+	ecies "github.com/bittorrent/go-eccrypto"
+	mfs "github.com/bittorrent/go-mfs"
+	ft "github.com/bittorrent/go-unixfs"
+	unixfile "github.com/bittorrent/go-unixfs/file"
+	"github.com/bittorrent/go-unixfs/importer/helpers"
+	uio "github.com/bittorrent/go-unixfs/io"
+	ftutil "github.com/bittorrent/go-unixfs/util"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	options "github.com/bittorrent/interface-go-btfs-core/options"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 
 	blockservice "github.com/ipfs/go-blockservice"
 	cid "github.com/ipfs/go-cid"
@@ -630,13 +630,13 @@ func (api *UnixfsAPI) RemoveMetadata(ctx context.Context, p path.Path, m string,
 }
 
 func (api *UnixfsAPI) processLink(ctx context.Context, linkres ft.LinkResult, settings *options.UnixfsLsSettings) coreiface.DirEntry {
+	if linkres.Err != nil {
+		return coreiface.DirEntry{Err: linkres.Err}
+	}
+
 	lnk := coreiface.DirEntry{
 		Name: linkres.Link.Name,
 		Cid:  linkres.Link.Cid,
-		Err:  linkres.Err,
-	}
-	if lnk.Err != nil {
-		return lnk
 	}
 
 	switch lnk.Cid.Type() {

@@ -10,10 +10,10 @@ import (
 
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
-	files "github.com/TRON-US/go-btfs-files"
-	coreiface "github.com/TRON-US/interface-go-btfs-core"
-	"github.com/TRON-US/interface-go-btfs-core/options"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	files "github.com/bittorrent/go-btfs-files"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+	"github.com/bittorrent/interface-go-btfs-core/options"
 	mh "github.com/multiformats/go-multihash"
 	pb "gopkg.in/cheggaaa/pb.v1"
 )

@@ -12,9 +12,9 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 
-	iface "github.com/TRON-US/interface-go-btfs-core"
-	hubpb "github.com/tron-us/go-btfs-common/protos/hub"
-	nodepb "github.com/tron-us/go-btfs-common/protos/node"
+	hubpb "github.com/bittorrent/go-btfs-common/protos/hub"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
+	iface "github.com/bittorrent/interface-go-btfs-core"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 )

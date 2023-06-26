@@ -6,8 +6,8 @@ import (
 
 	"gotest.tools/assert"
 
-	Cfg "github.com/TRON-US/go-btfs-config"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	Cfg "github.com/bittorrent/go-btfs-config"
 	"github.com/bittorrent/go-btfs/chain"
 )
 

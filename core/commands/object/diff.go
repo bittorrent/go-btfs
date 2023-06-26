@@ -6,8 +6,8 @@ import (
 
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
-	path "github.com/TRON-US/interface-go-btfs-core/path"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 	"github.com/ipfs/go-merkledag/dagutils"
 )
 

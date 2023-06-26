@@ -11,10 +11,10 @@ import (
 	ncmd "github.com/bittorrent/go-btfs/core/commands/name"
 	ns "github.com/bittorrent/go-btfs/namesys"
 
-	options "github.com/TRON-US/interface-go-btfs-core/options"
-	nsopts "github.com/TRON-US/interface-go-btfs-core/options/namesys"
-	path "github.com/TRON-US/interface-go-btfs-core/path"
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	options "github.com/bittorrent/interface-go-btfs-core/options"
+	nsopts "github.com/bittorrent/interface-go-btfs-core/options/namesys"
+	path "github.com/bittorrent/interface-go-btfs-core/path"
 	cidenc "github.com/ipfs/go-cidutil/cidenc"
 	ipfspath "github.com/ipfs/go-path"
 )

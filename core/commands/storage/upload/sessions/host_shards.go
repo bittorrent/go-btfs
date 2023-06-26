@@ -9,8 +9,8 @@ import (
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	shardpb "github.com/bittorrent/go-btfs/protos/shard"
 
-	guardpb "github.com/tron-us/go-btfs-common/protos/guard"
-	"github.com/tron-us/protobuf/proto"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	"github.com/bittorrent/protobuf/proto"
 
 	"github.com/ipfs/go-datastore"
 	"github.com/looplab/fsm"
