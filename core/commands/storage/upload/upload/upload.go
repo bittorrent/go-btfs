@@ -4,15 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/bittorrent/go-btfs/chain/tokencfg"
-	"github.com/bittorrent/go-btfs/utils"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/utils"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+
 	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
 
 	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/hosts"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/offline"
@@ -111,7 +114,15 @@ Use status command to check for completion:
 	},
 	RunTimeout: 15 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		err := utils.CheckSimpleMode(env)
+		nd, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+
+		if !nd.IsOnline {
+			return coreiface.ErrOffline
+		}
+		err = utils.CheckSimpleMode(env)
 		if err != nil {
 			return err
 		}
