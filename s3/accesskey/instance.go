@@ -147,11 +147,6 @@ func (s *service) update(key string, args *updateArgs) (err error) {
 		return
 	}
 
-	if ack.IsDeleted {
-		err = ErrNotFound
-		return
-	}
-
 	if args.Enable != nil {
 		ack.Enable = *args.Enable
 	}
