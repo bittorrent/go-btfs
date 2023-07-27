@@ -7,6 +7,7 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
+	"github.com/bittorrent/go-btfs/s3/accesskey"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -420,6 +421,12 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	defer func() {
 		statestore.Close()
 	}()
+
+	// access-key init
+	accesskey.InitService(&accesskey.Config{
+		SecretLength: 32,
+		StorePrefix:  "access-keys-test-",
+	}, statestore)
 
 	if SimpleMode == false {
 		chainid, stored, err := getChainID(req, cfg, statestore)
