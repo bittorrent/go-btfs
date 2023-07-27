@@ -1,6 +1,7 @@
 package accesskey
 
 import (
+	"errors"
 	"github.com/bittorrent/go-btfs/s3/utils/random"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/google/uuid"
@@ -73,10 +74,10 @@ func (s *service) Delete(key string) (err error) {
 func (s *service) Get(key string) (ack *AccessKey, err error) {
 	ack = &AccessKey{}
 	err = s.store.Get(s.getStoreKey(key), ack)
-	if err != nil && err != storage.ErrNotFound {
+	if err != nil && !errors.Is(err, storage.ErrNotFound) {
 		return
 	}
-	if err == storage.ErrNotFound || ack.IsDeleted {
+	if errors.Is(err, storage.ErrNotFound) || ack.IsDeleted {
 		err = ErrNotFound
 	}
 	return
@@ -139,10 +140,10 @@ func (s *service) update(key string, args *updateArgs) (err error) {
 	stk := s.getStoreKey(key)
 
 	err = s.store.Get(stk, ack)
-	if err != nil && err != storage.ErrNotFound {
+	if err != nil && !errors.Is(err, storage.ErrNotFound) {
 		return
 	}
-	if err == storage.ErrNotFound || ack.IsDeleted {
+	if errors.Is(err, storage.ErrNotFound) || ack.IsDeleted {
 		err = ErrNotFound
 		return
 	}

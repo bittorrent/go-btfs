@@ -21,17 +21,6 @@ type AccessKey struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type Bucket struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Owner     string `json:"owner"`
-	ACL       string `json:"acl"`
-	CID       string `json:"cid"`
-	IsDeleted bool   `json:"is_deleted"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
-}
-
 type Service interface {
 	Generate() (ack *AccessKey, err error)
 	Enable(key string) (err error)
