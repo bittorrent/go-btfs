@@ -426,7 +426,7 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	accesskey.InitService(
 		&accesskey.Config{
 			SecretLength: 32,
-			StorePrefix:  "access-keys-",
+			StorePrefix:  "access-keys:",
 		},
 		statestore,
 	)
