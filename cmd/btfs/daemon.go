@@ -423,10 +423,13 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	}()
 
 	// access-key init
-	accesskey.InitService(&accesskey.Config{
-		SecretLength: 32,
-		StorePrefix:  "access-keys-test-",
-	}, statestore)
+	accesskey.InitService(
+		&accesskey.Config{
+			SecretLength: 32,
+			StorePrefix:  "access-keys-",
+		},
+		statestore,
+	)
 
 	if SimpleMode == false {
 		chainid, stored, err := getChainID(req, cfg, statestore)
