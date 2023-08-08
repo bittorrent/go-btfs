@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-var ErrNotFound = errors.New("not found")
+var ErrNotFound = errors.New("key is not found")
 
 type Config struct {
 	SecretLength int
