@@ -2,7 +2,7 @@ package set
 
 import (
 	"fmt"
-	"github.com/vmihailenco/msgpack/v5"
+	"github.com/vmihailenco/msgpack/v4"
 	"sort"
 
 	jsoniter "github.com/json-iterator/go"

@@ -1,4 +1,4 @@
-package s3action
+package action
 
 import "testing"
 
