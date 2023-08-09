@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/bittorrent/go-btfs/s3/apierrors"
+	"github.com/bittorrent/go-btfs/s3d/apierrors"
 	"net/http"
 )
 

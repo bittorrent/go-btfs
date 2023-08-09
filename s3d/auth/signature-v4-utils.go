@@ -23,8 +23,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bittorrent/go-btfs/s3/apierrors"
-	"github.com/bittorrent/go-btfs/s3/consts"
+	"github.com/bittorrent/go-btfs/s3d/apierrors"
+	"github.com/bittorrent/go-btfs/s3d/consts"
 )
 
 // http Header "x-amz-content-sha256" == "UNSIGNED-PAYLOAD" indicates that the
@@ -39,7 +39,7 @@ func isValidRegion(reqRegion string, confRegion string) bool {
 	if confRegion == "US" {
 		confRegion = consts.DefaultRegion
 	}
-	// Some older s3 clients set region as "US" instead of
+	// Some older s3d clients set region as "US" instead of
 	// globalDefaultRegion, handle it.
 	if reqRegion == "US" {
 		reqRegion = consts.DefaultRegion

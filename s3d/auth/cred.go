@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/bittorrent/go-btfs/s3/apierrors"
+	"github.com/bittorrent/go-btfs/s3d/apierrors"
 	"time"
 )
 
@@ -44,7 +44,7 @@ func CheckAccessKeyValid(accessKey string) (*Credentials, apierrors.ErrorCode) {
 const (
 	// Minimum length for  access key.
 	accessKeyMinLen = 3
-	
+
 	// Maximum length for  access key.
 	// There is no max length enforcement for access keys
 	accessKeyMaxLen = 20

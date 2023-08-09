@@ -24,10 +24,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bittorrent/go-btfs/s3/apierrors"
-	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/set"
-	"github.com/bittorrent/go-btfs/s3/utils"
+	"github.com/bittorrent/go-btfs/s3d/apierrors"
+	"github.com/bittorrent/go-btfs/s3d/consts"
+	"github.com/bittorrent/go-btfs/s3d/set"
+	"github.com/bittorrent/go-btfs/s3d/utils"
 )
 
 // AWS Signature Version '4' constants.
@@ -40,7 +40,7 @@ const (
 type serviceType string
 
 const (
-	ServiceS3 serviceType = "s3"
+	ServiceS3 serviceType = "s3d"
 	////ServiceSTS STS
 	//ServiceSTS serviceType = "sts"
 )

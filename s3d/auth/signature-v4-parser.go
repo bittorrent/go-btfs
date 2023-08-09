@@ -22,8 +22,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bittorrent/go-btfs/s3/apierrors"
-	"github.com/bittorrent/go-btfs/s3/consts"
+	"github.com/bittorrent/go-btfs/s3d/apierrors"
+	"github.com/bittorrent/go-btfs/s3d/consts"
 )
 
 // credentialHeader data type represents structured form of Credential
