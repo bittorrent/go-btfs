@@ -18,6 +18,7 @@
 package auth
 
 import (
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -282,4 +283,35 @@ func parseSignV4(v4Auth string, region string, stype serviceType) (sv signValues
 
 	// Return the structure here.
 	return signV4Values, apierrors.ErrNone
+}
+
+func GetReqAccessKeyV4(r *http.Request, region string, stype serviceType) (Credentials, apierrors.ErrorCode) {
+	ch, s3Err := parseCredentialHeader("Credential="+r.Form.Get(consts.AmzCredential), region, stype)
+	if s3Err != apierrors.ErrNone {
+		// Strip off the Algorithm prefix.
+		v4Auth := strings.TrimPrefix(r.Header.Get("Authorization"), signV4Algorithm)
+		authFields := strings.Split(strings.TrimSpace(v4Auth), ",")
+		if len(authFields) != 3 {
+			return Credentials{}, apierrors.ErrMissingFields
+		}
+		ch, s3Err = parseCredentialHeader(authFields[0], region, stype)
+		if s3Err != apierrors.ErrNone {
+			return Credentials{}, s3Err
+		}
+	}
+	// TODO: Why should a temporary user be replaced with the parent user's account name?
+	//cerd, _ := s.Iam.GetUser(r.Context(), ch.accessKey)
+	//if cerd.IsTemp() {
+	//	ch.accessKey = cerd.ParentUser
+	//}
+	return checkAccessKeyValid(ch.accessKey)
+}
+
+// check if the access key is valid and recognized, additionally
+func checkAccessKeyValid(accessKey string) (Credentials, apierrors.ErrorCode) {
+
+	//todo 根据accessKey获取accessKey
+	cred := Credentials{}
+
+	return cred, apierrors.ErrNone
 }

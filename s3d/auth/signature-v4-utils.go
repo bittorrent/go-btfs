@@ -175,3 +175,46 @@ func isRequestPresignedSignatureV4(r *http.Request) bool {
 	_, ok := r.URL.Query()["X-Amz-Credential"]
 	return ok
 }
+
+// SkipContentSha256Cksum returns true if caller needs to skip
+// payload checksum, false if not.
+func SkipContentSha256Cksum(r *http.Request) bool {
+	var (
+		v  []string
+		ok bool
+	)
+
+	if isRequestPresignedSignatureV4(r) {
+		v, ok = r.Form[consts.AmzContentSha256]
+		if !ok {
+			v, ok = r.Header[consts.AmzContentSha256]
+		}
+	} else {
+		v, ok = r.Header[consts.AmzContentSha256]
+	}
+
+	// Skip if no header was set.
+	if !ok {
+		return true
+	}
+
+	// If x-amz-content-sha256 is set and the value is not
+	// 'UNSIGNED-PAYLOAD' we should validate the content sha256.
+	switch v[0] {
+	case unsignedPayload:
+		return true
+	case consts.EmptySHA256:
+		// some broken clients set empty-sha256
+		// with > 0 content-length in the body,
+		// we should skip such clients and allow
+		// blindly such insecure clients only if
+		// S3 strict compatibility is disabled.
+		if r.ContentLength > 0 {
+			// We return true only in situations when
+			// deployment has asked MinIO to allow for
+			// such broken clients and content-length > 0.
+			return true
+		}
+	}
+	return false
+}

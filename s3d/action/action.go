@@ -1,5 +1,7 @@
 package action
 
+import "github.com/bittorrent/go-btfs/s3d/set"
+
 type Action string
 
 // ActionSet - set of actions.
@@ -102,8 +104,24 @@ func (action Action) IsValid() bool {
 
 // Match - matches action name with action patter.
 func (action Action) Match(a Action) bool {
-	//return set.Match(string(action), string(a))
-	return true
+	return set.Match(string(action), string(a))
+	//return true
+}
+
+// List of all supported object actions.
+var supportedBucketActions = map[Action]struct{}{
+	CreateBucketAction: {},
+	HeadBucketAction:   {},
+	ListBucketAction:   {},
+	DeleteBucketAction: {},
+	PutBucketAclAction: {},
+	GetBucketAclAction: {},
+}
+
+// IsBucketAction - returns whether action is bucket type or not.
+func (action Action) IsBucketAction() bool {
+	_, ok := supportedBucketActions[action]
+	return ok
 }
 
 // List of all supported object actions.
@@ -128,147 +146,3 @@ func (action Action) IsObjectAction() bool {
 	_, ok := supportedObjectActions[action]
 	return ok
 }
-
-//func createActionConditionKeyMap() map[Action]condition.KeySet {
-//	commonKeys := []condition.Key{}
-//	for _, keyName := range condition.CommonKeys {
-//		commonKeys = append(commonKeys, keyName.ToKey())
-//	}
-//
-//	return map[Action]condition.KeySet{
-//		AbortMultipartUploadAction: condition.NewKeySet(commonKeys...),
-//
-//		CreateBucketAction: condition.NewKeySet(commonKeys...),
-//
-//		DeleteObjectAction: condition.NewKeySet(commonKeys...),
-//
-//		GetBucketLocationAction: condition.NewKeySet(commonKeys...),
-//
-//		GetBucketPolicyStatusAction: condition.NewKeySet(commonKeys...),
-//
-//		GetObjectAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3XAmzServerSideEncryption.ToKey(),
-//				condition.S3XAmzServerSideEncryptionCustomerAlgorithm.ToKey(),
-//			}, commonKeys...)...),
-//
-//		HeadBucketAction: condition.NewKeySet(commonKeys...),
-//
-//		ListAllMyBucketsAction: condition.NewKeySet(commonKeys...),
-//
-//		ListBucketAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3Prefix.ToKey(),
-//				condition.S3Delimiter.ToKey(),
-//				condition.S3MaxKeys.ToKey(),
-//			}, commonKeys...)...),
-//
-//		ListBucketVersionsAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3Prefix.ToKey(),
-//				condition.S3Delimiter.ToKey(),
-//				condition.S3MaxKeys.ToKey(),
-//			}, commonKeys...)...),
-//
-//		ListBucketMultipartUploadsAction: condition.NewKeySet(commonKeys...),
-//
-//		ListenNotificationAction: condition.NewKeySet(commonKeys...),
-//
-//		ListenBucketNotificationAction: condition.NewKeySet(commonKeys...),
-//
-//		ListMultipartUploadPartsAction: condition.NewKeySet(commonKeys...),
-//
-//		PutObjectAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3XAmzCopySource.ToKey(),
-//				condition.S3XAmzServerSideEncryption.ToKey(),
-//				condition.S3XAmzServerSideEncryptionCustomerAlgorithm.ToKey(),
-//				condition.S3XAmzMetadataDirective.ToKey(),
-//				condition.S3XAmzStorageClass.ToKey(),
-//				condition.S3ObjectLockRetainUntilDate.ToKey(),
-//				condition.S3ObjectLockMode.ToKey(),
-//				condition.S3ObjectLockLegalHold.ToKey(),
-//				condition.S3RequestObjectTagKeys.ToKey(),
-//				condition.S3RequestObjectTag.ToKey(),
-//			}, commonKeys...)...),
-//
-//		// https://docs.aws.amazon.com/AmazonS3/latest/dev/list_amazons3.html
-//		// LockLegalHold is not supported with PutObjectRetentionAction
-//		PutObjectRetentionAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3ObjectLockRemainingRetentionDays.ToKey(),
-//				condition.S3ObjectLockRetainUntilDate.ToKey(),
-//				condition.S3ObjectLockMode.ToKey(),
-//			}, commonKeys...)...),
-//
-//		GetObjectRetentionAction: condition.NewKeySet(commonKeys...),
-//		PutObjectLegalHoldAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3ObjectLockLegalHold.ToKey(),
-//			}, commonKeys...)...),
-//		GetObjectLegalHoldAction: condition.NewKeySet(commonKeys...),
-//
-//		// https://docs.aws.amazon.com/AmazonS3/latest/dev/list_amazons3.html
-//		BypassGovernanceRetentionAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3ObjectLockRemainingRetentionDays.ToKey(),
-//				condition.S3ObjectLockRetainUntilDate.ToKey(),
-//				condition.S3ObjectLockMode.ToKey(),
-//				condition.S3ObjectLockLegalHold.ToKey(),
-//			}, commonKeys...)...),
-//
-//		GetBucketObjectLockConfigurationAction: condition.NewKeySet(commonKeys...),
-//		PutBucketObjectLockConfigurationAction: condition.NewKeySet(commonKeys...),
-//		GetBucketTaggingAction:                 condition.NewKeySet(commonKeys...),
-//		PutBucketTaggingAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3RequestObjectTagKeys.ToKey(),
-//				condition.S3RequestObjectTag.ToKey(),
-//			}, commonKeys...)...),
-//		PutObjectTaggingAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3RequestObjectTagKeys.ToKey(),
-//				condition.S3RequestObjectTag.ToKey(),
-//			}, commonKeys...)...),
-//		GetObjectTaggingAction: condition.NewKeySet(commonKeys...),
-//		DeleteObjectTaggingAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3RequestObjectTagKeys.ToKey(),
-//				condition.S3RequestObjectTag.ToKey(),
-//			}, commonKeys...)...),
-//		PutObjectVersionTaggingAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3VersionID.ToKey(),
-//				condition.S3RequestObjectTagKeys.ToKey(),
-//				condition.S3RequestObjectTag.ToKey(),
-//			}, commonKeys...)...),
-//		GetObjectVersionAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3VersionID.ToKey(),
-//			}, commonKeys...)...),
-//		GetObjectVersionTaggingAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3VersionID.ToKey(),
-//			}, commonKeys...)...),
-//		DeleteObjectVersionAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3VersionID.ToKey(),
-//			}, commonKeys...)...),
-//		DeleteObjectVersionTaggingAction: condition.NewKeySet(
-//			append([]condition.Key{
-//				condition.S3VersionID.ToKey(),
-//				condition.S3RequestObjectTagKeys.ToKey(),
-//				condition.S3RequestObjectTag.ToKey(),
-//			}, commonKeys...)...),
-//		GetReplicationConfigurationAction:    condition.NewKeySet(commonKeys...),
-//		PutReplicationConfigurationAction:    condition.NewKeySet(commonKeys...),
-//		ReplicateObjectAction:                condition.NewKeySet(commonKeys...),
-//		ReplicateDeleteAction:                condition.NewKeySet(commonKeys...),
-//		ReplicateTagsAction:                  condition.NewKeySet(commonKeys...),
-//		GetObjectVersionForReplicationAction: condition.NewKeySet(commonKeys...),
-//		RestoreObjectAction:                  condition.NewKeySet(commonKeys...),
-//	}
-//}
-//
-//// ActionConditionKeyMap - holds mapping of supported condition key for an action.
-//var ActionConditionKeyMap = createActionConditionKeyMap()

@@ -1,30 +1,28 @@
 package auth
 
 import (
+	"context"
+	s3action "github.com/bittorrent/go-btfs/s3d/action"
 	"github.com/bittorrent/go-btfs/s3d/apierrors"
+	"github.com/bittorrent/go-btfs/s3d/store"
 	"net/http"
 )
 
 type service struct {
+	au    *AuthSys
+	bmSys *store.BucketMetadataSys
 }
 
-func newService() (svc *service, err error) {
-	svc = &service{}
-	return
-}
-
-func (s *service) CheckSignatureV4Verify(r *http.Request, region string, stype serviceType) (s3Error apierrors.ErrorCode) {
-	sha256sum := getContentSha256Cksum(r, stype)
-	switch {
-	case isRequestSignatureV4(r):
-		return DoesSignatureMatch(sha256sum, r, region, stype)
-	case isRequestPresignedSignatureV4(r):
-		return DoesPresignedSignatureMatch(sha256sum, r, region, stype)
-	default:
-		return apierrors.ErrAccessDenied
+func newService(bmSys *store.BucketMetadataSys) (svc *service, err error) {
+	svc = &service{
+		au:    NewAuthSys(),
+		bmSys: bmSys,
 	}
+	return
 }
 
-func (s *service) CheckACL(r *http.Request, region string, stype serviceType) (s3Error apierrors.ErrorCode) {
-	return
+func (s *service) CheckSignatureAndAcl(ctx context.Context, r *http.Request, action s3action.Action, bucketName string) (
+	cred Credentials, s3Error apierrors.ErrorCode) {
+
+	return s.au.CheckRequestAuthTypeCredential(ctx, r, action, bucketName, s.bmSys)
 }

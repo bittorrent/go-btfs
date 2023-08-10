@@ -6,6 +6,5 @@ import (
 )
 
 type Service interface {
-	CheckSignatureV4Verify(r *http.Request, region string, stype serviceType) (s3Error apierrors.ErrorCode)
-	CheckACL(r *http.Request, region string, stype serviceType) (s3Error apierrors.ErrorCode)
+	CheckSignatureAndAcl(r *http.Request, region string, stype serviceType) (s3Error apierrors.ErrorCode)
 }
