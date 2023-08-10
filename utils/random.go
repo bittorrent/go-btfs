@@ -1,4 +1,4 @@
-package random
+package utils
 
 import (
 	"math/rand"
@@ -11,7 +11,7 @@ func init() {
 
 var letters = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-func NewString(l int) string {
+func RandomString(l int) string {
 	b := make([]rune, l)
 	for i := range b {
 		b[i] = letters[rand.Intn(len(letters))]

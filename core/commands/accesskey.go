@@ -4,7 +4,7 @@ import (
 	"errors"
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
-	"github.com/bittorrent/go-btfs/s3/accesskey"
+	"github.com/bittorrent/go-btfs/s3/handlers/accesskey"
 )
 
 var AccessKeyCmd = &cmds.Command{
@@ -13,7 +13,6 @@ var AccessKeyCmd = &cmds.Command{
 		ShortDescription: `
 `,
 	},
-
 	Subcommands: map[string]*cmds.Command{
 		"generate": accessKeyGenerateCmd,
 		"enable":   accessKeyEnableCmd,
@@ -23,6 +22,7 @@ var AccessKeyCmd = &cmds.Command{
 		"get":      accessKeyGetCmd,
 		"list":     accessKeyListCmd,
 	},
+	NoLocal: true,
 }
 
 func checkDaemon(env cmds.Environment) (err error) {

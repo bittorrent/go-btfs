@@ -7,7 +7,8 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
-	"github.com/bittorrent/go-btfs/s3/accesskey"
+	"github.com/bittorrent/go-btfs/s3/handlers/accesskey"
+	s3statestore "github.com/bittorrent/go-btfs/s3/handlers/statestore"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -423,13 +424,7 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	}()
 
 	// access-key init
-	accesskey.InitService(
-		&accesskey.Config{
-			SecretLength: 32,
-			StorePrefix:  "access-keys:",
-		},
-		statestore,
-	)
+	accesskey.InitInstance(s3statestore.NewStorageStateStoreProxy(statestore))
 
 	if SimpleMode == false {
 		chainid, stored, err := getChainID(req, cfg, statestore)
