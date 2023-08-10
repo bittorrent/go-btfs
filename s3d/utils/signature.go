@@ -7,8 +7,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/yann-y/fds/internal/consts"
-	"github.com/yann-y/fds/internal/iam/auth"
 	"io"
 	"net/http"
 	"regexp"
@@ -17,6 +15,8 @@ import (
 	"testing"
 	"time"
 	"unicode/utf8"
+
+	"github.com/bittorrent/go-btfs/s3d/consts"
 )
 
 var ignoredHeaders = map[string]bool{
@@ -41,8 +41,8 @@ func MustNewSignedV4Request(method string, urlStr string, contentLength int64, b
 	if err != nil {
 		t.Fatalf("newTestRequest fail err:%v", err)
 	}
-	cred := &auth.Credentials{AccessKey: accessKey, SecretKey: secretKey}
-	if err := SignRequestV4(req, cred.AccessKey, cred.SecretKey, st); err != nil {
+
+	if err := SignRequestV4(req, accessKey, secretKey, st); err != nil {
 		t.Fatalf("Unable to inititalized new signed http request %s", err)
 	}
 	return req
