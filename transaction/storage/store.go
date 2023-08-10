@@ -1,6 +1,9 @@
 package storage
 
 import (
+	"context"
+	"encoding"
+	"encoding/json"
 	"errors"
 	"io"
 
@@ -158,6 +161,19 @@ var (
 //	SubscribePull(ctx context.Context, bin uint8, since, until uint64) (c <-chan Descriptor, closed <-chan struct{}, stop func())
 //}
 
+// Entry 特别注意：Entry是否需要专门处理下，在ReadAllChan解析出来数据的时候
+type Entry struct {
+	Key   string
+	Value []byte
+}
+
+func (e *Entry) UnmarshalValue(value interface{}) error {
+	if unmarshaler, ok := value.(encoding.BinaryUnmarshaler); ok {
+		return unmarshaler.UnmarshalBinary(e.Value)
+	}
+	return json.Unmarshal(e.Value, value)
+}
+
 // StateStorer defines methods required to get, set, delete values for different keys
 // and close the underlying resources.
 type StateStorer interface {
@@ -165,6 +181,7 @@ type StateStorer interface {
 	Put(key string, i interface{}) (err error)
 	Delete(key string) (err error)
 	Iterate(prefix string, iterFunc StateIterFunc) (err error)
+	ReadAllChan(ctx context.Context, prefix string, seekKey string) (<-chan *Entry, error)
 	// DB returns the underlying DB storage.
 	DB() *leveldb.DB
 	io.Closer
