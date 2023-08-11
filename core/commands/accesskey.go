@@ -4,7 +4,7 @@ import (
 	"errors"
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
-	"github.com/bittorrent/go-btfs/s3/handlers/accesskey"
+	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 )
 
 var AccessKeyCmd = &cmds.Command{

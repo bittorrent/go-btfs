@@ -1,30 +1,12 @@
-package handlers
+package services
 
 import (
 	"errors"
-	"io"
+	"net/http"
 	"time"
 )
 
-type FileStorer interface {
-	AddWithOpts(r io.Reader, pin bool, rawLeaves bool) (hash string, err error)
-	Remove(hash string) (removed bool)
-	Cat(path string) (readCloser io.ReadCloser, err error)
-	Unpin(path string) (err error)
-}
-
-type StateStorer interface {
-	Get(key string, i interface{}) (err error)
-	Put(key string, i interface{}) (err error)
-	Delete(key string) (err error)
-	Iterate(prefix string, iterFunc StateStoreIterFunc) (err error)
-}
-
-type StateStoreIterFunc func(key, value []byte) (stop bool, err error)
-
-var ErrStateStoreNotFound = errors.New("not found")
-
-type AccessKeyer interface {
+type AccessKeyService interface {
 	Generate() (record *AccessKeyRecord, err error)
 	Enable(key string) (err error)
 	Disable(key string) (err error)
@@ -44,3 +26,21 @@ type AccessKeyRecord struct {
 }
 
 var ErrAccessKeyIsNotFound = errors.New("access-key is not found")
+
+type BucketService interface {
+}
+
+type ObjectService interface {
+}
+
+type MultipartService interface {
+}
+
+type SignService interface {
+	Verify(r *http.Request) (err error)
+}
+
+var (
+	ErrSignOutdated      = errors.New("sign is outdated")
+	ErrSignKeyIsNotFound = errors.New("key is not found")
+)

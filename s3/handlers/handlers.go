@@ -4,6 +4,7 @@ package handlers
 import (
 	"github.com/bittorrent/go-btfs/s3"
 	"github.com/bittorrent/go-btfs/s3/consts"
+	"github.com/bittorrent/go-btfs/s3/services"
 	"github.com/rs/cors"
 	"net/http"
 )
@@ -51,19 +52,25 @@ type Handlers struct {
 	corsAllowOrigins []string
 	corsAllowHeaders []string
 	corsAllowMethods []string
-	fileStore        FileStorer
-	stateStore       StateStorer
-	accessKey        AccessKeyer
+	authSvc          services.SignService
+	bucketSvc        services.BucketService
+	objectSvc        services.ObjectService
+	multipartSvc     services.MultipartService
 }
 
-func NewHandlers(fileStore FileStorer, stateStore StateStorer, accessKey AccessKeyer, options ...Option) (handlers *Handlers) {
+func NewHandlers(
+	authSvc services.SignService, bucketSvc services.BucketService,
+	objectSvc services.ObjectService, multipartSvc services.MultipartService,
+	options ...Option,
+) (handlers *Handlers) {
 	handlers = &Handlers{
 		corsAllowOrigins: defaultCorsAllowOrigins,
 		corsAllowHeaders: defaultCorsAllowHeaders,
 		corsAllowMethods: defaultCorsAllowMethods,
-		fileStore:        fileStore,
-		stateStore:       stateStore,
-		accessKey:        accessKey,
+		authSvc:          authSvc,
+		bucketSvc:        bucketSvc,
+		objectSvc:        objectSvc,
+		multipartSvc:     multipartSvc,
 	}
 	for _, option := range options {
 		option(handlers)

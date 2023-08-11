@@ -2,7 +2,8 @@ package accesskey
 
 import (
 	"errors"
-	"github.com/bittorrent/go-btfs/s3/handlers"
+	"github.com/bittorrent/go-btfs/s3/providers"
+	"github.com/bittorrent/go-btfs/s3/services"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/bittorrent/go-btfs/utils"
 	"github.com/google/uuid"
@@ -15,31 +16,31 @@ const (
 	defaultStoreKeyPrefix = "access-keys:"
 )
 
-var _ handlers.AccessKeyer = (*AccessKey)(nil)
+var _ services.AccessKeyService = (*AccessKey)(nil)
 
 type AccessKey struct {
+	providers      providers.Providerser
 	secretLength   int
 	storeKeyPrefix string
-	stateStore     handlers.StateStorer
 	locks          sync.Map
 }
 
-func NewAccessKey(store handlers.StateStorer, options ...Option) (ack *AccessKey) {
-	ack = &AccessKey{
+func NewAccessKey(providers providers.Providerser, options ...Option) services.AccessKeyService {
+	ack := &AccessKey{
+		providers:      providers,
 		secretLength:   defaultSecretLength,
 		storeKeyPrefix: defaultStoreKeyPrefix,
-		stateStore:     store,
 		locks:          sync.Map{},
 	}
 	for _, option := range options {
 		option(ack)
 	}
-	return
+	return ack
 }
 
-func (ack *AccessKey) Generate() (record *handlers.AccessKeyRecord, err error) {
+func (ack *AccessKey) Generate() (record *services.AccessKeyRecord, err error) {
 	now := time.Now()
-	record = &handlers.AccessKeyRecord{
+	record = &services.AccessKeyRecord{
 		Key:       ack.newKey(),
 		Secret:    ack.newSecret(),
 		Enable:    true,
@@ -47,7 +48,7 @@ func (ack *AccessKey) Generate() (record *handlers.AccessKeyRecord, err error) {
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	err = ack.stateStore.Put(ack.getStoreKey(record.Key), record)
+	err = ack.providers.GetStateStore().Put(ack.getStoreKey(record.Key), record)
 	return
 }
 
@@ -83,22 +84,22 @@ func (ack *AccessKey) Delete(key string) (err error) {
 	return
 }
 
-func (ack *AccessKey) Get(key string) (record *handlers.AccessKeyRecord, err error) {
-	record = &handlers.AccessKeyRecord{}
-	err = ack.stateStore.Get(ack.getStoreKey(key), record)
-	if err != nil && !errors.Is(err, handlers.ErrStateStoreNotFound) {
+func (ack *AccessKey) Get(key string) (record *services.AccessKeyRecord, err error) {
+	record = &services.AccessKeyRecord{}
+	err = ack.providers.GetStateStore().Get(ack.getStoreKey(key), record)
+	if err != nil && !errors.Is(err, providers.ErrStateStoreNotFound) {
 		return
 	}
-	if errors.Is(err, handlers.ErrStateStoreNotFound) || record.IsDeleted {
-		err = handlers.ErrAccessKeyIsNotFound
+	if errors.Is(err, providers.ErrStateStoreNotFound) || record.IsDeleted {
+		err = services.ErrAccessKeyIsNotFound
 	}
 	return
 }
 
-func (ack *AccessKey) List() (list []*handlers.AccessKeyRecord, err error) {
-	err = ack.stateStore.Iterate(ack.storeKeyPrefix, func(key, _ []byte) (stop bool, er error) {
-		record := &handlers.AccessKeyRecord{}
-		er = ack.stateStore.Get(string(key), record)
+func (ack *AccessKey) List() (list []*services.AccessKeyRecord, err error) {
+	err = ack.providers.GetStateStore().Iterate(ack.storeKeyPrefix, func(key, _ []byte) (stop bool, er error) {
+		record := &services.AccessKeyRecord{}
+		er = ack.providers.GetStateStore().Get(string(key), record)
 		if er != nil {
 			return
 		}
@@ -148,15 +149,15 @@ func (ack *AccessKey) update(key string, args *updateArgs) (err error) {
 	unlock := ack.lock(key)
 	defer unlock()
 
-	record := &handlers.AccessKeyRecord{}
+	record := &services.AccessKeyRecord{}
 	stk := ack.getStoreKey(key)
 
-	err = ack.stateStore.Get(stk, record)
+	err = ack.providers.GetStateStore().Get(stk, record)
 	if err != nil && !errors.Is(err, storage.ErrNotFound) {
 		return
 	}
 	if errors.Is(err, storage.ErrNotFound) || record.IsDeleted {
-		err = handlers.ErrAccessKeyIsNotFound
+		err = services.ErrAccessKeyIsNotFound
 		return
 	}
 
@@ -172,7 +173,7 @@ func (ack *AccessKey) update(key string, args *updateArgs) (err error) {
 
 	record.UpdatedAt = time.Now()
 
-	err = ack.stateStore.Put(stk, record)
+	err = ack.providers.GetStateStore().Put(stk, record)
 
 	return
 }
