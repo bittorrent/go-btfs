@@ -1,4 +1,4 @@
-package services
+package handlers
 
 import (
 	"errors"

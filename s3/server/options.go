@@ -1,4 +1,4 @@
-package s3
+package server
 
 type Option func(*Server)
 

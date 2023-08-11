@@ -1,4 +1,4 @@
-package s3
+package server
 
 import (
 	"net/http"
@@ -6,5 +6,6 @@ import (
 
 type Handlerser interface {
 	Cors(handler http.Handler) http.Handler
+	Sign(handler http.Handler) http.Handler
 	PutObjectHandler(w http.ResponseWriter, r *http.Request)
 }

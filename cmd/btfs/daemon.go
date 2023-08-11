@@ -7,10 +7,10 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
-	"github.com/bittorrent/go-btfs/s3"
+	"github.com/bittorrent/go-btfs/s3/providers"
 	"github.com/bittorrent/go-btfs/s3/providers/filestore"
-	"github.com/bittorrent/go-btfs/s3/providers/providers"
 	s3statestore "github.com/bittorrent/go-btfs/s3/providers/statestore"
+	"github.com/bittorrent/go-btfs/s3/server"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"io/ioutil"
 	"math/rand"
@@ -1474,6 +1474,6 @@ func buildS3Providers(storageStore storage.StateStorer) *providers.Providers {
 	)
 }
 
-func buildS3Server(providers providers.Providers, address string, corsAllowHeaders []string) *s3.Server {
+func buildS3Server(providers providers.Providers, address string, corsAllowHeaders []string) *server.Server {
 
 }

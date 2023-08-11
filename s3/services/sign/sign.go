@@ -1,19 +1,23 @@
 package sign
 
 import (
-	"github.com/bittorrent/go-btfs/s3/providers"
+	"github.com/bittorrent/go-btfs/s3/handlers"
+	"github.com/bittorrent/go-btfs/s3/services"
 	"net/http"
 )
 
+var _ handlers.SignService = (*Sign)(nil)
+
 type Sign struct {
-	providers providers.Providerser
+	providers    services.Providerser
+	accesskeySvc handlers.AccessKeyService
 }
 
-func NewSign(providers providers.Providerser, options ...Option) (sign *Sign) {
+func NewSign(providers services.Providerser, accesskeySvc handlers.AccessKeyService, options ...Option) (sign *Sign) {
 	sign = &Sign{
-		providers: providers,
+		providers:    providers,
+		accesskeySvc: accesskeySvc,
 	}
-
 	for _, option := range options {
 		option(sign)
 	}

@@ -2,9 +2,8 @@
 package handlers
 
 import (
-	"github.com/bittorrent/go-btfs/s3"
-	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/services"
+	"github.com/bittorrent/go-btfs/s3/common/consts"
+	"github.com/bittorrent/go-btfs/s3/server"
 	"github.com/rs/cors"
 	"net/http"
 )
@@ -46,28 +45,28 @@ var (
 	}
 )
 
-var _ s3.Handlerser = (*Handlers)(nil)
+var _ server.Handlerser = (*Handlers)(nil)
 
 type Handlers struct {
 	corsAllowOrigins []string
 	corsAllowHeaders []string
 	corsAllowMethods []string
-	authSvc          services.SignService
-	bucketSvc        services.BucketService
-	objectSvc        services.ObjectService
-	multipartSvc     services.MultipartService
+	signSvc          SignService
+	bucketSvc        BucketService
+	objectSvc        ObjectService
+	multipartSvc     MultipartService
 }
 
 func NewHandlers(
-	authSvc services.SignService, bucketSvc services.BucketService,
-	objectSvc services.ObjectService, multipartSvc services.MultipartService,
+	signSvc SignService, bucketSvc BucketService,
+	objectSvc ObjectService, multipartSvc MultipartService,
 	options ...Option,
 ) (handlers *Handlers) {
 	handlers = &Handlers{
 		corsAllowOrigins: defaultCorsAllowOrigins,
 		corsAllowHeaders: defaultCorsAllowHeaders,
 		corsAllowMethods: defaultCorsAllowMethods,
-		authSvc:          authSvc,
+		signSvc:          signSvc,
 		bucketSvc:        bucketSvc,
 		objectSvc:        objectSvc,
 		multipartSvc:     multipartSvc,
@@ -86,6 +85,10 @@ func (s *Handlers) Cors(handler http.Handler) http.Handler {
 		ExposedHeaders:   s.corsAllowHeaders,
 		AllowCredentials: true,
 	}).Handler(handler)
+}
+
+func (s *Handlers) Sign(handler http.Handler) http.Handler {
+	return nil
 }
 
 func (s *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {

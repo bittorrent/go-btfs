@@ -2,7 +2,7 @@ package accesskey
 
 import (
 	"errors"
-	"github.com/bittorrent/go-btfs/s3/providers"
+	"github.com/bittorrent/go-btfs/s3/handlers"
 	"github.com/bittorrent/go-btfs/s3/services"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/bittorrent/go-btfs/utils"
@@ -16,17 +16,17 @@ const (
 	defaultStoreKeyPrefix = "access-keys:"
 )
 
-var _ services.AccessKeyService = (*AccessKey)(nil)
+var _ handlers.AccessKeyService = (*AccessKey)(nil)
 
 type AccessKey struct {
-	providers      providers.Providerser
+	providers      services.Providerser
 	secretLength   int
 	storeKeyPrefix string
 	locks          sync.Map
 }
 
-func NewAccessKey(providers providers.Providerser, options ...Option) services.AccessKeyService {
-	ack := &AccessKey{
+func NewAccessKey(providers services.Providerser, options ...Option) (ack *AccessKey) {
+	ack = &AccessKey{
 		providers:      providers,
 		secretLength:   defaultSecretLength,
 		storeKeyPrefix: defaultStoreKeyPrefix,
@@ -38,9 +38,9 @@ func NewAccessKey(providers providers.Providerser, options ...Option) services.A
 	return ack
 }
 
-func (ack *AccessKey) Generate() (record *services.AccessKeyRecord, err error) {
+func (ack *AccessKey) Generate() (record *handlers.AccessKeyRecord, err error) {
 	now := time.Now()
-	record = &services.AccessKeyRecord{
+	record = &handlers.AccessKeyRecord{
 		Key:       ack.newKey(),
 		Secret:    ack.newSecret(),
 		Enable:    true,
@@ -84,21 +84,21 @@ func (ack *AccessKey) Delete(key string) (err error) {
 	return
 }
 
-func (ack *AccessKey) Get(key string) (record *services.AccessKeyRecord, err error) {
-	record = &services.AccessKeyRecord{}
+func (ack *AccessKey) Get(key string) (record *handlers.AccessKeyRecord, err error) {
+	record = &handlers.AccessKeyRecord{}
 	err = ack.providers.GetStateStore().Get(ack.getStoreKey(key), record)
-	if err != nil && !errors.Is(err, providers.ErrStateStoreNotFound) {
+	if err != nil && !errors.Is(err, services.ErrStateStoreNotFound) {
 		return
 	}
-	if errors.Is(err, providers.ErrStateStoreNotFound) || record.IsDeleted {
-		err = services.ErrAccessKeyIsNotFound
+	if errors.Is(err, services.ErrStateStoreNotFound) || record.IsDeleted {
+		err = handlers.ErrAccessKeyIsNotFound
 	}
 	return
 }
 
-func (ack *AccessKey) List() (list []*services.AccessKeyRecord, err error) {
+func (ack *AccessKey) List() (list []*handlers.AccessKeyRecord, err error) {
 	err = ack.providers.GetStateStore().Iterate(ack.storeKeyPrefix, func(key, _ []byte) (stop bool, er error) {
-		record := &services.AccessKeyRecord{}
+		record := &handlers.AccessKeyRecord{}
 		er = ack.providers.GetStateStore().Get(string(key), record)
 		if er != nil {
 			return
@@ -149,7 +149,7 @@ func (ack *AccessKey) update(key string, args *updateArgs) (err error) {
 	unlock := ack.lock(key)
 	defer unlock()
 
-	record := &services.AccessKeyRecord{}
+	record := &handlers.AccessKeyRecord{}
 	stk := ack.getStoreKey(key)
 
 	err = ack.providers.GetStateStore().Get(stk, record)
@@ -157,7 +157,7 @@ func (ack *AccessKey) update(key string, args *updateArgs) (err error) {
 		return
 	}
 	if errors.Is(err, storage.ErrNotFound) || record.IsDeleted {
-		err = services.ErrAccessKeyIsNotFound
+		err = handlers.ErrAccessKeyIsNotFound
 		return
 	}
 

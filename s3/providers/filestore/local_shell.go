@@ -2,10 +2,10 @@ package filestore
 
 import (
 	shell "github.com/bittorrent/go-btfs-api"
-	"github.com/bittorrent/go-btfs/s3/providers"
+	"github.com/bittorrent/go-btfs/s3/services"
 )
 
-var _ providers.FileStorer = (*LocalShell)(nil)
+var _ services.FileStorer = (*LocalShell)(nil)
 
 type LocalShell struct {
 	*shell.Shell

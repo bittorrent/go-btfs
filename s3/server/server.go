@@ -1,4 +1,4 @@
-package s3
+package server
 
 import (
 	"context"
@@ -81,7 +81,7 @@ func (s *Server) Stop() (err error) {
 func (s *Server) registerRouter() http.Handler {
 	root := mux.NewRouter()
 
-	root.Use(s.handlers.Cors)
+	root.Use(s.handlers.Cors, s.handlers.Sign)
 
 	bucket := root.PathPrefix("/{bucket}").Subrouter()
 	bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(s.handlers.PutObjectHandler)
