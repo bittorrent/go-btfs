@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"io"
 )
 
@@ -23,7 +22,3 @@ type StateStorer interface {
 	Delete(key string) (err error)
 	Iterate(prefix string, iterFunc StateStoreIterFunc) (err error)
 }
-
-type StateStoreIterFunc func(key, value []byte) (stop bool, err error)
-
-var ErrStateStoreNotFound = errors.New("not found")

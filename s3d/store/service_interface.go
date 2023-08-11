@@ -2,7 +2,7 @@ package store
 
 import (
 	"context"
-	"github.com/bittorrent/go-btfs/s3d/lock"
+	"github.com/bittorrent/go-btfs/s3/lock"
 )
 
 type Service interface {

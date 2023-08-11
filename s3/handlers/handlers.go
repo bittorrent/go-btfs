@@ -2,7 +2,7 @@
 package handlers
 
 import (
-	"github.com/bittorrent/go-btfs/s3/common/consts"
+	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/server"
 	"github.com/rs/cors"
 	"net/http"
@@ -51,14 +51,14 @@ type Handlers struct {
 	corsAllowOrigins []string
 	corsAllowHeaders []string
 	corsAllowMethods []string
-	signSvc          SignService
+	authSvc          AuthService
 	bucketSvc        BucketService
 	objectSvc        ObjectService
 	multipartSvc     MultipartService
 }
 
 func NewHandlers(
-	signSvc SignService, bucketSvc BucketService,
+	authSvc AuthService, bucketSvc BucketService,
 	objectSvc ObjectService, multipartSvc MultipartService,
 	options ...Option,
 ) (handlers *Handlers) {
@@ -66,7 +66,7 @@ func NewHandlers(
 		corsAllowOrigins: defaultCorsAllowOrigins,
 		corsAllowHeaders: defaultCorsAllowHeaders,
 		corsAllowMethods: defaultCorsAllowMethods,
-		signSvc:          signSvc,
+		authSvc:          authSvc,
 		bucketSvc:        bucketSvc,
 		objectSvc:        objectSvc,
 		multipartSvc:     multipartSvc,

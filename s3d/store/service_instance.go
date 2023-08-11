@@ -2,9 +2,9 @@ package store
 
 import (
 	"context"
+	"github.com/bittorrent/go-btfs/s3/lock"
 	"time"
-	
-	"github.com/bittorrent/go-btfs/s3d/lock"
+
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/syndtr/goleveldb/leveldb"
 )

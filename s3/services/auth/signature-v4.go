@@ -19,6 +19,8 @@ package auth
 
 import (
 	"crypto/subtle"
+	"github.com/bittorrent/go-btfs/s3/set"
+	"github.com/bittorrent/go-btfs/s3/utils"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -26,8 +28,6 @@ import (
 
 	"github.com/bittorrent/go-btfs/s3d/apierrors"
 	"github.com/bittorrent/go-btfs/s3d/consts"
-	"github.com/bittorrent/go-btfs/s3d/set"
-	"github.com/bittorrent/go-btfs/s3d/utils"
 )
 
 // AWS Signature Version '4' constants.

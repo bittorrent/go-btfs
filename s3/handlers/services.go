@@ -1,9 +1,8 @@
 package handlers
 
 import (
-	"errors"
+	"github.com/bittorrent/go-btfs/s3/action"
 	"net/http"
-	"time"
 )
 
 type AccessKeyService interface {
@@ -16,17 +15,6 @@ type AccessKeyService interface {
 	List() (list []*AccessKeyRecord, err error)
 }
 
-type AccessKeyRecord struct {
-	Key       string    `json:"key"`
-	Secret    string    `json:"secret"`
-	Enable    bool      `json:"enable"`
-	IsDeleted bool      `json:"is_deleted"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-var ErrAccessKeyIsNotFound = errors.New("access-key is not found")
-
 type BucketService interface {
 }
 
@@ -36,11 +24,7 @@ type ObjectService interface {
 type MultipartService interface {
 }
 
-type SignService interface {
-	Verify(r *http.Request) (err error)
+type AuthService interface {
+	VerifySignature(r *http.Request) (accessKeyRecord *AccessKeyRecord, err error)
+	CheckACL(accessKeyRecord *AccessKeyRecord, bucketMeta *BucketMeta, action action.Action) (err error)
 }
-
-var (
-	ErrSignOutdated      = errors.New("sign is outdated")
-	ErrSignKeyIsNotFound = errors.New("key is not found")
-)

@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	s3action "github.com/bittorrent/go-btfs/s3/action"
+	"github.com/bittorrent/go-btfs/s3/handlers"
+	"github.com/bittorrent/go-btfs/s3/policy"
+	"github.com/bittorrent/go-btfs/s3/utils/hash"
 	"github.com/bittorrent/go-btfs/s3d/store"
 	"io"
 	"net/http"
 
-	s3action "github.com/bittorrent/go-btfs/s3d/action"
 	"github.com/bittorrent/go-btfs/s3d/apierrors"
 	"github.com/bittorrent/go-btfs/s3d/consts"
 	"github.com/bittorrent/go-btfs/s3d/etag"
-	"github.com/bittorrent/go-btfs/s3d/policy"
-	"github.com/bittorrent/go-btfs/s3d/utils/hash"
 )
 
 // AuthSys auth and sign system
@@ -31,10 +32,10 @@ func NewAuthSys() *AuthSys {
 //
 // returns APIErrorCode if any to be replied to the client.
 // Additionally, returns the accessKey used in the request, and if this request is by an admin.
-func (s *AuthSys) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Request, action s3action.Action, bucketName string, bmSys *store.BucketMetadataSys) (cred Credentials, s3Err apierrors.ErrorCode) {
+func (s *AuthSys) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Request, action s3action.Action, bucketName string, bmSys *store.BucketMetadataSys) (cred Credentials, err error) {
 	//todo 是否需要判断
 	if bucketName == "" {
-		return cred, apierrors.ErrNoSuchBucket
+		return cred, handlers.ErrBucketNotFound
 	}
 
 	// 1.check signature
@@ -55,7 +56,7 @@ func (s *AuthSys) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Re
 	}
 
 	// CreateBucketAction
-	if action == s3action.CreateBucketAction {
+	if action == action.CreateBucketAction {
 		// To extract region from XML in request body, get copy of request body.
 		payload, err := io.ReadAll(io.LimitReader(r.Body, consts.MaxLocationConstraintSize))
 		if err != nil {

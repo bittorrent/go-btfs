@@ -1,6 +1,8 @@
 package action
 
-import "github.com/bittorrent/go-btfs/s3d/set"
+import (
+	"github.com/bittorrent/go-btfs/s3/set"
+)
 
 type Action string
 

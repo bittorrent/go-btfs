@@ -1,6 +1,8 @@
 package policy
 
-import s3action "github.com/bittorrent/go-btfs/s3d/action"
+import (
+	s3action "github.com/bittorrent/go-btfs/s3/action"
+)
 
 const (
 	// PublicReadWrite 公开读写，适用于桶ACL和对象ACL
@@ -51,7 +53,7 @@ func checkActionInPublicRead(action s3action.Action) bool {
 }
 
 func IsAllowed(own bool, acl string, action s3action.Action) (allow bool) {
-	a := s3action.Action(action)
+	a := action.Action(action)
 
 	// 1.if bucket
 	if a.IsBucketAction() {
