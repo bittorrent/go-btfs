@@ -2,74 +2,35 @@
 package handlers
 
 import (
-	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/server"
+	"github.com/bittorrent/go-btfs/s3/routers"
 	"github.com/rs/cors"
 	"net/http"
 )
 
-var (
-	defaultCorsAllowOrigins = []string{"*"}
-	defaultCorsAllowHeaders = []string{
-		consts.Date,
-		consts.ETag,
-		consts.ServerInfo,
-		consts.Connection,
-		consts.AcceptRanges,
-		consts.ContentRange,
-		consts.ContentEncoding,
-		consts.ContentLength,
-		consts.ContentType,
-		consts.ContentDisposition,
-		consts.LastModified,
-		consts.ContentLanguage,
-		consts.CacheControl,
-		consts.RetryAfter,
-		consts.AmzBucketRegion,
-		consts.Expires,
-		consts.Authorization,
-		consts.Action,
-		consts.Range,
-		"X-Amz*",
-		"x-amz*",
-		"*",
-	}
-	defaultCorsAllowMethods = []string{
-		http.MethodGet,
-		http.MethodPut,
-		http.MethodHead,
-		http.MethodPost,
-		http.MethodDelete,
-		http.MethodOptions,
-		http.MethodPatch,
-	}
-)
-
-var _ server.Handlerser = (*Handlers)(nil)
+var _ routers.Handlerser = (*Handlers)(nil)
 
 type Handlers struct {
-	corsAllowOrigins []string
-	corsAllowHeaders []string
-	corsAllowMethods []string
-	authSvc          AuthService
-	bucketSvc        BucketService
-	objectSvc        ObjectService
-	multipartSvc     MultipartService
+	corsSvc      CorsService
+	authSvc      AuthService
+	bucketSvc    BucketService
+	objectSvc    ObjectService
+	multipartSvc MultipartService
 }
 
 func NewHandlers(
-	authSvc AuthService, bucketSvc BucketService,
-	objectSvc ObjectService, multipartSvc MultipartService,
+	corsSvc CorsService,
+	authSvc AuthService,
+	bucketSvc BucketService,
+	objectSvc ObjectService,
+	multipartSvc MultipartService,
 	options ...Option,
 ) (handlers *Handlers) {
 	handlers = &Handlers{
-		corsAllowOrigins: defaultCorsAllowOrigins,
-		corsAllowHeaders: defaultCorsAllowHeaders,
-		corsAllowMethods: defaultCorsAllowMethods,
-		authSvc:          authSvc,
-		bucketSvc:        bucketSvc,
-		objectSvc:        objectSvc,
-		multipartSvc:     multipartSvc,
+		corsSvc:      corsSvc,
+		authSvc:      authSvc,
+		bucketSvc:    bucketSvc,
+		objectSvc:    objectSvc,
+		multipartSvc: multipartSvc,
 	}
 	for _, option := range options {
 		option(handlers)
@@ -77,20 +38,20 @@ func NewHandlers(
 	return
 }
 
-func (s *Handlers) Cors(handler http.Handler) http.Handler {
+func (handlers *Handlers) Cors(handler http.Handler) http.Handler {
 	return cors.New(cors.Options{
-		AllowedOrigins:   s.corsAllowOrigins,
-		AllowedMethods:   s.corsAllowMethods,
-		AllowedHeaders:   s.corsAllowHeaders,
-		ExposedHeaders:   s.corsAllowHeaders,
+		AllowedOrigins:   handlers.corsSvc.GetAllowOrigins(),
+		AllowedMethods:   handlers.corsSvc.GetAllowMethods(),
+		AllowedHeaders:   handlers.corsSvc.GetAllowHeaders(),
+		ExposedHeaders:   handlers.corsSvc.GetAllowHeaders(),
 		AllowCredentials: true,
 	}).Handler(handler)
 }
 
-func (s *Handlers) Sign(handler http.Handler) http.Handler {
+func (handlers *Handlers) Sign(handler http.Handler) http.Handler {
 	return nil
 }
 
-func (s *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
+func (handlers *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }

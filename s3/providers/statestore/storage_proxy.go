@@ -12,7 +12,7 @@ type StorageProxy struct {
 	proxy storage.StateStorer
 }
 
-func NewStorageStateStoreProxy(proxy storage.StateStorer) services.StateStorer {
+func NewStorageStateStoreProxy(proxy storage.StateStorer) *StorageProxy {
 	return &StorageProxy{
 		proxy: proxy,
 	}

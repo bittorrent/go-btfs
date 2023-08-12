@@ -14,21 +14,21 @@ type Service struct {
 	accesskeySvc handlers.AccessKeyService
 }
 
-func NewService(providers services.Providerser, accesskeySvc handlers.AccessKeyService, options ...Option) (s *Service) {
-	s = &Service{
+func NewService(providers services.Providerser, accesskeySvc handlers.AccessKeyService, options ...Option) (svc *Service) {
+	svc = &Service{
 		providers:    providers,
 		accesskeySvc: accesskeySvc,
 	}
 	for _, option := range options {
-		option(s)
+		option(svc)
 	}
 	return
 }
 
-func (s *Service) VerifySignature(r *http.Request) (accessKeyRecord *handlers.AccessKeyRecord, err error) {
+func (svc *Service) VerifySignature(r *http.Request) (accessKeyRecord *handlers.AccessKeyRecord, err error) {
 	return
 }
 
-func (s *Service) CheckACL(accessKeyRecord *handlers.AccessKeyRecord, bucketMeta *handlers.BucketMeta, action action.Action) (err error) {
+func (svc *Service) CheckACL(accessKeyRecord *handlers.AccessKeyRecord, bucketMeta *handlers.BucketMeta, action action.Action) (err error) {
 	return
 }

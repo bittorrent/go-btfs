@@ -427,7 +427,7 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	}()
 
 	// access-key init
-	accesskey.InitInstance(s3statestore.NewStorageStateStoreProxy(statestore))
+	accesskey.InitService(s3statestore.NewStorageStateStoreProxy(statestore))
 
 	if SimpleMode == false {
 		chainid, stored, err := getChainID(req, cfg, statestore)

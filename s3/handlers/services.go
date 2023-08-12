@@ -5,6 +5,12 @@ import (
 	"net/http"
 )
 
+type CorsService interface {
+	GetAllowOrigins() []string
+	GetAllowMethods() []string
+	GetAllowHeaders() []string
+}
+
 type AccessKeyService interface {
 	Generate() (record *AccessKeyRecord, err error)
 	Enable(key string) (err error)
@@ -15,6 +21,11 @@ type AccessKeyService interface {
 	List() (list []*AccessKeyRecord, err error)
 }
 
+type AuthService interface {
+	VerifySignature(r *http.Request) (accessKeyRecord *AccessKeyRecord, err error)
+	CheckACL(accessKeyRecord *AccessKeyRecord, bucketMeta *BucketMeta, action action.Action) (err error)
+}
+
 type BucketService interface {
 }
 
@@ -22,9 +33,4 @@ type ObjectService interface {
 }
 
 type MultipartService interface {
-}
-
-type AuthService interface {
-	VerifySignature(r *http.Request) (accessKeyRecord *AccessKeyRecord, err error)
-	CheckACL(accessKeyRecord *AccessKeyRecord, bucketMeta *BucketMeta, action action.Action) (err error)
 }

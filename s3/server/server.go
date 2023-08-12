@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
 	"sync"
 )
@@ -17,15 +16,15 @@ var (
 )
 
 type Server struct {
-	handlers Handlerser
+	routers  Routerser
 	address  string
 	shutdown func() error
 	mutex    sync.Mutex
 }
 
-func NewServer(handlers Handlerser, options ...Option) (s *Server) {
+func NewServer(routers Routerser, options ...Option) (s *Server) {
 	s = &Server{
-		handlers: handlers,
+		routers:  routers,
 		address:  defaultServerAddress,
 		shutdown: nil,
 		mutex:    sync.Mutex{},
@@ -47,7 +46,7 @@ func (s *Server) Start() (err error) {
 
 	httpSvr := &http.Server{
 		Addr:    s.address,
-		Handler: s.registerRouter(),
+		Handler: s.routers.Register(),
 	}
 
 	s.shutdown = func() error {
@@ -76,15 +75,4 @@ func (s *Server) Stop() (err error) {
 	s.shutdown = nil
 	fmt.Printf("stoped s3-compatible-api server: %v\n", err)
 	return
-}
-
-func (s *Server) registerRouter() http.Handler {
-	root := mux.NewRouter()
-
-	root.Use(s.handlers.Cors, s.handlers.Sign)
-
-	bucket := root.PathPrefix("/{bucket}").Subrouter()
-	bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(s.handlers.PutObjectHandler)
-
-	return root
 }

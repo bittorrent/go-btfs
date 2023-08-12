@@ -6,44 +6,44 @@ import (
 	"sync"
 )
 
-var instance handlers.AccessKeyService
+var service *Service
 
 var once sync.Once
 
-func InitInstance(providers services.Providerser, options ...Option) {
+func InitService(providers services.Providerser, options ...Option) {
 	once.Do(func() {
-		instance = NewAccessKey(providers, options...)
+		service = NewService(providers, options...)
 	})
 }
 
-func GetInstance() handlers.AccessKeyService {
-	return instance
+func GetService() *Service {
+	return service
 }
 
 func Generate() (record *handlers.AccessKeyRecord, err error) {
-	return instance.Generate()
+	return service.Generate()
 }
 
 func Enable(key string) (err error) {
-	return instance.Enable(key)
+	return service.Enable(key)
 }
 
 func Disable(key string) (err error) {
-	return instance.Disable(key)
+	return service.Disable(key)
 }
 
 func Reset(key string) (err error) {
-	return instance.Reset(key)
+	return service.Reset(key)
 }
 
 func Delete(key string) (err error) {
-	return instance.Delete(key)
+	return service.Delete(key)
 }
 
 func Get(key string) (record *handlers.AccessKeyRecord, err error) {
-	return instance.Get(key)
+	return service.Get(key)
 }
 
 func List() (list []*handlers.AccessKeyRecord, err error) {
-	return instance.List()
+	return service.List()
 }

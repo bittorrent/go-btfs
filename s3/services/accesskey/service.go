@@ -16,77 +16,77 @@ const (
 	defaultStoreKeyPrefix = "access-keys:"
 )
 
-var _ handlers.AccessKeyService = (*AccessKey)(nil)
+var _ handlers.AccessKeyService = (*Service)(nil)
 
-type AccessKey struct {
+type Service struct {
 	providers      services.Providerser
 	secretLength   int
 	storeKeyPrefix string
 	locks          sync.Map
 }
 
-func NewAccessKey(providers services.Providerser, options ...Option) (ack *AccessKey) {
-	ack = &AccessKey{
+func NewService(providers services.Providerser, options ...Option) (svc *Service) {
+	svc = &Service{
 		providers:      providers,
 		secretLength:   defaultSecretLength,
 		storeKeyPrefix: defaultStoreKeyPrefix,
 		locks:          sync.Map{},
 	}
 	for _, option := range options {
-		option(ack)
+		option(svc)
 	}
-	return ack
+	return svc
 }
 
-func (ack *AccessKey) Generate() (record *handlers.AccessKeyRecord, err error) {
+func (svc *Service) Generate() (record *handlers.AccessKeyRecord, err error) {
 	now := time.Now()
 	record = &handlers.AccessKeyRecord{
-		Key:       ack.newKey(),
-		Secret:    ack.newSecret(),
+		Key:       svc.newKey(),
+		Secret:    svc.newSecret(),
 		Enable:    true,
 		IsDeleted: false,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	err = ack.providers.GetStateStore().Put(ack.getStoreKey(record.Key), record)
+	err = svc.providers.GetStateStore().Put(svc.getStoreKey(record.Key), record)
 	return
 }
 
-func (ack *AccessKey) Enable(key string) (err error) {
+func (svc *Service) Enable(key string) (err error) {
 	enable := true
-	err = ack.update(key, &updateArgs{
+	err = svc.update(key, &updateArgs{
 		Enable: &enable,
 	})
 	return
 }
 
-func (ack *AccessKey) Disable(key string) (err error) {
+func (svc *Service) Disable(key string) (err error) {
 	enable := false
-	err = ack.update(key, &updateArgs{
+	err = svc.update(key, &updateArgs{
 		Enable: &enable,
 	})
 	return
 }
 
-func (ack *AccessKey) Reset(key string) (err error) {
-	secret := ack.newSecret()
-	err = ack.update(key, &updateArgs{
+func (svc *Service) Reset(key string) (err error) {
+	secret := svc.newSecret()
+	err = svc.update(key, &updateArgs{
 		Secret: &secret,
 	})
 	return
 }
 
-func (ack *AccessKey) Delete(key string) (err error) {
+func (svc *Service) Delete(key string) (err error) {
 	isDelete := true
-	err = ack.update(key, &updateArgs{
+	err = svc.update(key, &updateArgs{
 		IsDelete: &isDelete,
 	})
 	return
 }
 
-func (ack *AccessKey) Get(key string) (record *handlers.AccessKeyRecord, err error) {
+func (svc *Service) Get(key string) (record *handlers.AccessKeyRecord, err error) {
 	record = &handlers.AccessKeyRecord{}
-	err = ack.providers.GetStateStore().Get(ack.getStoreKey(key), record)
+	err = svc.providers.GetStateStore().Get(svc.getStoreKey(key), record)
 	if err != nil && !errors.Is(err, services.ErrStateStoreNotFound) {
 		return
 	}
@@ -96,10 +96,10 @@ func (ack *AccessKey) Get(key string) (record *handlers.AccessKeyRecord, err err
 	return
 }
 
-func (ack *AccessKey) List() (list []*handlers.AccessKeyRecord, err error) {
-	err = ack.providers.GetStateStore().Iterate(ack.storeKeyPrefix, func(key, _ []byte) (stop bool, er error) {
+func (svc *Service) List() (list []*handlers.AccessKeyRecord, err error) {
+	err = svc.providers.GetStateStore().Iterate(svc.storeKeyPrefix, func(key, _ []byte) (stop bool, er error) {
 		record := &handlers.AccessKeyRecord{}
-		er = ack.providers.GetStateStore().Get(string(key), record)
+		er = svc.providers.GetStateStore().Get(string(key), record)
 		if er != nil {
 			return
 		}
@@ -112,29 +112,29 @@ func (ack *AccessKey) List() (list []*handlers.AccessKeyRecord, err error) {
 	return
 }
 
-func (ack *AccessKey) newKey() (key string) {
+func (svc *Service) newKey() (key string) {
 	key = uuid.NewString()
 	return
 }
 
-func (ack *AccessKey) newSecret() (secret string) {
-	secret = utils.RandomString(ack.secretLength)
+func (svc *Service) newSecret() (secret string) {
+	secret = utils.RandomString(svc.secretLength)
 	return
 }
 
-func (ack *AccessKey) getStoreKey(key string) (storeKey string) {
-	storeKey = ack.storeKeyPrefix + key
+func (svc *Service) getStoreKey(key string) (storeKey string) {
+	storeKey = svc.storeKeyPrefix + key
 	return
 }
 
-func (ack *AccessKey) lock(key string) (unlock func()) {
+func (svc *Service) lock(key string) (unlock func()) {
 	loaded := true
 	for loaded {
-		_, loaded = ack.locks.LoadOrStore(key, nil)
+		_, loaded = svc.locks.LoadOrStore(key, nil)
 		time.Sleep(10 * time.Millisecond)
 	}
 	unlock = func() {
-		ack.locks.Delete(key)
+		svc.locks.Delete(key)
 	}
 	return
 }
@@ -145,14 +145,14 @@ type updateArgs struct {
 	IsDelete *bool
 }
 
-func (ack *AccessKey) update(key string, args *updateArgs) (err error) {
-	unlock := ack.lock(key)
+func (svc *Service) update(key string, args *updateArgs) (err error) {
+	unlock := svc.lock(key)
 	defer unlock()
 
 	record := &handlers.AccessKeyRecord{}
-	stk := ack.getStoreKey(key)
+	stk := svc.getStoreKey(key)
 
-	err = ack.providers.GetStateStore().Get(stk, record)
+	err = svc.providers.GetStateStore().Get(stk, record)
 	if err != nil && !errors.Is(err, storage.ErrNotFound) {
 		return
 	}
@@ -173,7 +173,7 @@ func (ack *AccessKey) update(key string, args *updateArgs) (err error) {
 
 	record.UpdatedAt = time.Now()
 
-	err = ack.providers.GetStateStore().Put(stk, record)
+	err = svc.providers.GetStateStore().Put(stk, record)
 
 	return
 }
