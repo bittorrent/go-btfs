@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/bittorrent/go-btfs/s3d/consts"
+	"github.com/bittorrent/go-btfs/s3/consts"
 )
 
 // Verify if request has JWT.

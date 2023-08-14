@@ -19,6 +19,7 @@ package auth
 
 import (
 	"crypto/subtle"
+	"github.com/bittorrent/go-btfs/s3/handlers"
 	"github.com/bittorrent/go-btfs/s3/set"
 	"github.com/bittorrent/go-btfs/s3/utils"
 	"net/http"
@@ -26,8 +27,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bittorrent/go-btfs/s3d/apierrors"
-	"github.com/bittorrent/go-btfs/s3d/consts"
+	"github.com/bittorrent/go-btfs/s3/apierrors"
+	"github.com/bittorrent/go-btfs/s3/consts"
 )
 
 // AWS Signature Version '4' constants.
@@ -40,7 +41,7 @@ const (
 type serviceType string
 
 const (
-	ServiceS3 serviceType = "s3d"
+	ServiceS3 serviceType = "s3"
 	////ServiceSTS STS
 	//ServiceSTS serviceType = "sts"
 )
@@ -58,7 +59,7 @@ func compareSignatureV4(sig1, sig2 string) bool {
 //   - http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html
 //
 // returns apierrors.ErrNone if the signature matches.
-func DoesPresignedSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) apierrors.ErrorCode {
+func DoesPresignedSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType, accessKeySvc handlers.AccessKeyService) apierrors.ErrorCode {
 	// Copy request
 	req := *r
 
@@ -69,7 +70,7 @@ func DoesPresignedSignatureMatch(hashedPayload string, r *http.Request, region s
 	}
 
 	// get access_info by accessKey
-	cred, s3Err := CheckAccessKeyValid(pSignValues.Credential.accessKey)
+	cred, s3Err := accessKeySvc.Get(pSignValues.Credential.accessKey)
 	if s3Err != apierrors.ErrNone {
 		return s3Err
 	}
@@ -101,10 +102,11 @@ func DoesPresignedSignatureMatch(hashedPayload string, r *http.Request, region s
 		query.Set(consts.AmzContentSha256, hashedPayload)
 	}
 
-	token := req.Form.Get(consts.AmzSecurityToken)
-	if token != "" {
-		query.Set(consts.AmzSecurityToken, cred.SessionToken)
-	}
+	// not check token?
+	//token := req.Form.Get(consts.AmzSecurityToken)
+	//if token != "" {
+	//	query.Set(consts.AmzSecurityToken, cred.SessionToken)
+	//}
 
 	query.Set(consts.AmzAlgorithm, signV4Algorithm)
 
@@ -112,11 +114,11 @@ func DoesPresignedSignatureMatch(hashedPayload string, r *http.Request, region s
 	query.Set(consts.AmzDate, t.Format(iso8601Format))
 	query.Set(consts.AmzExpires, strconv.Itoa(expireSeconds))
 	query.Set(consts.AmzSignedHeaders, utils.GetSignedHeaders(extractedSignedHeaders))
-	query.Set(consts.AmzCredential, cred.AccessKey+consts.SlashSeparator+pSignValues.Credential.getScope())
+	query.Set(consts.AmzCredential, cred.Key+consts.SlashSeparator+pSignValues.Credential.getScope())
 
 	defaultSigParams := set.CreateStringSet(
 		consts.AmzContentSha256,
-		consts.AmzSecurityToken,
+		//consts.AmzSecurityToken,
 		consts.AmzAlgorithm,
 		consts.AmzDate,
 		consts.AmzExpires,
@@ -155,10 +157,11 @@ func DoesPresignedSignatureMatch(hashedPayload string, r *http.Request, region s
 	if clntHashedPayload != "" && clntHashedPayload != query.Get(consts.AmzContentSha256) {
 		return apierrors.ErrContentSHA256Mismatch
 	}
-	// Verify if security token is correct.
-	if token != "" && subtle.ConstantTimeCompare([]byte(token), []byte(cred.SessionToken)) != 1 {
-		return apierrors.ErrInvalidToken
-	}
+	// not check SessionToken.
+	//// Verify if security token is correct.
+	//if token != "" && subtle.ConstantTimeCompare([]byte(token), []byte(cred.SessionToken)) != 1 {
+	//	return apierrors.ErrInvalidToken
+	//}
 
 	// Verify finally if signature is same.
 
@@ -169,7 +172,7 @@ func DoesPresignedSignatureMatch(hashedPayload string, r *http.Request, region s
 	presignedStringToSign := utils.GetStringToSign(presignedCanonicalReq, t, pSignValues.Credential.getScope())
 
 	// Get hmac presigned signing key.
-	presignedSigningKey := utils.GetSigningKey(cred.SecretKey, pSignValues.Credential.scope.date,
+	presignedSigningKey := utils.GetSigningKey(cred.Secret, pSignValues.Credential.scope.date,
 		pSignValues.Credential.scope.region, string(stype))
 
 	// Get new signature.
@@ -186,7 +189,7 @@ func DoesPresignedSignatureMatch(hashedPayload string, r *http.Request, region s
 //   - http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html
 //
 // returns apierrors.ErrNone if signature matches.
-func DoesSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) apierrors.ErrorCode {
+func DoesSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType, accessKeySvc handlers.AccessKeyService) apierrors.ErrorCode {
 	// Copy request.
 	req := *r
 
@@ -205,7 +208,7 @@ func DoesSignatureMatch(hashedPayload string, r *http.Request, region string, st
 		return errCode
 	}
 
-	cred, s3Err := CheckAccessKeyValid(signV4Values.Credential.accessKey)
+	cred, s3Err := accessKeySvc.Get(signV4Values.Credential.accessKey)
 	if s3Err != apierrors.ErrNone {
 		return s3Err
 	}
@@ -234,7 +237,7 @@ func DoesSignatureMatch(hashedPayload string, r *http.Request, region string, st
 	stringToSign := utils.GetStringToSign(canonicalRequest, t, signV4Values.Credential.getScope())
 
 	// Get hmac signing key.
-	signingKey := utils.GetSigningKey(cred.SecretKey, signV4Values.Credential.scope.date,
+	signingKey := utils.GetSigningKey(cred.Key, signV4Values.Credential.scope.date,
 		signV4Values.Credential.scope.region, string(stype))
 
 	// Calculate signature.

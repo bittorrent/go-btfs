@@ -18,14 +18,14 @@ func TestMatch(t *testing.T) {
 		// Test case with pattern "*". Expected to match any text.
 		{
 			pattern: "*",
-			text:    "s3d:GetObject",
+			text:    "s3:GetObject",
 			matched: true,
 		},
 		// Test case - 2.
 		// Test case with empty pattern. This only matches empty string.
 		{
 			pattern: "",
-			text:    "s3d:GetObject",
+			text:    "s3:GetObject",
 			matched: false,
 		},
 		// Test case - 3.
@@ -38,29 +38,29 @@ func TestMatch(t *testing.T) {
 		// Test case - 4.
 		// Test case with single "*" at the end.
 		{
-			pattern: "s3d:*",
-			text:    "s3d:ListMultipartUploadParts",
+			pattern: "s3:*",
+			text:    "s3:ListMultipartUploadParts",
 			matched: true,
 		},
 		// Test case - 5.
 		// Test case with a no "*". In this case the pattern and text should be the same.
 		{
-			pattern: "s3d:ListBucketMultipartUploads",
-			text:    "s3d:ListBucket",
+			pattern: "s3:ListBucketMultipartUploads",
+			text:    "s3:ListBucket",
 			matched: false,
 		},
 		// Test case - 6.
 		// Test case with a no "*". In this case the pattern and text should be the same.
 		{
-			pattern: "s3d:ListBucket",
-			text:    "s3d:ListBucket",
+			pattern: "s3:ListBucket",
+			text:    "s3:ListBucket",
 			matched: true,
 		},
 		// Test case - 7.
 		// Test case with a no "*". In this case the pattern and text should be the same.
 		{
-			pattern: "s3d:ListBucketMultipartUploads",
-			text:    "s3d:ListBucketMultipartUploads",
+			pattern: "s3:ListBucketMultipartUploads",
+			text:    "s3:ListBucketMultipartUploads",
 			matched: true,
 		},
 		// Test case - 8.
@@ -194,7 +194,7 @@ func TestMatch(t *testing.T) {
 			matched: true,
 		},
 		// Test case 27-28.
-		// '?' matches '/' too. (works with s3d).
+		// '?' matches '/' too. (works with s3).
 		// This is because the namespace is considered flat.
 		// "abc?efg" matches both "abcdefg" and "abc/efg".
 		{
@@ -375,14 +375,14 @@ func TestMatchSimple(t *testing.T) {
 		// Test case with pattern "*". Expected to match any text.
 		{
 			pattern: "*",
-			text:    "s3d:GetObject",
+			text:    "s3:GetObject",
 			matched: true,
 		},
 		// Test case - 2.
 		// Test case with empty pattern. This only matches empty string.
 		{
 			pattern: "",
-			text:    "s3d:GetObject",
+			text:    "s3:GetObject",
 			matched: false,
 		},
 		// Test case - 3.
@@ -395,29 +395,29 @@ func TestMatchSimple(t *testing.T) {
 		// Test case - 4.
 		// Test case with single "*" at the end.
 		{
-			pattern: "s3d:*",
-			text:    "s3d:ListMultipartUploadParts",
+			pattern: "s3:*",
+			text:    "s3:ListMultipartUploadParts",
 			matched: true,
 		},
 		// Test case - 5.
 		// Test case with a no "*". In this case the pattern and text should be the same.
 		{
-			pattern: "s3d:ListBucketMultipartUploads",
-			text:    "s3d:ListBucket",
+			pattern: "s3:ListBucketMultipartUploads",
+			text:    "s3:ListBucket",
 			matched: false,
 		},
 		// Test case - 6.
 		// Test case with a no "*". In this case the pattern and text should be the same.
 		{
-			pattern: "s3d:ListBucket",
-			text:    "s3d:ListBucket",
+			pattern: "s3:ListBucket",
+			text:    "s3:ListBucket",
 			matched: true,
 		},
 		// Test case - 7.
 		// Test case with a no "*". In this case the pattern and text should be the same.
 		{
-			pattern: "s3d:ListBucketMultipartUploads",
-			text:    "s3d:ListBucketMultipartUploads",
+			pattern: "s3:ListBucketMultipartUploads",
+			text:    "s3:ListBucketMultipartUploads",
 			matched: true,
 		},
 		// Test case - 8.

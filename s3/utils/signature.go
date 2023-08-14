@@ -16,7 +16,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/bittorrent/go-btfs/s3d/consts"
+	"github.com/bittorrent/go-btfs/s3/consts"
 )
 
 var ignoredHeaders = map[string]bool{

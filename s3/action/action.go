@@ -12,62 +12,62 @@ const (
 	//--- bucket
 
 	// CreateBucketAction - CreateBucket Rest API action.
-	CreateBucketAction = "s3d:CreateBucket"
+	CreateBucketAction = "s3:CreateBucket"
 
 	// HeadBucketAction - HeadBucket Rest API action.
-	HeadBucketAction = "s3d:HeadBucket"
+	HeadBucketAction = "s3:HeadBucket"
 
 	// ListBucketAction - ListBucket Rest API action.
-	ListBucketAction = "s3d:ListBucket"
+	ListBucketAction = "s3:ListBucket"
 
 	// DeleteBucketAction - DeleteBucket Rest API action.
-	DeleteBucketAction = "s3d:DeleteBucket"
+	DeleteBucketAction = "s3:DeleteBucket"
 
 	// PutBucketAclAction - PutBucketAcl Rest API action.
-	PutBucketAclAction = "s3d:PutBucketAcl"
+	PutBucketAclAction = "s3:PutBucketAcl"
 
 	// GetBucketAclAction - GetBucketAcl Rest API action.
-	GetBucketAclAction = "s3d:GetBucketAcl"
+	GetBucketAclAction = "s3:GetBucketAcl"
 
 	//--- object
 
 	// ListObjectsAction - ListObjects Rest API action.
-	ListObjectsAction = "s3d:ListObjects"
+	ListObjectsAction = "s3:ListObjects"
 
 	// ListObjectsV2Action - ListObjectsV2 Rest API action.
-	ListObjectsV2Action = "s3d:ListObjectsV2"
+	ListObjectsV2Action = "s3:ListObjectsV2"
 
 	// HeadObjectAction - HeadObject Rest API action.
-	HeadObjectAction = "s3d:HeadObject"
+	HeadObjectAction = "s3:HeadObject"
 
 	// PutObjectAction - PutObject Rest API action.
-	PutObjectAction = "s3d:PutObject"
+	PutObjectAction = "s3:PutObject"
 
 	// GetObjectAction - GetObject Rest API action.
-	GetObjectAction = "s3d:GetObject"
+	GetObjectAction = "s3:GetObject"
 
 	// CopyObjectAction - CopyObject Rest API action.
-	CopyObjectAction = "s3d:CopyObject"
+	CopyObjectAction = "s3:CopyObject"
 
 	// DeleteObjectAction - DeleteObject Rest API action.
-	DeleteObjectAction = "s3d:DeleteObject"
+	DeleteObjectAction = "s3:DeleteObject"
 
 	// DeleteObjectsAction - DeleteObjects Rest API action.
-	DeleteObjectsAction = "s3d:DeleteObjects"
+	DeleteObjectsAction = "s3:DeleteObjects"
 
 	//--- multipart upload
 
 	// CreateMultipartUploadAction - CreateMultipartUpload Rest API action.
-	CreateMultipartUploadAction Action = "s3d:CreateMultipartUpload"
+	CreateMultipartUploadAction Action = "s3:CreateMultipartUpload"
 
 	// AbortMultipartUploadAction - AbortMultipartUpload Rest API action.
-	AbortMultipartUploadAction Action = "s3d:AbortMultipartUpload"
+	AbortMultipartUploadAction Action = "s3:AbortMultipartUpload"
 
 	// CompleteMultipartUploadAction - CompleteMultipartUpload Rest API action.
-	CompleteMultipartUploadAction Action = "s3d:CompleteMultipartUpload"
+	CompleteMultipartUploadAction Action = "s3:CompleteMultipartUpload"
 
 	// UploadPartAction - UploadPartUpload Rest API action.
-	UploadPartAction Action = "s3d:UploadPartUpload"
+	UploadPartAction Action = "s3:UploadPartUpload"
 )
 
 // SupportedActions List of all supported actions.

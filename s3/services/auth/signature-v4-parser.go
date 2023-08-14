@@ -18,13 +18,14 @@
 package auth
 
 import (
+	"github.com/bittorrent/go-btfs/s3/handlers"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/bittorrent/go-btfs/s3d/apierrors"
-	"github.com/bittorrent/go-btfs/s3d/consts"
+	"github.com/bittorrent/go-btfs/s3/apierrors"
+	"github.com/bittorrent/go-btfs/s3/consts"
 )
 
 // credentialHeader data type represents structured form of Credential
@@ -63,9 +64,9 @@ func parseCredentialHeader(credElement string, region string, stype serviceType)
 		return ch, apierrors.ErrCredMalformed
 	}
 	accessKey := strings.Join(credElements[:len(credElements)-4], consts.SlashSeparator) // The access key may contain one or more `/`
-	if !IsAccessKeyValid(accessKey) {
-		return ch, apierrors.ErrInvalidAccessKeyID
-	}
+	//if !IsAccessKeyValid(accessKey) {
+	//	return ch, apierrors.ErrInvalidAccessKeyID
+	//}
 	// Save access key id.
 	cred := credentialHeader{
 		accessKey: accessKey,
@@ -285,33 +286,25 @@ func parseSignV4(v4Auth string, region string, stype serviceType) (sv signValues
 	return signV4Values, apierrors.ErrNone
 }
 
-func GetReqAccessKeyV4(r *http.Request, region string, stype serviceType) (Credentials, apierrors.ErrorCode) {
+func GetReqAccessKeyV4(r *http.Request, region string, stype serviceType, accessKeySvc handlers.AccessKeyService) (*handlers.AccessKeyRecord, apierrors.ErrorCode) {
 	ch, s3Err := parseCredentialHeader("Credential="+r.Form.Get(consts.AmzCredential), region, stype)
 	if s3Err != apierrors.ErrNone {
 		// Strip off the Algorithm prefix.
 		v4Auth := strings.TrimPrefix(r.Header.Get("Authorization"), signV4Algorithm)
 		authFields := strings.Split(strings.TrimSpace(v4Auth), ",")
 		if len(authFields) != 3 {
-			return Credentials{}, apierrors.ErrMissingFields
+			return &handlers.AccessKeyRecord{}, apierrors.ErrMissingFields
 		}
 		ch, s3Err = parseCredentialHeader(authFields[0], region, stype)
 		if s3Err != apierrors.ErrNone {
-			return Credentials{}, s3Err
+			return &handlers.AccessKeyRecord{}, s3Err
 		}
 	}
+
 	// TODO: Why should a temporary user be replaced with the parent user's account name?
-	//cerd, _ := s.Iam.GetUser(r.Context(), ch.accessKey)
-	//if cerd.IsTemp() {
-	//	ch.accessKey = cerd.ParentUser
-	//}
-	return checkAccessKeyValid(ch.accessKey)
-}
-
-// check if the access key is valid and recognized, additionally
-func checkAccessKeyValid(accessKey string) (Credentials, apierrors.ErrorCode) {
-
-	//todo 根据accessKey获取accessKey
-	cred := Credentials{}
-
-	return cred, apierrors.ErrNone
+	record, err := accessKeySvc.Get(ch.accessKey)
+	if err != nil {
+		return &handlers.AccessKeyRecord{}, err
+	}
+	return record, apierrors.ErrNone
 }

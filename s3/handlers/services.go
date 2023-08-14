@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"github.com/bittorrent/go-btfs/s3/action"
+	"github.com/bittorrent/go-btfs/s3/apierrors"
 	"net/http"
 )
 
@@ -22,7 +24,7 @@ type AccessKeyService interface {
 }
 
 type AuthService interface {
-	VerifySignature(r *http.Request) (accessKeyRecord *AccessKeyRecord, err error)
+	VerifySignature(ctx context.Context, r *http.Request) (accessKeyRecord *AccessKeyRecord, err apierrors.ErrorCode)
 	CheckACL(accessKeyRecord *AccessKeyRecord, bucketMeta *BucketMeta, action action.Action) (err error)
 }
 

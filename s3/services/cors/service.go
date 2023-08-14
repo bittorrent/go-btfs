@@ -1,8 +1,8 @@
 package cors
 
 import (
+	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/handlers"
-	"github.com/bittorrent/go-btfs/s3d/consts"
 	"net/http"
 )
 
