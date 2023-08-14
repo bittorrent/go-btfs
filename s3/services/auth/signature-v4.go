@@ -19,7 +19,6 @@ package auth
 
 import (
 	"crypto/subtle"
-	"github.com/bittorrent/go-btfs/s3/handlers"
 	"github.com/bittorrent/go-btfs/s3/set"
 	"github.com/bittorrent/go-btfs/s3/utils"
 	"net/http"
@@ -59,7 +58,7 @@ func compareSignatureV4(sig1, sig2 string) bool {
 //   - http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html
 //
 // returns apierrors.ErrNone if the signature matches.
-func DoesPresignedSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType, accessKeySvc handlers.AccessKeyService) apierrors.ErrorCode {
+func (s *Service) doesPresignedSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) apierrors.ErrorCode {
 	// Copy request
 	req := *r
 
@@ -70,7 +69,7 @@ func DoesPresignedSignatureMatch(hashedPayload string, r *http.Request, region s
 	}
 
 	// get access_info by accessKey
-	cred, s3Err := accessKeySvc.Get(pSignValues.Credential.accessKey)
+	cred, s3Err := s.accessKeySvc.Get(pSignValues.Credential.accessKey)
 	if s3Err != apierrors.ErrNone {
 		return s3Err
 	}
@@ -189,7 +188,7 @@ func DoesPresignedSignatureMatch(hashedPayload string, r *http.Request, region s
 //   - http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html
 //
 // returns apierrors.ErrNone if signature matches.
-func DoesSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType, accessKeySvc handlers.AccessKeyService) apierrors.ErrorCode {
+func (s *Service) doesSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) apierrors.ErrorCode {
 	// Copy request.
 	req := *r
 
@@ -208,7 +207,7 @@ func DoesSignatureMatch(hashedPayload string, r *http.Request, region string, st
 		return errCode
 	}
 
-	cred, s3Err := accessKeySvc.Get(signV4Values.Credential.accessKey)
+	cred, s3Err := s.accessKeySvc.Get(signV4Values.Credential.accessKey)
 	if s3Err != apierrors.ErrNone {
 		return s3Err
 	}

@@ -286,7 +286,7 @@ func parseSignV4(v4Auth string, region string, stype serviceType) (sv signValues
 	return signV4Values, apierrors.ErrNone
 }
 
-func GetReqAccessKeyV4(r *http.Request, region string, stype serviceType, accessKeySvc handlers.AccessKeyService) (*handlers.AccessKeyRecord, apierrors.ErrorCode) {
+func (s *Service) getReqAccessKeyV4(r *http.Request, region string, stype serviceType) (*handlers.AccessKeyRecord, apierrors.ErrorCode) {
 	ch, s3Err := parseCredentialHeader("Credential="+r.Form.Get(consts.AmzCredential), region, stype)
 	if s3Err != apierrors.ErrNone {
 		// Strip off the Algorithm prefix.
@@ -302,7 +302,7 @@ func GetReqAccessKeyV4(r *http.Request, region string, stype serviceType, access
 	}
 
 	// TODO: Why should a temporary user be replaced with the parent user's account name?
-	record, err := accessKeySvc.Get(ch.accessKey)
+	record, err := s.accessKeySvc.Get(ch.accessKey)
 	if err != nil {
 		return &handlers.AccessKeyRecord{}, err
 	}

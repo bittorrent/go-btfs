@@ -39,7 +39,7 @@ func (s *Service) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Re
 		if s3Err = s.IsReqAuthenticated(ctx, r, region, ServiceS3); s3Err != apierrors.ErrNone {
 			return cred, s3Err
 		}
-		cred, s3Err = GetReqAccessKeyV4(r, region, ServiceS3, s.accessKeySvc)
+		cred, s3Err = s.getReqAccessKeyV4(r, region, ServiceS3)
 	}
 	if s3Err != apierrors.ErrNone {
 		return cred, s3Err
@@ -52,9 +52,9 @@ func (s *Service) ReqSignatureV4Verify(r *http.Request, region string, stype ser
 	sha256sum := getContentSha256Cksum(r, stype)
 	switch {
 	case IsRequestSignatureV4(r):
-		return DoesSignatureMatch(sha256sum, r, region, stype, s.accessKeySvc)
+		return s.doesSignatureMatch(sha256sum, r, region, stype)
 	case isRequestPresignedSignatureV4(r):
-		return DoesPresignedSignatureMatch(sha256sum, r, region, stype, s.accessKeySvc)
+		return s.doesPresignedSignatureMatch(sha256sum, r, region, stype)
 	default:
 		return apierrors.ErrAccessDenied
 	}
