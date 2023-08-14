@@ -12,14 +12,6 @@ import (
 	"github.com/bittorrent/go-btfs/s3/etag"
 )
 
-//// AuthSys auth and sign system
-//type AuthSys struct{}
-//
-//// NewAuthSys new an AuthSys
-//func NewAuthSys() *AuthSys {
-//	return &AuthSys{}
-//}
-
 // CheckRequestAuthTypeCredential Check request auth type verifies the incoming http request
 //   - validates the request signature
 //   - validates the policy action if anonymous tests bucket policies if any,
@@ -28,18 +20,16 @@ import (
 // returns APIErrorCode if any to be replied to the client.
 // Additionally, returns the accessKey used in the request, and if this request is by an admin.
 func (s *Service) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Request) (cred *handlers.AccessKeyRecord, s3Err apierrors.ErrorCode) {
-	// 1.check signature
+	// check signature
 	switch GetRequestAuthType(r) {
-	case AuthTypeUnknown, AuthTypeStreamingSigned:
-		return cred, apierrors.ErrSignatureVersionNotSupported
-	case AuthTypePresignedV2, AuthTypeSignedV2:
-		return cred, apierrors.ErrSignatureVersionNotSupported
 	case AuthTypeSigned, AuthTypePresigned:
 		region := ""
 		if s3Err = s.IsReqAuthenticated(ctx, r, region, ServiceS3); s3Err != apierrors.ErrNone {
 			return cred, s3Err
 		}
 		cred, s3Err = s.getReqAccessKeyV4(r, region, ServiceS3)
+	default:
+		return cred, apierrors.ErrSignatureVersionNotSupported
 	}
 	if s3Err != apierrors.ErrNone {
 		return cred, s3Err
