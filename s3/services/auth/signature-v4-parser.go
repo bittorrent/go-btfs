@@ -18,7 +18,6 @@
 package auth
 
 import (
-	"github.com/bittorrent/go-btfs/s3/handlers"
 	"net/http"
 	"net/url"
 	"strings"
@@ -26,6 +25,7 @@ import (
 
 	"github.com/bittorrent/go-btfs/s3/apierrors"
 	"github.com/bittorrent/go-btfs/s3/consts"
+	"github.com/bittorrent/go-btfs/s3/handlers"
 )
 
 // credentialHeader data type represents structured form of Credential

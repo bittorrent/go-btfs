@@ -3,13 +3,13 @@ package auth
 import (
 	"context"
 	"encoding/hex"
-	"github.com/bittorrent/go-btfs/s3/handlers"
-	"github.com/bittorrent/go-btfs/s3/utils/hash"
 	"net/http"
 
 	"github.com/bittorrent/go-btfs/s3/apierrors"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/etag"
+	"github.com/bittorrent/go-btfs/s3/handlers"
+	"github.com/bittorrent/go-btfs/s3/utils/hash"
 )
 
 // CheckRequestAuthTypeCredential Check request auth type verifies the incoming http request

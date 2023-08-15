@@ -2,12 +2,13 @@ package auth
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/apierrors"
 	"github.com/bittorrent/go-btfs/s3/handlers"
 	"github.com/bittorrent/go-btfs/s3/policy"
 	"github.com/bittorrent/go-btfs/s3/services"
-	"net/http"
 )
 
 var _ handlers.AuthService = (*Service)(nil)
