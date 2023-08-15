@@ -53,15 +53,13 @@ func checkActionInPublicRead(action s3action.Action) bool {
 }
 
 func IsAllowed(own bool, acl string, action s3action.Action) (allow bool) {
-	a := action.Action(action)
-
 	// 1.if bucket
-	if a.IsBucketAction() {
+	if action.IsBucketAction() {
 		return own
 	}
 
 	// 2.if object
-	if a.IsObjectAction() {
+	if action.IsObjectAction() {
 		switch acl {
 		case Private:
 			return own
