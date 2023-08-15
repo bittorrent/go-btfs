@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/bittorrent/go-btfs/s3/action"
+	"github.com/bittorrent/go-btfs/s3/ctxmu"
 	"github.com/bittorrent/go-btfs/s3/handlers"
-	"github.com/bittorrent/go-btfs/s3/lock"
 	"github.com/bittorrent/go-btfs/s3/policy"
 	"github.com/bittorrent/go-btfs/s3/services"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -14,24 +14,25 @@ import (
 
 const (
 	bucketPrefix           = "bkt/"
-	globalOperationTimeout = 5 * time.Minute
-	deleteOperationTimeout = 1 * time.Minute
+	defaultUpdateTimeoutMS = 200
 )
 
 var _ handlers.BucketService = (*Service)(nil)
 
 // Service captures all bucket metadata for a given cluster.
 type Service struct {
-	providers   services.Providerser
-	nsLock      *lock.NsLockMap
-	emptyBucket func(ctx context.Context, bucket string) (bool, error)
+	providers     services.Providerser
+	emptyBucket   func(ctx context.Context, bucket string) (bool, error)
+	locks         *ctxmu.MultiCtxRWMutex
+	updateTimeout time.Duration
 }
 
 // NewService - creates new policy system.
 func NewService(providers services.Providerser, options ...Option) (s *Service) {
 	s = &Service{
-		providers: providers,
-		nsLock:    lock.NewNSLock(),
+		providers:     providers,
+		locks:         ctxmu.NewDefaultMultiCtxRWMutex(),
+		updateTimeout: time.Duration(defaultUpdateTimeoutMS) * time.Millisecond,
 	}
 	for _, option := range options {
 		option(s)
@@ -69,34 +70,30 @@ func (s *Service) NewBucketMetadata(name, region, accessKey, acl string) *handle
 	}
 }
 
-// NewNSLock - initialize a new namespace RWLocker instance.
-func (s *Service) NewNSLock(bucket string) lock.RWLocker {
-	return s.nsLock.NewNSLock("meta", bucket)
-}
-
 func (s *Service) SetEmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error)) {
 	s.emptyBucket = emptyBucket
 }
 
-// setBucketMeta - sets a new metadata in-db
-func (s *Service) setBucketMeta(bucket string, meta *handlers.BucketMetadata) error {
+// lockSetBucketMeta - sets a new metadata in-db
+func (s *Service) lockSetBucketMeta(bucket string, meta *handlers.BucketMetadata) error {
 	return s.providers.GetStateStore().Put(bucketPrefix+bucket, meta)
 }
 
 // CreateBucket - create a new Bucket
 func (s *Service) CreateBucket(ctx context.Context, bucket, region, accessKey, acl string) error {
-	lk := s.NewNSLock(bucket)
-	lkctx, err := lk.GetLock(ctx, globalOperationTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
+	defer cancel()
+
+	err := s.locks.Lock(ctx, bucket)
 	if err != nil {
 		return err
 	}
-	ctx = lkctx.Context()
-	defer lk.Unlock(lkctx.Cancel)
+	defer s.locks.Unlock(bucket)
 
-	return s.setBucketMeta(bucket, s.NewBucketMetadata(bucket, region, accessKey, acl))
+	return s.lockSetBucketMeta(bucket, s.NewBucketMetadata(bucket, region, accessKey, acl))
 }
 
-func (s *Service) getBucketMeta(bucket string) (meta handlers.BucketMetadata, err error) {
+func (s *Service) lockGetBucketMeta(bucket string) (meta handlers.BucketMetadata, err error) {
 	err = s.providers.GetStateStore().Get(bucketPrefix+bucket, &meta)
 	if err == leveldb.ErrNotFound {
 		err = handlers.ErrBucketNotFound
@@ -106,15 +103,16 @@ func (s *Service) getBucketMeta(bucket string) (meta handlers.BucketMetadata, er
 
 // GetBucketMeta metadata for a bucket.
 func (s *Service) GetBucketMeta(ctx context.Context, bucket string) (meta handlers.BucketMetadata, err error) {
-	lk := s.NewNSLock(bucket)
-	lkctx, err := lk.GetRLock(ctx, globalOperationTimeout)
-	if err != nil {
-		return handlers.BucketMetadata{}, err
-	}
-	ctx = lkctx.Context()
-	defer lk.RUnlock(lkctx.Cancel)
+	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
+	defer cancel()
 
-	return s.getBucketMeta(bucket)
+	err = s.locks.Lock(ctx, bucket)
+	if err != nil {
+		return handlers.BucketMetadata{Name: bucket}, err
+	}
+	defer s.locks.Unlock(bucket)
+
+	return s.lockGetBucketMeta(bucket)
 }
 
 // HasBucket  metadata for a bucket.
@@ -125,15 +123,16 @@ func (s *Service) HasBucket(ctx context.Context, bucket string) bool {
 
 // DeleteBucket bucket.
 func (s *Service) DeleteBucket(ctx context.Context, bucket string) error {
-	lk := s.NewNSLock(bucket)
-	lkctx, err := lk.GetLock(ctx, deleteOperationTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
+	defer cancel()
+
+	err := s.locks.Lock(ctx, bucket)
 	if err != nil {
 		return err
 	}
-	ctx = lkctx.Context()
-	defer lk.Unlock(lkctx.Cancel)
+	defer s.locks.Unlock(bucket)
 
-	if _, err = s.getBucketMeta(bucket); err != nil {
+	if _, err = s.lockGetBucketMeta(bucket); err != nil {
 		return err
 	}
 
@@ -168,21 +167,22 @@ func (s *Service) GetAllBucketsOfUser(ctx context.Context, username string) ([]h
 
 // UpdateBucketAcl .
 func (s *Service) UpdateBucketAcl(ctx context.Context, bucket, acl, accessKey string) error {
-	lk := s.NewNSLock(bucket)
-	lkctx, err := lk.GetLock(ctx, globalOperationTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
+	defer cancel()
+
+	err := s.locks.Lock(ctx, bucket)
 	if err != nil {
 		return err
 	}
-	ctx = lkctx.Context()
-	defer lk.Unlock(lkctx.Cancel)
+	defer s.locks.Unlock(bucket)
 
-	meta, err := s.getBucketMeta(bucket)
+	meta, err := s.lockGetBucketMeta(bucket)
 	if err != nil {
 		return err
 	}
 
 	meta.Acl = acl
-	return s.setBucketMeta(bucket, &meta)
+	return s.lockSetBucketMeta(bucket, &meta)
 }
 
 // GetBucketAcl .

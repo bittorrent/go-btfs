@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/apierrors"
-	"github.com/bittorrent/go-btfs/s3/lock"
 	"net/http"
 )
 
@@ -30,7 +29,6 @@ type AuthService interface {
 
 type BucketService interface {
 	CheckACL(accessKeyRecord *AccessKeyRecord, bucketName string, action action.Action) (err error)
-	NewNSLock(bucket string) lock.RWLocker
 	SetEmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error))
 	CreateBucket(ctx context.Context, bucket, region, accessKey, acl string) error
 	GetBucketMeta(ctx context.Context, bucket string) (meta BucketMetadata, err error)
