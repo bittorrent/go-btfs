@@ -301,7 +301,7 @@ func (s *Service) getReqAccessKeyV4(r *http.Request, region string, stype servic
 		}
 	}
 
-	// TODO: Why should a temporary user be replaced with the parent user's account name?
+	// check accessKey.
 	record, err := s.accessKeySvc.Get(ch.accessKey)
 	if err != nil {
 		return &handlers.AccessKeyRecord{}, err
