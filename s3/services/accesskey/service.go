@@ -1,19 +1,21 @@
 package accesskey
 
 import (
+	"context"
 	"errors"
+	"github.com/bittorrent/go-btfs/s3/ctxmu"
 	"github.com/bittorrent/go-btfs/s3/handlers"
 	"github.com/bittorrent/go-btfs/s3/services"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/bittorrent/go-btfs/utils"
 	"github.com/google/uuid"
-	"sync"
 	"time"
 )
 
 const (
-	defaultSecretLength   = 32
-	defaultStoreKeyPrefix = "access-keys:"
+	defaultSecretLength    = 32
+	defaultStoreKeyPrefix  = "access-keys:"
+	defaultUpdateTimeoutMS = 200
 )
 
 var _ handlers.AccessKeyService = (*Service)(nil)
@@ -22,7 +24,8 @@ type Service struct {
 	providers      services.Providerser
 	secretLength   int
 	storeKeyPrefix string
-	locks          sync.Map
+	locks          *ctxmu.MultiCtxRWMutex
+	updateTimeout  time.Duration
 }
 
 func NewService(providers services.Providerser, options ...Option) (svc *Service) {
@@ -30,7 +33,8 @@ func NewService(providers services.Providerser, options ...Option) (svc *Service
 		providers:      providers,
 		secretLength:   defaultSecretLength,
 		storeKeyPrefix: defaultStoreKeyPrefix,
-		locks:          sync.Map{},
+		locks:          ctxmu.NewDefaultMultiCtxRWMutex(),
+		updateTimeout:  time.Duration(defaultUpdateTimeoutMS) * time.Millisecond,
 	}
 	for _, option := range options {
 		option(svc)
@@ -127,18 +131,6 @@ func (svc *Service) getStoreKey(key string) (storeKey string) {
 	return
 }
 
-func (svc *Service) lock(key string) (unlock func()) {
-	loaded := true
-	for loaded {
-		_, loaded = svc.locks.LoadOrStore(key, nil)
-		time.Sleep(10 * time.Millisecond)
-	}
-	unlock = func() {
-		svc.locks.Delete(key)
-	}
-	return
-}
-
 type updateArgs struct {
 	Enable   *bool
 	Secret   *string
@@ -146,8 +138,14 @@ type updateArgs struct {
 }
 
 func (svc *Service) update(key string, args *updateArgs) (err error) {
-	unlock := svc.lock(key)
-	defer unlock()
+	ctx, cancel := context.WithTimeout(context.Background(), svc.updateTimeout)
+	defer cancel()
+
+	err = svc.locks.Lock(ctx, key)
+	if err != nil {
+		return
+	}
+	defer svc.locks.Unlock(key)
 
 	record := &handlers.AccessKeyRecord{}
 	stk := svc.getStoreKey(key)
