@@ -26,10 +26,10 @@ type AccessKeyService interface {
 
 type AuthService interface {
 	VerifySignature(ctx context.Context, r *http.Request) (accessKeyRecord *AccessKeyRecord, err apierrors.ErrorCode)
-	CheckACL(accessKeyRecord *AccessKeyRecord, bucketMeta *BucketMetadata, action action.Action) (err error)
 }
 
 type BucketService interface {
+	CheckACL(accessKeyRecord *AccessKeyRecord, bucketName string, action action.Action) (err error)
 	NewNSLock(bucket string) lock.RWLocker
 	SetEmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error))
 	CreateBucket(ctx context.Context, bucket, region, accessKey, acl string) error

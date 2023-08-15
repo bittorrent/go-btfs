@@ -4,10 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/apierrors"
 	"github.com/bittorrent/go-btfs/s3/handlers"
-	"github.com/bittorrent/go-btfs/s3/policy"
 	"github.com/bittorrent/go-btfs/s3/services"
 )
 
@@ -31,19 +29,5 @@ func NewService(providers services.Providerser, accessKeySvc handlers.AccessKeyS
 
 func (s *Service) VerifySignature(ctx context.Context, r *http.Request) (accessKeyRecord *handlers.AccessKeyRecord, err apierrors.ErrorCode) {
 	s.CheckRequestAuthTypeCredential(ctx, r)
-	return
-}
-
-func (svc *Service) CheckACL(accessKeyRecord *handlers.AccessKeyRecord, bucketMeta *handlers.BucketMeta, action action.Action) (err error) {
-	////todo 是否需要判断原始的
-	//if bucketName == "" {
-	//	return cred, handlers.ErrBucketNotFound
-	//}
-
-	//todo 注意：如果action是CreateBucketAction，HasBucket(ctx, bucketName)进行判断
-
-	if policy.IsAllowed(bucketMeta.Owner == accessKeyRecord.Key, bucketMeta.Acl, action) == false {
-		return cred, apierrors.ErrAccessDenied
-	}
 	return
 }

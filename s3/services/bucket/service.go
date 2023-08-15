@@ -4,8 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/handlers"
 	"github.com/bittorrent/go-btfs/s3/lock"
+	"github.com/bittorrent/go-btfs/s3/policy"
 	"github.com/bittorrent/go-btfs/s3/services"
 	"github.com/syndtr/goleveldb/leveldb"
 )
@@ -35,6 +37,25 @@ func NewService(providers services.Providerser, options ...Option) (s *Service) 
 		option(s)
 	}
 	return s
+}
+
+func (s *Service) CheckACL(accessKeyRecord *handlers.AccessKeyRecord, bucketName string, action action.Action) (err error) {
+	//todo 是否需要判断原始的
+	if bucketName == "" {
+		return handlers.ErrBucketNotFound
+	}
+
+	bucketMeta, err := s.GetBucketMeta(context.Background(), bucketName)
+	if err != nil {
+		return err
+	}
+
+	//todo 注意：如果action是CreateBucketAction，HasBucket(ctx, bucketName)进行判断
+
+	if policy.IsAllowed(bucketMeta.Owner == accessKeyRecord.Key, bucketMeta.Acl, action) == false {
+		return handlers.ErrBucketAccessDenied
+	}
+	return
 }
 
 // NewBucketMetadata creates handlers.BucketMetadata with the supplied name and Created to Now.
