@@ -52,6 +52,19 @@ func (handlers *Handlers) Sign(handler http.Handler) http.Handler {
 	return nil
 }
 
+func (handlers *Handlers) parsePutObjectReq(r *http.Request) (arg *PutObjectReq, err error) {
+	return
+}
+
 func (handlers *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
+	req := &PutObjectRequest{}
+	err := req.Bind(r)
+	if err != nil {
+		return
+	}
+	//....
+
+	WritePutObjectResponse(w, object)
+
 	return
 }

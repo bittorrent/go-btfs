@@ -20,13 +20,5 @@ type BucketMetadata struct {
 	Created time.Time
 }
 
-// NewBucketMetadata creates BucketMetadata with the supplied name and Created to Now.
-func NewBucketMetadata(name, region, accessKey, acl string) *BucketMetadata {
-	return &BucketMetadata{
-		Name:    name,
-		Region:  region,
-		Owner:   accessKey,
-		Acl:     acl,
-		Created: time.Now().UTC(),
-	}
+type ObjectMetadata struct {
 }
