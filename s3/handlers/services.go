@@ -29,10 +29,10 @@ type AuthService interface {
 
 type BucketService interface {
 	CheckACL(accessKeyRecord *AccessKeyRecord, bucketName string, action action.Action) (err error)
-	SetEmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error))
 	CreateBucket(ctx context.Context, bucket, region, accessKey, acl string) error
 	GetBucketMeta(ctx context.Context, bucket string) (meta BucketMetadata, err error)
 	HasBucket(ctx context.Context, bucket string) bool
+	SetEmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error))
 	DeleteBucket(ctx context.Context, bucket string) error
 	GetAllBucketsOfUser(ctx context.Context, username string) ([]BucketMetadata, error)
 }

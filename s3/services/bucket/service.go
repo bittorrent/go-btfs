@@ -70,10 +70,6 @@ func (s *Service) NewBucketMetadata(name, region, accessKey, acl string) *handle
 	}
 }
 
-func (s *Service) SetEmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error)) {
-	s.emptyBucket = emptyBucket
-}
-
 // lockSetBucketMeta - sets a new metadata in-db
 func (s *Service) lockSetBucketMeta(bucket string, meta *handlers.BucketMetadata) error {
 	return s.providers.GetStateStore().Put(bucketPrefix+bucket, meta)
@@ -106,11 +102,11 @@ func (s *Service) GetBucketMeta(ctx context.Context, bucket string) (meta handle
 	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
 	defer cancel()
 
-	err = s.locks.Lock(ctx, bucket)
+	err = s.locks.RLock(ctx, bucket)
 	if err != nil {
 		return handlers.BucketMetadata{Name: bucket}, err
 	}
-	defer s.locks.Unlock(bucket)
+	defer s.locks.RUnlock(bucket)
 
 	return s.lockGetBucketMeta(bucket)
 }
@@ -143,6 +139,10 @@ func (s *Service) DeleteBucket(ctx context.Context, bucket string) error {
 	}
 
 	return s.providers.GetStateStore().Delete(bucketPrefix + bucket)
+}
+
+func (s *Service) SetEmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error)) {
+	s.emptyBucket = emptyBucket
 }
 
 // GetAllBucketsOfUser metadata for all bucket.
