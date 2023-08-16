@@ -342,6 +342,13 @@ func TestCommands(t *testing.T) {
 		"/bittorrent/scrape",
 		"/bittorrent/metainfo",
 		"/bittorrent/bencode",
+		"/multibase",
+		"/multibase/encode",
+		"/multibase/decode",
+		"/multibase/transcode",
+		"/multibase/list",
+		"/backup",
+		"/recovery",
 	}
 
 	cmdSet := make(map[string]struct{})
