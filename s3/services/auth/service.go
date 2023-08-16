@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/bittorrent/go-btfs/s3/apierrors"
 	"github.com/bittorrent/go-btfs/s3/handlers"
 	"github.com/bittorrent/go-btfs/s3/services"
 )
@@ -27,7 +26,7 @@ func NewService(providers services.Providerser, accessKeySvc handlers.AccessKeyS
 	return
 }
 
-func (s *Service) VerifySignature(ctx context.Context, r *http.Request) (accessKeyRecord *handlers.AccessKeyRecord, err apierrors.ErrorCode) {
+func (s *Service) VerifySignature(ctx context.Context, r *http.Request) (accessKeyRecord *handlers.AccessKeyRecord, err handlers.ErrorCode) {
 	s.CheckRequestAuthTypeCredential(ctx, r)
 	return
 }

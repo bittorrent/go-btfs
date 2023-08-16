@@ -135,7 +135,7 @@ func (s *Service) DeleteBucket(ctx context.Context, bucket string) error {
 	if empty, err := s.emptyBucket(ctx, bucket); err != nil {
 		return err
 	} else if !empty {
-		return handlers.ErrBucketNotEmpty
+		return handlers.ErrSetBucketEmptyFailed
 	}
 
 	return s.providers.GetStateStore().Delete(bucketPrefix + bucket)

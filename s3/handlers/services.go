@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"context"
-	"github.com/bittorrent/go-btfs/s3/action"
-	"github.com/bittorrent/go-btfs/s3/apierrors"
 	"net/http"
+
+	"github.com/bittorrent/go-btfs/s3/action"
 )
 
 type CorsService interface {
@@ -24,7 +24,7 @@ type AccessKeyService interface {
 }
 
 type AuthService interface {
-	VerifySignature(ctx context.Context, r *http.Request) (accessKeyRecord *AccessKeyRecord, err apierrors.ErrorCode)
+	VerifySignature(ctx context.Context, r *http.Request) (accessKeyRecord *AccessKeyRecord, err ErrorCode)
 }
 
 type BucketService interface {
@@ -34,7 +34,7 @@ type BucketService interface {
 	HasBucket(ctx context.Context, bucket string) bool
 	SetEmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error))
 	DeleteBucket(ctx context.Context, bucket string) error
-	GetAllBucketsOfUser(ctx context.Context, username string) ([]BucketMetadata, error)
+	GetAllBucketsOfUser(ctx context.Context, accessKey string) ([]BucketMetadata, error)
 }
 
 type ObjectService interface {
