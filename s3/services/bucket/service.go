@@ -41,7 +41,7 @@ func NewService(providers services.Providerser, options ...Option) (s *Service) 
 }
 
 func (s *Service) CheckACL(accessKeyRecord *handlers.AccessKeyRecord, bucketName string, action action.Action) (err error) {
-	//todo 是否需要判断原始的
+	//需要判断原始的
 	if bucketName == "" {
 		return handlers.ErrBucketNotFound
 	}
@@ -50,8 +50,6 @@ func (s *Service) CheckACL(accessKeyRecord *handlers.AccessKeyRecord, bucketName
 	if err != nil {
 		return err
 	}
-
-	//todo 注意：如果action是CreateBucketAction，HasBucket(ctx, bucketName)进行判断
 
 	if policy.IsAllowed(bucketMeta.Owner == accessKeyRecord.Key, bucketMeta.Acl, action) == false {
 		return handlers.ErrBucketAccessDenied
@@ -166,7 +164,7 @@ func (s *Service) GetAllBucketsOfUser(ctx context.Context, username string) ([]h
 }
 
 // UpdateBucketAcl .
-func (s *Service) UpdateBucketAcl(ctx context.Context, bucket, acl, accessKey string) error {
+func (s *Service) UpdateBucketAcl(ctx context.Context, bucket, acl string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
 	defer cancel()
 

@@ -2,14 +2,14 @@ package handlers
 
 import (
 	"encoding/xml"
-	"github.com/bittorrent/go-btfs/s3/apierrors"
+	"io"
+	"net/http"
+	"path"
+
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/policy"
 	"github.com/bittorrent/go-btfs/s3/utils"
 	"github.com/gorilla/mux"
-	"io"
-	"net/http"
-	"path"
 )
 
 type RequestBinder interface {
@@ -61,7 +61,7 @@ func (req *PutBucketRequest) Bind(r *http.Request) (err error) {
 }
 
 // Parses location constraint from the incoming reader.
-func parseLocationConstraint(r *http.Request) (location string, s3Error apierrors.ErrorCode) {
+func parseLocationConstraint(r *http.Request) (location string, s3Error ErrorCode) {
 	// If the request has no body with content-length set to 0,
 	// we do not have to validate location constraint. Bucket will
 	// be created at default region.
@@ -69,13 +69,13 @@ func parseLocationConstraint(r *http.Request) (location string, s3Error apierror
 	err := utils.XmlDecoder(r.Body, &locationConstraint, r.ContentLength)
 	if err != nil && r.ContentLength != 0 {
 		// Treat all other failures as XML parsing errors.
-		return "", apierrors.ErrMalformedXML
+		return "", ErrCodeMalformedXML
 	} // else for both err as nil or io.EOF
 	location = locationConstraint.Location
 	if location == "" {
 		location = consts.DefaultRegion
 	}
-	return location, apierrors.ErrNone
+	return location, ErrCodeNone
 }
 
 // createBucketConfiguration container for bucket configuration request from client.
@@ -95,17 +95,17 @@ func pathClean(p string) string {
 	return cp
 }
 
-func unmarshalXML(reader io.Reader, isObject bool) (*store.Tags, error) {
-	tagging := &store.Tags{
-		TagSet: &store.TagSet{
-			TagMap:   make(map[string]string),
-			IsObject: isObject,
-		},
-	}
-
-	if err := xml.NewDecoder(reader).Decode(tagging); err != nil {
-		return nil, err
-	}
-
-	return tagging, nil
-}
+//func unmarshalXML(reader io.Reader, isObject bool) (*store.Tags, error) {
+//	tagging := &store.Tags{
+//		TagSet: &store.TagSet{
+//			TagMap:   make(map[string]string),
+//			IsObject: isObject,
+//		},
+//	}
+//
+//	if err := xml.NewDecoder(reader).Decode(tagging); err != nil {
+//		return nil, err
+//	}
+//
+//	return tagging, nil
+//}

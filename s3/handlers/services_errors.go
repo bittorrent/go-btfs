@@ -9,7 +9,10 @@ var (
 
 	ErrInvalidBucketName    = errors.New("bucket name is invalid")
 	ErrBucketNotFound       = errors.New("bucket is not found")
-	ErrBucketAccessDenied   = errors.New("bucket access denied. ")
-	ErrSetBucketEmptyFailed = errors.New("set bucket empty failed. ")
+	ErrBucketAccessDenied   = errors.New("bucket access denied")
+	ErrSetBucketEmptyFailed = errors.New("set bucket empty failed")
 	ErrCreateBucket         = errors.New("create bucket failed")
+	ErrNoSuchUserPolicy     = errors.New("no such user policy")
+
+	ErrNotImplemented = errors.New("not implemented")
 )

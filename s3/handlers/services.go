@@ -35,6 +35,8 @@ type BucketService interface {
 	SetEmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error))
 	DeleteBucket(ctx context.Context, bucket string) error
 	GetAllBucketsOfUser(ctx context.Context, accessKey string) ([]BucketMetadata, error)
+	UpdateBucketAcl(ctx context.Context, bucket, acl string) error
+	GetBucketAcl(ctx context.Context, bucket string) (string, error)
 }
 
 type ObjectService interface {
