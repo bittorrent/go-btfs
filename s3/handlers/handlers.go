@@ -4,8 +4,6 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
 	s3action "github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/routers"
@@ -44,36 +42,19 @@ func NewHandlers(
 	return
 }
 
-func (handlers *Handlers) Cors(handler http.Handler) http.Handler {
+func (h *Handlers) Cors(handler http.Handler) http.Handler {
 	return cors.New(cors.Options{
-		AllowedOrigins:   handlers.corsSvc.GetAllowOrigins(),
-		AllowedMethods:   handlers.corsSvc.GetAllowMethods(),
-		AllowedHeaders:   handlers.corsSvc.GetAllowHeaders(),
-		ExposedHeaders:   handlers.corsSvc.GetAllowHeaders(),
+		AllowedOrigins:   h.corsSvc.GetAllowOrigins(),
+		AllowedMethods:   h.corsSvc.GetAllowMethods(),
+		AllowedHeaders:   h.corsSvc.GetAllowHeaders(),
+		ExposedHeaders:   h.corsSvc.GetAllowHeaders(),
 		AllowCredentials: true,
 	}).Handler(handler)
 }
 
-func (handlers *Handlers) Sign(handler http.Handler) http.Handler {
+func (h *Handlers) Sign(handler http.Handler) http.Handler {
 	return nil
 }
-
-//func (handlers *Handlers) parsePutObjectReq(r *http.Request) (arg *PutObjectReq, err error) {
-//	return
-//}
-//
-//func (handlers *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
-//	req := &PutObjectRequest{}
-//	err := req.Bind(r)
-//	if err != nil {
-//		return
-//	}
-//	//....
-//
-//	WritePutObjectResponse(w, object)
-//
-//	return
-//}
 
 func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -122,7 +103,7 @@ func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(consts.Location, cp) // Clean any trailing slashes.
 	}
 
-	WriteSuccessResponse(w, r)
+	WritePutBucketResponse(w, r)
 
 	return
 }
@@ -153,7 +134,7 @@ func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteSuccessResponse(w, r)
+	WriteHeadBucketResponse(w, r)
 }
 
 func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
@@ -183,7 +164,7 @@ func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, r, ToApiError(ctx, err))
 		return
 	}
-	WriteSuccessNoContent(w)
+	WriteDeleteBucketResponse(w)
 }
 
 func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
@@ -213,23 +194,8 @@ func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, r, ToApiError(ctx, err))
 		return
 	}
-	var buckets []*s3.Bucket
-	for _, b := range bucketMetas {
-		buckets = append(buckets, &s3.Bucket{
-			Name:         aws.String(b.Name),
-			CreationDate: aws.Time(b.Created),
-		})
-	}
 
-	resp := ListAllMyBucketsResult{
-		Owner: &s3.Owner{
-			ID:          aws.String(consts.DefaultOwnerID),
-			DisplayName: aws.String(consts.DisplayName),
-		},
-		Buckets: buckets,
-	}
-
-	WriteSuccessResponseXML(w, r, resp)
+	WriteListBucketsResponse(w, r, bucketMetas)
 }
 
 func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
@@ -263,27 +229,8 @@ func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, r, ToApiError(ctx, err))
 		return
 	}
-	// 校验桶ACL类型，公共读(PublicRead)，公共读写(PublicReadWrite)，私有(Private)
-	if acl == "" {
-		acl = "private"
-	}
 
-	resp := AccessControlPolicy{}
-	id := accessKeyRecord.Key
-	if resp.Owner.DisplayName == "" {
-		resp.Owner.DisplayName = accessKeyRecord.Key
-		resp.Owner.ID = id
-	}
-	resp.AccessControlList.Grant = append(resp.AccessControlList.Grant, Grant{
-		Grantee: Grantee{
-			ID:          id,
-			DisplayName: accessKeyRecord.Key,
-			Type:        "CanonicalUser",
-			XMLXSI:      "CanonicalUser",
-			XMLNS:       "http://www.w3.org/2001/XMLSchema-instance"},
-		Permission: Permission(acl), //todo change
-	})
-	WriteSuccessResponseXML(w, r, resp)
+	WriteGetBucketAclResponse(w, r, accessKeyRecord, acl)
 }
 
 func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
@@ -320,5 +267,5 @@ func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//todo check no return?
-	WriteSuccessNoContent(w)
+	WritePutBucketAclResponse(w, r)
 }
