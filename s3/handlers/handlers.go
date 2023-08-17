@@ -129,7 +129,7 @@ func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := &PutBucketRequest{}
+	req := &HeadBucketRequest{}
 	err := req.Bind(r)
 	if err != nil {
 		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))
@@ -158,7 +158,7 @@ func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := &PutBucketRequest{}
+	req := &DeleteBucketRequest{}
 	err := req.Bind(r)
 	if err != nil {
 		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))
@@ -188,7 +188,7 @@ func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := &PutBucketRequest{}
+	req := &ListBucketsRequest{}
 	err := req.Bind(r)
 	if err != nil {
 		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))
@@ -234,7 +234,7 @@ func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := &PutBucketRequest{}
+	req := &GetBucketAclRequest{}
 	err := req.Bind(r)
 	if err != nil {
 		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))
@@ -258,13 +258,12 @@ func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//todo check all errors
-	bucketMeta, err := h.bucketSvc.GetBucketMeta(ctx, req.Bucket)
+	acl, err := h.bucketSvc.GetBucketAcl(ctx, req.Bucket)
 	if err != nil {
 		WriteErrorResponse(w, r, ToApiError(ctx, err))
 		return
 	}
 	// 校验桶ACL类型，公共读(PublicRead)，公共读写(PublicReadWrite)，私有(Private)
-	acl := bucketMeta.Acl
 	if acl == "" {
 		acl = "private"
 	}
@@ -289,7 +288,7 @@ func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := &PutBucketRequest{}
+	req := &PutBucketAclRequest{}
 	err := req.Bind(r)
 	if err != nil {
 		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))

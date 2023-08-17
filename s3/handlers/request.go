@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/xml"
-	"io"
 	"net/http"
 	"path"
 
@@ -26,23 +25,11 @@ type RequestBinder interface {
 //	return
 //}
 
-func checkPermissionType(s string) bool {
-	switch s {
-	case policy.PublicRead:
-		return true
-	case policy.PublicReadWrite:
-		return true
-	case policy.Private:
-		return true
-	}
-	return false
-}
-
+// PutBucketRequest .
 type PutBucketRequest struct {
 	Bucket string
 	ACL    string
 	Region string
-	Body   io.Reader
 }
 
 func (req *PutBucketRequest) Bind(r *http.Request) (err error) {
@@ -59,6 +46,82 @@ func (req *PutBucketRequest) Bind(r *http.Request) (err error) {
 	req.Region = region
 	return
 }
+
+// HeadBucketRequest .
+type HeadBucketRequest struct {
+	Bucket string
+}
+
+func (req *HeadBucketRequest) Bind(r *http.Request) (err error) {
+	vars := mux.Vars(r)
+	bucket := vars["bucket"]
+
+	//set request
+	req.Bucket = bucket
+	return
+}
+
+// DeleteBucketRequest .
+type DeleteBucketRequest struct {
+	Bucket string
+}
+
+func (req *DeleteBucketRequest) Bind(r *http.Request) (err error) {
+	vars := mux.Vars(r)
+	bucket := vars["bucket"]
+
+	//set request
+	req.Bucket = bucket
+	return
+}
+
+// ListBucketsRequest .
+type ListBucketsRequest struct {
+	Bucket string
+}
+
+func (req *ListBucketsRequest) Bind(r *http.Request) (err error) {
+	vars := mux.Vars(r)
+	bucket := vars["bucket"]
+
+	//set request
+	req.Bucket = bucket
+	return
+}
+
+// GetBucketAclRequest .
+type GetBucketAclRequest struct {
+	Bucket string
+}
+
+func (req *GetBucketAclRequest) Bind(r *http.Request) (err error) {
+	vars := mux.Vars(r)
+	bucket := vars["bucket"]
+
+	//set request
+	req.Bucket = bucket
+	return
+}
+
+// PutBucketAclRequest .
+type PutBucketAclRequest struct {
+	Bucket string
+	ACL    string
+}
+
+func (req *PutBucketAclRequest) Bind(r *http.Request) (err error) {
+	vars := mux.Vars(r)
+	bucket := vars["bucket"]
+
+	acl := r.Header.Get(consts.AmzACL)
+
+	//set request
+	req.Bucket = bucket
+	req.ACL = acl
+	return
+}
+
+/*********************************/
 
 // Parses location constraint from the incoming reader.
 func parseLocationConstraint(r *http.Request) (location string, s3Error ErrorCode) {
@@ -109,3 +172,15 @@ func pathClean(p string) string {
 //
 //	return tagging, nil
 //}
+
+func checkPermissionType(s string) bool {
+	switch s {
+	case policy.PublicRead:
+		return true
+	case policy.PublicReadWrite:
+		return true
+	case policy.Private:
+		return true
+	}
+	return false
+}
