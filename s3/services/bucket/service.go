@@ -41,7 +41,7 @@ func NewService(providers services.Providerser, options ...Option) (s *Service) 
 }
 
 func (s *Service) CheckACL(accessKeyRecord *handlers.AccessKeyRecord, bucketName string, action action.Action) (err error) {
-	//需要判断原始的
+	//需要判断bucketName是否为空字符串
 	if bucketName == "" {
 		return handlers.ErrBucketNotFound
 	}
