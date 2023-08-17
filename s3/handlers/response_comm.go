@@ -141,8 +141,8 @@ type ListAllMyBucketsResult struct {
 	Buckets []*s3.Bucket `xml:"Buckets>Bucket"`
 }
 
-// WriteSuccessResponseHeadersOnly write SuccessResponseHeadersOnly
-func WriteSuccessResponseHeadersOnly(w http.ResponseWriter, r *http.Request) {
+// WriteSuccessResponse write SuccessResponseHeadersOnly
+func WriteSuccessResponse(w http.ResponseWriter, r *http.Request) {
 	writeResponse(w, r, http.StatusOK, nil, mimeNone)
 }
 

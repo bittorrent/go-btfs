@@ -122,7 +122,7 @@ func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(consts.Location, cp) // Clean any trailing slashes.
 	}
 
-	WriteSuccessResponseHeadersOnly(w, r)
+	WriteSuccessResponse(w, r)
 
 	return
 }
@@ -153,7 +153,7 @@ func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteSuccessResponseHeadersOnly(w, r)
+	WriteSuccessResponse(w, r)
 }
 
 func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
