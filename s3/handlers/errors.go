@@ -25,55 +25,72 @@ func ContextCanceled(ctx context.Context) bool {
 	}
 }
 
+//ErrInvalidBucketName    = errors.New("bucket name is invalid")
+//ErrBucketNotFound       = errors.New("bucket is not found")
+//ErrBucketAccessDenied   = errors.New("bucket access denied. ")
+//ErrSetBucketEmptyFailed = errors.New("set bucket empty failed. ")
+//ErrCreateBucket         = errors.New("create bucket failed")
+//)
+
 func ToApiError(ctx context.Context, err error) ErrorCode {
 	if ContextCanceled(ctx) {
 		if ctx.Err() == context.Canceled {
-			return ErrClientDisconnected
+			return ErrCodeClientDisconnected
 		}
 	}
-	errCode := ErrInternalError
-	switch err.(type) {
+	errCode := ErrCodeInternalError
+	switch err {
+	case ErrInvalidArgument:
+		errCode = ErrCodeInvalidRequestBody //实际是request请求信息， header or query uri 信息。
+	case ErrInvalidBucketName:
+		errCode = ErrCodeInvalidBucketName
+	case ErrBucketNotFound:
+		errCode = ErrCodeNoSuchBucket
+	case ErrBucketAccessDenied:
+		errCode = ErrCodeAccessDenied
+	case ErrSetBucketEmptyFailed:
+	case ErrCreateBucket:
+		errCode = ErrCodeInternalError
+
 	case lock.OperationTimedOut:
-		errCode = ErrOperationTimedOut
+		errCode = ErrCodeOperationTimedOut
 	case hash.SHA256Mismatch:
-		errCode = ErrContentSHA256Mismatch
+		errCode = ErrCodeContentSHA256Mismatch
 	case hash.BadDigest:
-		errCode = ErrBadDigest
-	case store.BucketNotFound:
-		errCode = ErrNoSuchBucket
+		errCode = ErrCodeBadDigest
 	case store.BucketPolicyNotFound:
-		errCode = ErrNoSuchBucketPolicy
+		errCode = ErrCodeNoSuchBucketPolicy
 	case store.BucketTaggingNotFound:
 		errCode = ErrBucketTaggingNotFound
 	case s3utils.BucketNameInvalid:
-		errCode = ErrInvalidBucketName
+		errCode = ErrCodeInvalidBucketName
 	case s3utils.ObjectNameInvalid:
-		errCode = ErrInvalidObjectName
+		errCode = ErrCodeInvalidObjectName
 	case s3utils.ObjectNameTooLong:
-		errCode = ErrKeyTooLongError
+		errCode = ErrCodeKeyTooLongError
 	case s3utils.ObjectNamePrefixAsSlash:
-		errCode = ErrInvalidObjectNamePrefixSlash
+		errCode = ErrCodeInvalidObjectNamePrefixSlash
 	case s3utils.InvalidUploadIDKeyCombination:
-		errCode = ErrNotImplemented
+		errCode = ErrCodeNotImplemented
 	case s3utils.InvalidMarkerPrefixCombination:
-		errCode = ErrNotImplemented
+		errCode = ErrCodeNotImplemented
 	case s3utils.MalformedUploadID:
-		errCode = ErrNoSuchUpload
+		errCode = ErrCodeNoSuchUpload
 	case s3utils.InvalidUploadID:
-		errCode = ErrNoSuchUpload
+		errCode = ErrCodeNoSuchUpload
 	case s3utils.InvalidPart:
-		errCode = ErrInvalidPart
+		errCode = ErrCodeInvalidPart
 	case s3utils.PartTooSmall:
-		errCode = ErrEntityTooSmall
+		errCode = ErrCodeEntityTooSmall
 	case s3utils.PartTooBig:
-		errCode = ErrEntityTooLarge
+		errCode = ErrCodeEntityTooLarge
 	case url.EscapeError:
-		errCode = ErrInvalidObjectName
+		errCode = ErrCodeInvalidObjectName
 	default:
 		if xerrors.Is(err, store.ErrObjectNotFound) {
-			errCode = ErrNoSuchKey
+			errCode = ErrCodeNoSuchKey
 		} else if xerrors.Is(err, store.ErrBucketNotEmpty) {
-			errCode = ErrBucketNotEmpty
+			errCode = ErrCodeBucketNotEmpty
 		}
 	}
 	return errCode

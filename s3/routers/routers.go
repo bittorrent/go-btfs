@@ -25,7 +25,10 @@ func (routers *Routers) Register() http.Handler {
 	root.Use(routers.handlers.Cors, routers.handlers.Sign)
 
 	bucket := root.PathPrefix("/{bucket}").Subrouter()
-	bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(routers.handlers.PutObjectHandler)
+	bucket.Methods(http.MethodPut).Path("/{bucket:.+}").HandlerFunc(routers.handlers.PutBucketHandler)
+
+	//object
+	//bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(routers.handlers.PutObjectHandler)
 
 	return root
 }

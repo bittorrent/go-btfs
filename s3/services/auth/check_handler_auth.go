@@ -23,18 +23,18 @@ func (s *Service) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Re
 	switch GetRequestAuthType(r) {
 	case AuthTypeSigned, AuthTypePresigned:
 		region := ""
-		if s3Err = s.IsReqAuthenticated(ctx, r, region, ServiceS3); s3Err != handlers.ErrNone {
+		if s3Err = s.IsReqAuthenticated(ctx, r, region, ServiceS3); s3Err != handlers.ErrCodeNone {
 			return cred, s3Err
 		}
 		cred, s3Err = s.getReqAccessKeyV4(r, region, ServiceS3)
 	default:
-		return cred, handlers.ErrSignatureVersionNotSupported
+		return cred, handlers.ErrCodeSignatureVersionNotSupported
 	}
-	if s3Err != handlers.ErrNone {
+	if s3Err != handlers.ErrCodeNone {
 		return cred, s3Err
 	}
 
-	return cred, handlers.ErrNone
+	return cred, handlers.ErrCodeNone
 }
 
 func (s *Service) ReqSignatureV4Verify(r *http.Request, region string, stype serviceType) (s3Error handlers.ErrorCode) {
@@ -45,18 +45,18 @@ func (s *Service) ReqSignatureV4Verify(r *http.Request, region string, stype ser
 	case isRequestPresignedSignatureV4(r):
 		return s.doesPresignedSignatureMatch(sha256sum, r, region, stype)
 	default:
-		return handlers.ErrAccessDenied
+		return handlers.ErrCodeAccessDenied
 	}
 }
 
 // IsReqAuthenticated Verify if request has valid AWS Signature Version '4'.
 func (s *Service) IsReqAuthenticated(ctx context.Context, r *http.Request, region string, stype serviceType) (s3Error handlers.ErrorCode) {
-	if errCode := s.ReqSignatureV4Verify(r, region, stype); errCode != handlers.ErrNone {
+	if errCode := s.ReqSignatureV4Verify(r, region, stype); errCode != handlers.ErrCodeNone {
 		return errCode
 	}
 	clientETag, err := etag.FromContentMD5(r.Header)
 	if err != nil {
-		return handlers.ErrInvalidDigest
+		return handlers.ErrCodeInvalidDigest
 	}
 
 	// Extract either 'X-Amz-Content-Sha256' header or 'X-Amz-Content-Sha256' query parameter (if V4 presigned)
@@ -66,13 +66,13 @@ func (s *Service) IsReqAuthenticated(ctx context.Context, r *http.Request, regio
 		if sha256Sum, ok := r.Form[consts.AmzContentSha256]; ok && len(sha256Sum) > 0 {
 			contentSHA256, err = hex.DecodeString(sha256Sum[0])
 			if err != nil {
-				return handlers.ErrContentSHA256Mismatch
+				return handlers.ErrCodeContentSHA256Mismatch
 			}
 		}
 	} else if _, ok := r.Header[consts.AmzContentSha256]; !skipSHA256 && ok {
 		contentSHA256, err = hex.DecodeString(r.Header.Get(consts.AmzContentSha256))
 		if err != nil || len(contentSHA256) == 0 {
-			return handlers.ErrContentSHA256Mismatch
+			return handlers.ErrCodeContentSHA256Mismatch
 		}
 	}
 
@@ -80,39 +80,39 @@ func (s *Service) IsReqAuthenticated(ctx context.Context, r *http.Request, regio
 	// The verification happens implicit during reading.
 	reader, err := hash.NewReader(r.Body, -1, clientETag.String(), hex.EncodeToString(contentSHA256), -1)
 	if err != nil {
-		return handlers.ErrInternalError
+		return handlers.ErrCodeInternalError
 	}
 	r.Body = reader
-	return handlers.ErrNone
+	return handlers.ErrCodeNone
 }
 
 //// ValidateAdminSignature validate admin Signature
 //func (s *Service) ValidateAdminSignature(ctx context.Context, r *http.Request, region string) (Credentials, map[string]interface{}, bool, handlers.ErrorCode) {
 //	var cred Credentials
 //	var owner bool
-//	s3Err := handlers.ErrAccessDenied
+//	s3Err := handlers.ErrCodeAccessDenied
 //	if _, ok := r.Header[consts.AmzContentSha256]; ok &&
 //		GetRequestAuthType(r) == AuthTypeSigned {
 //		// We only support admin credentials to access admin APIs.
 //		cred, s3Err = GetReqAccessKeyV4(r, region, ServiceS3)
-//		if s3Err != handlers.ErrNone {
+//		if s3Err != handlers.ErrCodeNone {
 //			return cred, nil, owner, s3Err
 //		}
 //
 //		// we only support V4 (no presign) with auth body
 //		s3Err = s.IsReqAuthenticated(ctx, r, region, ServiceS3)
 //	}
-//	if s3Err != handlers.ErrNone {
+//	if s3Err != handlers.ErrCodeNone {
 //		return cred, nil, owner, s3Err
 //	}
 //
-//	return cred, nil, owner, handlers.ErrNone
+//	return cred, nil, owner, handlers.ErrCodeNone
 //}
 ////
 //func (s *Service) GetCredential(r *http.Request) (cred auth.Credentials, owner bool, s3Err handlers.ErrorCode) {
 //	switch GetRequestAuthType(r) {
 //	case AuthTypeUnknown:
-//		s3Err = handlers.ErrSignatureVersionNotSupported
+//		s3Err = handlers.ErrCodeSignatureVersionNotSupported
 //	case AuthTypeSignedV2, AuthTypePresignedV2:
 //		cred, owner, s3Err = s.getReqAccessKeyV2(r)
 //	case AuthTypeStreamingSigned, AuthTypePresigned, AuthTypeSigned:
