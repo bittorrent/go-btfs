@@ -60,7 +60,7 @@ func parseCredentialHeader(credElement string, region string, stype serviceType)
 	}
 	credElements := strings.Split(strings.TrimSpace(creds[1]), consts.SlashSeparator)
 	if len(credElements) < 5 {
-		return ch, handlers.ErrCredMalformed
+		return ch, handlers.ErrCodeCredMalformed
 	}
 	accessKey := strings.Join(credElements[:len(credElements)-4], consts.SlashSeparator) // The access key may contain one or more `/`
 	//if !IsAccessKeyValid(accessKey) {

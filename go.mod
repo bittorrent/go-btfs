@@ -5,6 +5,7 @@ go 1.18
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137
+	github.com/aws/aws-sdk-go v1.27.0
 	github.com/bittorrent/go-btfs-api v0.5.0
 	github.com/bittorrent/go-btfs-chunker v0.4.0
 	github.com/bittorrent/go-btfs-cmds v0.3.0
@@ -34,6 +35,7 @@ require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.3
 	github.com/google/uuid v1.3.0
+	github.com/gorilla/mux v1.7.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d
 	github.com/ip2location/ip2location-go/v9 v9.0.0
@@ -174,12 +176,12 @@ require (
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/pprof v0.0.0-20221203041831-ce31453925ec // indirect
-	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/ipfs/go-bitfield v1.1.0 // indirect
 	github.com/ipfs/go-ipld-legacy v0.1.1 // indirect
 	github.com/ipfs/go-ipns v0.3.0 // indirect
 	github.com/ipld/edelweiss v0.2.0 // indirect
+	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af // indirect
 	github.com/libp2p/go-libp2p-core v0.20.1 // indirect
 	github.com/libp2p/go-libp2p-xor v0.1.0 // indirect
 	github.com/libp2p/go-yamux/v4 v4.0.0 // indirect
@@ -282,7 +284,7 @@ require (
 	github.com/ipld/go-ipld-prime v0.19.0
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/json-iterator/go v1.1.12
 	github.com/kisielk/errcheck v1.5.0 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
@@ -325,7 +327,7 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
-	github.com/rs/cors v1.7.0 // indirect
+	github.com/rs/cors v1.7.0
 	github.com/segmentio/encoding v0.3.6 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/spacemonkeygo/spacelog v0.0.0-20180420211403-2296661a0572 // indirect
@@ -335,7 +337,7 @@ require (
 	github.com/tklauser/numcpus v0.2.2 // indirect
 	github.com/ulikunitz/xz v0.5.6 // indirect
 	github.com/vmihailenco/bufpool v0.1.11 // indirect
-	github.com/vmihailenco/msgpack/v4 v4.3.12 // indirect
+	github.com/vmihailenco/msgpack/v4 v4.3.12
 	github.com/vmihailenco/tagparser v0.1.2 // indirect
 	github.com/whyrusleeping/cbor-gen v0.0.0-20210219115102-f37d292932f2 // indirect
 	github.com/whyrusleeping/chunker v0.0.0-20181014151217-fe64bd25879f // indirect

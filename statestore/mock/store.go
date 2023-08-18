@@ -1,6 +1,7 @@
 package mock
 
 import (
+	"context"
 	"encoding"
 	"encoding/json"
 	"fmt"
@@ -94,6 +95,10 @@ func (s *store) Iterate(prefix string, iterFunc storage.StateIterFunc) (err erro
 		}
 	}
 	return nil
+}
+
+func (s *store) ReadAllChan(ctx context.Context, prefix string, seekKey string) (c <-chan *storage.Entry, err error) {
+	return
 }
 
 // DB implements StateStorer.DB method.

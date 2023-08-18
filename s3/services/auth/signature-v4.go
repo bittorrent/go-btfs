@@ -236,7 +236,7 @@ func (s *Service) doesSignatureMatch(hashedPayload string, r *http.Request, regi
 	stringToSign := utils.GetStringToSign(canonicalRequest, t, signV4Values.Credential.getScope())
 
 	// Get hmac signing key.
-	signingKey := utils.GetSigningKey(cred.Key, signV4Values.Credential.scope.date,
+	signingKey := utils.GetSigningKey(cred.Secret, signV4Values.Credential.scope.date,
 		signV4Values.Credential.scope.region, string(stype))
 
 	// Calculate signature.

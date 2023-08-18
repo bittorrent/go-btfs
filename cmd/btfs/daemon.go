@@ -7,10 +7,10 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
+	"github.com/bittorrent/go-btfs/s3"
 	"github.com/bittorrent/go-btfs/s3/providers"
 	"github.com/bittorrent/go-btfs/s3/providers/filestore"
 	s3statestore "github.com/bittorrent/go-btfs/s3/providers/statestore"
-	"github.com/bittorrent/go-btfs/s3/server"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"io/ioutil"
 	"math/rand"
@@ -426,9 +426,6 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		statestore.Close()
 	}()
 
-	// access-key init
-	accesskey.InitService(s3statestore.NewStorageStateStoreProxy(statestore))
-
 	if SimpleMode == false {
 		chainid, stored, err := getChainID(req, cfg, statestore)
 		if err != nil {
@@ -720,6 +717,12 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	if runStartupTest {
 		functest(cfg.Services.OnlineServerDomain, cfg.Identity.PeerID, hValue)
 	}
+
+	// access-key init
+	accesskey.InitService(s3.GetProviders(statestore))
+	s3Server := s3.NewServer(statestore)
+	_ = s3Server.Start()
+	defer s3Server.Stop()
 
 	if SimpleMode == false {
 		// set Analytics flag if specified
@@ -1472,8 +1475,4 @@ func buildS3Providers(storageStore storage.StateStorer) *providers.Providers {
 		s3statestore.NewStorageStateStoreProxy(storageStore),
 		filestore.NewLocalShell(),
 	)
-}
-
-func buildS3Server(providers providers.Providers, address string, corsAllowHeaders []string) *server.Server {
-
 }

@@ -44,6 +44,11 @@ func (req *PutBucketRequest) Bind(r *http.Request) (err error) {
 	req.Bucket = bucket
 	req.ACL = acl
 	req.Region = region
+
+	if req.ACL == "" {
+		req.ACL = policy.PublicRead
+	}
+
 	return
 }
 

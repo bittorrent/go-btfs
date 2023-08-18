@@ -22,15 +22,15 @@ func NewRouters(handlers Handlerser, options ...Option) (routers *Routers) {
 func (routers *Routers) Register() http.Handler {
 	root := mux.NewRouter()
 
-	root.Use(routers.handlers.Cors, routers.handlers.Sign)
+	root.Use(routers.handlers.Cors)
 
 	bucket := root.PathPrefix("/{bucket}").Subrouter()
-	bucket.Methods(http.MethodPut).Path("/{bucket:.+}").HandlerFunc(routers.handlers.PutBucketHandler)
-	bucket.Methods(http.MethodHead).Path("/{bucket:.+}").HandlerFunc(routers.handlers.HeadBucketHandler)
-	bucket.Methods(http.MethodDelete).Path("/{bucket:.+}").HandlerFunc(routers.handlers.DeleteBucketHandler)
-	bucket.Methods(http.MethodGet).Path("/").HandlerFunc(routers.handlers.ListBucketsHandler)
-	bucket.Methods(http.MethodGet).Path("/{bucket:.+}").HandlerFunc(routers.handlers.GetBucketAclHandler).Queries("acl", "")
-	bucket.Methods(http.MethodPut).Path("/{bucket:.+}").HandlerFunc(routers.handlers.PutBucketAclHandler).Queries("acl", "")
+	bucket.Methods(http.MethodPut).HandlerFunc(routers.handlers.PutBucketHandler)
+	bucket.Methods(http.MethodHead).HandlerFunc(routers.handlers.HeadBucketHandler)
+	bucket.Methods(http.MethodDelete).HandlerFunc(routers.handlers.DeleteBucketHandler)
+	bucket.Methods(http.MethodGet).HandlerFunc(routers.handlers.ListBucketsHandler)
+	bucket.Methods(http.MethodGet).HandlerFunc(routers.handlers.GetBucketAclHandler).Queries("acl", "")
+	bucket.Methods(http.MethodPut).HandlerFunc(routers.handlers.PutBucketAclHandler).Queries("acl", "")
 
 	//object
 	//bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(routers.handlers.PutObjectHandler)

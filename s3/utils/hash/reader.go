@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"github.com/yann-y/fds/pkg/etag"
+	"github.com/bittorrent/go-btfs/s3/etag"
 	"hash"
 	"io"
 )

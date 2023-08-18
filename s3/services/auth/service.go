@@ -27,6 +27,5 @@ func NewService(providers services.Providerser, accessKeySvc handlers.AccessKeyS
 }
 
 func (s *Service) VerifySignature(ctx context.Context, r *http.Request) (accessKeyRecord *handlers.AccessKeyRecord, err handlers.ErrorCode) {
-	s.CheckRequestAuthTypeCredential(ctx, r)
-	return
+	return s.CheckRequestAuthTypeCredential(ctx, r)
 }

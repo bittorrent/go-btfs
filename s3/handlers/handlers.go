@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	s3action "github.com/bittorrent/go-btfs/s3/action"
@@ -57,9 +58,15 @@ func (h *Handlers) Sign(handler http.Handler) http.Handler {
 }
 
 func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("receive request")
 	ctx := r.Context()
 	req := &PutBucketRequest{}
 	err := req.Bind(r)
+
+	defer func() {
+		fmt.Println("handle err: ", err)
+	}()
+
 	if err != nil {
 		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))
 		return
@@ -71,26 +78,30 @@ func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.bucketSvc.CheckACL(accessKeyRecord, req.Bucket, s3action.CreateBucketAction)
-	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrNoSuchUserPolicy))
-		return
-	}
+	//err = h.bucketSvc.CheckACL(accessKeyRecord, req.Bucket, s3action.CreateBucketAction)
+	//if err != nil {
+	//	WriteErrorResponse(w, r, ToApiError(ctx, ErrNoSuchUserPolicy))
+	//	return
+	//}
 
-	if err := s3utils.CheckValidBucketNameStrict(req.Bucket); err != nil {
+	if err = s3utils.CheckValidBucketNameStrict(req.Bucket); err != nil {
 		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidBucketName))
 		return
 	}
 
+	fmt.Println("4")
 	if !checkPermissionType(req.ACL) {
 		WriteErrorResponse(w, r, ToApiError(ctx, ErrNotImplemented))
 	}
 
-	if ok := h.bucketSvc.HasBucket(r.Context(), req.Bucket); !ok {
+	fmt.Println("3")
+	if ok := h.bucketSvc.HasBucket(r.Context(), req.Bucket); ok {
 		WriteErrorResponseHeadersOnly(w, r, ToApiError(ctx, ErrBucketNotFound))
 		return
 	}
 
+	fmt.Println("2")
+	fmt.Println(h.bucketSvc, accessKeyRecord)
 	err = h.bucketSvc.CreateBucket(ctx, req.Bucket, req.Region, accessKeyRecord.Key, req.ACL)
 	if err != nil {
 		log.Errorf("PutBucketHandler create bucket error:%v", err)
@@ -98,10 +109,13 @@ func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("1")
 	// Make sure to add Location information here only for bucket
 	if cp := pathClean(r.URL.Path); cp != "" {
 		w.Header().Set(consts.Location, cp) // Clean any trailing slashes.
 	}
+
+	fmt.Println("0")
 
 	WritePutBucketResponse(w, r)
 
