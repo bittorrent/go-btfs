@@ -90,13 +90,14 @@ func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("4")
-	if !checkPermissionType(req.ACL) {
+	if !checkAclPermissionType(&req.ACL) {
 		WriteErrorResponse(w, r, ToApiError(ctx, ErrNotImplemented))
+		return
 	}
 
 	fmt.Println("3")
 	if ok := h.bucketSvc.HasBucket(r.Context(), req.Bucket); ok {
-		WriteErrorResponseHeadersOnly(w, r, ToApiError(ctx, ErrBucketNotFound))
+		WriteErrorResponseHeadersOnly(w, r, ToApiError(ctx, ErrBucketAlreadyExists))
 		return
 	}
 
@@ -130,6 +131,8 @@ func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))
 		return
 	}
+
+	fmt.Println("... head bucket ", req)
 
 	accessKeyRecord, errCode := h.authSvc.VerifySignature(ctx, r)
 	if errCode != ErrCodeNone {
@@ -221,6 +224,8 @@ func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("... get acl req: ", req)
+
 	accessKeyRecord, errCode := h.authSvc.VerifySignature(ctx, r)
 	if errCode != ErrCodeNone {
 		WriteErrorResponse(w, r, errCode)
@@ -251,7 +256,7 @@ func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	req := &PutBucketAclRequest{}
 	err := req.Bind(r)
-	if err != nil {
+	if err != nil || len(req.ACL) == 0 || len(req.Bucket) == 0 {
 		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))
 		return
 	}
@@ -268,7 +273,7 @@ func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !checkPermissionType(req.ACL) || req.ACL == "" {
+	if !checkAclPermissionType(&req.ACL) {
 		WriteErrorResponse(w, r, ToApiError(ctx, ErrNotImplemented))
 		return
 	}

@@ -29,6 +29,8 @@ func (routers *Routers) Register() http.Handler {
 	bucket.Methods(http.MethodHead).HandlerFunc(routers.handlers.HeadBucketHandler)
 	bucket.Methods(http.MethodDelete).HandlerFunc(routers.handlers.DeleteBucketHandler)
 	bucket.Methods(http.MethodGet).HandlerFunc(routers.handlers.ListBucketsHandler)
+	//bucket.Methods(http.MethodGet).HandlerFunc(routers.handlers.GetBucketAclHandler)
+	//bucket.Methods(http.MethodPut).HandlerFunc(routers.handlers.PutBucketAclHandler)
 	bucket.Methods(http.MethodGet).HandlerFunc(routers.handlers.GetBucketAclHandler).Queries("acl", "")
 	bucket.Methods(http.MethodPut).HandlerFunc(routers.handlers.PutBucketAclHandler).Queries("acl", "")
 

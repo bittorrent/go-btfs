@@ -40,7 +40,8 @@ func ToApiError(ctx context.Context, err error) ErrorCode {
 		errCode = ErrCodeInternalError
 	case ErrNotImplemented:
 		errCode = ErrCodeNotImplemented
-
+	case ErrBucketAlreadyExists:
+		errCode = ErrCodeBucketAlreadyExists
 		//case lock.OperationTimedOut:
 		//	errCode = ErrCodeOperationTimedOut
 		//case hash.SHA256Mismatch:

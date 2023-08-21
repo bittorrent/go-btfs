@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -46,11 +47,16 @@ func WriteListBucketsResponse(w http.ResponseWriter, r *http.Request, bucketMeta
 
 func WriteGetBucketAclResponse(w http.ResponseWriter, r *http.Request, accessKeyRecord *AccessKeyRecord, acl string) {
 	resp := AccessControlPolicy{}
+	fmt.Printf(" -1- get acl resp: %+v \n", resp)
+
 	id := accessKeyRecord.Key
 	if resp.Owner.DisplayName == "" {
 		resp.Owner.DisplayName = accessKeyRecord.Key
 		resp.Owner.ID = id
 	}
+	fmt.Printf(" -2- get acl resp: %+v \n", resp)
+
+	resp.AccessControlList.Grant = make([]Grant, 0)
 	resp.AccessControlList.Grant = append(resp.AccessControlList.Grant, Grant{
 		Grantee: Grantee{
 			ID:          id,
@@ -60,6 +66,9 @@ func WriteGetBucketAclResponse(w http.ResponseWriter, r *http.Request, accessKey
 			XMLNS:       "http://www.w3.org/2001/XMLSchema-instance"},
 		Permission: Permission(acl), //todo change
 	})
+	fmt.Printf(" -3- get acl resp: %+v \n", resp)
+
+	fmt.Printf("get acl resp: %+v \n", resp)
 
 	WriteSuccessResponseXML(w, r, resp)
 	return

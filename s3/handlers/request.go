@@ -178,8 +178,13 @@ func pathClean(p string) string {
 //	return tagging, nil
 //}
 
-func checkPermissionType(s string) bool {
-	switch s {
+func checkAclPermissionType(s *string) bool {
+	if len(*s) == 0 {
+		*s = policy.PublicRead
+		return true
+	}
+
+	switch *s {
 	case policy.PublicRead:
 		return true
 	case policy.PublicReadWrite:
