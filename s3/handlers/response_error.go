@@ -13,7 +13,7 @@ func WriteErrorResponseHeadersOnly(w http.ResponseWriter, r *http.Request, err E
 
 // WriteErrorResponse write ErrorResponse
 func WriteErrorResponse(w http.ResponseWriter, r *http.Request, errorCode ErrorCode) {
-	fmt.Println("response errcode: ", errorCode)
+	fmt.Println("response errcode: ", errorCode, r.URL, r.Method, r.Header)
 	vars := mux.Vars(r)
 	bucket := vars["bucket"]
 	object := vars["object"]

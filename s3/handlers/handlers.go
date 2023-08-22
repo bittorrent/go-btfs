@@ -58,6 +58,7 @@ func (h *Handlers) Sign(handler http.Handler) http.Handler {
 }
 
 func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("... PutBucketHandler: begin")
 	fmt.Println("receive request")
 	ctx := r.Context()
 	req := &PutBucketRequest{}
@@ -124,6 +125,7 @@ func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("... HeadBucketHandler: begin")
 	ctx := r.Context()
 	req := &HeadBucketRequest{}
 	err := req.Bind(r)
@@ -155,6 +157,7 @@ func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("... DeleteBucketHandler: begin")
 	ctx := r.Context()
 	req := &DeleteBucketRequest{}
 	err := req.Bind(r)
@@ -185,6 +188,7 @@ func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("... ListBucketsHandler: begin")
 	ctx := r.Context()
 	req := &ListBucketsRequest{}
 	err := req.Bind(r)
@@ -216,6 +220,8 @@ func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("... get acl req: begin")
+
 	ctx := r.Context()
 	req := &GetBucketAclRequest{}
 	err := req.Bind(r)
@@ -249,10 +255,13 @@ func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("... get acl = ", req)
+
 	WriteGetBucketAclResponse(w, r, accessKeyRecord, acl)
 }
 
 func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("... PutBucketAclHandler: begin")
 	ctx := r.Context()
 	req := &PutBucketAclRequest{}
 	err := req.Bind(r)
