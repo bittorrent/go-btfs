@@ -24,7 +24,7 @@ func WriteDeleteBucketResponse(w http.ResponseWriter) {
 	return
 }
 
-func WriteListBucketsResponse(w http.ResponseWriter, r *http.Request, bucketMetas []BucketMetadata) {
+func WriteListBucketsResponse(w http.ResponseWriter, r *http.Request, bucketMetas []*BucketMetadata) {
 	var buckets []*s3.Bucket
 	for _, b := range bucketMetas {
 		buckets = append(buckets, &s3.Bucket{

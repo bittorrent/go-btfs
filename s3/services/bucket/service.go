@@ -144,23 +144,21 @@ func (s *Service) SetEmptyBucket(emptyBucket func(ctx context.Context, bucket st
 }
 
 // GetAllBucketsOfUser metadata for all bucket.
-func (s *Service) GetAllBucketsOfUser(ctx context.Context, username string) ([]handlers.BucketMetadata, error) {
-	var m []handlers.BucketMetadata
-	all, err := s.providers.GetStateStore().ReadAllChan(ctx, bucketPrefix, "")
-	if err != nil {
-		return nil, err
-	}
-	for entry := range all {
-		data := handlers.BucketMetadata{}
-		if err = entry.UnmarshalValue(&data); err != nil {
-			continue
+func (s *Service) GetAllBucketsOfUser(username string) (list []*handlers.BucketMetadata, err error) {
+	err = s.providers.GetStateStore().Iterate(bucketPrefix, func(key, _ []byte) (stop bool, er error) {
+		record := &handlers.BucketMetadata{}
+		er = s.providers.GetStateStore().Get(string(key), record)
+		if er != nil {
+			return
 		}
-		if data.Owner != username {
-			continue
+		if record.Owner == username {
+			list = append(list, record)
 		}
-		m = append(m, data)
-	}
-	return m, nil
+
+		return
+	})
+
+	return
 }
 
 // UpdateBucketAcl .

@@ -1,7 +1,6 @@
 package statestore
 
 import (
-	"context"
 	"errors"
 	"github.com/bittorrent/go-btfs/s3/services"
 	"github.com/bittorrent/go-btfs/transaction/storage"
@@ -41,8 +40,4 @@ func (s *StorageProxy) Delete(key string) (err error) {
 
 func (s *StorageProxy) Iterate(prefix string, iterFunc services.StateStoreIterFunc) (err error) {
 	return s.proxy.Iterate(prefix, storage.StateIterFunc(iterFunc))
-}
-
-func (s *StorageProxy) ReadAllChan(ctx context.Context, prefix string, seekKey string) (<-chan *storage.Entry, error) {
-	return s.proxy.ReadAllChan(ctx, prefix, seekKey)
 }

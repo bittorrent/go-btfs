@@ -206,7 +206,7 @@ func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//todo check all errors
-	bucketMetas, err := h.bucketSvc.GetAllBucketsOfUser(ctx, accessKeyRecord.Key)
+	bucketMetas, err := h.bucketSvc.GetAllBucketsOfUser(accessKeyRecord.Key)
 	if err != nil {
 		WriteErrorResponse(w, r, ToApiError(ctx, err))
 		return

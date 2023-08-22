@@ -1,7 +1,6 @@
 package leveldb
 
 import (
-	"context"
 	"encoding"
 	"encoding/json"
 	"errors"
@@ -13,11 +12,8 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	ldb "github.com/syndtr/goleveldb/leveldb"
 	ldberr "github.com/syndtr/goleveldb/leveldb/errors"
-	"github.com/syndtr/goleveldb/leveldb/iterator"
-	"github.com/syndtr/goleveldb/leveldb/opt"
 	ldbs "github.com/syndtr/goleveldb/leveldb/storage"
 	"github.com/syndtr/goleveldb/leveldb/util"
-	"go.uber.org/zap/buffer"
 )
 
 var log = logging.Logger("leveldb")
@@ -174,42 +170,4 @@ func (s *store) DB() *leveldb.DB {
 // Close releases the resources used by the store.
 func (s *store) Close() error {
 	return s.db.Close()
-}
-
-// NewIterator /**
-func (l *store) NewIterator(slice *util.Range, ro *opt.ReadOptions) iterator.Iterator {
-	return l.db.NewIterator(slice, ro)
-}
-
-//ReadAllChan read all key value
-func (l *store) ReadAllChan(ctx context.Context, prefix string, seekKey string) (<-chan *storage.Entry, error) {
-	ch := make(chan *storage.Entry)
-	var slice *util.Range
-	if prefix != "" {
-		slice = util.BytesPrefix([]byte(prefix))
-	}
-	iter := l.NewIterator(slice, nil)
-	if seekKey != "" {
-		iter.Seek([]byte(seekKey))
-	}
-	go func() {
-		defer func() {
-			iter.Release()
-			close(ch)
-		}()
-		for iter.Next() {
-			key := string(iter.Key())
-			buf := buffer.Buffer{}
-			buf.Write(iter.Value())
-			select {
-			case <-ctx.Done():
-				return
-			case ch <- &storage.Entry{
-				Key:   key,
-				Value: buf.Bytes(),
-			}:
-			}
-		}
-	}()
-	return ch, nil
 }

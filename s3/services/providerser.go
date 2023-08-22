@@ -1,8 +1,6 @@
 package services
 
 import (
-	"context"
-	"github.com/bittorrent/go-btfs/transaction/storage"
 	"io"
 )
 
@@ -23,5 +21,4 @@ type StateStorer interface {
 	Put(key string, i interface{}) (err error)
 	Delete(key string) (err error)
 	Iterate(prefix string, iterFunc StateStoreIterFunc) (err error)
-	ReadAllChan(ctx context.Context, prefix string, seekKey string) (<-chan *storage.Entry, error)
 }
