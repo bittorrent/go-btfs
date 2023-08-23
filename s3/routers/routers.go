@@ -23,7 +23,10 @@ func NewRouters(handlers handlers.Handlerser, options ...Option) (routers *Route
 func (routers *Routers) Register() http.Handler {
 	root := mux.NewRouter()
 
-	root.Use(routers.handlers.Cors)
+	root.Use(
+		routers.handlers.Cors,
+		routers.handlers.Auth,
+	)
 
 	bucket := root.PathPrefix("/{bucket}").Subrouter()
 	bucket.Methods(http.MethodGet).HandlerFunc(routers.handlers.GetBucketAclHandler).Queries("acl", "")

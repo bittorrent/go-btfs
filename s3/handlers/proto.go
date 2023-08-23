@@ -5,9 +5,11 @@ import (
 )
 
 type Handlerser interface {
+	// middlewares
 	Cors(handler http.Handler) http.Handler
 	Auth(handler http.Handler) http.Handler
 
+	// handlers
 	PutBucketHandler(w http.ResponseWriter, r *http.Request)
 	HeadBucketHandler(w http.ResponseWriter, r *http.Request)
 	DeleteBucketHandler(w http.ResponseWriter, r *http.Request)
