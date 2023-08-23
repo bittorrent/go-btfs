@@ -60,13 +60,13 @@ func contains(slice interface{}, elem interface{}) bool {
 }
 
 // extractSignedHeaders extract signed headers from Authorization header
-func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header, handlers.ErrorCode) {
+func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header, handlers.Errorcode) {
 	reqHeaders := r.Header
 	reqQueries := r.Form
 	// find whether "host" is part of list of signed headers.
-	// if not return ErrCodeUnsignedHeaders. "host" is mandatory.
+	// if not return ErrcodeUnsignedHeaders. "host" is mandatory.
 	if !contains(signedHeaders, "host") {
-		return nil, handlers.ErrCodeUnsignedHeaders
+		return nil, handlers.ErrcodeUnsignedHeaders
 	}
 	extractedSignedHeaders := make(http.Header)
 	for _, header := range signedHeaders {
@@ -116,10 +116,10 @@ func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header,
 			// calculation to be compatible with such clients.
 			extractedSignedHeaders.Set(header, strconv.FormatInt(r.ContentLength, 10))
 		default:
-			return nil, handlers.ErrCodeUnsignedHeaders
+			return nil, handlers.ErrcodeUnsignedHeaders
 		}
 	}
-	return extractedSignedHeaders, handlers.ErrCodeNone
+	return extractedSignedHeaders, handlers.ErrcodeNone
 }
 
 // Returns SHA256 for calculating canonical-request.

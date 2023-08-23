@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/s3/routers"
 	"net/http"
 	"sync"
 )
@@ -16,13 +17,14 @@ var (
 )
 
 type Server struct {
-	routers  Routerser
-	address  string
+	routers routers.Routerser
+	address string
+
 	shutdown func() error
 	mutex    sync.Mutex
 }
 
-func NewServer(routers Routerser, options ...Option) (s *Server) {
+func NewServer(routers routers.Routerser, options ...Option) (s *Server) {
 	s = &Server{
 		routers:  routers,
 		address:  defaultServerAddress,

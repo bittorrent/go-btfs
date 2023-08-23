@@ -1,11 +1,11 @@
 package multipart
 
 import (
-	"github.com/bittorrent/go-btfs/s3/handlers"
+	"github.com/bittorrent/go-btfs/s3/services"
 	"io"
 )
 
-var _ handlers.MultipartService = (*Service)(nil)
+var _ services.MultipartService = (*Service)(nil)
 
 type Service struct {
 }

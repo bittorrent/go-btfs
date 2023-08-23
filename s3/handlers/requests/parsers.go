@@ -1,7 +1,8 @@
-package handlers
+package requests
 
 import (
 	"encoding/xml"
+	"github.com/bittorrent/go-btfs/s3/handlers/responses"
 	"net/http"
 	"path"
 
@@ -10,10 +11,6 @@ import (
 	"github.com/bittorrent/go-btfs/s3/utils"
 	"github.com/gorilla/mux"
 )
-
-type RequestBinder interface {
-	Bind(r *http.Request) (err error)
-}
 
 //type PutObjectRequest struct {
 //	Bucket string
@@ -25,14 +22,9 @@ type RequestBinder interface {
 //	return
 //}
 
-// PutBucketRequest .
-type PutBucketRequest struct {
-	Bucket string
-	ACL    string
-	Region string
-}
+func ParsePubBucketRequest(r *http.Request) (req *PutBucketRequest, err error) {
+	req = &PutBucketRequest{}
 
-func (req *PutBucketRequest) Bind(r *http.Request) (err error) {
 	vars := mux.Vars(r)
 	bucket := vars["bucket"]
 
@@ -129,7 +121,7 @@ func (req *PutBucketAclRequest) Bind(r *http.Request) (err error) {
 /*********************************/
 
 // Parses location constraint from the incoming reader.
-func parseLocationConstraint(r *http.Request) (location string, s3Error ErrorCode) {
+func parseLocationConstraint(r *http.Request) (location string, s3Error *responses.Error) {
 	// If the request has no body with content-length set to 0,
 	// we do not have to validate location constraint. Bucket will
 	// be created at default region.
@@ -137,13 +129,13 @@ func parseLocationConstraint(r *http.Request) (location string, s3Error ErrorCod
 	err := utils.XmlDecoder(r.Body, &locationConstraint, r.ContentLength)
 	if err != nil && r.ContentLength != 0 {
 		// Treat all other failures as XML parsing errors.
-		return "", ErrCodeMalformedXML
+		return "", responses.ErrMalformedXML
 	} // else for both err as nil or io.EOF
 	location = locationConstraint.Location
 	if location == "" {
 		location = consts.DefaultRegion
 	}
-	return location, ErrCodeNone
+	return location, nil
 }
 
 // createBucketConfiguration container for bucket configuration request from client.
@@ -155,7 +147,7 @@ type createBucketLocationConfiguration struct {
 
 // pathClean is like path.Clean but does not return "." for
 // empty inputs, instead returns "empty" as is.
-func pathClean(p string) string {
+func PathClean(p string) string {
 	cp := path.Clean(p)
 	if cp == "." {
 		return ""
@@ -178,7 +170,7 @@ func pathClean(p string) string {
 //	return tagging, nil
 //}
 
-func checkAclPermissionType(s *string) bool {
+func CheckAclPermissionType(s *string) bool {
 	if len(*s) == 0 {
 		*s = policy.PublicRead
 		return true

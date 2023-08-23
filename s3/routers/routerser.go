@@ -1,4 +1,4 @@
-package server
+package routers
 
 import "net/http"
 

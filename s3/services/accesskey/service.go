@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/bittorrent/go-btfs/s3/ctxmu"
-	"github.com/bittorrent/go-btfs/s3/handlers"
+	"github.com/bittorrent/go-btfs/s3/providers"
 	"github.com/bittorrent/go-btfs/s3/services"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/bittorrent/go-btfs/utils"
@@ -18,17 +18,17 @@ const (
 	defaultUpdateTimeoutMS = 200
 )
 
-var _ handlers.AccessKeyService = (*Service)(nil)
+var _ services.AccessKeyService = (*Service)(nil)
 
 type Service struct {
-	providers      services.Providerser
+	providers      providers.Providerser
 	secretLength   int
 	storeKeyPrefix string
 	locks          *ctxmu.MultiCtxRWMutex
 	updateTimeout  time.Duration
 }
 
-func NewService(providers services.Providerser, options ...Option) (svc *Service) {
+func NewService(providers providers.Providerser, options ...Option) (svc *Service) {
 	svc = &Service{
 		providers:      providers,
 		secretLength:   defaultSecretLength,
@@ -42,9 +42,9 @@ func NewService(providers services.Providerser, options ...Option) (svc *Service
 	return svc
 }
 
-func (svc *Service) Generate() (record *handlers.AccessKeyRecord, err error) {
+func (svc *Service) Generate() (record *services.AccessKey, err error) {
 	now := time.Now()
-	record = &handlers.AccessKeyRecord{
+	record = &services.AccessKey{
 		Key:       svc.newKey(),
 		Secret:    svc.newSecret(),
 		Enable:    true,
@@ -88,21 +88,21 @@ func (svc *Service) Delete(key string) (err error) {
 	return
 }
 
-func (svc *Service) Get(key string) (record *handlers.AccessKeyRecord, err error) {
-	record = &handlers.AccessKeyRecord{}
-	err = svc.providers.GetStateStore().Get(svc.getStoreKey(key), record)
-	if err != nil && !errors.Is(err, services.ErrStateStoreNotFound) {
+func (svc *Service) Get(key string) (ack *services.AccessKey, err error) {
+	ack = &services.AccessKey{}
+	err = svc.providers.GetStateStore().Get(svc.getStoreKey(key), ack)
+	if err != nil && !errors.Is(err, providers.ErrStateStoreNotFound) {
 		return
 	}
-	if errors.Is(err, services.ErrStateStoreNotFound) || record.IsDeleted {
-		err = handlers.ErrAccessKeyIsNotFound
+	if errors.Is(err, providers.ErrStateStoreNotFound) || ack.IsDeleted {
+		err = services.ErrAccessKeyIsNotFound
 	}
 	return
 }
 
-func (svc *Service) List() (list []*handlers.AccessKeyRecord, err error) {
+func (svc *Service) List() (list []*services.AccessKey, err error) {
 	err = svc.providers.GetStateStore().Iterate(svc.storeKeyPrefix, func(key, _ []byte) (stop bool, er error) {
-		record := &handlers.AccessKeyRecord{}
+		record := &services.AccessKey{}
 		er = svc.providers.GetStateStore().Get(string(key), record)
 		if er != nil {
 			return
@@ -147,7 +147,7 @@ func (svc *Service) update(key string, args *updateArgs) (err error) {
 	}
 	defer svc.locks.Unlock(key)
 
-	record := &handlers.AccessKeyRecord{}
+	record := &services.AccessKey{}
 	stk := svc.getStoreKey(key)
 
 	err = svc.providers.GetStateStore().Get(stk, record)
@@ -155,7 +155,7 @@ func (svc *Service) update(key string, args *updateArgs) (err error) {
 		return
 	}
 	if errors.Is(err, storage.ErrNotFound) || record.IsDeleted {
-		err = handlers.ErrAccessKeyIsNotFound
+		err = services.ErrAccessKeyIsNotFound
 		return
 	}
 

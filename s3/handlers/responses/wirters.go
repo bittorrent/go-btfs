@@ -1,7 +1,8 @@
-package handlers
+package responses
 
 import (
 	"fmt"
+	"github.com/bittorrent/go-btfs/s3/services"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -24,7 +25,7 @@ func WriteDeleteBucketResponse(w http.ResponseWriter) {
 	return
 }
 
-func WriteListBucketsResponse(w http.ResponseWriter, r *http.Request, bucketMetas []*BucketMetadata) {
+func WriteListBucketsResponse(w http.ResponseWriter, r *http.Request, bucketMetas []*services.BucketMetadata) {
 	var buckets []*s3.Bucket
 	for _, b := range bucketMetas {
 		buckets = append(buckets, &s3.Bucket{
@@ -45,13 +46,13 @@ func WriteListBucketsResponse(w http.ResponseWriter, r *http.Request, bucketMeta
 	return
 }
 
-func WriteGetBucketAclResponse(w http.ResponseWriter, r *http.Request, accessKeyRecord *AccessKeyRecord, acl string) {
-	resp := AccessControlPolicy{}
+func WriteGetBucketAclResponse(w http.ResponseWriter, r *http.Request, ack *services.AccessKey, acl string) {
+	resp := GetBucketAclResponse{}
 	fmt.Printf(" -1- get acl resp: %+v \n", resp)
 
-	id := accessKeyRecord.Key
+	id := ack.Key
 	if resp.Owner.DisplayName == "" {
-		resp.Owner.DisplayName = accessKeyRecord.Key
+		resp.Owner.DisplayName = ack.Key
 		resp.Owner.ID = id
 	}
 	fmt.Printf(" -2- get acl resp: %+v \n", resp)
@@ -60,7 +61,7 @@ func WriteGetBucketAclResponse(w http.ResponseWriter, r *http.Request, accessKey
 	resp.AccessControlList.Grant = append(resp.AccessControlList.Grant, Grant{
 		Grantee: Grantee{
 			ID:          id,
-			DisplayName: accessKeyRecord.Key,
+			DisplayName: ack.Key,
 			Type:        "CanonicalUser",
 			XMLXSI:      "CanonicalUser",
 			XMLNS:       "http://www.w3.org/2001/XMLSchema-instance"},

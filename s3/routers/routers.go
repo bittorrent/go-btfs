@@ -1,15 +1,16 @@
 package routers
 
 import (
+	"github.com/bittorrent/go-btfs/s3/handlers"
 	"github.com/gorilla/mux"
 	"net/http"
 )
 
 type Routers struct {
-	handlers Handlerser
+	handlers handlers.Handlerser
 }
 
-func NewRouters(handlers Handlerser, options ...Option) (routers *Routers) {
+func NewRouters(handlers handlers.Handlerser, options ...Option) (routers *Routers) {
 	routers = &Routers{
 		handlers: handlers,
 	}

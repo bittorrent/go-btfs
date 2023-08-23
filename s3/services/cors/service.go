@@ -2,7 +2,7 @@ package cors
 
 import (
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/handlers"
+	"github.com/bittorrent/go-btfs/s3/services"
 	"net/http"
 )
 
@@ -43,7 +43,7 @@ var (
 	}
 )
 
-var _ handlers.CorsService = (*Service)(nil)
+var _ services.CorsService = (*Service)(nil)
 
 type Service struct {
 	allowOrigins []string

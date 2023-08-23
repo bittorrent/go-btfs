@@ -3,11 +3,12 @@ package auth
 import (
 	"context"
 	"encoding/hex"
+	"github.com/bittorrent/go-btfs/s3/handlers/responses"
+	"github.com/bittorrent/go-btfs/s3/services"
 	"net/http"
 
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/etag"
-	"github.com/bittorrent/go-btfs/s3/handlers"
 	"github.com/bittorrent/go-btfs/s3/utils/hash"
 )
 
@@ -16,28 +17,26 @@ import (
 //   - validates the policy action if anonymous tests bucket policies if any,
 //     for authenticated requests validates IAM policies.
 //
-// returns APIErrorCode if any to be replied to the client.
+// returns APIErrorcode if any to be replied to the client.
 // Additionally, returns the accessKey used in the request, and if this request is by an admin.
-func (s *Service) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Request) (cred *handlers.AccessKeyRecord, s3Err handlers.ErrorCode) {
+func (s *Service) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Request) (cred *services.AccessKey, rErr *responses.Error) {
 	// check signature
 	switch GetRequestAuthType(r) {
 	case AuthTypeSigned, AuthTypePresigned:
 		region := ""
-		if s3Err = s.IsReqAuthenticated(ctx, r, region, ServiceS3); s3Err != handlers.ErrCodeNone {
-			return cred, s3Err
+		if rErr = s.IsReqAuthenticated(ctx, r, region, ServiceS3); rErr != nil {
+			return
 		}
-		cred, s3Err = s.getReqAccessKeyV4(r, region, ServiceS3)
+		cred, rErr = s.getReqAccessKeyV4(r, region, ServiceS3)
 	default:
-		return cred, handlers.ErrCodeSignatureVersionNotSupported
-	}
-	if s3Err != handlers.ErrCodeNone {
-		return cred, s3Err
+		rErr = responses.ErrSignatureVersionNotSupported
+		return
 	}
 
-	return cred, handlers.ErrCodeNone
+	return
 }
 
-func (s *Service) ReqSignatureV4Verify(r *http.Request, region string, stype serviceType) (s3Error handlers.ErrorCode) {
+func (s *Service) ReqSignatureV4Verify(r *http.Request, region string, stype serviceType) *responses.Error {
 	sha256sum := getContentSha256Cksum(r, stype)
 	switch {
 	case IsRequestSignatureV4(r):
@@ -45,18 +44,19 @@ func (s *Service) ReqSignatureV4Verify(r *http.Request, region string, stype ser
 	case isRequestPresignedSignatureV4(r):
 		return s.doesPresignedSignatureMatch(sha256sum, r, region, stype)
 	default:
-		return handlers.ErrCodeAccessDenied
+		return responses.ErrAccessDenied
 	}
 }
 
 // IsReqAuthenticated Verify if request has valid AWS Signature Version '4'.
-func (s *Service) IsReqAuthenticated(ctx context.Context, r *http.Request, region string, stype serviceType) (s3Error handlers.ErrorCode) {
-	if errCode := s.ReqSignatureV4Verify(r, region, stype); errCode != handlers.ErrCodeNone {
-		return errCode
+func (s *Service) IsReqAuthenticated(ctx context.Context, r *http.Request, region string, stype serviceType) (rErr *responses.Error) {
+	if rErr = s.ReqSignatureV4Verify(r, region, stype); rErr != nil {
+		return
 	}
 	clientETag, err := etag.FromContentMD5(r.Header)
 	if err != nil {
-		return handlers.ErrCodeInvalidDigest
+		rErr = responses.ErrInvalidDigest
+		return
 	}
 
 	// Extract either 'X-Amz-Content-Sha256' header or 'X-Amz-Content-Sha256' query parameter (if V4 presigned)
@@ -66,13 +66,15 @@ func (s *Service) IsReqAuthenticated(ctx context.Context, r *http.Request, regio
 		if sha256Sum, ok := r.Form[consts.AmzContentSha256]; ok && len(sha256Sum) > 0 {
 			contentSHA256, err = hex.DecodeString(sha256Sum[0])
 			if err != nil {
-				return handlers.ErrCodeContentSHA256Mismatch
+				rErr = responses.ErrContentSHA256Mismatch
+				return
 			}
 		}
 	} else if _, ok := r.Header[consts.AmzContentSha256]; !skipSHA256 && ok {
 		contentSHA256, err = hex.DecodeString(r.Header.Get(consts.AmzContentSha256))
 		if err != nil || len(contentSHA256) == 0 {
-			return handlers.ErrCodeContentSHA256Mismatch
+			rErr = responses.ErrContentSHA256Mismatch
+			return
 		}
 	}
 
@@ -80,39 +82,40 @@ func (s *Service) IsReqAuthenticated(ctx context.Context, r *http.Request, regio
 	// The verification happens implicit during reading.
 	reader, err := hash.NewReader(r.Body, -1, clientETag.String(), hex.EncodeToString(contentSHA256), -1)
 	if err != nil {
-		return handlers.ErrCodeInternalError
+		rErr = responses.ErrInternalError
+		return
 	}
 	r.Body = reader
-	return handlers.ErrCodeNone
+	return
 }
 
 //// ValidateAdminSignature validate admin Signature
-//func (s *Service) ValidateAdminSignature(ctx context.Context, r *http.Request, region string) (Credentials, map[string]interface{}, bool, handlers.ErrorCode) {
+//func (s *Service) ValidateAdminSignature(ctx context.Context, r *http.Request, region string) (Credentials, map[string]interface{}, bool, handlers.Errorcode) {
 //	var cred Credentials
 //	var owner bool
-//	s3Err := handlers.ErrCodeAccessDenied
+//	s3Err := handlers.ErrcodeAccessDenied
 //	if _, ok := r.Header[consts.AmzContentSha256]; ok &&
 //		GetRequestAuthType(r) == AuthTypeSigned {
 //		// We only support admin credentials to access admin APIs.
 //		cred, s3Err = GetReqAccessKeyV4(r, region, ServiceS3)
-//		if s3Err != handlers.ErrCodeNone {
+//		if s3Err != handlers.ErrcodeNone {
 //			return cred, nil, owner, s3Err
 //		}
 //
 //		// we only support V4 (no presign) with auth body
 //		s3Err = s.IsReqAuthenticated(ctx, r, region, ServiceS3)
 //	}
-//	if s3Err != handlers.ErrCodeNone {
+//	if s3Err != handlers.ErrcodeNone {
 //		return cred, nil, owner, s3Err
 //	}
 //
-//	return cred, nil, owner, handlers.ErrCodeNone
+//	return cred, nil, owner, handlers.ErrcodeNone
 //}
 ////
-//func (s *Service) GetCredential(r *http.Request) (cred auth.Credentials, owner bool, s3Err handlers.ErrorCode) {
+//func (s *Service) GetCredential(r *http.Request) (cred auth.Credentials, owner bool, s3Err handlers.Errorcode) {
 //	switch GetRequestAuthType(r) {
 //	case AuthTypeUnknown:
-//		s3Err = handlers.ErrCodeSignatureVersionNotSupported
+//		s3Err = handlers.ErrcodeSignatureVersionNotSupported
 //	case AuthTypeSignedV2, AuthTypePresignedV2:
 //		cred, owner, s3Err = s.getReqAccessKeyV2(r)
 //	case AuthTypeStreamingSigned, AuthTypePresigned, AuthTypeSigned:

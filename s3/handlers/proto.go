@@ -1,4 +1,4 @@
-package routers
+package handlers
 
 import (
 	"net/http"
@@ -6,7 +6,7 @@ import (
 
 type Handlerser interface {
 	Cors(handler http.Handler) http.Handler
-	Sign(handler http.Handler) http.Handler
+	Auth(handler http.Handler) http.Handler
 
 	PutBucketHandler(w http.ResponseWriter, r *http.Request)
 	HeadBucketHandler(w http.ResponseWriter, r *http.Request)

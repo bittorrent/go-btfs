@@ -3,8 +3,6 @@ package s3
 import (
 	"github.com/bittorrent/go-btfs/s3/handlers"
 	"github.com/bittorrent/go-btfs/s3/providers"
-	"github.com/bittorrent/go-btfs/s3/providers/filestore"
-	"github.com/bittorrent/go-btfs/s3/providers/statestore"
 	"github.com/bittorrent/go-btfs/s3/routers"
 	"github.com/bittorrent/go-btfs/s3/server"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
@@ -22,8 +20,8 @@ var (
 
 func GetProviders(storageStore storage.StateStorer) *providers.Providers {
 	once.Do(func() {
-		sstore := statestore.NewStorageStateStoreProxy(storageStore)
-		fstore := filestore.NewLocalShell()
+		sstore := providers.NewStorageStateStoreProxy(storageStore)
+		fstore := providers.NewFileStore()
 		ps = providers.NewProviders(sstore, fstore)
 
 	})

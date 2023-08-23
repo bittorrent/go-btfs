@@ -1,20 +1,16 @@
 package providers
 
-import (
-	"github.com/bittorrent/go-btfs/s3/services"
-)
-
-var _ services.Providerser = (*Providers)(nil)
+var _ Providerser = (*Providers)(nil)
 
 type Providers struct {
-	statestore services.StateStorer
-	filestore  services.FileStorer
+	stateStore StateStorer
+	fileStore  FileStorer
 }
 
-func NewProviders(statestore services.StateStorer, filestore services.FileStorer, options ...Option) (providers *Providers) {
+func NewProviders(stateStore StateStorer, fileStore FileStorer, options ...Option) (providers *Providers) {
 	providers = &Providers{
-		statestore: statestore,
-		filestore:  filestore,
+		stateStore: stateStore,
+		fileStore:  fileStore,
 	}
 	for _, option := range options {
 		option(providers)
@@ -22,10 +18,10 @@ func NewProviders(statestore services.StateStorer, filestore services.FileStorer
 	return
 }
 
-func (p *Providers) GetStateStore() services.StateStorer {
-	return p.statestore
+func (p *Providers) GetStateStore() StateStorer {
+	return p.stateStore
 }
 
-func (p *Providers) GetFileStore() services.FileStorer {
-	return p.filestore
+func (p *Providers) GetFileStore() FileStorer {
+	return p.fileStore
 }

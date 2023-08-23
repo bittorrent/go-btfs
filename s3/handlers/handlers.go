@@ -3,31 +3,34 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/bittorrent/go-btfs/s3/handlers/cctx"
+	"github.com/bittorrent/go-btfs/s3/handlers/requests"
+	"github.com/bittorrent/go-btfs/s3/handlers/responses"
+	"github.com/bittorrent/go-btfs/s3/services"
 	"net/http"
 
 	s3action "github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/routers"
 	"github.com/bittorrent/go-btfs/s3/s3utils"
 	"github.com/rs/cors"
 )
 
-var _ routers.Handlerser = (*Handlers)(nil)
+var _ Handlerser = (*Handlers)(nil)
 
 type Handlers struct {
-	corsSvc      CorsService
-	authSvc      AuthService
-	bucketSvc    BucketService
-	objectSvc    ObjectService
-	multipartSvc MultipartService
+	corsSvc      services.CorsService
+	authSvc      services.AuthService
+	bucketSvc    services.BucketService
+	objectSvc    services.ObjectService
+	multipartSvc services.MultipartService
 }
 
 func NewHandlers(
-	corsSvc CorsService,
-	authSvc AuthService,
-	bucketSvc BucketService,
-	objectSvc ObjectService,
-	multipartSvc MultipartService,
+	corsSvc services.CorsService,
+	authSvc services.AuthService,
+	bucketSvc services.BucketService,
+	objectSvc services.ObjectService,
+	multipartSvc services.MultipartService,
 	options ...Option,
 ) (handlers *Handlers) {
 	handlers = &Handlers{
@@ -53,29 +56,26 @@ func (h *Handlers) Cors(handler http.Handler) http.Handler {
 	}).Handler(handler)
 }
 
-func (h *Handlers) Sign(handler http.Handler) http.Handler {
-	return nil
+func (h *Handlers) Auth(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ack, rErr := h.authSvc.VerifySignature(r.Context(), r)
+		if rErr != nil {
+			responses.WriteErrorResponse(w, r, rErr)
+			return
+		}
+		cctx.SetAccessKey(r, ack)
+		handler.ServeHTTP(w, r)
+	})
 }
 
 func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("... PutBucketHandler: begin")
-	fmt.Println("receive request")
+
 	ctx := r.Context()
-	req := &PutBucketRequest{}
-	err := req.Bind(r)
 
-	defer func() {
-		fmt.Println("handle err: ", err)
-	}()
-
+	req, err := requests.ParsePubBucketRequest(r)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))
-		return
-	}
-
-	accessKeyRecord, errCode := h.authSvc.VerifySignature(ctx, r)
-	if errCode != ErrCodeNone {
-		WriteErrorResponse(w, r, errCode)
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
 		return
 	}
 
@@ -86,214 +86,196 @@ func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 	//}
 
 	if err = s3utils.CheckValidBucketNameStrict(req.Bucket); err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidBucketName))
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidBucketName)
 		return
 	}
 
 	fmt.Println("4")
-	if !checkAclPermissionType(&req.ACL) {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrNotImplemented))
+	if !requests.CheckAclPermissionType(&req.ACL) {
+		responses.WriteErrorResponse(w, r, responses.ErrNotImplemented)
 		return
 	}
 
 	fmt.Println("3")
-	if ok := h.bucketSvc.HasBucket(r.Context(), req.Bucket); ok {
-		WriteErrorResponseHeadersOnly(w, r, ToApiError(ctx, ErrBucketAlreadyExists))
+	if ok := h.bucketSvc.HasBucket(ctx, req.Bucket); ok {
+		responses.WriteErrorResponseHeadersOnly(w, r, responses.ErrBucketAlreadyExists)
 		return
 	}
 
 	fmt.Println("2")
-	fmt.Println(h.bucketSvc, accessKeyRecord)
-	err = h.bucketSvc.CreateBucket(ctx, req.Bucket, req.Region, accessKeyRecord.Key, req.ACL)
+	err = h.bucketSvc.CreateBucket(ctx, req.Bucket, req.Region, cctx.GetAccessKey(r).Key, req.ACL)
 	if err != nil {
-		log.Errorf("PutBucketHandler create bucket error:%v", err)
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrCreateBucket))
+		responses.WriteErrorResponse(w, r, responses.ErrInternalError)
 		return
 	}
 
 	fmt.Println("1")
 	// Make sure to add Location information here only for bucket
-	if cp := pathClean(r.URL.Path); cp != "" {
+	if cp := requests.PathClean(r.URL.Path); cp != "" {
 		w.Header().Set(consts.Location, cp) // Clean any trailing slashes.
 	}
 
 	fmt.Println("0")
 
-	WritePutBucketResponse(w, r)
+	responses.WritePutBucketResponse(w, r)
 
 	return
 }
 
 func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("... HeadBucketHandler: begin")
+
 	ctx := r.Context()
-	req := &HeadBucketRequest{}
+	ack := cctx.GetAccessKey(r)
+
+	req := &requests.HeadBucketRequest{}
 	err := req.Bind(r)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
 		return
 	}
 
 	fmt.Println("... head bucket ", req)
 
-	accessKeyRecord, errCode := h.authSvc.VerifySignature(ctx, r)
-	if errCode != ErrCodeNone {
-		WriteErrorResponse(w, r, errCode)
-		return
-	}
-
-	err = h.bucketSvc.CheckACL(accessKeyRecord, req.Bucket, s3action.HeadBucketAction)
+	err = h.bucketSvc.CheckACL(ack, req.Bucket, s3action.HeadBucketAction)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrNoSuchUserPolicy))
+		responses.WriteErrorResponse(w, r, ToResponseErr(err))
 		return
 	}
 
-	if ok := h.bucketSvc.HasBucket(r.Context(), req.Bucket); !ok {
-		WriteErrorResponseHeadersOnly(w, r, ToApiError(ctx, ErrBucketNotFound))
+	if ok := h.bucketSvc.HasBucket(ctx, req.Bucket); !ok {
+		responses.WriteErrorResponseHeadersOnly(w, r, responses.ErrNoSuchBucket)
 		return
 	}
 
-	WriteHeadBucketResponse(w, r)
+	responses.WriteHeadBucketResponse(w, r)
 }
 
 func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("... DeleteBucketHandler: begin")
+
 	ctx := r.Context()
-	req := &DeleteBucketRequest{}
+	ack := cctx.GetAccessKey(r)
+
+	req := &requests.DeleteBucketRequest{}
 	err := req.Bind(r)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
 		return
 	}
 
-	accessKeyRecord, errCode := h.authSvc.VerifySignature(ctx, r)
-	if errCode != ErrCodeNone {
-		WriteErrorResponse(w, r, errCode)
-		return
-	}
-
-	err = h.bucketSvc.CheckACL(accessKeyRecord, req.Bucket, s3action.HeadBucketAction)
+	err = h.bucketSvc.CheckACL(ack, req.Bucket, s3action.HeadBucketAction)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrNoSuchUserPolicy))
+		responses.WriteErrorResponse(w, r, ToResponseErr(err))
 		return
 	}
 
 	//todo check all errors.
 	err = h.bucketSvc.DeleteBucket(ctx, req.Bucket)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, err))
+		responses.WriteErrorResponse(w, r, ToResponseErr(err))
 		return
 	}
-	WriteDeleteBucketResponse(w)
+
+	responses.WriteDeleteBucketResponse(w)
 }
 
 func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("... ListBucketsHandler: begin")
-	ctx := r.Context()
-	req := &ListBucketsRequest{}
+
+	ack := cctx.GetAccessKey(r)
+
+	req := &requests.ListBucketsRequest{}
 	err := req.Bind(r)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
 		return
 	}
 
-	accessKeyRecord, errCode := h.authSvc.VerifySignature(ctx, r)
-	if errCode != ErrCodeNone {
-		WriteErrorResponse(w, r, errCode)
-		return
-	}
-
-	err = h.bucketSvc.CheckACL(accessKeyRecord, req.Bucket, s3action.ListBucketAction)
+	err = h.bucketSvc.CheckACL(ack, req.Bucket, s3action.ListBucketAction)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrNoSuchUserPolicy))
+		responses.WriteErrorResponse(w, r, ToResponseErr(err))
 		return
 	}
 
 	//todo check all errors
-	bucketMetas, err := h.bucketSvc.GetAllBucketsOfUser(accessKeyRecord.Key)
+	bucketMetas, err := h.bucketSvc.GetAllBucketsOfUser(ack.Key)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, err))
+		responses.WriteErrorResponse(w, r, ToResponseErr(err))
 		return
 	}
 
-	WriteListBucketsResponse(w, r, bucketMetas)
+	responses.WriteListBucketsResponse(w, r, bucketMetas)
 }
 
 func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("... get acl req: begin")
 
 	ctx := r.Context()
-	req := &GetBucketAclRequest{}
+	ack := cctx.GetAccessKey(r)
+
+	req := &requests.GetBucketAclRequest{}
 	err := req.Bind(r)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
 		return
 	}
 
 	fmt.Println("... get acl req: ", req)
 
-	accessKeyRecord, errCode := h.authSvc.VerifySignature(ctx, r)
-	if errCode != ErrCodeNone {
-		WriteErrorResponse(w, r, errCode)
-		return
-	}
-
-	err = h.bucketSvc.CheckACL(accessKeyRecord, req.Bucket, s3action.GetBucketAclAction)
+	err = h.bucketSvc.CheckACL(ack, req.Bucket, s3action.GetBucketAclAction)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrNoSuchUserPolicy))
+		responses.WriteErrorResponse(w, r, ToResponseErr(err))
 		return
 	}
 
 	if !h.bucketSvc.HasBucket(ctx, req.Bucket) {
-		WriteErrorResponseHeadersOnly(w, r, ToApiError(ctx, ErrBucketNotFound))
+		responses.WriteErrorResponseHeadersOnly(w, r, responses.ErrNoSuchBucket)
 		return
 	}
 	//todo check all errors
 	acl, err := h.bucketSvc.GetBucketAcl(ctx, req.Bucket)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, err))
+		responses.WriteErrorResponse(w, r, ToResponseErr(err))
 		return
 	}
 
 	fmt.Println("... get acl = ", req)
 
-	WriteGetBucketAclResponse(w, r, accessKeyRecord, acl)
+	responses.WriteGetBucketAclResponse(w, r, ack, acl)
 }
 
 func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("... PutBucketAclHandler: begin")
+
 	ctx := r.Context()
-	req := &PutBucketAclRequest{}
+	ack := cctx.GetAccessKey(r)
+
+	req := &requests.PutBucketAclRequest{}
 	err := req.Bind(r)
 	if err != nil || len(req.ACL) == 0 || len(req.Bucket) == 0 {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrInvalidArgument))
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
 		return
 	}
 
-	accessKeyRecord, errCode := h.authSvc.VerifySignature(ctx, r)
-	if errCode != ErrCodeNone {
-		WriteErrorResponse(w, r, errCode)
-		return
-	}
-
-	err = h.bucketSvc.CheckACL(accessKeyRecord, req.Bucket, s3action.PutBucketAclAction)
+	err = h.bucketSvc.CheckACL(ack, req.Bucket, s3action.PutBucketAclAction)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrNoSuchUserPolicy))
+		responses.WriteErrorResponse(w, r, ToResponseErr(err))
 		return
 	}
 
-	if !checkAclPermissionType(&req.ACL) {
-		WriteErrorResponse(w, r, ToApiError(ctx, ErrNotImplemented))
+	if !requests.CheckAclPermissionType(&req.ACL) {
+		responses.WriteErrorResponse(w, r, responses.ErrNotImplemented)
 		return
 	}
 
 	//todo check all errors
 	err = h.bucketSvc.UpdateBucketAcl(ctx, req.Bucket, req.ACL)
 	if err != nil {
-		WriteErrorResponse(w, r, ToApiError(ctx, err))
+		responses.WriteErrorResponse(w, r, ToResponseErr(err))
 		return
 	}
 
 	//todo check no return?
-	WritePutBucketAclResponse(w, r)
+	responses.WritePutBucketAclResponse(w, r)
 }
