@@ -4,6 +4,7 @@ package handlers
 import (
 	"fmt"
 	"github.com/bittorrent/go-btfs/s3/cctx"
+	"github.com/bittorrent/go-btfs/s3/etag"
 	"github.com/bittorrent/go-btfs/s3/requests"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/services"
@@ -295,6 +296,69 @@ func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 
 	//todo check no return?
 	responses.WritePutBucketAclResponse(w, r)
+}
+
+// PutObjectHandler http://docs.aws.amazon.com/AmazonS3/latest/dev/UploadingObjects.html
+func (h *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
+	var err error
+	defer func() {
+		cctx.SetHandleInf(r, fnName(), err)
+	}()
+
+	// X-Amz-Copy-Source shouldn't be set for this call.
+	if _, ok := r.Header[consts.AmzCopySource]; ok {
+		responses.WriteErrorResponse(w, r, services.RespErrInvalidCopySource)
+		return
+	}
+
+	buc, obj, err := requests.ParseBucketAndObject(r)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestParameter)
+		return
+	}
+
+	clientETag, err := etag.FromContentMD5(r.Header)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, services.RespErrInvalidDigest)
+		return
+	}
+	_ = clientETag
+
+	size := r.ContentLength
+	// todo: streaming signed
+
+	if size == -1 {
+		responses.WriteErrorResponse(w, r, services.RespErrMissingContentLength)
+		return
+	}
+	if size == 0 {
+		responses.WriteErrorResponse(w, r, services.RespErrEntityTooSmall)
+		return
+	}
+
+	if size > consts.MaxObjectSize {
+		responses.WriteErrorResponse(w, r, services.RespErrEntityTooLarge)
+		return
+	}
+
+	ctx := r.Context()
+	ack := cctx.GetAccessKey(r)
+
+	err = h.bucketSvc.CheckACL(ack, buc, s3action.PutObjectAction)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, err)
+		return
+	}
+
+	// todo: convert error
+	err = s3utils.CheckPutObjectArgs(ctx, buc, obj)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, err)
+		return
+	}
+
+	// todo
+	fmt.Println("need put object...", buc, obj)
 }
 
 func fnName() string {

@@ -41,7 +41,14 @@ func NewService(providers providers.Providerser, options ...Option) Service {
 	return s
 }
 
-func (s *service) CheckACL(accessKeyRecord *accesskey.AccessKey, bucketName string, action action.Action) (err error) {
+func (s *service) CheckACL(ack *accesskey.AccessKey, bucketName string, act action.Action) (err error) {
+	if act == action.ListBucketAction {
+		if ack.Key == "" {
+			err = services.RespErrAccessDenied
+		}
+		return
+	}
+
 	//需要判断bucketName是否为空字符串
 	if bucketName == "" {
 		return services.RespErrNoSuchBucket
@@ -52,7 +59,7 @@ func (s *service) CheckACL(accessKeyRecord *accesskey.AccessKey, bucketName stri
 		return err
 	}
 
-	if policy.IsAllowed(bucketMeta.Owner == accessKeyRecord.Key, bucketMeta.Acl, action) == false {
+	if policy.IsAllowed(bucketMeta.Owner == ack.Key, bucketMeta.Acl, act) == false {
 		return services.RespErrAccessDenied
 	}
 	return

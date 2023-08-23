@@ -10,7 +10,7 @@ type Handlerser interface {
 	Auth(handler http.Handler) http.Handler
 	Log(handler http.Handler) http.Handler
 
-	// handlers
+	// bucket
 	PutBucketHandler(w http.ResponseWriter, r *http.Request)
 	HeadBucketHandler(w http.ResponseWriter, r *http.Request)
 	DeleteBucketHandler(w http.ResponseWriter, r *http.Request)
@@ -18,5 +18,6 @@ type Handlerser interface {
 	GetBucketAclHandler(w http.ResponseWriter, r *http.Request)
 	PutBucketAclHandler(w http.ResponseWriter, r *http.Request)
 
-	//PutObjectHandler(w http.ResponseWriter, r *http.Request)
+	// object
+	PutObjectHandler(w http.ResponseWriter, r *http.Request)
 }

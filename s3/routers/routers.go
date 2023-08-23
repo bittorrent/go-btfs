@@ -30,6 +30,10 @@ func (routers *Routers) Register() http.Handler {
 	)
 
 	bucket := root.PathPrefix("/{bucket}").Subrouter()
+
+	//object
+	bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(routers.handlers.PutObjectHandler)
+
 	bucket.Methods(http.MethodGet).HandlerFunc(routers.handlers.GetBucketAclHandler).Queries("acl", "")
 	bucket.Methods(http.MethodPut).HandlerFunc(routers.handlers.PutBucketAclHandler).Queries("acl", "")
 
@@ -38,9 +42,6 @@ func (routers *Routers) Register() http.Handler {
 	bucket.Methods(http.MethodDelete).HandlerFunc(routers.handlers.DeleteBucketHandler)
 
 	root.Methods(http.MethodGet).Path("/").HandlerFunc(routers.handlers.ListBucketsHandler)
-
-	//object
-	//bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(routers.handlers.PutObjectHandler)
 
 	return root
 }
