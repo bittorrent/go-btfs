@@ -117,7 +117,7 @@ func (req *PutBucketAclRequest) Bind(r *http.Request) (err error) {
 /*********************************/
 
 // Parses location constraint from the incoming reader.
-func parseLocationConstraint(r *http.Request) (location string, s3Error *services.Error) {
+func parseLocationConstraint(r *http.Request) (location string, s3Error *services.ResponseError) {
 	// If the request has no body with content-length set to 0,
 	// we do not have to validate location constraint. Bucket will
 	// be created at default region.
@@ -125,7 +125,7 @@ func parseLocationConstraint(r *http.Request) (location string, s3Error *service
 	err := utils.XmlDecoder(r.Body, &locationConstraint, r.ContentLength)
 	if err != nil && r.ContentLength != 0 {
 		// Treat all other failures as XML parsing errors.
-		return "", services.ErrMalformedXML
+		return "", services.RespErrMalformedXML
 	} // else for both err as nil or io.EOF
 	location = locationConstraint.Location
 	if location == "" {

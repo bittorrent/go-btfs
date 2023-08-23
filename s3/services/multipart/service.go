@@ -5,20 +5,20 @@ import (
 	"io"
 )
 
-var _ services.MultipartService = (*Service)(nil)
+var _ services.MultipartService = (*service)(nil)
 
-type Service struct {
+type service struct {
 }
 
-func NewService(options ...Option) (svc *Service) {
-	svc = &Service{}
+func NewService(options ...Option) Service {
+	svc := &service{}
 	for _, option := range options {
 		option(svc)
 	}
-	return
+	return svc
 }
 
-func (svc *Service) multiReader() io.Reader {
+func (svc *service) multiReader() io.Reader {
 	var (
 		r1 io.Reader
 		r2 io.Reader

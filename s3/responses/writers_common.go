@@ -29,7 +29,7 @@ const (
 
 // APIErrorResponse - error response format
 type APIErrorResponse struct {
-	XMLName   xml.Name `xml:"Error" json:"-"`
+	XMLName   xml.Name `xml:"ResponseError" json:"-"`
 	Code      string
 	Message   string
 	Resource  string
@@ -47,19 +47,30 @@ type RESTErrorResponse struct {
 	BucketName string   `xml:"BucketName,omitempty" json:"BucketName,omitempty"`
 }
 
+func getRESTErrorResponse(err *services.ResponseError, resource string, bucket, object string) RESTErrorResponse {
+	return RESTErrorResponse{
+		Code:       err.Code(),
+		BucketName: bucket,
+		Key:        object,
+		Message:    err.Description(),
+		Resource:   resource,
+		RequestID:  fmt.Sprintf("%d", time.Now().UnixNano()),
+	}
+}
+
 func WriteErrorResponseHeadersOnly(w http.ResponseWriter, r *http.Request, err error) {
-	var rerr *services.Error
+	var rerr *services.ResponseError
 	if !errors.As(err, &rerr) {
-		rerr = services.ErrInternalError
+		rerr = services.RespErrInternalError
 	}
 	writeResponse(w, r, rerr.HTTPStatusCode(), nil, mimeNone)
 }
 
 // WriteErrorResponse write ErrorResponse
 func WriteErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
-	var rerr *services.Error
+	var rerr *services.ResponseError
 	if !errors.As(err, &rerr) {
-		rerr = services.ErrInternalError
+		rerr = services.RespErrInternalError
 	}
 	vars := mux.Vars(r)
 	bucket := vars["bucket"]
@@ -131,9 +142,9 @@ func encodeXMLResponse(response interface{}) []byte {
 // WriteErrorResponseJSON - writes error response in JSON format;
 // useful for admin APIs.
 func WriteErrorResponseJSON(w http.ResponseWriter, err error, reqURL *url.URL, host string) {
-	var rerr *services.Error
+	var rerr *services.ResponseError
 	if !errors.As(err, &rerr) {
-		rerr = services.ErrInternalError
+		rerr = services.RespErrInternalError
 	}
 	// Generate error response.
 	errorResponse := getAPIErrorResponse(rerr, reqURL.Path, w.Header().Get(consts.AmzRequestID), host)
@@ -143,7 +154,7 @@ func WriteErrorResponseJSON(w http.ResponseWriter, err error, reqURL *url.URL, h
 
 // getErrorResponse gets in standard error and resource value and
 // provides a encodable populated response values
-func getAPIErrorResponse(err *services.Error, resource, requestID, hostID string) APIErrorResponse {
+func getAPIErrorResponse(err *services.ResponseError, resource, requestID, hostID string) APIErrorResponse {
 	return APIErrorResponse{
 		Code:      err.Code(),
 		Message:   err.Description(),

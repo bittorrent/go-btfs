@@ -2,7 +2,6 @@ package cors
 
 import (
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/services"
 	"net/http"
 )
 
@@ -43,16 +42,16 @@ var (
 	}
 )
 
-var _ services.CorsService = (*Service)(nil)
+var _ Service = (*service)(nil)
 
-type Service struct {
+type service struct {
 	allowOrigins []string
 	allowMethods []string
 	allowHeaders []string
 }
 
-func NewService(options ...Option) (svc *Service) {
-	svc = &Service{
+func NewService(options ...Option) Service {
+	svc := &service{
 		allowOrigins: defaultAllowOrigins,
 		allowMethods: defaultAllowMethods,
 		allowHeaders: defaultAllowHeaders,
@@ -60,17 +59,17 @@ func NewService(options ...Option) (svc *Service) {
 	for _, option := range options {
 		option(svc)
 	}
-	return
+	return svc
 }
 
-func (svc *Service) GetAllowOrigins() []string {
+func (svc *service) GetAllowOrigins() []string {
 	return svc.allowOrigins
 }
 
-func (svc *Service) GetAllowMethods() []string {
+func (svc *service) GetAllowMethods() []string {
 	return svc.allowMethods
 }
 
-func (svc *Service) GetAllowHeaders() []string {
+func (svc *service) GetAllowHeaders() []string {
 	return svc.allowHeaders
 }

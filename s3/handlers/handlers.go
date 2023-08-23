@@ -3,43 +3,40 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/bittorrent/go-btfs/s3/handlers/cctx"
-	"github.com/bittorrent/go-btfs/s3/handlers/requests"
-	"github.com/bittorrent/go-btfs/s3/handlers/responses"
+	"github.com/bittorrent/go-btfs/s3/cctx"
+	"github.com/bittorrent/go-btfs/s3/requests"
+	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/services"
+	"github.com/bittorrent/go-btfs/s3/services/auth"
+	"github.com/bittorrent/go-btfs/s3/services/bucket"
+	"github.com/bittorrent/go-btfs/s3/services/cors"
 	"net/http"
 	"runtime"
 
 	s3action "github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/s3utils"
-	"github.com/rs/cors"
+	rscors "github.com/rs/cors"
 )
 
 var _ Handlerser = (*Handlers)(nil)
 
 type Handlers struct {
-	corsSvc      services.CorsService
-	authSvc      services.AuthService
-	bucketSvc    services.BucketService
-	objectSvc    services.ObjectService
-	multipartSvc services.MultipartService
+	corsSvc   cors.Service
+	authSvc   auth.Service
+	bucketSvc bucket.Service
 }
 
 func NewHandlers(
-	corsSvc services.CorsService,
-	authSvc services.AuthService,
-	bucketSvc services.BucketService,
-	objectSvc services.ObjectService,
-	multipartSvc services.MultipartService,
+	corsSvc cors.Service,
+	authSvc auth.Service,
+	bucketSvc bucket.Service,
 	options ...Option,
 ) (handlers *Handlers) {
 	handlers = &Handlers{
-		corsSvc:      corsSvc,
-		authSvc:      authSvc,
-		bucketSvc:    bucketSvc,
-		objectSvc:    objectSvc,
-		multipartSvc: multipartSvc,
+		corsSvc:   corsSvc,
+		authSvc:   authSvc,
+		bucketSvc: bucketSvc,
 	}
 	for _, option := range options {
 		option(handlers)
@@ -48,7 +45,7 @@ func NewHandlers(
 }
 
 func (h *Handlers) Cors(handler http.Handler) http.Handler {
-	return cors.New(cors.Options{
+	return rscors.New(rscors.Options{
 		AllowedOrigins:   h.corsSvc.GetAllowOrigins(),
 		AllowedMethods:   h.corsSvc.GetAllowMethods(),
 		AllowedHeaders:   h.corsSvc.GetAllowHeaders(),
@@ -57,23 +54,33 @@ func (h *Handlers) Cors(handler http.Handler) http.Handler {
 	}).Handler(handler)
 }
 
+func (h *Handlers) Log(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("[REQ] %4s | %s\n", r.Method, r.URL)
+		handler.ServeHTTP(w, r)
+		hname, herr := cctx.GetHandleInf(r)
+		fmt.Printf("[RSP] %4s | %s | %s | %v\n", r.Method, r.URL, hname, herr)
+	})
+}
+
 func (h *Handlers) Auth(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		defer func() {
+			if err != nil {
+				cctx.SetHandleInf(r, fnName(), err)
+			}
+		}()
+
 		ack, err := h.authSvc.VerifySignature(r.Context(), r)
 		if err != nil {
 			responses.WriteErrorResponse(w, r, err)
 			return
 		}
-		cctx.SetAccessKey(r, ack)
-		handler.ServeHTTP(w, r)
-	})
-}
 
-func (h *Handlers) Log(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cctx.SetAccessKey(r, ack)
+
 		handler.ServeHTTP(w, r)
-		hname, herr := cctx.GetHandleInf(r)
-		fmt.Printf("[%-4s] %s | %s | %v\n", r.Method, r.URL, hname, herr)
 	})
 }
 
@@ -85,32 +92,32 @@ func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 
 	req, err := requests.ParsePubBucketRequest(r)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, services.ErrInvalidRequestBody)
+		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
 		return
 	}
 
 	ctx := r.Context()
 
 	if err = s3utils.CheckValidBucketNameStrict(req.Bucket); err != nil {
-		responses.WriteErrorResponse(w, r, services.ErrInvalidBucketName)
+		responses.WriteErrorResponse(w, r, services.RespErrInvalidBucketName)
 		return
 	}
 
 	if !requests.CheckAclPermissionType(&req.ACL) {
-		err = services.ErrNotImplemented
-		responses.WriteErrorResponse(w, r, services.ErrNotImplemented)
+		err = services.RespErrNotImplemented
+		responses.WriteErrorResponse(w, r, services.RespErrNotImplemented)
 		return
 	}
 
 	if ok := h.bucketSvc.HasBucket(ctx, req.Bucket); ok {
-		err = services.ErrBucketAlreadyExists
-		responses.WriteErrorResponseHeadersOnly(w, r, services.ErrBucketAlreadyExists)
+		err = services.RespErrBucketAlreadyExists
+		responses.WriteErrorResponseHeadersOnly(w, r, services.RespErrBucketAlreadyExists)
 		return
 	}
 
 	err = h.bucketSvc.CreateBucket(ctx, req.Bucket, req.Region, cctx.GetAccessKey(r).Key, req.ACL)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, services.ErrInternalError)
+		responses.WriteErrorResponse(w, r, services.RespErrInternalError)
 		return
 	}
 
@@ -132,7 +139,7 @@ func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 
 	req, err := requests.ParseHeadBucketRequest(r)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, services.ErrInvalidRequestBody)
+		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
 		return
 	}
 
@@ -146,7 +153,7 @@ func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if ok := h.bucketSvc.HasBucket(ctx, req.Bucket); !ok {
-		responses.WriteErrorResponseHeadersOnly(w, r, services.ErrNoSuchBucket)
+		responses.WriteErrorResponseHeadersOnly(w, r, services.RespErrNoSuchBucket)
 		return
 	}
 
@@ -162,7 +169,7 @@ func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 	req := &requests.DeleteBucketRequest{}
 	err = req.Bind(r)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, services.ErrInvalidRequestBody)
+		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
 		return
 	}
 
@@ -194,7 +201,7 @@ func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 	req := &requests.ListBucketsRequest{}
 	err = req.Bind(r)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, services.ErrInvalidRequestBody)
+		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
 		return
 	}
 
@@ -225,7 +232,7 @@ func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	req := &requests.GetBucketAclRequest{}
 	err = req.Bind(r)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, services.ErrInvalidRequestBody)
+		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
 		return
 	}
 
@@ -239,7 +246,7 @@ func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !h.bucketSvc.HasBucket(ctx, req.Bucket) {
-		responses.WriteErrorResponseHeadersOnly(w, r, services.ErrNoSuchBucket)
+		responses.WriteErrorResponseHeadersOnly(w, r, services.RespErrNoSuchBucket)
 		return
 	}
 	//todo check all errors
@@ -261,7 +268,7 @@ func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	req := &requests.PutBucketAclRequest{}
 	err = req.Bind(r)
 	if err != nil || len(req.ACL) == 0 || len(req.Bucket) == 0 {
-		responses.WriteErrorResponse(w, r, services.ErrInvalidRequestBody)
+		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
 		return
 	}
 
@@ -275,7 +282,7 @@ func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !requests.CheckAclPermissionType(&req.ACL) {
-		responses.WriteErrorResponse(w, r, services.ErrNotImplemented)
+		responses.WriteErrorResponse(w, r, services.RespErrNotImplemented)
 		return
 	}
 

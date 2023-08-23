@@ -1,3 +1,3 @@
 package multipart
 
-type Option func(svc *Service)
+type Option func(svc *service)

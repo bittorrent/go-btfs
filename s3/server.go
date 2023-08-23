@@ -38,7 +38,7 @@ func NewServer(storageStore storage.StateStorer) *server.Server {
 	bucketSvc := bucket.NewService(ps)
 
 	// handlers
-	hs := handlers.NewHandlers(corsSvc, authSvc, bucketSvc, nil, nil)
+	hs := handlers.NewHandlers(corsSvc, authSvc, bucketSvc)
 
 	// routers
 	rs := routers.NewRouters(hs)

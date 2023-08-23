@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/bittorrent/go-btfs/s3/providers"
 	"github.com/bittorrent/go-btfs/s3/services"
+	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"time"
 
 	"github.com/bittorrent/go-btfs/s3/action"
@@ -17,10 +18,10 @@ const (
 	defaultUpdateTimeoutMS = 200
 )
 
-var _ services.BucketService = (*Service)(nil)
+var _ Service = (*service)(nil)
 
-// Service captures all bucket metadata for a given cluster.
-type Service struct {
+// service captures all bucket metadata for a given cluster.
+type service struct {
 	providers     providers.Providerser
 	emptyBucket   func(ctx context.Context, bucket string) (bool, error)
 	locks         *ctxmu.MultiCtxRWMutex
@@ -28,8 +29,8 @@ type Service struct {
 }
 
 // NewService - creates new policy system.
-func NewService(providers providers.Providerser, options ...Option) (s *Service) {
-	s = &Service{
+func NewService(providers providers.Providerser, options ...Option) Service {
+	s := &service{
 		providers:     providers,
 		locks:         ctxmu.NewDefaultMultiCtxRWMutex(),
 		updateTimeout: time.Duration(defaultUpdateTimeoutMS) * time.Millisecond,
@@ -40,10 +41,10 @@ func NewService(providers providers.Providerser, options ...Option) (s *Service)
 	return s
 }
 
-func (s *Service) CheckACL(accessKeyRecord *services.AccessKey, bucketName string, action action.Action) (err error) {
+func (s *service) CheckACL(accessKeyRecord *accesskey.AccessKey, bucketName string, action action.Action) (err error) {
 	//需要判断bucketName是否为空字符串
 	if bucketName == "" {
-		return services.ErrNoSuchBucket
+		return services.RespErrNoSuchBucket
 	}
 
 	bucketMeta, err := s.GetBucketMeta(context.Background(), bucketName)
@@ -52,14 +53,14 @@ func (s *Service) CheckACL(accessKeyRecord *services.AccessKey, bucketName strin
 	}
 
 	if policy.IsAllowed(bucketMeta.Owner == accessKeyRecord.Key, bucketMeta.Acl, action) == false {
-		return services.ErrAccessDenied
+		return services.RespErrAccessDenied
 	}
 	return
 }
 
-// NewBucketMetadata creates handlers.BucketMetadata with the supplied name and Created to Now.
-func (s *Service) NewBucketMetadata(name, region, accessKey, acl string) *services.BucketMetadata {
-	return &services.BucketMetadata{
+// NewBucketMetadata creates handlers.Bucket with the supplied name and Created to Now.
+func (s *service) NewBucketMetadata(name, region, accessKey, acl string) *Bucket {
+	return &Bucket{
 		Name:    name,
 		Region:  region,
 		Owner:   accessKey,
@@ -69,12 +70,12 @@ func (s *Service) NewBucketMetadata(name, region, accessKey, acl string) *servic
 }
 
 // lockSetBucketMeta - sets a new metadata in-db
-func (s *Service) lockSetBucketMeta(bucket string, meta *services.BucketMetadata) error {
+func (s *service) lockSetBucketMeta(bucket string, meta *Bucket) error {
 	return s.providers.GetStateStore().Put(bucketPrefix+bucket, meta)
 }
 
 // CreateBucket - create a new Bucket
-func (s *Service) CreateBucket(ctx context.Context, bucket, region, accessKey, acl string) error {
+func (s *service) CreateBucket(ctx context.Context, bucket, region, accessKey, acl string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
 	defer cancel()
 
@@ -87,22 +88,22 @@ func (s *Service) CreateBucket(ctx context.Context, bucket, region, accessKey, a
 	return s.lockSetBucketMeta(bucket, s.NewBucketMetadata(bucket, region, accessKey, acl))
 }
 
-func (s *Service) lockGetBucketMeta(bucket string) (meta services.BucketMetadata, err error) {
+func (s *service) lockGetBucketMeta(bucket string) (meta Bucket, err error) {
 	err = s.providers.GetStateStore().Get(bucketPrefix+bucket, &meta)
 	if errors.Is(err, providers.ErrStateStoreNotFound) {
-		err = services.ErrNoSuchBucket
+		err = services.RespErrNoSuchBucket
 	}
 	return
 }
 
 // GetBucketMeta metadata for a bucket.
-func (s *Service) GetBucketMeta(ctx context.Context, bucket string) (meta services.BucketMetadata, err error) {
+func (s *service) GetBucketMeta(ctx context.Context, bucket string) (meta Bucket, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
 	defer cancel()
 
 	err = s.locks.RLock(ctx, bucket)
 	if err != nil {
-		return services.BucketMetadata{Name: bucket}, err
+		return Bucket{Name: bucket}, err
 	}
 	defer s.locks.RUnlock(bucket)
 
@@ -110,13 +111,13 @@ func (s *Service) GetBucketMeta(ctx context.Context, bucket string) (meta servic
 }
 
 // HasBucket  metadata for a bucket.
-func (s *Service) HasBucket(ctx context.Context, bucket string) bool {
+func (s *service) HasBucket(ctx context.Context, bucket string) bool {
 	_, err := s.GetBucketMeta(ctx, bucket)
 	return err == nil
 }
 
 // DeleteBucket bucket.
-func (s *Service) DeleteBucket(ctx context.Context, bucket string) error {
+func (s *service) DeleteBucket(ctx context.Context, bucket string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
 	defer cancel()
 
@@ -142,14 +143,14 @@ func (s *Service) DeleteBucket(ctx context.Context, bucket string) error {
 	return s.providers.GetStateStore().Delete(bucketPrefix + bucket)
 }
 
-func (s *Service) SetEmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error)) {
+func (s *service) SetEmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error)) {
 	s.emptyBucket = emptyBucket
 }
 
 // GetAllBucketsOfUser metadata for all bucket.
-func (s *Service) GetAllBucketsOfUser(username string) (list []*services.BucketMetadata, err error) {
+func (s *service) GetAllBucketsOfUser(username string) (list []*Bucket, err error) {
 	err = s.providers.GetStateStore().Iterate(bucketPrefix, func(key, _ []byte) (stop bool, er error) {
-		record := &services.BucketMetadata{}
+		record := &Bucket{}
 		er = s.providers.GetStateStore().Get(string(key), record)
 		if er != nil {
 			return
@@ -165,7 +166,7 @@ func (s *Service) GetAllBucketsOfUser(username string) (list []*services.BucketM
 }
 
 // UpdateBucketAcl .
-func (s *Service) UpdateBucketAcl(ctx context.Context, bucket, acl string) error {
+func (s *service) UpdateBucketAcl(ctx context.Context, bucket, acl string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
 	defer cancel()
 
@@ -185,7 +186,7 @@ func (s *Service) UpdateBucketAcl(ctx context.Context, bucket, acl string) error
 }
 
 // GetBucketAcl .
-func (s *Service) GetBucketAcl(ctx context.Context, bucket string) (string, error) {
+func (s *service) GetBucketAcl(ctx context.Context, bucket string) (string, error) {
 	meta, err := s.GetBucketMeta(ctx, bucket)
 	if err != nil {
 		return "", err

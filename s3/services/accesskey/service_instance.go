@@ -2,48 +2,47 @@ package accesskey
 
 import (
 	"github.com/bittorrent/go-btfs/s3/providers"
-	"github.com/bittorrent/go-btfs/s3/services"
 	"sync"
 )
 
-var service *Service
+var svcInstance Service
 
 var once sync.Once
 
 func InitService(providers providers.Providerser, options ...Option) {
 	once.Do(func() {
-		service = NewService(providers, options...)
+		svcInstance = NewService(providers, options...)
 	})
 }
 
-func GetService() *Service {
-	return service
+func GetServiceInstance() Service {
+	return svcInstance
 }
 
-func Generate() (ack *services.AccessKey, err error) {
-	return service.Generate()
+func Generate() (ack *AccessKey, err error) {
+	return svcInstance.Generate()
 }
 
 func Enable(key string) (err error) {
-	return service.Enable(key)
+	return svcInstance.Enable(key)
 }
 
 func Disable(key string) (err error) {
-	return service.Disable(key)
+	return svcInstance.Disable(key)
 }
 
 func Reset(key string) (err error) {
-	return service.Reset(key)
+	return svcInstance.Reset(key)
 }
 
 func Delete(key string) (err error) {
-	return service.Delete(key)
+	return svcInstance.Delete(key)
 }
 
-func Get(key string) (record *services.AccessKey, err error) {
-	return service.Get(key)
+func Get(key string) (record *AccessKey, err error) {
+	return svcInstance.Get(key)
 }
 
-func List() (list []*services.AccessKey, err error) {
-	return service.List()
+func List() (list []*AccessKey, err error) {
+	return svcInstance.List()
 }

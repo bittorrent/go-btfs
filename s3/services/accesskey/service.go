@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/bittorrent/go-btfs/s3/ctxmu"
 	"github.com/bittorrent/go-btfs/s3/providers"
-	"github.com/bittorrent/go-btfs/s3/services"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"github.com/bittorrent/go-btfs/utils"
 	"github.com/google/uuid"
@@ -18,9 +17,9 @@ const (
 	defaultUpdateTimeoutMS = 200
 )
 
-var _ services.AccessKeyService = (*Service)(nil)
+var _ Service = (*service)(nil)
 
-type Service struct {
+type service struct {
 	providers      providers.Providerser
 	secretLength   int
 	storeKeyPrefix string
@@ -28,8 +27,8 @@ type Service struct {
 	updateTimeout  time.Duration
 }
 
-func NewService(providers providers.Providerser, options ...Option) (svc *Service) {
-	svc = &Service{
+func NewService(providers providers.Providerser, options ...Option) Service {
+	svc := &service{
 		providers:      providers,
 		secretLength:   defaultSecretLength,
 		storeKeyPrefix: defaultStoreKeyPrefix,
@@ -42,9 +41,9 @@ func NewService(providers providers.Providerser, options ...Option) (svc *Servic
 	return svc
 }
 
-func (svc *Service) Generate() (record *services.AccessKey, err error) {
+func (svc *service) Generate() (record *AccessKey, err error) {
 	now := time.Now()
-	record = &services.AccessKey{
+	record = &AccessKey{
 		Key:       svc.newKey(),
 		Secret:    svc.newSecret(),
 		Enable:    true,
@@ -56,7 +55,7 @@ func (svc *Service) Generate() (record *services.AccessKey, err error) {
 	return
 }
 
-func (svc *Service) Enable(key string) (err error) {
+func (svc *service) Enable(key string) (err error) {
 	enable := true
 	err = svc.update(key, &updateArgs{
 		Enable: &enable,
@@ -64,7 +63,7 @@ func (svc *Service) Enable(key string) (err error) {
 	return
 }
 
-func (svc *Service) Disable(key string) (err error) {
+func (svc *service) Disable(key string) (err error) {
 	enable := false
 	err = svc.update(key, &updateArgs{
 		Enable: &enable,
@@ -72,7 +71,7 @@ func (svc *Service) Disable(key string) (err error) {
 	return
 }
 
-func (svc *Service) Reset(key string) (err error) {
+func (svc *service) Reset(key string) (err error) {
 	secret := svc.newSecret()
 	err = svc.update(key, &updateArgs{
 		Secret: &secret,
@@ -80,7 +79,7 @@ func (svc *Service) Reset(key string) (err error) {
 	return
 }
 
-func (svc *Service) Delete(key string) (err error) {
+func (svc *service) Delete(key string) (err error) {
 	isDelete := true
 	err = svc.update(key, &updateArgs{
 		IsDelete: &isDelete,
@@ -88,21 +87,21 @@ func (svc *Service) Delete(key string) (err error) {
 	return
 }
 
-func (svc *Service) Get(key string) (ack *services.AccessKey, err error) {
-	ack = &services.AccessKey{}
+func (svc *service) Get(key string) (ack *AccessKey, err error) {
+	ack = &AccessKey{}
 	err = svc.providers.GetStateStore().Get(svc.getStoreKey(key), ack)
 	if err != nil && !errors.Is(err, providers.ErrStateStoreNotFound) {
 		return
 	}
 	if errors.Is(err, providers.ErrStateStoreNotFound) || ack.IsDeleted {
-		err = services.ErrAccessKeyNotFound
+		err = ErrNotFound
 	}
 	return
 }
 
-func (svc *Service) List() (list []*services.AccessKey, err error) {
+func (svc *service) List() (list []*AccessKey, err error) {
 	err = svc.providers.GetStateStore().Iterate(svc.storeKeyPrefix, func(key, _ []byte) (stop bool, er error) {
-		record := &services.AccessKey{}
+		record := &AccessKey{}
 		er = svc.providers.GetStateStore().Get(string(key), record)
 		if er != nil {
 			return
@@ -116,17 +115,17 @@ func (svc *Service) List() (list []*services.AccessKey, err error) {
 	return
 }
 
-func (svc *Service) newKey() (key string) {
+func (svc *service) newKey() (key string) {
 	key = uuid.NewString()
 	return
 }
 
-func (svc *Service) newSecret() (secret string) {
+func (svc *service) newSecret() (secret string) {
 	secret = utils.RandomString(svc.secretLength)
 	return
 }
 
-func (svc *Service) getStoreKey(key string) (storeKey string) {
+func (svc *service) getStoreKey(key string) (storeKey string) {
 	storeKey = svc.storeKeyPrefix + key
 	return
 }
@@ -137,7 +136,7 @@ type updateArgs struct {
 	IsDelete *bool
 }
 
-func (svc *Service) update(key string, args *updateArgs) (err error) {
+func (svc *service) update(key string, args *updateArgs) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), svc.updateTimeout)
 	defer cancel()
 
@@ -147,7 +146,7 @@ func (svc *Service) update(key string, args *updateArgs) (err error) {
 	}
 	defer svc.locks.Unlock(key)
 
-	record := &services.AccessKey{}
+	record := &AccessKey{}
 	stk := svc.getStoreKey(key)
 
 	err = svc.providers.GetStateStore().Get(stk, record)
@@ -155,7 +154,7 @@ func (svc *Service) update(key string, args *updateArgs) (err error) {
 		return
 	}
 	if errors.Is(err, storage.ErrNotFound) || record.IsDeleted {
-		err = services.ErrAccessKeyNotFound
+		err = ErrNotFound
 		return
 	}
 

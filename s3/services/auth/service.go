@@ -3,28 +3,28 @@ package auth
 import (
 	"context"
 	"github.com/bittorrent/go-btfs/s3/providers"
-	"github.com/bittorrent/go-btfs/s3/services"
+	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"net/http"
 )
 
-var _ services.AuthService = (*Service)(nil)
+var _ Service = (*service)(nil)
 
-type Service struct {
+type service struct {
 	providers    providers.Providerser
-	accessKeySvc services.AccessKeyService
+	accessKeySvc accesskey.Service
 }
 
-func NewService(providers providers.Providerser, accessKeySvc services.AccessKeyService, options ...Option) (svc *Service) {
-	svc = &Service{
+func NewService(providers providers.Providerser, accessKeySvc accesskey.Service, options ...Option) Service {
+	svc := &service{
 		providers:    providers,
 		accessKeySvc: accessKeySvc,
 	}
 	for _, option := range options {
 		option(svc)
 	}
-	return
+	return svc
 }
 
-func (s *Service) VerifySignature(ctx context.Context, r *http.Request) (accessKeyRecord *services.AccessKey, err error) {
+func (s *service) VerifySignature(ctx context.Context, r *http.Request) (accessKeyRecord *accesskey.AccessKey, err error) {
 	return s.CheckRequestAuthTypeCredential(ctx, r)
 }
