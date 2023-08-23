@@ -8,9 +8,6 @@ import (
 	_ "expvar"
 	"fmt"
 	"github.com/bittorrent/go-btfs/s3"
-	"github.com/bittorrent/go-btfs/s3/providers"
-	"github.com/bittorrent/go-btfs/s3/providers/filestore"
-	s3statestore "github.com/bittorrent/go-btfs/s3/providers/statestore"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"io/ioutil"
 	"math/rand"
@@ -1468,11 +1465,4 @@ func CheckExistLastOnlineReportV2(cfg *config.Config, configRoot string, chainId
 		}
 	}
 	return nil
-}
-
-func buildS3Providers(storageStore storage.StateStorer) *providers.Providers {
-	return providers.NewProviders(
-		s3statestore.NewStorageStateStoreProxy(storageStore),
-		filestore.NewLocalShell(),
-	)
 }

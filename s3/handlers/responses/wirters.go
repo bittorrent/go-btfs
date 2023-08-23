@@ -46,13 +46,13 @@ func WriteListBucketsResponse(w http.ResponseWriter, r *http.Request, bucketMeta
 	return
 }
 
-func WriteGetBucketAclResponse(w http.ResponseWriter, r *http.Request, ack *services.AccessKey, acl string) {
+func WriteGetBucketAclResponse(w http.ResponseWriter, r *http.Request, key string, acl string) {
 	resp := GetBucketAclResponse{}
 	fmt.Printf(" -1- get acl resp: %+v \n", resp)
 
-	id := ack.Key
+	id := key
 	if resp.Owner.DisplayName == "" {
-		resp.Owner.DisplayName = ack.Key
+		resp.Owner.DisplayName = key
 		resp.Owner.ID = id
 	}
 	fmt.Printf(" -2- get acl resp: %+v \n", resp)
@@ -61,7 +61,7 @@ func WriteGetBucketAclResponse(w http.ResponseWriter, r *http.Request, ack *serv
 	resp.AccessControlList.Grant = append(resp.AccessControlList.Grant, Grant{
 		Grantee: Grantee{
 			ID:          id,
-			DisplayName: ack.Key,
+			DisplayName: key,
 			Type:        "CanonicalUser",
 			XMLXSI:      "CanonicalUser",
 			XMLNS:       "http://www.w3.org/2001/XMLSchema-instance"},

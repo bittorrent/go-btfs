@@ -8,6 +8,7 @@ type Handlerser interface {
 	// middlewares
 	Cors(handler http.Handler) http.Handler
 	Auth(handler http.Handler) http.Handler
+	Log(handler http.Handler) http.Handler
 
 	// handlers
 	PutBucketHandler(w http.ResponseWriter, r *http.Request)

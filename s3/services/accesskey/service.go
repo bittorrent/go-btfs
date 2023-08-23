@@ -95,7 +95,7 @@ func (svc *Service) Get(key string) (ack *services.AccessKey, err error) {
 		return
 	}
 	if errors.Is(err, providers.ErrStateStoreNotFound) || ack.IsDeleted {
-		err = services.ErrAccessKeyIsNotFound
+		err = services.ErrAccessKeyNotFound
 	}
 	return
 }
@@ -155,7 +155,7 @@ func (svc *Service) update(key string, args *updateArgs) (err error) {
 		return
 	}
 	if errors.Is(err, storage.ErrNotFound) || record.IsDeleted {
-		err = services.ErrAccessKeyIsNotFound
+		err = services.ErrAccessKeyNotFound
 		return
 	}
 

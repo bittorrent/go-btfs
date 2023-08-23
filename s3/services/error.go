@@ -1,4 +1,4 @@
-package responses
+package services
 
 import (
 	"fmt"
@@ -1030,6 +1030,11 @@ var (
 	ErrMalformedJSON = &Error{
 		code:           "MalformedJSON",
 		description:    "The JSON was not well-formed or did not validate against our published format.",
+		httpStatusCode: http.StatusBadRequest,
+	}
+	ErrAccessKeyNotFound = &Error{
+		code:           "AccessKeyNotFound",
+		description:    "",
 		httpStatusCode: http.StatusBadRequest,
 	}
 )

@@ -2,11 +2,9 @@ package services
 
 import (
 	"context"
-	"github.com/bittorrent/go-btfs/s3/handlers/responses"
 	"net/http"
 	"time"
 
-	"errors"
 	"github.com/bittorrent/go-btfs/s3/action"
 )
 
@@ -27,7 +25,7 @@ type AccessKeyService interface {
 }
 
 type AuthService interface {
-	VerifySignature(ctx context.Context, r *http.Request) (ack *AccessKey, rErr *responses.Error)
+	VerifySignature(ctx context.Context, r *http.Request) (ack *AccessKey, err error)
 }
 
 type BucketService interface {
@@ -47,20 +45,6 @@ type ObjectService interface {
 
 type MultipartService interface {
 }
-
-var (
-	ErrSignVersionNotSupport = errors.New("sign version is not support")
-	ErrInvalidArgument       = errors.New("invalid argument")
-	ErrInvalidBucketName     = errors.New("bucket name is invalid")
-	ErrBucketNotFound        = errors.New("bucket is not found")
-	ErrBucketAlreadyExists   = errors.New("bucket is already exists")
-	ErrBucketAccessDenied    = errors.New("bucket access denied")
-	ErrSetBucketEmptyFailed  = errors.New("set bucket empty failed")
-	ErrCreateBucket          = errors.New("create bucket failed")
-	ErrNoSuchUserPolicy      = errors.New("no such user policy")
-	ErrNotImplemented        = errors.New("not implemented")
-	ErrAccessKeyIsNotFound   = errors.New("access-key is not found")
-)
 
 type AccessKey struct {
 	Key       string    `json:"key"`

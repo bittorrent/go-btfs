@@ -2,6 +2,7 @@ package bucket
 
 import (
 	"context"
+	"errors"
 	"github.com/bittorrent/go-btfs/s3/providers"
 	"github.com/bittorrent/go-btfs/s3/services"
 	"time"
@@ -9,7 +10,6 @@ import (
 	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/ctxmu"
 	"github.com/bittorrent/go-btfs/s3/policy"
-	"github.com/syndtr/goleveldb/leveldb"
 )
 
 const (
@@ -43,7 +43,7 @@ func NewService(providers providers.Providerser, options ...Option) (s *Service)
 func (s *Service) CheckACL(accessKeyRecord *services.AccessKey, bucketName string, action action.Action) (err error) {
 	//需要判断bucketName是否为空字符串
 	if bucketName == "" {
-		return services.ErrBucketNotFound
+		return services.ErrNoSuchBucket
 	}
 
 	bucketMeta, err := s.GetBucketMeta(context.Background(), bucketName)
@@ -52,7 +52,7 @@ func (s *Service) CheckACL(accessKeyRecord *services.AccessKey, bucketName strin
 	}
 
 	if policy.IsAllowed(bucketMeta.Owner == accessKeyRecord.Key, bucketMeta.Acl, action) == false {
-		return services.ErrBucketAccessDenied
+		return services.ErrAccessDenied
 	}
 	return
 }
@@ -89,10 +89,10 @@ func (s *Service) CreateBucket(ctx context.Context, bucket, region, accessKey, a
 
 func (s *Service) lockGetBucketMeta(bucket string) (meta services.BucketMetadata, err error) {
 	err = s.providers.GetStateStore().Get(bucketPrefix+bucket, &meta)
-	if err == leveldb.ErrNotFound {
-		err = services.ErrBucketNotFound
+	if errors.Is(err, providers.ErrStateStoreNotFound) {
+		err = services.ErrNoSuchBucket
 	}
-	return meta, err
+	return
 }
 
 // GetBucketMeta metadata for a bucket.
@@ -130,10 +130,13 @@ func (s *Service) DeleteBucket(ctx context.Context, bucket string) error {
 		return err
 	}
 
-	if empty, err := s.emptyBucket(ctx, bucket); err != nil {
+	empty, err := s.emptyBucket(ctx, bucket)
+	if err != nil {
 		return err
-	} else if !empty {
-		return services.ErrSetBucketEmptyFailed
+	}
+
+	if !empty {
+		return errors.New("bucket not empty")
 	}
 
 	return s.providers.GetStateStore().Delete(bucketPrefix + bucket)

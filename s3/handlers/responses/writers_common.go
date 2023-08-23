@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"github.com/bittorrent/go-btfs/s3/consts"
+	"github.com/bittorrent/go-btfs/s3/services"
 	"github.com/gorilla/mux"
 	logging "github.com/ipfs/go-log/v2"
 	"net/http"
@@ -45,13 +47,20 @@ type RESTErrorResponse struct {
 	BucketName string   `xml:"BucketName,omitempty" json:"BucketName,omitempty"`
 }
 
-func WriteErrorResponseHeadersOnly(w http.ResponseWriter, r *http.Request, rerr *Error) {
+func WriteErrorResponseHeadersOnly(w http.ResponseWriter, r *http.Request, err error) {
+	var rerr *services.Error
+	if !errors.As(err, &rerr) {
+		rerr = services.ErrInternalError
+	}
 	writeResponse(w, r, rerr.HTTPStatusCode(), nil, mimeNone)
 }
 
 // WriteErrorResponse write ErrorResponse
-func WriteErrorResponse(w http.ResponseWriter, r *http.Request, rerr *Error) {
-	fmt.Println("response err: ", rerr.Error(), r.URL, r.Method, r.Header)
+func WriteErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
+	var rerr *services.Error
+	if !errors.As(err, &rerr) {
+		rerr = services.ErrInternalError
+	}
 	vars := mux.Vars(r)
 	bucket := vars["bucket"]
 	object := vars["object"]
@@ -121,16 +130,20 @@ func encodeXMLResponse(response interface{}) []byte {
 
 // WriteErrorResponseJSON - writes error response in JSON format;
 // useful for admin APIs.
-func WriteErrorResponseJSON(w http.ResponseWriter, err *Error, reqURL *url.URL, host string) {
+func WriteErrorResponseJSON(w http.ResponseWriter, err error, reqURL *url.URL, host string) {
+	var rerr *services.Error
+	if !errors.As(err, &rerr) {
+		rerr = services.ErrInternalError
+	}
 	// Generate error response.
-	errorResponse := getAPIErrorResponse(err, reqURL.Path, w.Header().Get(consts.AmzRequestID), host)
+	errorResponse := getAPIErrorResponse(rerr, reqURL.Path, w.Header().Get(consts.AmzRequestID), host)
 	encodedErrorResponse := encodeResponseJSON(errorResponse)
-	writeResponseSimple(w, err.HTTPStatusCode(), encodedErrorResponse, mimeJSON)
+	writeResponseSimple(w, rerr.HTTPStatusCode(), encodedErrorResponse, mimeJSON)
 }
 
 // getErrorResponse gets in standard error and resource value and
 // provides a encodable populated response values
-func getAPIErrorResponse(err *Error, resource, requestID, hostID string) APIErrorResponse {
+func getAPIErrorResponse(err *services.Error, resource, requestID, hostID string) APIErrorResponse {
 	return APIErrorResponse{
 		Code:      err.Code(),
 		Message:   err.Description(),

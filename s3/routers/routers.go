@@ -26,6 +26,7 @@ func (routers *Routers) Register() http.Handler {
 	root.Use(
 		routers.handlers.Cors,
 		routers.handlers.Auth,
+		routers.handlers.Log,
 	)
 
 	bucket := root.PathPrefix("/{bucket}").Subrouter()

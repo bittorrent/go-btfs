@@ -18,13 +18,13 @@
 package auth
 
 import (
+	"github.com/bittorrent/go-btfs/s3/services"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/handlers"
 )
 
 // http Header "x-amz-content-sha256" == "UNSIGNED-PAYLOAD" indicates that the
@@ -60,13 +60,13 @@ func contains(slice interface{}, elem interface{}) bool {
 }
 
 // extractSignedHeaders extract signed headers from Authorization header
-func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header, handlers.Errorcode) {
+func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header, error) {
 	reqHeaders := r.Header
 	reqQueries := r.Form
 	// find whether "host" is part of list of signed headers.
 	// if not return ErrcodeUnsignedHeaders. "host" is mandatory.
 	if !contains(signedHeaders, "host") {
-		return nil, handlers.ErrcodeUnsignedHeaders
+		return nil, services.ErrUnsignedHeaders
 	}
 	extractedSignedHeaders := make(http.Header)
 	for _, header := range signedHeaders {
@@ -116,10 +116,10 @@ func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header,
 			// calculation to be compatible with such clients.
 			extractedSignedHeaders.Set(header, strconv.FormatInt(r.ContentLength, 10))
 		default:
-			return nil, handlers.ErrcodeUnsignedHeaders
+			return nil, services.ErrUnsignedHeaders
 		}
 	}
-	return extractedSignedHeaders, handlers.ErrcodeNone
+	return extractedSignedHeaders, nil
 }
 
 // Returns SHA256 for calculating canonical-request.

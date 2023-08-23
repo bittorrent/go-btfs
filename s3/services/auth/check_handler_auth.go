@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"encoding/hex"
-	"github.com/bittorrent/go-btfs/s3/handlers/responses"
 	"github.com/bittorrent/go-btfs/s3/services"
 	"net/http"
 
@@ -19,24 +18,24 @@ import (
 //
 // returns APIErrorcode if any to be replied to the client.
 // Additionally, returns the accessKey used in the request, and if this request is by an admin.
-func (s *Service) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Request) (cred *services.AccessKey, rErr *responses.Error) {
+func (s *Service) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Request) (cred *services.AccessKey, err error) {
 	// check signature
 	switch GetRequestAuthType(r) {
 	case AuthTypeSigned, AuthTypePresigned:
 		region := ""
-		if rErr = s.IsReqAuthenticated(ctx, r, region, ServiceS3); rErr != nil {
+		if err = s.IsReqAuthenticated(ctx, r, region, ServiceS3); err != nil {
 			return
 		}
-		cred, rErr = s.getReqAccessKeyV4(r, region, ServiceS3)
+		cred, err = s.getReqAccessKeyV4(r, region, ServiceS3)
 	default:
-		rErr = responses.ErrSignatureVersionNotSupported
+		err = services.ErrSignatureVersionNotSupported
 		return
 	}
 
 	return
 }
 
-func (s *Service) ReqSignatureV4Verify(r *http.Request, region string, stype serviceType) *responses.Error {
+func (s *Service) ReqSignatureV4Verify(r *http.Request, region string, stype serviceType) error {
 	sha256sum := getContentSha256Cksum(r, stype)
 	switch {
 	case IsRequestSignatureV4(r):
@@ -44,18 +43,18 @@ func (s *Service) ReqSignatureV4Verify(r *http.Request, region string, stype ser
 	case isRequestPresignedSignatureV4(r):
 		return s.doesPresignedSignatureMatch(sha256sum, r, region, stype)
 	default:
-		return responses.ErrAccessDenied
+		return services.ErrAccessDenied
 	}
 }
 
 // IsReqAuthenticated Verify if request has valid AWS Signature Version '4'.
-func (s *Service) IsReqAuthenticated(ctx context.Context, r *http.Request, region string, stype serviceType) (rErr *responses.Error) {
-	if rErr = s.ReqSignatureV4Verify(r, region, stype); rErr != nil {
+func (s *Service) IsReqAuthenticated(ctx context.Context, r *http.Request, region string, stype serviceType) (err error) {
+	if err = s.ReqSignatureV4Verify(r, region, stype); err != nil {
 		return
 	}
 	clientETag, err := etag.FromContentMD5(r.Header)
 	if err != nil {
-		rErr = responses.ErrInvalidDigest
+		err = services.ErrInvalidDigest
 		return
 	}
 
@@ -66,14 +65,14 @@ func (s *Service) IsReqAuthenticated(ctx context.Context, r *http.Request, regio
 		if sha256Sum, ok := r.Form[consts.AmzContentSha256]; ok && len(sha256Sum) > 0 {
 			contentSHA256, err = hex.DecodeString(sha256Sum[0])
 			if err != nil {
-				rErr = responses.ErrContentSHA256Mismatch
+				err = services.ErrContentSHA256Mismatch
 				return
 			}
 		}
 	} else if _, ok := r.Header[consts.AmzContentSha256]; !skipSHA256 && ok {
 		contentSHA256, err = hex.DecodeString(r.Header.Get(consts.AmzContentSha256))
 		if err != nil || len(contentSHA256) == 0 {
-			rErr = responses.ErrContentSHA256Mismatch
+			err = services.ErrContentSHA256Mismatch
 			return
 		}
 	}
@@ -82,7 +81,7 @@ func (s *Service) IsReqAuthenticated(ctx context.Context, r *http.Request, regio
 	// The verification happens implicit during reading.
 	reader, err := hash.NewReader(r.Body, -1, clientETag.String(), hex.EncodeToString(contentSHA256), -1)
 	if err != nil {
-		rErr = responses.ErrInternalError
+		err = services.ErrInternalError
 		return
 	}
 	r.Body = reader

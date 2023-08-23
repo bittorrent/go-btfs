@@ -6,3 +6,8 @@ type PutBucketRequest struct {
 	ACL    string
 	Region string
 }
+
+// HeadBucketRequest .
+type HeadBucketRequest struct {
+	Bucket string
+}
