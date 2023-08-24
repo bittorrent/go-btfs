@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"errors"
 	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/cctx"
@@ -17,7 +16,6 @@ import (
 
 const lockWaitTimeout = 5 * time.Minute
 
-// PutObjectHandler http://docs.aws.amazon.com/AmazonS3/latest/dev/UploadingObjects.html
 func (h *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ack := cctx.GetAccessKey(r)
@@ -52,16 +50,14 @@ func (h *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// lock
-	runlock, err := h.rlock(ctx, bucname, w, r)
+	meta, err := extractMetadata(ctx, r)
 	if err != nil {
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequest)
 		return
 	}
-	defer runlock()
 
-	err = h.bucsvc.CheckACL(ack, bucname, action.PutObjectAction)
-	if errors.Is(err, bucket.ErrNotFound) {
-		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
+	if r.ContentLength == 0 {
+		responses.WriteErrorResponse(w, r, responses.ErrEntityTooSmall)
 		return
 	}
 
@@ -71,33 +67,38 @@ func (h *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metadata, err := extractMetadata(ctx, r)
+	// rlock bucket
+	runlock, err := h.rlock(ctx, bucname, w, r)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequest)
+		return
+	}
+	defer runlock()
+
+	// lock object
+	unlock, err := h.lock(ctx, bucname+"/"+objname, w, r)
+	if err != nil {
+		return
+	}
+	defer unlock()
+
+	err = h.bucsvc.CheckACL(ack, bucname, action.PutObjectAction)
+	if errors.Is(err, bucket.ErrNotFound) {
+		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
+		return
+	}
+	if err != nil {
+		responses.WriteErrorResponse(w, r, err)
 		return
 	}
 
-	obj, err := h.objsvc.StoreObject(ctx, bucname, objname, hrdr, r.ContentLength, metadata)
+	obj, err := h.objsvc.PutObject(ctx, bucname, objname, hrdr, r.ContentLength, meta)
 
 	if err != nil {
 		responses.WriteErrorResponse(w, r, err)
 		return
 	}
 
-	responses.WritePutObjectResponse(w, r, obj, false)
-}
+	responses.WritePutObjectResponse(w, r, obj)
 
-func (h *Handlers) rlock(ctx context.Context, key string, w http.ResponseWriter, r *http.Request) (runlock func(), err error) {
-	ctx, cancel := context.WithTimeout(ctx, lockWaitTimeout)
-	err = h.nslock.RLock(ctx, key)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
-		cancel()
-		return
-	}
-	runlock = func() {
-		h.nslock.RUnlock(key)
-		cancel()
-	}
 	return
 }

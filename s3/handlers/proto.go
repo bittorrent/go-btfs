@@ -20,4 +20,10 @@ type Handlerser interface {
 
 	// object
 	PutObjectHandler(w http.ResponseWriter, r *http.Request)
+
+	// multipart
+	CreateMultipartUploadHandler(w http.ResponseWriter, r *http.Request)
+	UploadPartHandler(w http.ResponseWriter, r *http.Request)
+	AbortMultipartUploadHandler(w http.ResponseWriter, r *http.Request)
+	CompleteMultipartUploadHandler(w http.ResponseWriter, r *http.Request)
 }

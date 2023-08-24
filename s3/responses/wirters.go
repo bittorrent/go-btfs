@@ -80,7 +80,27 @@ func WritePutBucketAclResponse(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func WritePutObjectResponse(w http.ResponseWriter, r *http.Request, obj object.Object, delete bool) {
-	setPutObjHeaders(w, obj, delete)
+func WritePutObjectResponse(w http.ResponseWriter, r *http.Request, obj object.Object) {
+	setPutObjHeaders(w, obj.ETag, obj.Cid, false)
 	WriteSuccessResponseHeadersOnly(w, r)
+}
+
+func WriteCreateMultipartUploadResponse(w http.ResponseWriter, r *http.Request, bucname, objname, uploadID string) {
+	resp := GenerateInitiateMultipartUploadResponse(bucname, objname, uploadID)
+	WriteSuccessResponseXML(w, r, resp)
+}
+
+func WriteAbortMultipartUploadResponse(w http.ResponseWriter, r *http.Request) {
+	WriteSuccessNoContent(w)
+}
+
+func WriteUploadPartResponse(w http.ResponseWriter, r *http.Request, part object.ObjectPart) {
+	setPutObjHeaders(w, part.ETag, part.Cid, false)
+	WriteSuccessResponseHeadersOnly(w, r)
+}
+
+func WriteCompleteMultipartUploadResponse(w http.ResponseWriter, r *http.Request, bucname, objname, region string, obj object.Object) {
+	resp := GenerateCompleteMultipartUploadResponse(bucname, objname, region, obj)
+	setPutObjHeaders(w, obj.ETag, obj.Cid, false)
+	WriteSuccessResponseXML(w, r, resp)
 }

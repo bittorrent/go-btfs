@@ -3,26 +3,29 @@ package responses
 import (
 	"encoding/xml"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/bittorrent/go-btfs/s3/services/object"
 )
 
 type GetBucketAclResponse AccessControlPolicy
 
 // AccessControlPolicy <AccessControlPolicy>
-//  <Owner>
-//    <ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID>
-//    <DisplayName>CustomersName@amazon.com</DisplayName>
-//  </Owner>
-//  <AccessControlList>
-//    <Grant>
-//      <Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-//			xsi:type="CanonicalUser">
-//        <ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID>
-//        <DisplayName>CustomersName@amazon.com</DisplayName>
-//      </Grantee>
-//      <Permission>FULL_CONTROL</Permission>
-//    </Grant>
-//  </AccessControlList>
-//</AccessControlPolicy>
+//
+//	 <Owner>
+//	   <ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID>
+//	   <DisplayName>CustomersName@amazon.com</DisplayName>
+//	 </Owner>
+//	 <AccessControlList>
+//	   <Grant>
+//	     <Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+//				xsi:type="CanonicalUser">
+//	       <ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID>
+//	       <DisplayName>CustomersName@amazon.com</DisplayName>
+//	     </Grantee>
+//	     <Permission>FULL_CONTROL</Permission>
+//	   </Grant>
+//	 </AccessControlList>
+//
+// </AccessControlPolicy>
 type AccessControlPolicy struct {
 	Owner             canonicalUser     `xml:"Owner"`
 	AccessControlList accessControlList `xml:"AccessControlList"`
@@ -36,13 +39,13 @@ type canonicalUser struct {
 	DisplayName string `xml:"DisplayName,omitempty"`
 }
 
-//Grant grant
+// Grant grant
 type Grant struct {
 	Grantee    Grantee    `xml:"Grantee"`
 	Permission Permission `xml:"Permission"`
 }
 
-//Grantee grant
+// Grantee grant
 type Grantee struct {
 	XMLNS       string `xml:"xmlns:xsi,attr"`
 	XMLXSI      string `xml:"xsi:type,attr"`
@@ -188,4 +191,45 @@ func (s StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 // CommonPrefix container for prefix response in ListObjectsResponse
 type CommonPrefix struct {
 	Prefix string
+}
+
+type InitiateMultipartUploadResponse struct {
+	XMLName xml.Name `xml:"http://s3.amazonaws.com/doc/2006-03-01/ InitiateMultipartUploadResult" json:"-"`
+
+	Bucket   string
+	Key      string
+	UploadID string `xml:"UploadId"`
+}
+
+func GenerateInitiateMultipartUploadResponse(bucname, objname, uploadID string) InitiateMultipartUploadResponse {
+	return InitiateMultipartUploadResponse{
+		Bucket:   bucname,
+		Key:      objname,
+		UploadID: uploadID,
+	}
+}
+
+type CompleteMultipartUploadResponse struct {
+	XMLName xml.Name `xml:"http://s3.amazonaws.com/doc/2006-03-01/ CompleteMultipartUploadResult" json:"-"`
+
+	Location string
+	Bucket   string
+	Key      string
+	ETag     string
+
+	ChecksumCRC32  string
+	ChecksumCRC32C string
+	ChecksumSHA1   string
+	ChecksumSHA256 string
+}
+
+func GenerateCompleteMultipartUploadResponse(bucname, objname, location string, obj object.Object) CompleteMultipartUploadResponse {
+	c := CompleteMultipartUploadResponse{
+		Location: location,
+		Bucket:   bucname,
+		Key:      objname,
+		// AWS S3 quotes the ETag in XML, make sure we are compatible here.
+		ETag: "\"" + obj.ETag + "\"",
+	}
+	return c
 }

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/services/object"
 	"github.com/gorilla/mux"
 	logging "github.com/ipfs/go-log/v2"
 	"net/http"
@@ -199,27 +198,11 @@ func WriteSuccessNoContent(w http.ResponseWriter) {
 	writeResponseSimple(w, http.StatusNoContent, nil, mimeNone)
 }
 
-// setPutObjHeaders sets all the necessary headers returned back
-// upon a success Put/Copy/CompleteMultipart/Delete requests
-// to activate delete only headers set delete as true
-func setPutObjHeaders(w http.ResponseWriter, obj object.Object, delete bool) {
-	// We must not use the http.Header().Set method here because some (broken)
-	// clients expect the ETag header key to be literally "ETag" - not "Etag" (case-sensitive).
-	// Therefore, we have to set the ETag directly as map entry.
-	if obj.ETag != "" && !delete {
-		w.Header()[consts.ETag] = []string{`"` + obj.ETag + `"`}
+func setPutObjHeaders(w http.ResponseWriter, etag, cid string, delete bool) {
+	if etag != "" && !delete {
+		w.Header()[consts.ETag] = []string{`"` + etag + `"`}
 	}
-
-	if obj.Cid != "" {
-		w.Header()[consts.BTFSHash] = []string{obj.Cid}
-	}
-
-	// Set the relevant version ID as part of the response header.
-	if obj.VersionID != "" {
-		w.Header()[consts.AmzVersionID] = []string{obj.VersionID}
-		// If version is a deleted marker, set this header as well
-		if obj.DeleteMarker && delete { // only returned during delete object
-			w.Header()[consts.AmzDeleteMarker] = []string{strconv.FormatBool(obj.DeleteMarker)}
-		}
+	if cid != "" {
+		w.Header()[consts.BTFSHash] = []string{cid}
 	}
 }

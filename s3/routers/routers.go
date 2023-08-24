@@ -21,8 +21,9 @@ func NewRouters(handlers handlers.Handlerser, options ...Option) (routers *Route
 }
 
 func (routers *Routers) Register() http.Handler {
-	root := mux.NewRouter()
+	hs := routers.handlers
 
+	root := mux.NewRouter()
 	root.Use(
 		routers.handlers.Cors,
 		routers.handlers.Log,
@@ -31,17 +32,30 @@ func (routers *Routers) Register() http.Handler {
 
 	bucket := root.PathPrefix("/{bucket}").Subrouter()
 
-	//object
-	bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(routers.handlers.PutObjectHandler)
+	// CreateMultipart
+	bucket.Methods(http.MethodPost).Path("/{object:.+}").HandlerFunc(hs.CreateMultipartUploadHandler).Queries("uploads", "")
+	// UploadPart
+	bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(hs.UploadPartHandler).Queries("partNumber", "{partNumber:[0-9]+}", "uploadId", "{uploadId:.*}")
+	// CompleteMultipartUpload
+	bucket.Methods(http.MethodPost).Path("/{object:.+}").HandlerFunc(hs.CompleteMultipartUploadHandler).Queries("uploadId", "{uploadId:.*}")
+	// AbortMultipart
+	bucket.Methods(http.MethodDelete).Path("/{object:.+}").HandlerFunc(hs.AbortMultipartUploadHandler).Queries("uploadId", "{uploadId:.*}")
 
-	bucket.Methods(http.MethodGet).HandlerFunc(routers.handlers.GetBucketAclHandler).Queries("acl", "")
-	bucket.Methods(http.MethodPut).HandlerFunc(routers.handlers.PutBucketAclHandler).Queries("acl", "")
+	// PutObject
+	bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(hs.PutObjectHandler)
 
-	bucket.Methods(http.MethodPut).HandlerFunc(routers.handlers.PutBucketHandler)
-	bucket.Methods(http.MethodHead).HandlerFunc(routers.handlers.HeadBucketHandler)
-	bucket.Methods(http.MethodDelete).HandlerFunc(routers.handlers.DeleteBucketHandler)
-
-	root.Methods(http.MethodGet).Path("/").HandlerFunc(routers.handlers.ListBucketsHandler)
+	// GetBucketAcl
+	bucket.Methods(http.MethodGet).HandlerFunc(hs.GetBucketAclHandler).Queries("acl", "")
+	// PutBucketAcl
+	bucket.Methods(http.MethodPut).HandlerFunc(hs.PutBucketAclHandler).Queries("acl", "")
+	// PutBucket
+	bucket.Methods(http.MethodPut).HandlerFunc(hs.PutBucketHandler)
+	// HeadBucket
+	bucket.Methods(http.MethodHead).HandlerFunc(hs.HeadBucketHandler)
+	// DeleteBucket
+	bucket.Methods(http.MethodDelete).HandlerFunc(hs.DeleteBucketHandler)
+	// ListBuckets
+	root.Methods(http.MethodGet).Path("/").HandlerFunc(hs.ListBucketsHandler)
 
 	return root
 }

@@ -2,11 +2,9 @@
 package handlers
 
 import (
-	"errors"
-	"fmt"
-	"github.com/bittorrent/go-btfs/s3/cctx"
+	"context"
+	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/ctxmu"
-	"github.com/bittorrent/go-btfs/s3/requests"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"github.com/bittorrent/go-btfs/s3/services/bucket"
@@ -14,12 +12,12 @@ import (
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"github.com/bittorrent/go-btfs/s3/services/sign"
 	"net/http"
+	"net/url"
 	"runtime"
-
-	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/s3utils"
-	rscors "github.com/rs/cors"
+	"strconv"
 )
+
+const lockPrefix = "s3:lock/"
 
 var _ Handlerser = (*Handlers)(nil)
 
@@ -54,115 +52,63 @@ func NewHandlers(
 	return
 }
 
-func (h *Handlers) Cors(handler http.Handler) http.Handler {
-	return rscors.New(rscors.Options{
-		AllowedOrigins:   h.corsvc.GetAllowOrigins(),
-		AllowedMethods:   h.corsvc.GetAllowMethods(),
-		AllowedHeaders:   h.corsvc.GetAllowHeaders(),
-		ExposedHeaders:   h.corsvc.GetAllowHeaders(),
-		AllowCredentials: true,
-	}).Handler(handler)
-}
-
-func (h *Handlers) Log(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("[REQ] <%4s> | %s\n", r.Method, r.URL)
-		handler.ServeHTTP(w, r)
-		hname, herr := cctx.GetHandleInf(r)
-		fmt.Printf("[RSP] <%4s> | %s | %s | %v\n", r.Method, r.URL, hname, herr)
-	})
-}
-
-func (h *Handlers) Sign(handler http.Handler) http.Handler {
-	h.sigsvc.SetSecretGetter(func(key string) (secret string, exists, enable bool, err error) {
-		ack, err := h.acksvc.Get(key)
-		if errors.Is(err, accesskey.ErrNotFound) {
-			exists = false
-			enable = true
-			err = nil
-			return
-		}
-		if err != nil {
-			return
-		}
-		exists = true
-		secret = ack.Secret
-		enable = ack.Enable
-		return
-	})
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err *responses.Error
-		defer func() {
-			if err != nil {
-				cctx.SetHandleInf(r, h.name(), err)
-			}
-		}()
-
-		ack, err := h.sigsvc.VerifyRequestSignature(r)
-		if err != nil {
-			responses.WriteErrorResponse(w, r, err)
-			return
-		}
-
-		cctx.SetAccessKey(r, ack)
-
-		handler.ServeHTTP(w, r)
-	})
-}
-
-func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	defer func() {
-		cctx.SetHandleInf(r, h.name(), err)
-	}()
-
-	req, err := requests.ParsePutBucketRequest(r)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
-		return
-	}
-
-	// issue: lock for check
-	ctx := r.Context()
-	ack := cctx.GetAccessKey(r)
-
-	if err = s3utils.CheckValidBucketNameStrict(req.Bucket); err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidBucketName)
-		return
-	}
-
-	if !requests.CheckAclPermissionType(&req.ACL) {
-		err = responses.ErrNotImplemented
-		responses.WriteErrorResponse(w, r, responses.ErrNotImplemented)
-		return
-	}
-
-	if ok := h.bucsvc.HasBucket(ctx, req.Bucket); ok {
-		err = responses.ErrBucketAlreadyExists
-		responses.WriteErrorResponseHeadersOnly(w, r, responses.ErrBucketAlreadyExists)
-		return
-	}
-
-	err = h.bucsvc.CreateBucket(ctx, req.Bucket, req.Region, ack, req.ACL)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrInternalError)
-		return
-	}
-
-	// Make sure to add Location information here only for bucket
-	if cp := requests.PathClean(r.URL.Path); cp != "" {
-		w.Header().Set(consts.Location, cp) // Clean any trailing slashes.
-	}
-
-	responses.WritePutBucketResponse(w, r)
-
-	return
-}
-
 func (h *Handlers) name() string {
 	pc := make([]uintptr, 1)
 	runtime.Callers(3, pc)
 	f := runtime.FuncForPC(pc[0])
 	return f.Name()
+}
+
+func (h *Handlers) rlock(ctx context.Context, key string, w http.ResponseWriter, r *http.Request) (runlock func(), err error) {
+	ctx, cancel := context.WithTimeout(ctx, lockWaitTimeout)
+	err = h.nslock.RLock(ctx, lockPrefix+key)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, err)
+		cancel()
+		return
+	}
+	runlock = func() {
+		h.nslock.RUnlock(key)
+		cancel()
+	}
+	return
+}
+
+func (h *Handlers) lock(ctx context.Context, key string, w http.ResponseWriter, r *http.Request) (unlock func(), err error) {
+	ctx, cancel := context.WithTimeout(ctx, lockWaitTimeout)
+	err = h.nslock.Lock(ctx, lockPrefix+key)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, err)
+		cancel()
+		return
+	}
+	unlock = func() {
+		h.nslock.Unlock(key)
+		cancel()
+	}
+	return
+}
+
+// Parse object url queries
+func (h *Handlers) getObjectResources(values url.Values) (uploadID string, partNumberMarker, maxParts int, encodingType string, rerr *responses.Error) {
+	var err error
+	if values.Get("max-parts") != "" {
+		if maxParts, err = strconv.Atoi(values.Get("max-parts")); err != nil {
+			rerr = responses.ErrInvalidMaxParts
+			return
+		}
+	} else {
+		maxParts = consts.MaxPartsList
+	}
+
+	if values.Get("part-number-marker") != "" {
+		if partNumberMarker, err = strconv.Atoi(values.Get("part-number-marker")); err != nil {
+			rerr = responses.ErrInvalidPartNumberMarker
+			return
+		}
+	}
+
+	uploadID = values.Get("uploadId")
+	encodingType = values.Get("encoding-type")
+	return
 }
