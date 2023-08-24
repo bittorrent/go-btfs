@@ -91,7 +91,7 @@ func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 		cctx.SetHandleInf(r, fnName(), err)
 	}()
 
-	req, err := requests.ParsePubBucketRequest(r)
+	req, err := requests.ParsePutBucketRequest(r)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
 		return
@@ -167,8 +167,7 @@ func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 		cctx.SetHandleInf(r, fnName(), err)
 	}()
 
-	req := &requests.DeleteBucketRequest{}
-	err = req.Bind(r)
+	req, err := requests.ParseDeleteBucketRequest(r)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
 		return
@@ -221,8 +220,7 @@ func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 		cctx.SetHandleInf(r, fnName(), err)
 	}()
 
-	req := &requests.GetBucketAclRequest{}
-	err = req.Bind(r)
+	req, err := requests.ParseGetBucketAclRequest(r)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
 		return
@@ -258,8 +256,7 @@ func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 		cctx.SetHandleInf(r, fnName(), err)
 	}()
 
-	req := &requests.PutBucketAclRequest{}
-	err = req.Bind(r)
+	req, err := requests.ParsePutBucketAclRequest(r)
 	if err != nil || len(req.ACL) == 0 || len(req.Bucket) == 0 {
 		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
 		return

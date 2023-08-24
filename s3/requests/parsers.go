@@ -22,7 +22,7 @@ import (
 //	return
 //}
 
-func ParsePubBucketRequest(r *http.Request) (req *PutBucketRequest, err error) {
+func ParsePutBucketRequest(r *http.Request) (req *PutBucketRequest, err error) {
 	req = &PutBucketRequest{}
 
 	vars := mux.Vars(r)
@@ -59,11 +59,12 @@ type DeleteBucketRequest struct {
 	Bucket string
 }
 
-func (req *DeleteBucketRequest) Bind(r *http.Request) (err error) {
+func ParseDeleteBucketRequest(r *http.Request) (req *DeleteBucketRequest, err error) {
 	vars := mux.Vars(r)
 	bucket := vars["bucket"]
 
 	//set request
+	req = &DeleteBucketRequest{}
 	req.Bucket = bucket
 	return
 }
@@ -73,11 +74,12 @@ type ListBucketsRequest struct {
 	Bucket string
 }
 
-func (req *ListBucketsRequest) Bind(r *http.Request) (err error) {
+func ParseListBucketsRequest(r *http.Request) (req *ListBucketsRequest, err error) {
 	vars := mux.Vars(r)
 	bucket := vars["bucket"]
 
 	//set request
+	req = &ListBucketsRequest{}
 	req.Bucket = bucket
 	return
 }
@@ -87,11 +89,12 @@ type GetBucketAclRequest struct {
 	Bucket string
 }
 
-func (req *GetBucketAclRequest) Bind(r *http.Request) (err error) {
+func ParseGetBucketAclRequest(r *http.Request) (req *GetBucketAclRequest, err error) {
 	vars := mux.Vars(r)
 	bucket := vars["bucket"]
 
 	//set request
+	req = &GetBucketAclRequest{}
 	req.Bucket = bucket
 	return
 }
@@ -102,13 +105,14 @@ type PutBucketAclRequest struct {
 	ACL    string
 }
 
-func (req *PutBucketAclRequest) Bind(r *http.Request) (err error) {
+func ParsePutBucketAclRequest(r *http.Request) (req *PutBucketAclRequest, err error) {
 	vars := mux.Vars(r)
 	bucket := vars["bucket"]
 
 	acl := r.Header.Get(consts.AmzACL)
 
 	//set request
+	req = &PutBucketAclRequest{}
 	req.Bucket = bucket
 	req.ACL = acl
 	return
