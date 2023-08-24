@@ -15,14 +15,13 @@
 // implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package iam
+package auth
 
 import (
 	"crypto/subtle"
-	"github.com/yann-y/fds/internal/apierrors"
-	"github.com/yann-y/fds/internal/consts"
-	"github.com/yann-y/fds/internal/iam/set"
-	"github.com/yann-y/fds/internal/utils"
+	"github.com/bittorrent/go-btfs/s3/consts"
+	"github.com/bittorrent/go-btfs/s3/iam/set"
+	"github.com/bittorrent/go-btfs/s3/utils"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -57,36 +56,36 @@ func compareSignatureV4(sig1, sig2 string) bool {
 // doesPresignedSignatureMatch - Verify query headers with presigned signature
 //   - http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html
 //
-// returns apierrors.ErrNone if the signature matches.
-func (s *AuthSys) doesPresignedSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) apierrors.ErrorCode {
+// returns nil if the signature matches.
+func (s *AuthSys) doesPresignedSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) responses.Error {
 	// Copy request
 	req := *r
 
 	// Parse request query string.
 	pSignValues, err := parsePreSignV4(req.Form, region, stype)
-	if err != apierrors.ErrNone {
+	if err != nil {
 		return err
 	}
 
 	cred, _, s3Err := s.checkKeyValid(r, pSignValues.Credential.accessKey)
-	if s3Err != apierrors.ErrNone {
+	if s3Err != nil {
 		return s3Err
 	}
 
 	// Extract all the signed headers along with its values.
 	extractedSignedHeaders, errCode := extractSignedHeaders(pSignValues.SignedHeaders, r)
-	if errCode != apierrors.ErrNone {
+	if errCode != nil {
 		return errCode
 	}
 
 	// If the host which signed the request is slightly ahead in time (by less than MaxSkewTime) the
 	// request should still be allowed.
 	if pSignValues.Date.After(time.Now().UTC().Add(consts.MaxSkewTime)) {
-		return apierrors.ErrRequestNotReadyYet
+		return responses.ErrRequestNotReadyYet
 	}
 
 	if time.Now().UTC().Sub(pSignValues.Date) > pSignValues.Expires {
-		return apierrors.ErrExpiredPresignRequest
+		return responses.ErrExpiredPresignRequest
 	}
 
 	// Save the date and expires.
@@ -136,27 +135,27 @@ func (s *AuthSys) doesPresignedSignatureMatch(hashedPayload string, r *http.Requ
 
 	// Verify if date query is same.
 	if req.Form.Get(consts.AmzDate) != query.Get(consts.AmzDate) {
-		return apierrors.ErrSignatureDoesNotMatch
+		return responses.ErrSignatureDoesNotMatch
 	}
 	// Verify if expires query is same.
 	if req.Form.Get(consts.AmzExpires) != query.Get(consts.AmzExpires) {
-		return apierrors.ErrSignatureDoesNotMatch
+		return responses.ErrSignatureDoesNotMatch
 	}
 	// Verify if signed headers query is same.
 	if req.Form.Get(consts.AmzSignedHeaders) != query.Get(consts.AmzSignedHeaders) {
-		return apierrors.ErrSignatureDoesNotMatch
+		return responses.ErrSignatureDoesNotMatch
 	}
 	// Verify if credential query is same.
 	if req.Form.Get(consts.AmzCredential) != query.Get(consts.AmzCredential) {
-		return apierrors.ErrSignatureDoesNotMatch
+		return responses.ErrSignatureDoesNotMatch
 	}
 	// Verify if sha256 payload query is same.
 	if clntHashedPayload != "" && clntHashedPayload != query.Get(consts.AmzContentSha256) {
-		return apierrors.ErrContentSHA256Mismatch
+		return responses.ErrContentSHA256Mismatch
 	}
 	// Verify if security token is correct.
 	if token != "" && subtle.ConstantTimeCompare([]byte(token), []byte(cred.SessionToken)) != 1 {
-		return apierrors.ErrInvalidToken
+		return responses.ErrInvalidToken
 	}
 
 	// Verify finally if signature is same.
@@ -176,16 +175,16 @@ func (s *AuthSys) doesPresignedSignatureMatch(hashedPayload string, r *http.Requ
 
 	// Verify signature.
 	if !compareSignatureV4(req.Form.Get(consts.AmzSignature), newSignature) {
-		return apierrors.ErrSignatureDoesNotMatch
+		return responses.ErrSignatureDoesNotMatch
 	}
-	return apierrors.ErrNone
+	return nil
 }
 
 // doesSignatureMatch - Verify authorization header with calculated header in accordance with
 //   - http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html
 //
-// returns apierrors.ErrNone if signature matches.
-func (s *AuthSys) doesSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) apierrors.ErrorCode {
+// returns nil if signature matches.
+func (s *AuthSys) doesSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) responses.Error {
 	// Copy request.
 	req := *r
 
@@ -194,18 +193,18 @@ func (s *AuthSys) doesSignatureMatch(hashedPayload string, r *http.Request, regi
 
 	// Parse signature version '4' header.
 	signV4Values, err := parseSignV4(v4Auth, region, stype)
-	if err != apierrors.ErrNone {
+	if err != nil {
 		return err
 	}
 
 	// Extract all the signed headers along with its values.
 	extractedSignedHeaders, errCode := extractSignedHeaders(signV4Values.SignedHeaders, r)
-	if errCode != apierrors.ErrNone {
+	if errCode != nil {
 		return errCode
 	}
 
 	cred, _, s3Err := s.checkKeyValid(r, signV4Values.Credential.accessKey)
-	if s3Err != apierrors.ErrNone {
+	if s3Err != nil {
 		return s3Err
 	}
 
@@ -213,14 +212,14 @@ func (s *AuthSys) doesSignatureMatch(hashedPayload string, r *http.Request, regi
 	var date string
 	if date = req.Header.Get(consts.AmzDate); date == "" {
 		if date = r.Header.Get(consts.Date); date == "" {
-			return apierrors.ErrMissingDateHeader
+			return responses.ErrMissingDateHeader
 		}
 	}
 
 	// Parse date header.
 	t, e := time.Parse(iso8601Format, date)
 	if e != nil {
-		return apierrors.ErrAuthorizationHeaderMalformed
+		return responses.ErrAuthorizationHeaderMalformed
 	}
 
 	// Query string.
@@ -241,11 +240,11 @@ func (s *AuthSys) doesSignatureMatch(hashedPayload string, r *http.Request, regi
 
 	// Verify if signature match.
 	if !compareSignatureV4(newSignature, signV4Values.Signature) {
-		return apierrors.ErrSignatureDoesNotMatch
+		return responses.ErrSignatureDoesNotMatch
 	}
 
 	// Return error none.
-	return apierrors.ErrNone
+	return nil
 }
 
 // getScope generate a string of a specific date, an AWS region, and a service.

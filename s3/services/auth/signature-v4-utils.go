@@ -15,15 +15,14 @@
 // implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package iam
+package auth
 
 import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"github.com/yann-y/fds/internal/apierrors"
-	"github.com/yann-y/fds/internal/consts"
-	"github.com/yann-y/fds/internal/iam/auth"
+	"github.com/bittorrent/go-btfs/s3/consts"
+	"github.com/bittorrent/go-btfs/s3/iam/auth"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -139,7 +138,7 @@ func isValidRegion(reqRegion string, confRegion string) bool {
 
 // check if the access key is valid and recognized, additionally
 // also returns if the access key is owner/admin.
-func (s *AuthSys) checkKeyValid(r *http.Request, accessKey string) (auth.Credentials, bool, apierrors.ErrorCode) {
+func (s *AuthSys) checkKeyValid(r *http.Request, accessKey string) (auth.Credentials, bool, responses.Error) {
 
 	cred := s.AdminCred
 	if cred.AccessKey != accessKey {
@@ -149,14 +148,14 @@ func (s *AuthSys) checkKeyValid(r *http.Request, accessKey string) (auth.Credent
 			// Credentials will be invalid but and disabled
 			// return a different error in such a scenario.
 			if ucred.Status == auth.AccountOff {
-				return cred, false, apierrors.ErrAccessKeyDisabled
+				return cred, false, responses.ErrAccessKeyDisabled
 			}
-			return cred, false, apierrors.ErrInvalidAccessKeyID
+			return cred, false, responses.ErrInvalidAccessKeyID
 		}
 		cred = ucred
 	}
 	owner := cred.AccessKey == s.AdminCred.AccessKey
-	return cred, owner, apierrors.ErrNone
+	return cred, owner, nil
 }
 
 func contains(slice interface{}, elem interface{}) bool {
@@ -172,13 +171,13 @@ func contains(slice interface{}, elem interface{}) bool {
 }
 
 // extractSignedHeaders extract signed headers from Authorization header
-func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header, apierrors.ErrorCode) {
+func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header, responses.Error) {
 	reqHeaders := r.Header
 	reqQueries := r.Form
 	// find whether "host" is part of list of signed headers.
 	// if not return ErrUnsignedHeaders. "host" is mandatory.
 	if !contains(signedHeaders, "host") {
-		return nil, apierrors.ErrUnsignedHeaders
+		return nil, responses.ErrUnsignedHeaders
 	}
 	extractedSignedHeaders := make(http.Header)
 	for _, header := range signedHeaders {
@@ -228,8 +227,8 @@ func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header,
 			// calculation to be compatible with such clients.
 			extractedSignedHeaders.Set(header, strconv.FormatInt(r.ContentLength, 10))
 		default:
-			return nil, apierrors.ErrUnsignedHeaders
+			return nil, responses.ErrUnsignedHeaders
 		}
 	}
-	return extractedSignedHeaders, apierrors.ErrNone
+	return extractedSignedHeaders, nil
 }

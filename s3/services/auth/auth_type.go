@@ -1,7 +1,7 @@
-package iam
+package auth
 
 import (
-	"github.com/yann-y/fds/internal/consts"
+	"github.com/bittorrent/go-btfs/s3/consts"
 	"net/http"
 	"net/url"
 	"strings"

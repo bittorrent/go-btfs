@@ -15,7 +15,7 @@
 // implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package iam
+package auth
 
 import (
 	"crypto/hmac"
@@ -23,9 +23,8 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
-	"github.com/yann-y/fds/internal/apierrors"
-	"github.com/yann-y/fds/internal/consts"
-	"github.com/yann-y/fds/internal/iam/auth"
+	"github.com/bittorrent/go-btfs/s3/consts"
+	"github.com/bittorrent/go-btfs/s3/iam/auth"
 	"net"
 	"net/http"
 	"net/url"
@@ -77,20 +76,20 @@ const (
 
 // AWS S3 Signature V2 calculation rule is give here:
 // http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html#RESTAuthenticationStringToSign
-func (s *AuthSys) doesPolicySignatureV2Match(formValues http.Header) (auth.Credentials, apierrors.ErrorCode) {
+func (s *AuthSys) doesPolicySignatureV2Match(formValues http.Header) (auth.Credentials, responses.Error) {
 	accessKey := formValues.Get(consts.AmzAccessKeyID)
 
 	r := &http.Request{Header: formValues}
 	cred, _, s3Err := s.checkKeyValid(r, accessKey)
-	if s3Err != apierrors.ErrNone {
+	if s3Err != nil {
 		return cred, s3Err
 	}
 	policy := formValues.Get("Policy")
 	signature := formValues.Get(consts.AmzSignatureV2)
 	if !compareSignatureV2(signature, calculateSignatureV2(policy, cred.SecretKey)) {
-		return cred, apierrors.ErrSignatureDoesNotMatch
+		return cred, responses.ErrSignatureDoesNotMatch
 	}
-	return cred, apierrors.ErrNone
+	return cred, nil
 }
 
 // Escape encodedQuery string into unescaped list of query params, returns error
@@ -110,8 +109,8 @@ func unescapeQueries(encodedQuery string) (unescapedQueries []string, err error)
 // doesPresignV2SignatureMatch - Verify query headers with presigned signature
 //   - http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html#RESTAuthenticationQueryStringAuth
 //
-// returns apierrors.ErrNone if matches. S3 errors otherwise.
-func (s *AuthSys) doesPresignV2SignatureMatch(r *http.Request) apierrors.ErrorCode {
+// returns nil if matches. S3 errors otherwise.
+func (s *AuthSys) doesPresignV2SignatureMatch(r *http.Request) responses.Error {
 	// r.RequestURI will have raw encoded URI as sent by the client.
 	tokens := strings.SplitN(r.RequestURI, "?", 2)
 	encodedResource := tokens[0]
@@ -131,14 +130,14 @@ func (s *AuthSys) doesPresignV2SignatureMatch(r *http.Request) apierrors.ErrorCo
 	var unescapedQueries []string
 	unescapedQueries, err = unescapeQueries(encodedQuery)
 	if err != nil {
-		return apierrors.ErrInvalidQueryParams
+		return responses.ErrInvalidQueryParams
 	}
 
 	// Extract the necessary values from presigned query, construct a list of new filtered queries.
 	for _, query := range unescapedQueries {
 		keyval := strings.SplitN(query, "=", 2)
 		if len(keyval) != 2 {
-			return apierrors.ErrInvalidQueryParams
+			return responses.ErrInvalidQueryParams
 		}
 		switch keyval[0] {
 		case consts.AmzAccessKeyID:
@@ -154,41 +153,41 @@ func (s *AuthSys) doesPresignV2SignatureMatch(r *http.Request) apierrors.ErrorCo
 
 	// Invalid values returns error.
 	if accessKey == "" || gotSignature == "" || expires == "" {
-		return apierrors.ErrInvalidQueryParams
+		return responses.ErrInvalidQueryParams
 	}
 
 	cred, _, s3Err := s.checkKeyValid(r, accessKey)
-	if s3Err != apierrors.ErrNone {
+	if s3Err != nil {
 		return s3Err
 	}
 
 	// Make sure the request has not expired.
 	expiresInt, err := strconv.ParseInt(expires, 10, 64)
 	if err != nil {
-		return apierrors.ErrAuthorizationHeaderMalformed
+		return responses.ErrAuthorizationHeaderMalformed
 	}
 
 	// Check if the presigned URL has expired.
 	if expiresInt < time.Now().UTC().Unix() {
-		return apierrors.ErrExpiredPresignRequest
+		return responses.ErrExpiredPresignRequest
 	}
 
 	encodedResource, err = getResource(encodedResource, r.Host)
 	if err != nil {
-		return apierrors.ErrInvalidRequest
+		return responses.ErrInvalidRequest
 	}
 
 	expectedSignature := preSignatureV2(cred, r.Method, encodedResource, strings.Join(filteredQueries, "&"), r.Header, expires)
 	if !compareSignatureV2(gotSignature, expectedSignature) {
-		return apierrors.ErrSignatureDoesNotMatch
+		return responses.ErrSignatureDoesNotMatch
 	}
 
 	r.Form.Del(consts.Expires)
 
-	return apierrors.ErrNone
+	return nil
 }
 
-func (s *AuthSys) getReqAccessKeyV2(r *http.Request) (auth.Credentials, bool, apierrors.ErrorCode) {
+func (s *AuthSys) getReqAccessKeyV2(r *http.Request) (auth.Credentials, bool, responses.Error) {
 	if accessKey := r.Form.Get(consts.AmzAccessKeyID); accessKey != "" {
 		return s.checkKeyValid(r, accessKey)
 	}
@@ -197,13 +196,13 @@ func (s *AuthSys) getReqAccessKeyV2(r *http.Request) (auth.Credentials, bool, ap
 	// Authorization = "AWS" + " " + AWSAccessKeyId + ":" + Signature
 	authFields := strings.Split(r.Header.Get(consts.Authorization), " ")
 	if len(authFields) != 2 {
-		return auth.Credentials{}, false, apierrors.ErrMissingFields
+		return auth.Credentials{}, false, responses.ErrMissingFields
 	}
 
 	// Then will be splitting on ":", this will seprate `AWSAccessKeyId` and `Signature` string.
 	keySignFields := strings.Split(strings.TrimSpace(authFields[1]), ":")
 	if len(keySignFields) != 2 {
-		return auth.Credentials{}, false, apierrors.ErrMissingFields
+		return auth.Credentials{}, false, responses.ErrMissingFields
 	}
 
 	return s.checkKeyValid(r, keySignFields[0])
@@ -229,30 +228,30 @@ func (s *AuthSys) getReqAccessKeyV2(r *http.Request) (auth.Credentials, bool, ap
 //     - http://docs.aws.amazon.com/AmazonS3/latest/dev/auth-request-sig-v2.html
 // returns true if matches, false otherwise. if error is not nil then it is always false
 
-func (s *AuthSys) validateV2AuthHeader(r *http.Request) (auth.Credentials, apierrors.ErrorCode) {
+func (s *AuthSys) validateV2AuthHeader(r *http.Request) (auth.Credentials, responses.Error) {
 	var cred auth.Credentials
 	v2Auth := r.Header.Get(consts.Authorization)
 	if v2Auth == "" {
-		return cred, apierrors.ErrAuthHeaderEmpty
+		return cred, responses.ErrAuthHeaderEmpty
 	}
 
 	// Verify if the header algorithm is supported or not.
 	if !strings.HasPrefix(v2Auth, signV2Algorithm) {
-		return cred, apierrors.ErrSignatureVersionNotSupported
+		return cred, responses.ErrSignatureVersionNotSupported
 	}
 
 	cred, _, apiErr := s.getReqAccessKeyV2(r)
-	if apiErr != apierrors.ErrNone {
+	if apiErr != nil {
 		return cred, apiErr
 	}
 
-	return cred, apierrors.ErrNone
+	return cred, nil
 }
 
-func (s *AuthSys) doesSignV2Match(r *http.Request) apierrors.ErrorCode {
+func (s *AuthSys) doesSignV2Match(r *http.Request) responses.Error {
 	v2Auth := r.Header.Get(consts.Authorization)
 	cred, apiError := s.validateV2AuthHeader(r)
-	if apiError != apierrors.ErrNone {
+	if apiError != nil {
 		return apiError
 	}
 
@@ -266,24 +265,24 @@ func (s *AuthSys) doesSignV2Match(r *http.Request) apierrors.ErrorCode {
 
 	unescapedQueries, err := unescapeQueries(encodedQuery)
 	if err != nil {
-		return apierrors.ErrInvalidQueryParams
+		return responses.ErrInvalidQueryParams
 	}
 
 	encodedResource, err = getResource(encodedResource, r.Host)
 	if err != nil {
-		return apierrors.ErrInvalidRequest
+		return responses.ErrInvalidRequest
 	}
 
 	prefix := fmt.Sprintf("%s %s:", signV2Algorithm, cred.AccessKey)
 	if !strings.HasPrefix(v2Auth, prefix) {
-		return apierrors.ErrSignatureDoesNotMatch
+		return responses.ErrSignatureDoesNotMatch
 	}
 	v2Auth = v2Auth[len(prefix):]
 	expectedAuth := signatureV2(cred, r.Method, encodedResource, strings.Join(unescapedQueries, "&"), r.Header)
 	if !compareSignatureV2(v2Auth, expectedAuth) {
-		return apierrors.ErrSignatureDoesNotMatch
+		return responses.ErrSignatureDoesNotMatch
 	}
-	return apierrors.ErrNone
+	return nil
 }
 
 func calculateSignatureV2(stringToSign string, secret string) string {
