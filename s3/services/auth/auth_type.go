@@ -70,7 +70,6 @@ func GetRequestAuthType(r *http.Request) AuthType {
 		var err error
 		r.Form, err = url.ParseQuery(r.URL.RawQuery)
 		if err != nil {
-			log.Infof("parse query failed, query: %s, error: %v", r.URL.RawQuery, err)
 			return AuthTypeUnknown
 		}
 	}

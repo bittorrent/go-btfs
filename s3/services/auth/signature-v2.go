@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/iam/auth"
+	"github.com/bittorrent/go-btfs/s3/responses"
 	"net"
 	"net/http"
 	"net/url"
@@ -76,7 +77,7 @@ const (
 
 // AWS S3 Signature V2 calculation rule is give here:
 // http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html#RESTAuthenticationStringToSign
-func (s *AuthSys) doesPolicySignatureV2Match(formValues http.Header) (auth.Credentials, responses.Error) {
+func (s *service) doesPolicySignatureV2Match(formValues http.Header) (auth.Credentials, *responses.Error) {
 	accessKey := formValues.Get(consts.AmzAccessKeyID)
 
 	r := &http.Request{Header: formValues}
@@ -110,7 +111,7 @@ func unescapeQueries(encodedQuery string) (unescapedQueries []string, err error)
 //   - http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html#RESTAuthenticationQueryStringAuth
 //
 // returns nil if matches. S3 errors otherwise.
-func (s *AuthSys) doesPresignV2SignatureMatch(r *http.Request) responses.Error {
+func (s *service) doesPresignV2SignatureMatch(r *http.Request) *responses.Error {
 	// r.RequestURI will have raw encoded URI as sent by the client.
 	tokens := strings.SplitN(r.RequestURI, "?", 2)
 	encodedResource := tokens[0]
@@ -187,7 +188,7 @@ func (s *AuthSys) doesPresignV2SignatureMatch(r *http.Request) responses.Error {
 	return nil
 }
 
-func (s *AuthSys) getReqAccessKeyV2(r *http.Request) (auth.Credentials, bool, responses.Error) {
+func (s *service) getReqAccessKeyV2(r *http.Request) (auth.Credentials, bool, *responses.Error) {
 	if accessKey := r.Form.Get(consts.AmzAccessKeyID); accessKey != "" {
 		return s.checkKeyValid(r, accessKey)
 	}
@@ -228,7 +229,7 @@ func (s *AuthSys) getReqAccessKeyV2(r *http.Request) (auth.Credentials, bool, re
 //     - http://docs.aws.amazon.com/AmazonS3/latest/dev/auth-request-sig-v2.html
 // returns true if matches, false otherwise. if error is not nil then it is always false
 
-func (s *AuthSys) validateV2AuthHeader(r *http.Request) (auth.Credentials, responses.Error) {
+func (s *service) validateV2AuthHeader(r *http.Request) (auth.Credentials, *responses.Error) {
 	var cred auth.Credentials
 	v2Auth := r.Header.Get(consts.Authorization)
 	if v2Auth == "" {
@@ -248,7 +249,7 @@ func (s *AuthSys) validateV2AuthHeader(r *http.Request) (auth.Credentials, respo
 	return cred, nil
 }
 
-func (s *AuthSys) doesSignV2Match(r *http.Request) responses.Error {
+func (s *service) doesSignV2Match(r *http.Request) *responses.Error {
 	v2Auth := r.Header.Get(consts.Authorization)
 	cred, apiError := s.validateV2AuthHeader(r)
 	if apiError != nil {

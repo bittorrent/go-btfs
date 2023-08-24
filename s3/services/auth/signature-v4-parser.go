@@ -20,6 +20,7 @@ package auth
 import (
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/iam/auth"
+	"github.com/bittorrent/go-btfs/s3/responses"
 	"net/http"
 	"net/url"
 	"strings"
@@ -48,7 +49,7 @@ func (c credentialHeader) getScope() string {
 	}, consts.SlashSeparator)
 }
 
-func (s *AuthSys) GetReqAccessKeyV4(r *http.Request, region string, stype serviceType) (auth.Credentials, bool, responses.Error) {
+func (s *service) GetReqAccessKeyV4(r *http.Request, region string, stype serviceType) (auth.Credentials, bool, *responses.Error) {
 	ch, s3Err := parseCredentialHeader("Credential="+r.Form.Get(consts.AmzCredential), region, stype)
 	if s3Err != nil {
 		// Strip off the Algorithm prefix.
@@ -71,7 +72,7 @@ func (s *AuthSys) GetReqAccessKeyV4(r *http.Request, region string, stype servic
 }
 
 // parse credentialHeader string into its structured form.
-func parseCredentialHeader(credElement string, region string, stype serviceType) (ch credentialHeader, aec responses.Error) {
+func parseCredentialHeader(credElement string, region string, stype serviceType) (ch credentialHeader, aec *responses.Error) {
 	creds := strings.SplitN(strings.TrimSpace(credElement), "=", 2)
 	if len(creds) != 2 {
 		return ch, responses.ErrMissingFields
@@ -128,7 +129,7 @@ func parseCredentialHeader(credElement string, region string, stype serviceType)
 }
 
 // Parse signature from signature tag.
-func parseSignature(signElement string) (string, responses.Error) {
+func parseSignature(signElement string) (string, *responses.Error) {
 	signFields := strings.Split(strings.TrimSpace(signElement), "=")
 	if len(signFields) != 2 {
 		return "", responses.ErrMissingFields
@@ -144,7 +145,7 @@ func parseSignature(signElement string) (string, responses.Error) {
 }
 
 // Parse slice of signed headers from signed headers tag.
-func parseSignedHeader(signedHdrElement string) ([]string, responses.Error) {
+func parseSignedHeader(signedHdrElement string) ([]string, *responses.Error) {
 	signedHdrFields := strings.Split(strings.TrimSpace(signedHdrElement), "=")
 	if len(signedHdrFields) != 2 {
 		return nil, responses.ErrMissingFields
@@ -183,7 +184,7 @@ type preSignValues struct {
 //	querystring += &X-Amz-Signature=signature
 //
 // verifies if any of the necessary query params are missing in the presigned request.
-func doesV4PresignParamsExist(query url.Values) responses.Error {
+func doesV4PresignParamsExist(query url.Values) *responses.Error {
 	v4PresignQueryParams := []string{consts.AmzAlgorithm, consts.AmzCredential, consts.AmzSignature, consts.AmzDate, consts.AmzSignedHeaders, consts.AmzExpires}
 	for _, v4PresignQueryParam := range v4PresignQueryParams {
 		if _, ok := query[v4PresignQueryParam]; !ok {
@@ -194,7 +195,7 @@ func doesV4PresignParamsExist(query url.Values) responses.Error {
 }
 
 // Parses all the presigned signature values into separate elements.
-func parsePreSignV4(query url.Values, region string, stype serviceType) (psv preSignValues, aec responses.Error) {
+func parsePreSignV4(query url.Values, region string, stype serviceType) (psv preSignValues, aec *responses.Error) {
 	// verify whether the required query params exist.
 	aec = doesV4PresignParamsExist(query)
 	if aec != nil {
@@ -257,7 +258,7 @@ func parsePreSignV4(query url.Values, region string, stype serviceType) (psv pre
 //
 //	Authorization: algorithm Credential=accessKeyID/credScope, \
 //	        SignedHeaders=signedHeaders, Signature=signature
-func parseSignV4(v4Auth string, region string, stype serviceType) (sv signValues, aec responses.Error) {
+func parseSignV4(v4Auth string, region string, stype serviceType) (sv signValues, aec *responses.Error) {
 	// credElement is fetched first to skip replacing the space in access key.
 	credElement := strings.TrimPrefix(strings.Split(strings.TrimSpace(v4Auth), ",")[0], signV4Algorithm)
 	// Replace all spaced strings, some clients can send spaced
@@ -283,7 +284,7 @@ func parseSignV4(v4Auth string, region string, stype serviceType) (sv signValues
 	// Initialize signature version '4' structured header.
 	signV4Values := signValues{}
 
-	var s3Err responses.Error
+	var s3Err *responses.Error
 	// Save credentail values.
 	signV4Values.Credential, s3Err = parseCredentialHeader(strings.TrimSpace(credElement), region, stype)
 	if s3Err != nil {

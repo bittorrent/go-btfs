@@ -4,34 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	s3action "github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/consts"
+	"github.com/bittorrent/go-btfs/s3/etag"
 	"github.com/bittorrent/go-btfs/s3/iam/auth"
-	"github.com/bittorrent/go-btfs/s3/iam/s3action"
-	"github.com/bittorrent/go-btfs/s3/uleveldb"
+	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/utils/hash"
-	"github.com/yann-y/fds/pkg/etag"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
 )
-
-// AuthSys auth and sign system
-type AuthSys struct {
-	Iam       *IdentityAMSys
-	PolicySys *iPolicySys
-	AdminCred auth.Credentials
-}
-
-// NewAuthSys new an AuthSys
-func NewAuthSys(db *uleveldb.ULevelDB, adminCred auth.Credentials) *AuthSys {
-	return &AuthSys{
-		Iam:       NewIdentityAMSys(db),
-		PolicySys: newIPolicySys(db),
-		AdminCred: adminCred,
-	}
-}
 
 // CheckRequestAuthTypeCredential Check request auth type verifies the incoming http request
 //   - validates the request signature
@@ -40,7 +24,7 @@ func NewAuthSys(db *uleveldb.ULevelDB, adminCred auth.Credentials) *AuthSys {
 //
 // returns APIErrorCode if any to be replied to the client.
 // Additionally, returns the accessKey used in the request, and if this request is by an admin.
-func (s *AuthSys) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Request, action s3action.Action, bucketName, objectName string) (cred auth.Credentials, owner bool, s3Err responses.Error) {
+func (s *service) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Request, action s3action.Action, bucketName, objectName string) (cred auth.Credentials, owner bool, s3Err *responses.Error) {
 	switch GetRequestAuthType(r) {
 	case AuthTypeUnknown, AuthTypeStreamingSigned:
 		return cred, owner, responses.ErrSignatureVersionNotSupported
@@ -71,7 +55,6 @@ func (s *AuthSys) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Re
 		// To extract region from XML in request body, get copy of request body.
 		payload, err := io.ReadAll(io.LimitReader(r.Body, consts.MaxLocationConstraintSize))
 		if err != nil {
-			log.Errorf("ReadAll err:%v", err)
 			return cred, owner, responses.ErrMalformedXML
 		}
 
@@ -136,14 +119,14 @@ func (s *AuthSys) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Re
 }
 
 // Verify if request has valid AWS Signature Version '2'.
-func (s *AuthSys) IsReqAuthenticatedV2(r *http.Request) (s3Error responses.Error) {
+func (s *service) IsReqAuthenticatedV2(r *http.Request) (s3Error *responses.Error) {
 	if isRequestSignatureV2(r) {
 		return s.doesSignV2Match(r)
 	}
 	return s.doesPresignV2SignatureMatch(r)
 }
 
-func (s *AuthSys) ReqSignatureV4Verify(r *http.Request, region string, stype serviceType) (s3Error responses.Error) {
+func (s *service) ReqSignatureV4Verify(r *http.Request, region string, stype serviceType) (s3Error *responses.Error) {
 	sha256sum := GetContentSha256Cksum(r, stype)
 	switch {
 	case IsRequestSignatureV4(r):
@@ -156,7 +139,7 @@ func (s *AuthSys) ReqSignatureV4Verify(r *http.Request, region string, stype ser
 }
 
 // IsReqAuthenticated Verify if request has valid AWS Signature Version '4'.
-func (s *AuthSys) IsReqAuthenticated(ctx context.Context, r *http.Request, region string, stype serviceType) (s3Error responses.Error) {
+func (s *service) IsReqAuthenticated(ctx context.Context, r *http.Request, region string, stype serviceType) (s3Error *responses.Error) {
 	if errCode := s.ReqSignatureV4Verify(r, region, stype); errCode != nil {
 		return errCode
 	}
@@ -193,7 +176,7 @@ func (s *AuthSys) IsReqAuthenticated(ctx context.Context, r *http.Request, regio
 }
 
 // ValidateAdminSignature validate admin Signature
-func (s *AuthSys) ValidateAdminSignature(ctx context.Context, r *http.Request, region string) (auth.Credentials, map[string]interface{}, bool, responses.Error) {
+func (s *service) ValidateAdminSignature(ctx context.Context, r *http.Request, region string) (auth.Credentials, map[string]interface{}, bool, *responses.Error) {
 	var cred auth.Credentials
 	var owner bool
 	s3Err := responses.ErrAccessDenied
@@ -284,7 +267,7 @@ func getConditions(r *http.Request, username string) map[string][]string {
 // IsPutActionAllowed - check if PUT operation is allowed on the resource, this
 // call verifies bucket policies and IAM policies, supports multi user
 // checks etc.
-func (s *AuthSys) IsPutActionAllowed(ctx context.Context, r *http.Request, action s3action.Action, bucketName, objectName string) (s3Err responses.Error) {
+func (s *service) IsPutActionAllowed(ctx context.Context, r *http.Request, action s3action.Action, bucketName, objectName string) (s3Err *responses.Error) {
 	var cred auth.Credentials
 	var owner bool
 	switch GetRequestAuthType(r) {
@@ -326,7 +309,7 @@ func (s *AuthSys) IsPutActionAllowed(ctx context.Context, r *http.Request, actio
 	return responses.ErrAccessDenied
 }
 
-func (s *AuthSys) GetCredential(r *http.Request) (cred auth.Credentials, owner bool, s3Err responses.Error) {
+func (s *service) GetCredential(r *http.Request) (cred auth.Credentials, owner bool, s3Err *responses.Error) {
 	switch GetRequestAuthType(r) {
 	case AuthTypeUnknown:
 		s3Err = responses.ErrSignatureVersionNotSupported

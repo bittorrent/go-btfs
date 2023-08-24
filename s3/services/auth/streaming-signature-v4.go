@@ -73,7 +73,7 @@ func getChunkSignature(cred auth.Credentials, seedSignature string, region strin
 //
 // returns signature, error otherwise if the signature mismatches or any other
 // error while parsing and validating.
-func (s *AuthSys) CalculateSeedSignature(r *http.Request) (cred auth.Credentials, signature string, region string, date time.Time, errCode responses.Error) {
+func (s *service) CalculateSeedSignature(r *http.Request) (cred auth.Credentials, signature string, region string, date time.Time, errCode *responses.Error) {
 	// Copy request.
 	req := *r
 
@@ -164,7 +164,7 @@ var errChunkTooBig = errors.New("chunk too big: choose chunk size <= 16MiB")
 //
 // NewChunkedReader is not needed by normal applications. The http package
 // automatically decodes chunking when reading response bodies.
-func NewSignV4ChunkedReader(req *http.Request, s *AuthSys) (io.ReadCloser, responses.Error) {
+func NewSignV4ChunkedReader(req *http.Request, s *service) (io.ReadCloser, *responses.Error) {
 	cred, seedSignature, region, seedDate, errCode := s.CalculateSeedSignature(req)
 	if errCode != nil {
 		return nil, errCode

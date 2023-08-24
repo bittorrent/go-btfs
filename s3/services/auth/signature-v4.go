@@ -21,6 +21,7 @@ import (
 	"crypto/subtle"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/iam/set"
+	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/utils"
 	"net/http"
 	"net/url"
@@ -57,7 +58,7 @@ func compareSignatureV4(sig1, sig2 string) bool {
 //   - http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html
 //
 // returns nil if the signature matches.
-func (s *AuthSys) doesPresignedSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) responses.Error {
+func (s *service) doesPresignedSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) *responses.Error {
 	// Copy request
 	req := *r
 
@@ -184,7 +185,7 @@ func (s *AuthSys) doesPresignedSignatureMatch(hashedPayload string, r *http.Requ
 //   - http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html
 //
 // returns nil if signature matches.
-func (s *AuthSys) doesSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) responses.Error {
+func (s *service) doesSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) *responses.Error {
 	// Copy request.
 	req := *r
 

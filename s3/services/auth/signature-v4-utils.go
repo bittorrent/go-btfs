@@ -23,6 +23,7 @@ import (
 	"encoding/hex"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/iam/auth"
+	"github.com/bittorrent/go-btfs/s3/responses"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -138,7 +139,7 @@ func isValidRegion(reqRegion string, confRegion string) bool {
 
 // check if the access key is valid and recognized, additionally
 // also returns if the access key is owner/admin.
-func (s *AuthSys) checkKeyValid(r *http.Request, accessKey string) (auth.Credentials, bool, responses.Error) {
+func (s *service) checkKeyValid(r *http.Request, accessKey string) (auth.Credentials, bool, *responses.Error) {
 
 	cred := s.AdminCred
 	if cred.AccessKey != accessKey {
@@ -171,7 +172,7 @@ func contains(slice interface{}, elem interface{}) bool {
 }
 
 // extractSignedHeaders extract signed headers from Authorization header
-func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header, responses.Error) {
+func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header, *responses.Error) {
 	reqHeaders := r.Header
 	reqQueries := r.Form
 	// find whether "host" is part of list of signed headers.
