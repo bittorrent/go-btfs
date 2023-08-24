@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/bittorrent/go-btfs/s3/cctx"
 	"github.com/bittorrent/go-btfs/s3/ctxmu"
-	"github.com/bittorrent/go-btfs/s3/etag"
 	"github.com/bittorrent/go-btfs/s3/requests"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
@@ -16,7 +15,6 @@ import (
 	"net/http"
 	"runtime"
 
-	s3action "github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/s3utils"
 	rscors "github.com/rs/cors"
@@ -87,7 +85,7 @@ func (h *Handlers) Sign(handler http.Handler) http.Handler {
 		var err *responses.Error
 		defer func() {
 			if err != nil {
-				cctx.SetHandleInf(r, fnName(), err)
+				cctx.SetHandleInf(r, h.name(), err)
 			}
 		}()
 
@@ -106,7 +104,7 @@ func (h *Handlers) Sign(handler http.Handler) http.Handler {
 func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
-		cctx.SetHandleInf(r, fnName(), err)
+		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
 	req, err := requests.ParsePutBucketRequest(r)
@@ -152,223 +150,7 @@ func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	defer func() {
-		cctx.SetHandleInf(r, fnName(), err)
-	}()
-
-	req, err := requests.ParseHeadBucketRequest(r)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
-		return
-	}
-
-	ack := cctx.GetAccessKey(r)
-
-	err = h.bucsvc.CheckACL(ack, req.Bucket, s3action.HeadBucketAction)
-	if errors.Is(err, bucket.ErrNotFound) {
-		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
-		return
-	}
-	if err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrAccessDenied)
-		return
-	}
-
-	responses.WriteHeadBucketResponse(w, r)
-}
-
-func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	defer func() {
-		cctx.SetHandleInf(r, fnName(), err)
-	}()
-
-	req, err := requests.ParseDeleteBucketRequest(r)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
-		return
-	}
-
-	ctx := r.Context()
-	ack := cctx.GetAccessKey(r)
-
-	err = h.bucsvc.CheckACL(ack, req.Bucket, s3action.HeadBucketAction)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
-		return
-	}
-
-	//todo check all errors.
-	err = h.bucsvc.DeleteBucket(ctx, req.Bucket)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
-		return
-	}
-
-	responses.WriteDeleteBucketResponse(w)
-}
-
-func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	defer func() {
-		cctx.SetHandleInf(r, fnName(), err)
-	}()
-
-	ack := cctx.GetAccessKey(r)
-	if ack == "" {
-		responses.WriteErrorResponse(w, r, responses.ErrNoAccessKey)
-		return
-	}
-
-	//todo check all errors
-	bucketMetas, err := h.bucsvc.GetAllBucketsOfUser(ack)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
-		return
-	}
-
-	responses.WriteListBucketsResponse(w, r, bucketMetas)
-}
-
-func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	defer func() {
-		cctx.SetHandleInf(r, fnName(), err)
-	}()
-
-	req, err := requests.ParseGetBucketAclRequest(r)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
-		return
-	}
-
-	ctx := r.Context()
-	ack := cctx.GetAccessKey(r)
-
-	if !h.bucsvc.HasBucket(ctx, req.Bucket) {
-		responses.WriteErrorResponseHeadersOnly(w, r, responses.ErrNoSuchBucket)
-		return
-	}
-
-	err = h.bucsvc.CheckACL(ack, req.Bucket, s3action.GetBucketAclAction)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
-		return
-	}
-
-	//todo check all errors
-	acl, err := h.bucsvc.GetBucketAcl(ctx, req.Bucket)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
-		return
-	}
-
-	responses.WriteGetBucketAclResponse(w, r, ack, acl)
-}
-
-func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	defer func() {
-		cctx.SetHandleInf(r, fnName(), err)
-	}()
-
-	req, err := requests.ParsePutBucketAclRequest(r)
-	if err != nil || len(req.ACL) == 0 || len(req.Bucket) == 0 {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
-		return
-	}
-
-	ctx := r.Context()
-	ack := cctx.GetAccessKey(r)
-
-	err = h.bucsvc.CheckACL(ack, req.Bucket, s3action.PutBucketAclAction)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
-		return
-	}
-
-	if !requests.CheckAclPermissionType(&req.ACL) {
-		responses.WriteErrorResponse(w, r, responses.ErrNotImplemented)
-		return
-	}
-
-	//todo check all errors
-	err = h.bucsvc.UpdateBucketAcl(ctx, req.Bucket, req.ACL)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
-		return
-	}
-
-	//todo check no return?
-	responses.WritePutBucketAclResponse(w, r)
-}
-
-// PutObjectHandler http://docs.aws.amazon.com/AmazonS3/latest/dev/UploadingObjects.html
-func (h *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	defer func() {
-		cctx.SetHandleInf(r, fnName(), err)
-	}()
-
-	// X-Amz-Copy-Source shouldn't be set for this call.
-	if _, ok := r.Header[consts.AmzCopySource]; ok {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidCopySource)
-		return
-	}
-
-	buc, obj, err := requests.ParseBucketAndObject(r)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestParameter)
-		return
-	}
-
-	clientETag, err := etag.FromContentMD5(r.Header)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidDigest)
-		return
-	}
-	_ = clientETag
-
-	size := r.ContentLength
-	// todo: streaming signed
-
-	if size == -1 {
-		responses.WriteErrorResponse(w, r, responses.ErrMissingContentLength)
-		return
-	}
-	if size == 0 {
-		responses.WriteErrorResponse(w, r, responses.ErrEntityTooSmall)
-		return
-	}
-
-	if size > consts.MaxObjectSize {
-		responses.WriteErrorResponse(w, r, responses.ErrEntityTooLarge)
-		return
-	}
-
-	ctx := r.Context()
-	ack := cctx.GetAccessKey(r)
-
-	err = h.bucsvc.CheckACL(ack, buc, s3action.PutObjectAction)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
-		return
-	}
-
-	// todo: convert error
-	err = s3utils.CheckPutObjectArgs(ctx, buc, obj)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
-		return
-	}
-
-	// todo
-	fmt.Println("need put object...", buc, obj)
-}
-
-func fnName() string {
+func (h *Handlers) name() string {
 	pc := make([]uintptr, 1)
 	runtime.Callers(3, pc)
 	f := runtime.FuncForPC(pc[0])
