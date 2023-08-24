@@ -7,7 +7,7 @@ import (
 type Handlerser interface {
 	// middlewares
 	Cors(handler http.Handler) http.Handler
-	Auth(handler http.Handler) http.Handler
+	Sign(handler http.Handler) http.Handler
 	Log(handler http.Handler) http.Handler
 
 	// bucket

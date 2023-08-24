@@ -65,7 +65,7 @@ func (h *Handlers) Log(handler http.Handler) http.Handler {
 	})
 }
 
-func (h *Handlers) Auth(handler http.Handler) http.Handler {
+func (h *Handlers) Sign(handler http.Handler) http.Handler {
 	h.sigsvc.SetSecretGetter(func(key string) (secret string, exists, enable bool, err error) {
 		ack, err := h.acksvc.Get(key)
 		if errors.Is(err, accesskey.ErrNotFound) {
