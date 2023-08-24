@@ -18,7 +18,7 @@
 package auth
 
 import (
-	"github.com/bittorrent/go-btfs/s3/services"
+	"github.com/bittorrent/go-btfs/s3/responses"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -66,7 +66,7 @@ func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header,
 	// find whether "host" is part of list of signed headers.
 	// if not return ErrcodeUnsignedHeaders. "host" is mandatory.
 	if !contains(signedHeaders, "host") {
-		return nil, services.RespErrUnsignedHeaders
+		return nil, responses.ErrUnsignedHeaders
 	}
 	extractedSignedHeaders := make(http.Header)
 	for _, header := range signedHeaders {
@@ -116,7 +116,7 @@ func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header,
 			// calculation to be compatible with such clients.
 			extractedSignedHeaders.Set(header, strconv.FormatInt(r.ContentLength, 10))
 		default:
-			return nil, services.RespErrUnsignedHeaders
+			return nil, responses.ErrUnsignedHeaders
 		}
 	}
 	return extractedSignedHeaders, nil

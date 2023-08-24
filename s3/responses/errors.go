@@ -1,1028 +1,1028 @@
-package services
+package responses
 
 import (
 	"fmt"
 	"net/http"
 )
 
-type ResponseError struct {
+type Error struct {
 	code           string
 	description    string
 	httpStatusCode int
 }
 
-func (err *ResponseError) Code() string {
+func (err *Error) Code() string {
 	return err.code
 }
 
-func (err *ResponseError) Description() string {
+func (err *Error) Description() string {
 	return err.description
 }
 
-func (err *ResponseError) HTTPStatusCode() int {
+func (err *Error) HTTPStatusCode() int {
 	return err.httpStatusCode
 }
 
-func (err *ResponseError) Error() string {
+func (err *Error) Error() string {
 	return fmt.Sprintf("[%s]%s", err.code, err.description)
 }
 
 // Errors http://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html
 var (
-	RespErrInvalidCopyDest = &ResponseError{
+	ErrInvalidCopyDest = &Error{
 		code:           "InvalidRequest",
 		description:    "This copy request is illegal because it is trying to copy an object to itself without changing the object's metadata, storage class, website redirect location or encryption attributes.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidCopySource = &ResponseError{
+	ErrInvalidCopySource = &Error{
 		code:           "InvalidArgument",
 		description:    "Copy Source must mention the source bucket and key: sourcebucket/sourcekey.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidMetadataDirective = &ResponseError{
+	ErrInvalidMetadataDirective = &Error{
 		code:           "InvalidArgument",
 		description:    "Unknown metadata directive.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidRequestBody = &ResponseError{
+	ErrInvalidRequestBody = &Error{
 		code:           "InvalidArgument",
 		description:    "Body shouldn't be set for this request.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidMaxUploads = &ResponseError{
+	ErrInvalidMaxUploads = &Error{
 		code:           "InvalidArgument",
 		description:    "Argument max-uploads must be an integer between 0 and 2147483647",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidMaxKeys = &ResponseError{
+	ErrInvalidMaxKeys = &Error{
 		code:           "InvalidArgument",
 		description:    "Argument maxKeys must be an integer between 0 and 2147483647",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidEncodingMethod = &ResponseError{
+	ErrInvalidEncodingMethod = &Error{
 		code:           "InvalidArgument",
 		description:    "Invalid Encoding Method specified in Request",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidMaxParts = &ResponseError{
+	ErrInvalidMaxParts = &Error{
 		code:           "InvalidArgument",
 		description:    "Part number must be an integer between 1 and 10000, inclusive",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidPartNumberMarker = &ResponseError{
+	ErrInvalidPartNumberMarker = &Error{
 		code:           "InvalidArgument",
 		description:    "Argument partNumberMarker must be an integer.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidPolicyDocument = &ResponseError{
+	ErrInvalidPolicyDocument = &Error{
 		code:           "InvalidPolicyDocument",
 		description:    "The content of the form does not meet the conditions specified in the policy document.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrAccessDenied = &ResponseError{
+	ErrAccessDenied = &Error{
 		code:           "AccessDenied",
 		description:    "Access Denied.",
 		httpStatusCode: http.StatusForbidden,
 	}
-	RespErrBadDigest = &ResponseError{
+	ErrBadDigest = &Error{
 		code:           "BadDigest",
 		description:    "The Content-Md5 you specified did not match what we received.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrEntityTooSmall = &ResponseError{
+	ErrEntityTooSmall = &Error{
 		code:           "EntityTooSmall",
 		description:    "Your proposed upload is smaller than the minimum allowed object size.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrEntityTooLarge = &ResponseError{
+	ErrEntityTooLarge = &Error{
 		code:           "EntityTooLarge",
 		description:    "Your proposed upload exceeds the maximum allowed object size.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrIncompleteBody = &ResponseError{
+	ErrIncompleteBody = &Error{
 		code:           "IncompleteBody",
 		description:    "You did not provide the number of bytes specified by the Content-Length HTTP header.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInternalError = &ResponseError{
+	ErrInternalError = &Error{
 		code:           "InternalError",
 		description:    "We encountered an internal error, please try again.",
 		httpStatusCode: http.StatusInternalServerError,
 	}
-	RespErrInvalidAccessKeyID = &ResponseError{
+	ErrInvalidAccessKeyID = &Error{
 		code:           "InvalidAccessKeyId",
 		description:    "The Access Key Id you provided does not exist in our records.",
 		httpStatusCode: http.StatusForbidden,
 	}
-	RespErrAccessKeyDisabled = &ResponseError{
+	ErrAccessKeyDisabled = &Error{
 		code:           "InvalidAccessKeyId",
 		description:    "Your account is disabled; please contact your administrator.",
 		httpStatusCode: http.StatusForbidden,
 	}
-	RespErrInvalidBucketName = &ResponseError{
+	ErrInvalidBucketName = &Error{
 		code:           "InvalidBucketName",
 		description:    "The specified bucket is not valid.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidDigest = &ResponseError{
+	ErrInvalidDigest = &Error{
 		code:           "InvalidDigest",
 		description:    "The Content-Md5 you specified is not valid.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidRange = &ResponseError{
+	ErrInvalidRange = &Error{
 		code:           "InvalidRange",
 		description:    "The requested range is not satisfiable",
 		httpStatusCode: http.StatusRequestedRangeNotSatisfiable,
 	}
-	RespErrInvalidRangePartNumber = &ResponseError{
+	ErrInvalidRangePartNumber = &Error{
 		code:           "InvalidRequest",
 		description:    "Cannot specify both Range header and partNumber query parameter",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrMalformedXML = &ResponseError{
+	ErrMalformedXML = &Error{
 		code:           "MalformedXML",
 		description:    "The XML you provided was not well-formed or did not validate against our published schema.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrMissingContentLength = &ResponseError{
+	ErrMissingContentLength = &Error{
 		code:           "MissingContentLength",
 		description:    "You must provide the Content-Length HTTP header.",
 		httpStatusCode: http.StatusLengthRequired,
 	}
-	RespErrMissingContentMD5 = &ResponseError{
+	ErrMissingContentMD5 = &Error{
 		code:           "MissingContentMD5",
 		description:    "Missing required header for this request: Content-Md5.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrMissingSecurityHeader = &ResponseError{
+	ErrMissingSecurityHeader = &Error{
 		code:           "MissingSecurityHeader",
 		description:    "Your request was missing a required header",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrMissingRequestBodyError = &ResponseError{
+	ErrMissingRequestBodyError = &Error{
 		code:           "MissingRequestBodyError",
 		description:    "Request body is empty.",
 		httpStatusCode: http.StatusLengthRequired,
 	}
-	RespErrNoSuchBucket = &ResponseError{
+	ErrNoSuchBucket = &Error{
 		code:           "NoSuchBucket",
 		description:    "The specified bucket does not exist",
 		httpStatusCode: http.StatusNotFound,
 	}
-	RespErrNoSuchBucketPolicy = &ResponseError{
+	ErrNoSuchBucketPolicy = &Error{
 		code:           "NoSuchBucketPolicy",
 		description:    "The bucket policy does not exist",
 		httpStatusCode: http.StatusNotFound,
 	}
-	RespErrNoSuchLifecycleConfiguration = &ResponseError{
+	ErrNoSuchLifecycleConfiguration = &Error{
 		code:           "NoSuchLifecycleConfiguration",
 		description:    "The lifecycle configuration does not exist",
 		httpStatusCode: http.StatusNotFound,
 	}
-	RespErrNoSuchUser = &ResponseError{
+	ErrNoSuchUser = &Error{
 		code:           "NoSuchUser",
 		description:    "The specified user does not exist",
 		httpStatusCode: http.StatusConflict,
 	}
-	RespErrUserAlreadyExists = &ResponseError{
+	ErrUserAlreadyExists = &Error{
 		code:           "UserAlreadyExists",
 		description:    "The request was rejected because it attempted to create a resource that already exists .",
 		httpStatusCode: http.StatusConflict,
 	}
-	RespErrNoSuchUserPolicy = &ResponseError{
+	ErrNoSuchUserPolicy = &Error{
 		code:           "NoSuchUserPolicy",
 		description:    "The specified user policy does not exist",
 		httpStatusCode: http.StatusConflict,
 	}
-	RespErrUserPolicyAlreadyExists = &ResponseError{
+	ErrUserPolicyAlreadyExists = &Error{
 		code:           "UserPolicyAlreadyExists",
 		description:    "The same user policy already exists .",
 		httpStatusCode: http.StatusConflict,
 	}
-	RespErrNoSuchKey = &ResponseError{
+	ErrNoSuchKey = &Error{
 		code:           "NoSuchKey",
 		description:    "The specified key does not exist.",
 		httpStatusCode: http.StatusNotFound,
 	}
-	RespErrNoSuchUpload = &ResponseError{
+	ErrNoSuchUpload = &Error{
 		code:           "NoSuchUpload",
 		description:    "The specified multipart upload does not exist. The upload ID may be invalid, or the upload may have been aborted or completed.",
 		httpStatusCode: http.StatusNotFound,
 	}
-	RespErrInvalidVersionID = &ResponseError{
+	ErrInvalidVersionID = &Error{
 		code:           "InvalidArgument",
 		description:    "Invalid version id specified",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrNoSuchVersion = &ResponseError{
+	ErrNoSuchVersion = &Error{
 		code:           "NoSuchVersion",
 		description:    "The specified version does not exist.",
 		httpStatusCode: http.StatusNotFound,
 	}
-	RespErrNotImplemented = &ResponseError{
+	ErrNotImplemented = &Error{
 		code:           "NotImplemented",
 		description:    "A header you provided implies functionality that is not implemented",
 		httpStatusCode: http.StatusNotImplemented,
 	}
-	RespErrPreconditionFailed = &ResponseError{
+	ErrPreconditionFailed = &Error{
 		code:           "PreconditionFailed",
 		description:    "At least one of the pre-conditions you specified did not hold",
 		httpStatusCode: http.StatusPreconditionFailed,
 	}
-	RespErrRequestTimeTooSkewed = &ResponseError{
+	ErrRequestTimeTooSkewed = &Error{
 		code:           "RequestTimeTooSkewed",
 		description:    "The difference between the request time and the server's time is too large.",
 		httpStatusCode: http.StatusForbidden,
 	}
-	RespErrSignatureDoesNotMatch = &ResponseError{
+	ErrSignatureDoesNotMatch = &Error{
 		code:           "SignatureDoesNotMatch",
 		description:    "The request signature we calculated does not match the signature you provided. Check your key and signing method.",
 		httpStatusCode: http.StatusForbidden,
 	}
-	RespErrMethodNotAllowed = &ResponseError{
+	ErrMethodNotAllowed = &Error{
 		code:           "MethodNotAllowed",
 		description:    "The specified method is not allowed against this resource.",
 		httpStatusCode: http.StatusMethodNotAllowed,
 	}
-	RespErrInvalidPart = &ResponseError{
+	ErrInvalidPart = &Error{
 		code:           "InvalidPart",
 		description:    "One or more of the specified parts could not be found.  The part may not have been uploaded, or the specified entity tag may not match the part's entity tag.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidPartOrder = &ResponseError{
+	ErrInvalidPartOrder = &Error{
 		code:           "InvalidPartOrder",
 		description:    "The list of parts was not in ascending order. The parts list must be specified in order by part number.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidObjectState = &ResponseError{
+	ErrInvalidObjectState = &Error{
 		code:           "InvalidObjectState",
 		description:    "The operation is not valid for the current state of the object.",
 		httpStatusCode: http.StatusForbidden,
 	}
-	RespErrAuthorizationHeaderMalformed = &ResponseError{
+	ErrAuthorizationHeaderMalformed = &Error{
 		code:           "AuthorizationHeaderMalformed",
 		description:    "The authorization header is malformed; the region is wrong; expecting 'us-east-1'.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrMalformedPOSTRequest = &ResponseError{
+	ErrMalformedPOSTRequest = &Error{
 		code:           "MalformedPOSTRequest",
 		description:    "The body of your POST request is not well-formed multipart/form-data.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrPOSTFileRequired = &ResponseError{
+	ErrPOSTFileRequired = &Error{
 		code:           "InvalidArgument",
 		description:    "POST requires exactly one file upload per request.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrSignatureVersionNotSupported = &ResponseError{
+	ErrSignatureVersionNotSupported = &Error{
 		code:           "InvalidRequest",
 		description:    "The authorization mechanism you have provided is not supported. Please use AWS4-HMAC-SHA256.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrBucketNotEmpty = &ResponseError{
+	ErrBucketNotEmpty = &Error{
 		code:           "BucketNotEmpty",
 		description:    "The bucket you tried to delete is not empty",
 		httpStatusCode: http.StatusConflict,
 	}
-	RespErrBucketAlreadyExists = &ResponseError{
+	ErrBucketAlreadyExists = &Error{
 		code:           "BucketAlreadyExists",
 		description:    "The requested bucket name is not available. The bucket namespace is shared by all users of the system. Please select a different name and try again.",
 		httpStatusCode: http.StatusConflict,
 	}
-	RespErrAllAccessDisabled = &ResponseError{
+	ErrAllAccessDisabled = &Error{
 		code:           "AllAccessDisabled",
 		description:    "All access to this resource has been disabled.",
 		httpStatusCode: http.StatusForbidden,
 	}
-	RespErrMalformedPolicy = &ResponseError{
+	ErrMalformedPolicy = &Error{
 		code:           "MalformedPolicy",
 		description:    "Policy has invalid resource.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrMissingFields = &ResponseError{ // todo
+	ErrMissingFields = &Error{ // todo
 		code:           "InvalidRequest",
 		description:    "ErrMissingFields",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrMissingCredTag = &ResponseError{
+	ErrMissingCredTag = &Error{
 		code:           "InvalidRequest",
 		description:    "Missing Credential field for this request.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrCredMalformed = &ResponseError{ // todo
+	ErrCredMalformed = &Error{ // todo
 		code:           "InvalidRequest",
 		description:    "ErrCredMalformed",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidRegion = &ResponseError{
+	ErrInvalidRegion = &Error{
 		code:           "InvalidRegion",
 		description:    "Region does not match.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrMissingSignTag = &ResponseError{
+	ErrMissingSignTag = &Error{
 		code:           "AccessDenied",
 		description:    "Signature header missing Signature field.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrMissingSignHeadersTag = &ResponseError{
+	ErrMissingSignHeadersTag = &Error{
 		code:           "InvalidArgument",
 		description:    "Signature header missing SignedHeaders field.",
 		httpStatusCode: http.StatusBadRequest,
 	}
 
-	RespErrAuthHeaderEmpty = &ResponseError{
+	ErrAuthHeaderEmpty = &Error{
 		code:           "InvalidArgument",
 		description:    "Authorization header is invalid -- one and only one ' ' (space) required.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrMissingDateHeader = &ResponseError{
+	ErrMissingDateHeader = &Error{
 		code:           "AccessDenied",
 		description:    "AWS authentication requires a valid Date or x-amz-date header",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrExpiredPresignRequest = &ResponseError{
+	ErrExpiredPresignRequest = &Error{
 		code:           "AccessDenied",
 		description:    "Request has expired",
 		httpStatusCode: http.StatusForbidden,
 	}
-	RespErrRequestNotReadyYet = &ResponseError{
+	ErrRequestNotReadyYet = &Error{
 		code:           "AccessDenied",
 		description:    "Request is not valid yet",
 		httpStatusCode: http.StatusForbidden,
 	}
-	RespErrSlowDown = &ResponseError{
+	ErrSlowDown = &Error{
 		code:           "SlowDown",
 		description:    "Resource requested is unreadable, please reduce your request rate",
 		httpStatusCode: http.StatusServiceUnavailable,
 	}
-	RespErrBadRequest = &ResponseError{
+	ErrBadRequest = &Error{
 		code:           "BadRequest",
 		description:    "400 BadRequest",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrKeyTooLongError = &ResponseError{
+	ErrKeyTooLongError = &Error{
 		code:           "KeyTooLongError",
 		description:    "Your key is too long",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrUnsignedHeaders = &ResponseError{
+	ErrUnsignedHeaders = &Error{
 		code:           "AccessDenied",
 		description:    "There were headers present in the request which were not signed",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrBucketAlreadyOwnedByYou = &ResponseError{
+	ErrBucketAlreadyOwnedByYou = &Error{
 		code:           "BucketAlreadyOwnedByYou",
 		description:    "Your previous request to create the named bucket succeeded and you already own it.",
 		httpStatusCode: http.StatusConflict,
 	}
-	RespErrInvalidDuration = &ResponseError{
+	ErrInvalidDuration = &Error{
 		code:           "InvalidDuration",
 		description:    "Duration provided in the request is invalid.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidBucketObjectLockConfiguration = &ResponseError{
+	ErrInvalidBucketObjectLockConfiguration = &Error{
 		code:           "InvalidRequest",
 		description:    "Bucket is missing ObjectLockConfiguration",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrBucketTaggingNotFound = &ResponseError{
+	ErrBucketTaggingNotFound = &Error{
 		code:           "NoSuchTagSet",
 		description:    "The TagSet does not exist",
 		httpStatusCode: http.StatusNotFound,
 	}
-	RespErrObjectLockConfigurationNotAllowed = &ResponseError{
+	ErrObjectLockConfigurationNotAllowed = &Error{
 		code:           "InvalidBucketState",
 		description:    "Object Lock configuration cannot be enabled on existing buckets",
 		httpStatusCode: http.StatusConflict,
 	}
-	RespErrNoSuchCORSConfiguration = &ResponseError{
+	ErrNoSuchCORSConfiguration = &Error{
 		code:           "NoSuchCORSConfiguration",
 		description:    "The CORS configuration does not exist",
 		httpStatusCode: http.StatusNotFound,
 	}
-	RespErrNoSuchWebsiteConfiguration = &ResponseError{
+	ErrNoSuchWebsiteConfiguration = &Error{
 		code:           "NoSuchWebsiteConfiguration",
 		description:    "The specified bucket does not have a website configuration",
 		httpStatusCode: http.StatusNotFound,
 	}
-	RespErrReplicationConfigurationNotFoundError = &ResponseError{
+	ErrReplicationConfigurationNotFoundError = &Error{
 		code:           "ReplicationConfigurationNotFoundError",
 		description:    "The replication configuration was not found",
 		httpStatusCode: http.StatusNotFound,
 	}
-	RespErrReplicationNeedsVersioningError = &ResponseError{
+	ErrReplicationNeedsVersioningError = &Error{
 		code:           "InvalidRequest",
 		description:    "Versioning must be 'Enabled' on the bucket to apply a replication configuration",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrReplicationBucketNeedsVersioningError = &ResponseError{
+	ErrReplicationBucketNeedsVersioningError = &Error{
 		code:           "InvalidRequest",
 		description:    "Versioning must be 'Enabled' on the bucket to add a replication target",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrNoSuchObjectLockConfiguration = &ResponseError{
+	ErrNoSuchObjectLockConfiguration = &Error{
 		code:           "NoSuchObjectLockConfiguration",
 		description:    "The specified object does not have a ObjectLock configuration",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrObjectLocked = &ResponseError{
+	ErrObjectLocked = &Error{
 		code:           "InvalidRequest",
 		description:    "Object is WORM protected and cannot be overwritten",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidRetentionDate = &ResponseError{
+	ErrInvalidRetentionDate = &Error{
 		code:           "InvalidRequest",
 		description:    "Date must be provided in ISO 8601 format",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrPastObjectLockRetainDate = &ResponseError{
+	ErrPastObjectLockRetainDate = &Error{
 		code:           "InvalidRequest",
 		description:    "the retain until date must be in the future",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrUnknownWORMModeDirective = &ResponseError{
+	ErrUnknownWORMModeDirective = &Error{
 		code:           "InvalidRequest",
 		description:    "unknown wormMode directive",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrObjectLockInvalidHeaders = &ResponseError{
+	ErrObjectLockInvalidHeaders = &Error{
 		code:           "InvalidRequest",
 		description:    "x-amz-object-lock-retain-until-date and x-amz-object-lock-mode must both be supplied",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrObjectRestoreAlreadyInProgress = &ResponseError{
+	ErrObjectRestoreAlreadyInProgress = &Error{
 		code:           "RestoreAlreadyInProgress",
 		description:    "Object restore is already in progress",
 		httpStatusCode: http.StatusConflict,
 	}
 	// Bucket notification related errors.
-	RespErrEventNotification = &ResponseError{
+	ErrEventNotification = &Error{
 		code:           "InvalidArgument",
 		description:    "A specified event is not supported for notifications.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrARNNotification = &ResponseError{
+	ErrARNNotification = &Error{
 		code:           "InvalidArgument",
 		description:    "A specified destination ARN does not exist or is not well-formed. Verify the destination ARN.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrRegionNotification = &ResponseError{
+	ErrRegionNotification = &Error{
 		code:           "InvalidArgument",
 		description:    "A specified destination is in a different region than the bucket. You must use a destination that resides in the same region as the bucket.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrOverlappingFilterNotification = &ResponseError{
+	ErrOverlappingFilterNotification = &Error{
 		code:           "InvalidArgument",
 		description:    "An object key name filtering rule defined with overlapping prefixes, overlapping suffixes, or overlapping combinations of prefixes and suffixes for the same event types.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrFilterNameInvalid = &ResponseError{
+	ErrFilterNameInvalid = &Error{
 		code:           "InvalidArgument",
 		description:    "filter rule name must be either prefix or suffix",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrFilterNamePrefix = &ResponseError{
+	ErrFilterNamePrefix = &Error{
 		code:           "InvalidArgument",
 		description:    "Cannot specify more than one prefix rule in a filter.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrFilterNameSuffix = &ResponseError{
+	ErrFilterNameSuffix = &Error{
 		code:           "InvalidArgument",
 		description:    "Cannot specify more than one suffix rule in a filter.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrFilterValueInvalid = &ResponseError{
+	ErrFilterValueInvalid = &Error{
 		code:           "InvalidArgument",
 		description:    "Size of filter rule value cannot exceed 1024 bytes in UTF-8 representation",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrOverlappingConfigs = &ResponseError{
+	ErrOverlappingConfigs = &Error{
 		code:           "InvalidArgument",
 		description:    "Configurations overlap. Configurations on the same bucket cannot share a common event type.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrContentSHA256Mismatch = &ResponseError{ //todo
+	ErrContentSHA256Mismatch = &Error{ //todo
 		code:           "InvalidArgument",
 		description:    "ErrContentSHA256Mismatch",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidCopyPartRange = &ResponseError{
+	ErrInvalidCopyPartRange = &Error{
 		code:           "InvalidArgument",
 		description:    "The x-amz-copy-source-range value must be of the form bytes=first-last where first and last are the zero-based offsets of the first and last bytes to copy",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidCopyPartRangeSource = &ResponseError{
+	ErrInvalidCopyPartRangeSource = &Error{
 		code:           "InvalidArgument",
 		description:    "Range specified is not valid for source object",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrMetadataTooLarge = &ResponseError{
+	ErrMetadataTooLarge = &Error{
 		code:           "MetadataTooLarge",
 		description:    "Your metadata headers exceed the maximum allowed metadata size.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidTagDirective = &ResponseError{
+	ErrInvalidTagDirective = &Error{
 		code:           "InvalidArgument",
 		description:    "Unknown tag directive.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidEncryptionMethod = &ResponseError{
+	ErrInvalidEncryptionMethod = &Error{
 		code:           "InvalidRequest",
 		description:    "The encryption method specified is not supported",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidQueryParams = &ResponseError{
+	ErrInvalidQueryParams = &Error{
 		code:           "AuthorizationQueryParametersError",
 		description:    "Query-string authentication version 4 requires the X-Amz-Algorithm, X-Amz-Credential, X-Amz-Signature, X-Amz-Date, X-Amz-SignedHeaders, and X-Amz-Expires parameters.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrNoAccessKey = &ResponseError{
+	ErrNoAccessKey = &Error{
 		code:           "AccessDenied",
 		description:    "No AWSAccessKey was presented",
 		httpStatusCode: http.StatusForbidden,
 	}
-	RespErrInvalidToken = &ResponseError{
+	ErrInvalidToken = &Error{
 		code:           "InvalidTokenId",
 		description:    "The security token included in the request is invalid",
 		httpStatusCode: http.StatusForbidden,
 	}
 
 	// S3 extensions.
-	RespErrInvalidObjectName = &ResponseError{
+	ErrInvalidObjectName = &Error{
 		code:           "InvalidObjectName",
 		description:    "Object name contains unsupported characters.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidObjectNamePrefixSlash = &ResponseError{
+	ErrInvalidObjectNamePrefixSlash = &Error{
 		code:           "InvalidObjectName",
 		description:    "Object name contains a leading slash.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrClientDisconnected = &ResponseError{
+	ErrClientDisconnected = &Error{
 		code:           "ClientDisconnected",
 		description:    "Client disconnected before response was ready",
 		httpStatusCode: 499, // No official code, use nginx value.
 	}
-	RespErrOperationTimedOut = &ResponseError{
+	ErrOperationTimedOut = &Error{
 		code:           "RequestTimeout",
 		description:    "A timeout occurred while trying to lock a resource, please reduce your request rate",
 		httpStatusCode: http.StatusServiceUnavailable,
 	}
-	RespErrOperationMaxedOut = &ResponseError{
+	ErrOperationMaxedOut = &Error{
 		code:           "SlowDown",
 		description:    "A timeout exceeded while waiting to proceed with the request, please reduce your request rate",
 		httpStatusCode: http.StatusServiceUnavailable,
 	}
-	RespErrUnsupportedMetadata = &ResponseError{
+	ErrUnsupportedMetadata = &Error{
 		code:           "InvalidArgument",
 		description:    "Your metadata headers are not supported.",
 		httpStatusCode: http.StatusBadRequest,
 	}
 	// Generic Invalid-Request error. Should be used for response errors only for unlikely
-	// corner case errors for which introducing new APIRespErrorcode is not worth it. LogIf()
+	// corner case errors for which introducing new APIorcode is not worth it. LogIf()
 	// should be used to log the error at the source of the error for debugging purposes.
-	ErrInvalidRequest = &ResponseError{
+	ErrErrInvalidRequest = &Error{
 		code:           "InvalidRequest",
 		description:    "Invalid Request",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrIncorrectContinuationToken = &ResponseError{
+	ErrIncorrectContinuationToken = &Error{
 		code:           "InvalidArgument",
 		description:    "The continuation token provided is incorrect",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidFormatAccessKey = &ResponseError{
+	ErrInvalidFormatAccessKey = &Error{
 		code:           "InvalidAccessKeyId",
 		description:    "The Access Key Id you provided contains invalid characters.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	// S3 Select API RespErrors
-	ErrEmptyRequestBody = &ResponseError{
+	// S3 Select API ors
+	ErrErrEmptyRequestBody = &Error{
 		code:           "EmptyRequestBody",
 		description:    "Request body cannot be empty.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrUnsupportedFunction = &ResponseError{
+	ErrUnsupportedFunction = &Error{
 		code:           "UnsupportedFunction",
 		description:    "Encountered an unsupported SQL function.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidDataSource = &ResponseError{
+	ErrInvalidDataSource = &Error{
 		code:           "InvalidDataSource",
 		description:    "Invalid data source type. Only CSV and JSON are supported at this time.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidExpressionType = &ResponseError{
+	ErrInvalidExpressionType = &Error{
 		code:           "InvalidExpressionType",
 		description:    "The ExpressionType is invalid. Only SQL expressions are supported at this time.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrBusy = &ResponseError{
+	ErrBusy = &Error{
 		code:           "Busy",
 		description:    "The service is unavailable. Please retry.",
 		httpStatusCode: http.StatusServiceUnavailable,
 	}
-	RespErrUnauthorizedAccess = &ResponseError{
+	ErrUnauthorizedAccess = &Error{
 		code:           "UnauthorizedAccess",
 		description:    "You are not authorized to perform this operation",
 		httpStatusCode: http.StatusUnauthorized,
 	}
-	RespErrExpressionTooLong = &ResponseError{
+	ErrExpressionTooLong = &Error{
 		code:           "ExpressionTooLong",
 		description:    "The SQL expression is too long: The maximum byte-length for the SQL expression is 256 KB.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrIllegalSQLFunctionArgument = &ResponseError{
+	ErrIllegalSQLFunctionArgument = &Error{
 		code:           "IllegalSqlFunctionArgument",
 		description:    "Illegal argument was used in the SQL function.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidKeyPath = &ResponseError{
+	ErrInvalidKeyPath = &Error{
 		code:           "InvalidKeyPath",
 		description:    "Key path in the SQL expression is invalid.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidCompressionFormat = &ResponseError{
+	ErrInvalidCompressionFormat = &Error{
 		code:           "InvalidCompressionFormat",
 		description:    "The file is not in a supported compression format. Only GZIP is supported at this time.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidFileHeaderInfo = &ResponseError{
+	ErrInvalidFileHeaderInfo = &Error{
 		code:           "InvalidFileHeaderInfo",
 		description:    "The FileHeaderInfo is invalid. Only NONE, USE, and IGNORE are supported.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidJSONType = &ResponseError{
+	ErrInvalidJSONType = &Error{
 		code:           "InvalidJsonType",
 		description:    "The JsonType is invalid. Only DOCUMENT and LINES are supported at this time.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidQuoteFields = &ResponseError{
+	ErrInvalidQuoteFields = &Error{
 		code:           "InvalidQuoteFields",
 		description:    "The QuoteFields is invalid. Only ALWAYS and ASNEEDED are supported.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidRequestParameter = &ResponseError{
+	ErrInvalidRequestParameter = &Error{
 		code:           "InvalidRequestParameter",
 		description:    "The value of a parameter in SelectRequest element is invalid. Check the service API documentation and try again.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidDataType = &ResponseError{
+	ErrInvalidDataType = &Error{
 		code:           "InvalidDataType",
 		description:    "The SQL expression contains an invalid data type.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidTextEncoding = &ResponseError{
+	ErrInvalidTextEncoding = &Error{
 		code:           "InvalidTextEncoding",
 		description:    "Invalid encoding type. Only UTF-8 encoding is supported at this time.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidTableAlias = &ResponseError{
+	ErrInvalidTableAlias = &Error{
 		code:           "InvalidTableAlias",
 		description:    "The SQL expression contains an invalid table alias.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrMissingRequiredParameter = &ResponseError{
+	ErrMissingRequiredParameter = &Error{
 		code:           "MissingRequiredParameter",
 		description:    "The SelectRequest entity is missing a required parameter. Check the service documentation and try again.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrObjectSerializationConflict = &ResponseError{
+	ErrObjectSerializationConflict = &Error{
 		code:           "ObjectSerializationConflict",
 		description:    "The SelectRequest entity can only contain one of CSV or JSON. Check the service documentation and try again.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrUnsupportedSQLOperation = &ResponseError{
+	ErrUnsupportedSQLOperation = &Error{
 		code:           "UnsupportedSqlOperation",
 		description:    "Encountered an unsupported SQL operation.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrUnsupportedSQLStructure = &ResponseError{
+	ErrUnsupportedSQLStructure = &Error{
 		code:           "UnsupportedSqlStructure",
 		description:    "Encountered an unsupported SQL structure. Check the SQL Reference.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrUnsupportedSyntax = &ResponseError{
+	ErrUnsupportedSyntax = &Error{
 		code:           "UnsupportedSyntax",
 		description:    "Encountered invalid syntax.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrUnsupportedRangeHeader = &ResponseError{
+	ErrUnsupportedRangeHeader = &Error{
 		code:           "UnsupportedRangeHeader",
 		description:    "Range header is not supported for this operation.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrLexerInvalidChar = &ResponseError{
+	ErrLexerInvalidChar = &Error{
 		code:           "LexerInvalidChar",
 		description:    "The SQL expression contains an invalid character.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrLexerInvalidOperator = &ResponseError{
+	ErrLexerInvalidOperator = &Error{
 		code:           "LexerInvalidOperator",
 		description:    "The SQL expression contains an invalid literal.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrLexerInvalidLiteral = &ResponseError{
+	ErrLexerInvalidLiteral = &Error{
 		code:           "LexerInvalidLiteral",
 		description:    "The SQL expression contains an invalid operator.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrLexerInvalidIONLiteral = &ResponseError{
+	ErrLexerInvalidIONLiteral = &Error{
 		code:           "LexerInvalidIONLiteral",
 		description:    "The SQL expression contains an invalid operator.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedDatePart = &ResponseError{
+	ErrParseExpectedDatePart = &Error{
 		code:           "ParseExpectedDatePart",
 		description:    "Did not find the expected date part in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedKeyword = &ResponseError{
+	ErrParseExpectedKeyword = &Error{
 		code:           "ParseExpectedKeyword",
 		description:    "Did not find the expected keyword in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedTokenType = &ResponseError{
+	ErrParseExpectedTokenType = &Error{
 		code:           "ParseExpectedTokenType",
 		description:    "Did not find the expected token in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpected2TokenTypes = &ResponseError{
+	ErrParseExpected2TokenTypes = &Error{
 		code:           "ParseExpected2TokenTypes",
 		description:    "Did not find the expected token in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedNumber = &ResponseError{
+	ErrParseExpectedNumber = &Error{
 		code:           "ParseExpectedNumber",
 		description:    "Did not find the expected number in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedRightParenBuiltinFunctionCall = &ResponseError{
+	ErrParseExpectedRightParenBuiltinFunctionCall = &Error{
 		code:           "ParseExpectedRightParenBuiltinFunctionCall",
 		description:    "Did not find the expected right parenthesis character in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedTypeName = &ResponseError{
+	ErrParseExpectedTypeName = &Error{
 		code:           "ParseExpectedTypeName",
 		description:    "Did not find the expected type name in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedWhenClause = &ResponseError{
+	ErrParseExpectedWhenClause = &Error{
 		code:           "ParseExpectedWhenClause",
 		description:    "Did not find the expected WHEN clause in the SQL expression. CASE is not supported.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseUnsupportedToken = &ResponseError{
+	ErrParseUnsupportedToken = &Error{
 		code:           "ParseUnsupportedToken",
 		description:    "The SQL expression contains an unsupported token.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseUnsupportedLiteralsGroupBy = &ResponseError{
+	ErrParseUnsupportedLiteralsGroupBy = &Error{
 		code:           "ParseUnsupportedLiteralsGroupBy",
 		description:    "The SQL expression contains an unsupported use of GROUP BY.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedMember = &ResponseError{
+	ErrParseExpectedMember = &Error{
 		code:           "ParseExpectedMember",
 		description:    "The SQL expression contains an unsupported use of MEMBER.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseUnsupportedSelect = &ResponseError{
+	ErrParseUnsupportedSelect = &Error{
 		code:           "ParseUnsupportedSelect",
 		description:    "The SQL expression contains an unsupported use of SELECT.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseUnsupportedCase = &ResponseError{
+	ErrParseUnsupportedCase = &Error{
 		code:           "ParseUnsupportedCase",
 		description:    "The SQL expression contains an unsupported use of CASE.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseUnsupportedCaseClause = &ResponseError{
+	ErrParseUnsupportedCaseClause = &Error{
 		code:           "ParseUnsupportedCaseClause",
 		description:    "The SQL expression contains an unsupported use of CASE.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseUnsupportedAlias = &ResponseError{
+	ErrParseUnsupportedAlias = &Error{
 		code:           "ParseUnsupportedAlias",
 		description:    "The SQL expression contains an unsupported use of ALIAS.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseUnsupportedSyntax = &ResponseError{
+	ErrParseUnsupportedSyntax = &Error{
 		code:           "ParseUnsupportedSyntax",
 		description:    "The SQL expression contains unsupported syntax.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseUnknownOperator = &ResponseError{
+	ErrParseUnknownOperator = &Error{
 		code:           "ParseUnknownOperator",
 		description:    "The SQL expression contains an invalid operator.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseMissingIdentAfterAt = &ResponseError{
+	ErrParseMissingIdentAfterAt = &Error{
 		code:           "ParseMissingIdentAfterAt",
 		description:    "Did not find the expected identifier after the @ symbol in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseUnexpectedOperator = &ResponseError{
+	ErrParseUnexpectedOperator = &Error{
 		code:           "ParseUnexpectedOperator",
 		description:    "The SQL expression contains an unexpected operator.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseUnexpectedTerm = &ResponseError{
+	ErrParseUnexpectedTerm = &Error{
 		code:           "ParseUnexpectedTerm",
 		description:    "The SQL expression contains an unexpected term.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseUnexpectedToken = &ResponseError{
+	ErrParseUnexpectedToken = &Error{
 		code:           "ParseUnexpectedToken",
 		description:    "The SQL expression contains an unexpected token.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseUnexpectedKeyword = &ResponseError{
+	ErrParseUnexpectedKeyword = &Error{
 		code:           "ParseUnexpectedKeyword",
 		description:    "The SQL expression contains an unexpected keyword.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedExpression = &ResponseError{
+	ErrParseExpectedExpression = &Error{
 		code:           "ParseExpectedExpression",
 		description:    "Did not find the expected SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedLeftParenAfterCast = &ResponseError{
+	ErrParseExpectedLeftParenAfterCast = &Error{
 		code:           "ParseExpectedLeftParenAfterCast",
 		description:    "Did not find expected the left parenthesis in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedLeftParenValueConstructor = &ResponseError{
+	ErrParseExpectedLeftParenValueConstructor = &Error{
 		code:           "ParseExpectedLeftParenValueConstructor",
 		description:    "Did not find expected the left parenthesis in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedLeftParenBuiltinFunctionCall = &ResponseError{
+	ErrParseExpectedLeftParenBuiltinFunctionCall = &Error{
 		code:           "ParseExpectedLeftParenBuiltinFunctionCall",
 		description:    "Did not find the expected left parenthesis in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedArgumentDelimiter = &ResponseError{
+	ErrParseExpectedArgumentDelimiter = &Error{
 		code:           "ParseExpectedArgumentDelimiter",
 		description:    "Did not find the expected argument delimiter in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseCastArity = &ResponseError{
+	ErrParseCastArity = &Error{
 		code:           "ParseCastArity",
 		description:    "The SQL expression CAST has incorrect arity.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseInvalidTypeParam = &ResponseError{
+	ErrParseInvalidTypeParam = &Error{
 		code:           "ParseInvalidTypeParam",
 		description:    "The SQL expression contains an invalid parameter value.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseEmptySelect = &ResponseError{
+	ErrParseEmptySelect = &Error{
 		code:           "ParseEmptySelect",
 		description:    "The SQL expression contains an empty SELECT.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseSelectMissingFrom = &ResponseError{
+	ErrParseSelectMissingFrom = &Error{
 		code:           "ParseSelectMissingFrom",
 		description:    "GROUP is not supported in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedIdentForGroupName = &ResponseError{
+	ErrParseExpectedIdentForGroupName = &Error{
 		code:           "ParseExpectedIdentForGroupName",
 		description:    "GROUP is not supported in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedIdentForAlias = &ResponseError{
+	ErrParseExpectedIdentForAlias = &Error{
 		code:           "ParseExpectedIdentForAlias",
 		description:    "Did not find the expected identifier for the alias in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseUnsupportedCallWithStar = &ResponseError{
+	ErrParseUnsupportedCallWithStar = &Error{
 		code:           "ParseUnsupportedCallWithStar",
 		description:    "Only COUNT with (*) as a parameter is supported in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseNonUnaryAgregateFunctionCall = &ResponseError{
+	ErrParseNonUnaryAgregateFunctionCall = &Error{
 		code:           "ParseNonUnaryAgregateFunctionCall",
 		description:    "Only one argument is supported for aggregate functions in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseMalformedJoin = &ResponseError{
+	ErrParseMalformedJoin = &Error{
 		code:           "ParseMalformedJoin",
 		description:    "JOIN is not supported in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseExpectedIdentForAt = &ResponseError{
+	ErrParseExpectedIdentForAt = &Error{
 		code:           "ParseExpectedIdentForAt",
 		description:    "Did not find the expected identifier for AT name in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseAsteriskIsNotAloneInSelectList = &ResponseError{
+	ErrParseAsteriskIsNotAloneInSelectList = &Error{
 		code:           "ParseAsteriskIsNotAloneInSelectList",
 		description:    "Other expressions are not allowed in the SELECT list when '*' is used without dot notation in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseCannotMixSqbAndWildcardInSelectList = &ResponseError{
+	ErrParseCannotMixSqbAndWildcardInSelectList = &Error{
 		code:           "ParseCannotMixSqbAndWildcardInSelectList",
 		description:    "Cannot mix [] and * in the same expression in a SELECT list in SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrParseInvalidContextForWildcardInSelectList = &ResponseError{
+	ErrParseInvalidContextForWildcardInSelectList = &Error{
 		code:           "ParseInvalidContextForWildcardInSelectList",
 		description:    "Invalid use of * in SELECT list in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrIncorrectSQLFunctionArgumentType = &ResponseError{
+	ErrIncorrectSQLFunctionArgumentType = &Error{
 		code:           "IncorrectSqlFunctionArgumentType",
 		description:    "Incorrect type of arguments in function call in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrValueParseFailure = &ResponseError{
+	ErrValueParseFailure = &Error{
 		code:           "ValueParseFailure",
 		description:    "Time stamp parse failure in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrEvaluatorInvalidArguments = &ResponseError{
+	ErrEvaluatorInvalidArguments = &Error{
 		code:           "EvaluatorInvalidArguments",
 		description:    "Incorrect number of arguments in the function call in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrIntegerOverflow = &ResponseError{
+	ErrIntegerOverflow = &Error{
 		code:           "IntegerOverflow",
 		description:    "Int overflow or underflow in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrLikeInvalidInputs = &ResponseError{
+	ErrLikeInvalidInputs = &Error{
 		code:           "LikeInvalidInputs",
 		description:    "Invalid argument given to the LIKE clause in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrCastFailed = &ResponseError{
+	ErrCastFailed = &Error{
 		code:           "CastFailed",
 		description:    "Attempt to convert from one data type to another using CAST failed in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidCast = &ResponseError{
+	ErrInvalidCast = &Error{
 		code:           "InvalidCast",
 		description:    "Attempt to convert from one data type to another using CAST failed in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrEvaluatorInvalidTimestampFormatPattern = &ResponseError{
+	ErrEvaluatorInvalidTimestampFormatPattern = &Error{
 		code:           "EvaluatorInvalidTimestampFormatPattern",
 		description:    "Time stamp format pattern requires additional fields in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrEvaluatorInvalidTimestampFormatPatternSymbolForParsing = &ResponseError{
+	ErrEvaluatorInvalidTimestampFormatPatternSymbolForParsing = &Error{
 		code:           "EvaluatorInvalidTimestampFormatPatternSymbolForParsing",
 		description:    "Time stamp format pattern contains a valid format symbol that cannot be applied to time stamp parsing in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrEvaluatorTimestampFormatPatternDuplicateFields = &ResponseError{
+	ErrEvaluatorTimestampFormatPatternDuplicateFields = &Error{
 		code:           "EvaluatorTimestampFormatPatternDuplicateFields",
 		description:    "Time stamp format pattern contains multiple format specifiers representing the time stamp field in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrEvaluatorTimestampFormatPatternHourClockAmPmMismatch = &ResponseError{
+	ErrEvaluatorTimestampFormatPatternHourClockAmPmMismatch = &Error{
 		code:           "EvaluatorUnterminatedTimestampFormatPatternToken",
 		description:    "Time stamp format pattern contains unterminated token in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrEvaluatorUnterminatedTimestampFormatPatternToken = &ResponseError{
+	ErrEvaluatorUnterminatedTimestampFormatPatternToken = &Error{
 		code:           "EvaluatorInvalidTimestampFormatPatternToken",
 		description:    "Time stamp format pattern contains an invalid token in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrEvaluatorInvalidTimestampFormatPatternToken = &ResponseError{
+	ErrEvaluatorInvalidTimestampFormatPatternToken = &Error{
 		code:           "EvaluatorInvalidTimestampFormatPatternToken",
 		description:    "Time stamp format pattern contains an invalid token in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrEvaluatorInvalidTimestampFormatPatternSymbol = &ResponseError{
+	ErrEvaluatorInvalidTimestampFormatPatternSymbol = &Error{
 		code:           "EvaluatorInvalidTimestampFormatPatternSymbol",
 		description:    "Time stamp format pattern contains an invalid symbol in the SQL expression.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrEvaluatorBindingDoesNotExist = &ResponseError{
+	ErrEvaluatorBindingDoesNotExist = &Error{
 		code:           "ErrEvaluatorBindingDoesNotExist",
 		description:    "A column name or a path provided does not exist in the SQL expression",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrMissingHeaders = &ResponseError{
+	ErrMissingHeaders = &Error{
 		code:           "MissingHeaders",
 		description:    "Some headers in the query are missing from the file. Check the file and try again.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrInvalidColumnIndex = &ResponseError{
+	ErrInvalidColumnIndex = &Error{
 		code:           "InvalidColumnIndex",
 		description:    "The column index is invalid. Please check the service documentation and try again.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	RespErrPostPolicyConditionInvalidFormat = &ResponseError{
+	ErrPostPolicyConditionInvalidFormat = &Error{
 		code:           "PostPolicyInvalidKeyName",
 		description:    "Invalid according to Policy: Policy Conditions failed",
 		httpStatusCode: http.StatusForbidden,
 	}
-	RespErrMalformedJSON = &ResponseError{
+	ErrMalformedJSON = &Error{
 		code:           "MalformedJSON",
 		description:    "The JSON was not well-formed or did not validate against our published format.",
 		httpStatusCode: http.StatusBadRequest,

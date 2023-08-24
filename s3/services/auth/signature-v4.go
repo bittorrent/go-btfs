@@ -20,7 +20,7 @@ package auth
 import (
 	"crypto/subtle"
 	"errors"
-	"github.com/bittorrent/go-btfs/s3/services"
+	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"net/http"
 	"net/url"
@@ -73,13 +73,13 @@ func (s *service) doesPresignedSignatureMatch(hashedPayload string, r *http.Requ
 	// Check accesskey
 	ack, err = s.accessKeySvc.Get(pSignValues.Credential.accessKey)
 	if errors.Is(err, accesskey.ErrNotFound) {
-		err = services.RespErrInvalidAccessKeyID
+		err = responses.ErrInvalidAccessKeyID
 	}
 	if err != nil {
 		return
 	}
 	if !ack.Enable {
-		err = services.RespErrAccessKeyDisabled
+		err = responses.ErrAccessKeyDisabled
 		return
 	}
 
@@ -92,12 +92,12 @@ func (s *service) doesPresignedSignatureMatch(hashedPayload string, r *http.Requ
 	// If the host which signed the request is slightly ahead in time (by less than MaxSkewTime) the
 	// request should still be allowed.
 	if pSignValues.Date.After(time.Now().UTC().Add(consts.MaxSkewTime)) {
-		err = services.RespErrRequestNotReadyYet
+		err = responses.ErrRequestNotReadyYet
 		return
 	}
 
 	if time.Now().UTC().Sub(pSignValues.Date) > pSignValues.Expires {
-		err = services.RespErrExpiredPresignRequest
+		err = responses.ErrExpiredPresignRequest
 		return
 	}
 
@@ -149,26 +149,26 @@ func (s *service) doesPresignedSignatureMatch(hashedPayload string, r *http.Requ
 
 	// Verify if date query is same.
 	if req.Form.Get(consts.AmzDate) != query.Get(consts.AmzDate) {
-		err = services.RespErrSignatureDoesNotMatch
+		err = responses.ErrSignatureDoesNotMatch
 	}
 	// Verify if expires query is same.
 	if req.Form.Get(consts.AmzExpires) != query.Get(consts.AmzExpires) {
-		err = services.RespErrSignatureDoesNotMatch
+		err = responses.ErrSignatureDoesNotMatch
 		return
 	}
 	// Verify if signed headers query is same.
 	if req.Form.Get(consts.AmzSignedHeaders) != query.Get(consts.AmzSignedHeaders) {
-		err = services.RespErrSignatureDoesNotMatch
+		err = responses.ErrSignatureDoesNotMatch
 		return
 	}
 	// Verify if credential query is same.
 	if req.Form.Get(consts.AmzCredential) != query.Get(consts.AmzCredential) {
-		err = services.RespErrSignatureDoesNotMatch
+		err = responses.ErrSignatureDoesNotMatch
 		return
 	}
 	// Verify if sha256 payload query is same.
 	if clntHashedPayload != "" && clntHashedPayload != query.Get(consts.AmzContentSha256) {
-		err = services.RespErrContentSHA256Mismatch
+		err = responses.ErrContentSHA256Mismatch
 		return
 	}
 	// not check SessionToken.
@@ -194,7 +194,7 @@ func (s *service) doesPresignedSignatureMatch(hashedPayload string, r *http.Requ
 
 	// Verify signature.
 	if !compareSignatureV4(req.Form.Get(consts.AmzSignature), newSignature) {
-		err = services.RespErrSignatureDoesNotMatch
+		err = responses.ErrSignatureDoesNotMatch
 		return
 	}
 
@@ -225,13 +225,13 @@ func (s *service) doesSignatureMatch(hashedPayload string, r *http.Request, regi
 	// Check accesskey
 	ack, err = s.accessKeySvc.Get(signV4Values.Credential.accessKey)
 	if errors.Is(err, accesskey.ErrNotFound) {
-		err = services.RespErrInvalidAccessKeyID
+		err = responses.ErrInvalidAccessKeyID
 	}
 	if err != nil {
 		return
 	}
 	if !ack.Enable {
-		err = services.RespErrAccessKeyDisabled
+		err = responses.ErrAccessKeyDisabled
 		return
 	}
 
@@ -239,7 +239,7 @@ func (s *service) doesSignatureMatch(hashedPayload string, r *http.Request, regi
 	var date string
 	if date = req.Header.Get(consts.AmzDate); date == "" {
 		if date = r.Header.Get(consts.Date); date == "" {
-			err = services.RespErrMissingDateHeader
+			err = responses.ErrMissingDateHeader
 			return
 		}
 	}
@@ -247,7 +247,7 @@ func (s *service) doesSignatureMatch(hashedPayload string, r *http.Request, regi
 	// Parse date header.
 	t, err := time.Parse(iso8601Format, date)
 	if err != nil {
-		err = services.RespErrAuthorizationHeaderMalformed
+		err = responses.ErrAuthorizationHeaderMalformed
 		return
 	}
 
@@ -269,7 +269,7 @@ func (s *service) doesSignatureMatch(hashedPayload string, r *http.Request, regi
 
 	// Verify if signature match.
 	if !compareSignatureV4(newSignature, signV4Values.Signature) {
-		err = services.RespErrSignatureDoesNotMatch
+		err = responses.ErrSignatureDoesNotMatch
 		return
 	}
 

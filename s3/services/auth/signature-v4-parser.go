@@ -19,7 +19,7 @@ package auth
 
 import (
 	"errors"
-	"github.com/bittorrent/go-btfs/s3/services"
+	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"net/http"
 	"net/url"
@@ -55,14 +55,14 @@ func (c credentialHeader) getScope() string {
 func parseCredentialHeader(credElement string, region string, stype serviceType) (ch credentialHeader, err error) {
 	creds := strings.SplitN(strings.TrimSpace(credElement), "=", 2)
 	if len(creds) != 2 {
-		return ch, services.RespErrMissingFields
+		return ch, responses.ErrMissingFields
 	}
 	if creds[0] != "Credential" {
-		return ch, services.RespErrMissingCredTag
+		return ch, responses.ErrMissingCredTag
 	}
 	credElements := strings.Split(strings.TrimSpace(creds[1]), consts.SlashSeparator)
 	if len(credElements) < 5 {
-		return ch, services.RespErrCredMalformed
+		return ch, responses.ErrCredMalformed
 	}
 	accessKey := strings.Join(credElements[:len(credElements)-4], consts.SlashSeparator) // The access key may contain one or more `/`
 	//if !IsAccessKeyValid(accessKey) {
@@ -76,7 +76,7 @@ func parseCredentialHeader(credElement string, region string, stype serviceType)
 	var e error
 	cred.scope.date, e = time.Parse(yyyymmdd, credElements[0])
 	if e != nil {
-		return ch, services.RespErrAuthorizationHeaderMalformed
+		return ch, responses.ErrAuthorizationHeaderMalformed
 	}
 
 	cred.scope.region = credElements[1]
@@ -91,18 +91,18 @@ func parseCredentialHeader(credElement string, region string, stype serviceType)
 	}
 	// Should validate region, only if region is set.
 	if !isValidRegion(sRegion, region) {
-		return ch, services.RespErrAuthorizationHeaderMalformed
+		return ch, responses.ErrAuthorizationHeaderMalformed
 	}
 	if credElements[2] != string(stype) {
 		//switch stype {
 		//case ServiceSTS:
 		//	return ch, handlers.ErrcodeAuthorizationHeaderMalformed
 		//}
-		return ch, services.RespErrAuthorizationHeaderMalformed
+		return ch, responses.ErrAuthorizationHeaderMalformed
 	}
 	cred.scope.service = credElements[2]
 	if credElements[3] != "aws4_request" {
-		return ch, services.RespErrAuthorizationHeaderMalformed
+		return ch, responses.ErrAuthorizationHeaderMalformed
 	}
 	cred.scope.request = credElements[3]
 	return cred, nil
@@ -112,13 +112,13 @@ func parseCredentialHeader(credElement string, region string, stype serviceType)
 func parseSignature(signElement string) (string, error) {
 	signFields := strings.Split(strings.TrimSpace(signElement), "=")
 	if len(signFields) != 2 {
-		return "", services.RespErrMissingFields
+		return "", responses.ErrMissingFields
 	}
 	if signFields[0] != "Signature" {
-		return "", services.RespErrMissingSignTag
+		return "", responses.ErrMissingSignTag
 	}
 	if signFields[1] == "" {
-		return "", services.RespErrMissingFields
+		return "", responses.ErrMissingFields
 	}
 	signature := signFields[1]
 	return signature, nil
@@ -128,13 +128,13 @@ func parseSignature(signElement string) (string, error) {
 func parseSignedHeader(signedHdrElement string) ([]string, error) {
 	signedHdrFields := strings.Split(strings.TrimSpace(signedHdrElement), "=")
 	if len(signedHdrFields) != 2 {
-		return nil, services.RespErrMissingFields
+		return nil, responses.ErrMissingFields
 	}
 	if signedHdrFields[0] != "SignedHeaders" {
-		return nil, services.RespErrMissingSignHeadersTag
+		return nil, responses.ErrMissingSignHeadersTag
 	}
 	if signedHdrFields[1] == "" {
-		return nil, services.RespErrMissingFields
+		return nil, responses.ErrMissingFields
 	}
 	signedHeaders := strings.Split(signedHdrFields[1], ";")
 	return signedHeaders, nil
@@ -168,7 +168,7 @@ func doesV4PresignParamsExist(query url.Values) error {
 	v4PresignQueryParams := []string{consts.AmzAlgorithm, consts.AmzCredential, consts.AmzSignature, consts.AmzDate, consts.AmzSignedHeaders, consts.AmzExpires}
 	for _, v4PresignQueryParam := range v4PresignQueryParams {
 		if _, ok := query[v4PresignQueryParam]; !ok {
-			return services.RespErrInvalidQueryParams
+			return responses.ErrInvalidQueryParams
 		}
 	}
 	return nil
@@ -184,7 +184,7 @@ func parsePreSignV4(query url.Values, region string, stype serviceType) (psv pre
 
 	// Verify if the query algorithm is supported or not.
 	if query.Get(consts.AmzAlgorithm) != signV4Algorithm {
-		return psv, services.RespErrAuthorizationHeaderMalformed
+		return psv, responses.ErrAuthorizationHeaderMalformed
 	}
 
 	// Initialize signature version '4' structured header.
@@ -199,22 +199,22 @@ func parsePreSignV4(query url.Values, region string, stype serviceType) (psv pre
 	// Save date in native time.Time.
 	preSignV4Values.Date, err = time.Parse(iso8601Format, query.Get(consts.AmzDate))
 	if err != nil {
-		return psv, services.RespErrAuthorizationHeaderMalformed
+		return psv, responses.ErrAuthorizationHeaderMalformed
 	}
 
 	// Save expires in native time.Duration.
 	preSignV4Values.Expires, err = time.ParseDuration(query.Get(consts.AmzExpires) + "s")
 	if err != nil {
-		return psv, services.RespErrAuthorizationHeaderMalformed
+		return psv, responses.ErrAuthorizationHeaderMalformed
 	}
 
 	if preSignV4Values.Expires < 0 {
-		return psv, services.RespErrAuthorizationHeaderMalformed
+		return psv, responses.ErrAuthorizationHeaderMalformed
 	}
 
 	// Check if Expiry time is less than 7 days (value in seconds).
 	if preSignV4Values.Expires.Seconds() > 604800 {
-		return psv, services.RespErrAuthorizationHeaderMalformed
+		return psv, responses.ErrAuthorizationHeaderMalformed
 	}
 
 	// Save signed headers.
@@ -245,19 +245,19 @@ func parseSignV4(v4Auth string, region string, stype serviceType) (sv signValues
 	// to make parsing easier.
 	v4Auth = strings.ReplaceAll(v4Auth, " ", "")
 	if v4Auth == "" {
-		return sv, services.RespErrAuthHeaderEmpty
+		return sv, responses.ErrAuthHeaderEmpty
 	}
 
 	// Verify if the header algorithm is supported or not.
 	if !strings.HasPrefix(v4Auth, signV4Algorithm) {
-		return sv, services.RespErrSignatureVersionNotSupported
+		return sv, responses.ErrSignatureVersionNotSupported
 	}
 
 	// Strip off the Algorithm prefix.
 	v4Auth = strings.TrimPrefix(v4Auth, signV4Algorithm)
 	authFields := strings.Split(strings.TrimSpace(v4Auth), ",")
 	if len(authFields) != 3 {
-		return sv, services.RespErrMissingFields
+		return sv, responses.ErrMissingFields
 	}
 
 	// Initialize signature version '4' structured header.
@@ -292,7 +292,7 @@ func (s *service) getReqAccessKeyV4(r *http.Request, region string, stype servic
 		v4Auth := strings.TrimPrefix(r.Header.Get("Authorization"), signV4Algorithm)
 		authFields := strings.Split(strings.TrimSpace(v4Auth), ",")
 		if len(authFields) != 3 {
-			err = services.RespErrMissingFields
+			err = responses.ErrMissingFields
 			return
 		}
 		ch, err = parseCredentialHeader(authFields[0], region, stype)
@@ -303,14 +303,14 @@ func (s *service) getReqAccessKeyV4(r *http.Request, region string, stype servic
 
 	ack, err = s.accessKeySvc.Get(ch.accessKey)
 	if errors.Is(err, accesskey.ErrNotFound) {
-		err = services.RespErrInvalidAccessKeyID
+		err = responses.ErrInvalidAccessKeyID
 		return
 	}
 	if err != nil {
 		return
 	}
 	if !ack.Enable {
-		err = services.RespErrAccessKeyDisabled
+		err = responses.ErrAccessKeyDisabled
 		return
 	}
 

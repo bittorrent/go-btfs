@@ -2,7 +2,7 @@ package requests
 
 import (
 	"encoding/xml"
-	"github.com/bittorrent/go-btfs/s3/services"
+	"github.com/bittorrent/go-btfs/s3/responses"
 	"net/http"
 	"path"
 
@@ -121,7 +121,7 @@ func ParsePutBucketAclRequest(r *http.Request) (req *PutBucketAclRequest, err er
 /*********************************/
 
 // Parses location constraint from the incoming reader.
-func parseLocationConstraint(r *http.Request) (location string, s3Error *services.ResponseError) {
+func parseLocationConstraint(r *http.Request) (location string, s3Error *responses.Error) {
 	// If the request has no body with content-length set to 0,
 	// we do not have to validate location constraint. Bucket will
 	// be created at default region.
@@ -129,7 +129,7 @@ func parseLocationConstraint(r *http.Request) (location string, s3Error *service
 	err := utils.XmlDecoder(r.Body, &locationConstraint, r.ContentLength)
 	if err != nil && r.ContentLength != 0 {
 		// Treat all other failures as XML parsing errors.
-		return "", services.RespErrMalformedXML
+		return "", responses.ErrMalformedXML
 	} // else for both err as nil or io.EOF
 	location = locationConstraint.Location
 	if location == "" {

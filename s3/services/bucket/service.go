@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"github.com/bittorrent/go-btfs/s3/providers"
-	"github.com/bittorrent/go-btfs/s3/services"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"time"
 
@@ -42,25 +41,19 @@ func NewService(providers providers.Providerser, options ...Option) Service {
 }
 
 func (s *service) CheckACL(ack *accesskey.AccessKey, bucketName string, act action.Action) (err error) {
-	if act == action.ListBucketAction {
-		if ack.Key == "" {
-			err = services.RespErrAccessDenied
+	var bucketMeta Bucket
+	if act != action.CreateBucketAction && act != action.ListBucketAction {
+		if bucketName == "" {
+			return ErrNotFound
 		}
-		return
-	}
-
-	//需要判断bucketName是否为空字符串
-	if bucketName == "" {
-		return services.RespErrNoSuchBucket
-	}
-
-	bucketMeta, err := s.GetBucketMeta(context.Background(), bucketName)
-	if err != nil {
-		return err
+		bucketMeta, err = s.GetBucketMeta(context.Background(), bucketName)
+		if err != nil {
+			return err
+		}
 	}
 
 	if policy.IsAllowed(bucketMeta.Owner == ack.Key, bucketMeta.Acl, act) == false {
-		return services.RespErrAccessDenied
+		return errors.New("not allowed")
 	}
 	return
 }
@@ -98,7 +91,7 @@ func (s *service) CreateBucket(ctx context.Context, bucket, region, accessKey, a
 func (s *service) lockGetBucketMeta(bucket string) (meta Bucket, err error) {
 	err = s.providers.GetStateStore().Get(bucketPrefix+bucket, &meta)
 	if errors.Is(err, providers.ErrStateStoreNotFound) {
-		err = services.RespErrNoSuchBucket
+		err = ErrNotFound
 	}
 	return
 }

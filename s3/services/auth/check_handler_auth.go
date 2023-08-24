@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/hex"
-	"github.com/bittorrent/go-btfs/s3/services"
+	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"net/http"
 
@@ -28,7 +28,7 @@ func (s *service) CheckRequestAuthTypeCredential(ctx context.Context, r *http.Re
 		ack, err = s.IsReqAuthenticated(ctx, r, "", ServiceS3)
 		return
 	default:
-		err = services.RespErrSignatureVersionNotSupported
+		err = responses.ErrSignatureVersionNotSupported
 		return
 	}
 }
@@ -41,7 +41,7 @@ func (s *service) ReqSignatureV4Verify(r *http.Request, region string, stype ser
 	case isRequestPresignedSignatureV4(r):
 		return s.doesPresignedSignatureMatch(sha256sum, r, region, stype)
 	default:
-		return nil, services.RespErrAccessDenied
+		return nil, responses.ErrAccessDenied
 	}
 }
 
@@ -54,7 +54,7 @@ func (s *service) IsReqAuthenticated(ctx context.Context, r *http.Request, regio
 
 	clientETag, err := etag.FromContentMD5(r.Header)
 	if err != nil {
-		err = services.RespErrInvalidDigest
+		err = responses.ErrInvalidDigest
 		return
 	}
 
@@ -65,14 +65,14 @@ func (s *service) IsReqAuthenticated(ctx context.Context, r *http.Request, regio
 		if sha256Sum, ok := r.Form[consts.AmzContentSha256]; ok && len(sha256Sum) > 0 {
 			contentSHA256, err = hex.DecodeString(sha256Sum[0])
 			if err != nil {
-				err = services.RespErrContentSHA256Mismatch
+				err = responses.ErrContentSHA256Mismatch
 				return
 			}
 		}
 	} else if _, ok := r.Header[consts.AmzContentSha256]; !skipSHA256 && ok {
 		contentSHA256, err = hex.DecodeString(r.Header.Get(consts.AmzContentSha256))
 		if err != nil || len(contentSHA256) == 0 {
-			err = services.RespErrContentSHA256Mismatch
+			err = responses.ErrContentSHA256Mismatch
 			return
 		}
 	}
@@ -81,7 +81,7 @@ func (s *service) IsReqAuthenticated(ctx context.Context, r *http.Request, regio
 	// The verification happens implicit during reading.
 	reader, err := hash.NewReader(r.Body, -1, clientETag.String(), hex.EncodeToString(contentSHA256), -1)
 	if err != nil {
-		err = services.RespErrInternalError
+		err = responses.ErrInternalError
 		return
 	}
 	r.Body = reader

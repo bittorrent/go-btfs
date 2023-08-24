@@ -2,10 +2,13 @@ package bucket
 
 import (
 	"context"
+	"errors"
 	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"time"
 )
+
+var ErrNotFound = errors.New("bucket not found")
 
 type Service interface {
 	CheckACL(accessKeyRecord *accesskey.AccessKey, bucketName string, action action.Action) (err error)

@@ -2,12 +2,12 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"github.com/bittorrent/go-btfs/s3/cctx"
 	"github.com/bittorrent/go-btfs/s3/etag"
 	"github.com/bittorrent/go-btfs/s3/requests"
 	"github.com/bittorrent/go-btfs/s3/responses"
-	"github.com/bittorrent/go-btfs/s3/services"
 	"github.com/bittorrent/go-btfs/s3/services/auth"
 	"github.com/bittorrent/go-btfs/s3/services/bucket"
 	"github.com/bittorrent/go-btfs/s3/services/cors"
@@ -93,32 +93,39 @@ func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 
 	req, err := requests.ParsePutBucketRequest(r)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
 		return
 	}
 
 	ctx := r.Context()
+	ack := cctx.GetAccessKey(r)
+
+	err = h.bucketSvc.CheckACL(ack, "", s3action.PutBucketAclAction)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, responses.ErrAccessDenied)
+		return
+	}
 
 	if err = s3utils.CheckValidBucketNameStrict(req.Bucket); err != nil {
-		responses.WriteErrorResponse(w, r, services.RespErrInvalidBucketName)
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidBucketName)
 		return
 	}
 
 	if !requests.CheckAclPermissionType(&req.ACL) {
-		err = services.RespErrNotImplemented
-		responses.WriteErrorResponse(w, r, services.RespErrNotImplemented)
+		err = responses.ErrNotImplemented
+		responses.WriteErrorResponse(w, r, responses.ErrNotImplemented)
 		return
 	}
 
 	if ok := h.bucketSvc.HasBucket(ctx, req.Bucket); ok {
-		err = services.RespErrBucketAlreadyExists
-		responses.WriteErrorResponseHeadersOnly(w, r, services.RespErrBucketAlreadyExists)
+		err = responses.ErrBucketAlreadyExists
+		responses.WriteErrorResponseHeadersOnly(w, r, responses.ErrBucketAlreadyExists)
 		return
 	}
 
 	err = h.bucketSvc.CreateBucket(ctx, req.Bucket, req.Region, cctx.GetAccessKey(r).Key, req.ACL)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, services.RespErrInternalError)
+		responses.WriteErrorResponse(w, r, responses.ErrInternalError)
 		return
 	}
 
@@ -140,21 +147,19 @@ func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 
 	req, err := requests.ParseHeadBucketRequest(r)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
 		return
 	}
 
-	ctx := r.Context()
 	ack := cctx.GetAccessKey(r)
 
-	if ok := h.bucketSvc.HasBucket(ctx, req.Bucket); !ok {
-		responses.WriteErrorResponseHeadersOnly(w, r, services.RespErrNoSuchBucket)
+	err = h.bucketSvc.CheckACL(ack, req.Bucket, s3action.HeadBucketAction)
+	if errors.Is(err, bucket.ErrNotFound) {
+		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}
-
-	err = h.bucketSvc.CheckACL(ack, req.Bucket, s3action.HeadBucketAction)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
+		responses.WriteErrorResponse(w, r, responses.ErrAccessDenied)
 		return
 	}
 
@@ -169,7 +174,7 @@ func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 
 	req, err := requests.ParseDeleteBucketRequest(r)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
 		return
 	}
 
@@ -200,7 +205,7 @@ func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ack := cctx.GetAccessKey(r)
 	if ack.Key == "" {
-		responses.WriteErrorResponse(w, r, services.RespErrNoAccessKey)
+		responses.WriteErrorResponse(w, r, responses.ErrNoAccessKey)
 		return
 	}
 
@@ -222,7 +227,7 @@ func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 
 	req, err := requests.ParseGetBucketAclRequest(r)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
 		return
 	}
 
@@ -230,7 +235,7 @@ func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	ack := cctx.GetAccessKey(r)
 
 	if !h.bucketSvc.HasBucket(ctx, req.Bucket) {
-		responses.WriteErrorResponseHeadersOnly(w, r, services.RespErrNoSuchBucket)
+		responses.WriteErrorResponseHeadersOnly(w, r, responses.ErrNoSuchBucket)
 		return
 	}
 
@@ -258,7 +263,7 @@ func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 
 	req, err := requests.ParsePutBucketAclRequest(r)
 	if err != nil || len(req.ACL) == 0 || len(req.Bucket) == 0 {
-		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
 		return
 	}
 
@@ -272,7 +277,7 @@ func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !requests.CheckAclPermissionType(&req.ACL) {
-		responses.WriteErrorResponse(w, r, services.RespErrNotImplemented)
+		responses.WriteErrorResponse(w, r, responses.ErrNotImplemented)
 		return
 	}
 
@@ -296,19 +301,19 @@ func (h *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	// X-Amz-Copy-Source shouldn't be set for this call.
 	if _, ok := r.Header[consts.AmzCopySource]; ok {
-		responses.WriteErrorResponse(w, r, services.RespErrInvalidCopySource)
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidCopySource)
 		return
 	}
 
 	buc, obj, err := requests.ParseBucketAndObject(r)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestParameter)
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestParameter)
 		return
 	}
 
 	clientETag, err := etag.FromContentMD5(r.Header)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, services.RespErrInvalidDigest)
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidDigest)
 		return
 	}
 	_ = clientETag
@@ -317,16 +322,16 @@ func (h *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 	// todo: streaming signed
 
 	if size == -1 {
-		responses.WriteErrorResponse(w, r, services.RespErrMissingContentLength)
+		responses.WriteErrorResponse(w, r, responses.ErrMissingContentLength)
 		return
 	}
 	if size == 0 {
-		responses.WriteErrorResponse(w, r, services.RespErrEntityTooSmall)
+		responses.WriteErrorResponse(w, r, responses.ErrEntityTooSmall)
 		return
 	}
 
 	if size > consts.MaxObjectSize {
-		responses.WriteErrorResponse(w, r, services.RespErrEntityTooLarge)
+		responses.WriteErrorResponse(w, r, responses.ErrEntityTooLarge)
 		return
 	}
 
