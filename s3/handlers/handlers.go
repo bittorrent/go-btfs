@@ -60,8 +60,9 @@ func (h *Handlers) name() string {
 }
 
 func (h *Handlers) rlock(ctx context.Context, key string, w http.ResponseWriter, r *http.Request) (runlock func(), err error) {
+	key = lockPrefix + key
 	ctx, cancel := context.WithTimeout(ctx, lockWaitTimeout)
-	err = h.nslock.RLock(ctx, lockPrefix+key)
+	err = h.nslock.RLock(ctx, key)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, err)
 		cancel()
@@ -75,8 +76,9 @@ func (h *Handlers) rlock(ctx context.Context, key string, w http.ResponseWriter,
 }
 
 func (h *Handlers) lock(ctx context.Context, key string, w http.ResponseWriter, r *http.Request) (unlock func(), err error) {
+	key = lockPrefix + key
 	ctx, cancel := context.WithTimeout(ctx, lockWaitTimeout)
-	err = h.nslock.Lock(ctx, lockPrefix+key)
+	err = h.nslock.Lock(ctx, key)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, err)
 		cancel()
