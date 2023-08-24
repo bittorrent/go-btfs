@@ -18,18 +18,105 @@
 package auth
 
 import (
-	"github.com/bittorrent/go-btfs/s3/responses"
+	"bytes"
+	"encoding/hex"
+	"github.com/bittorrent/go-btfs/s3/consts"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
-	"strings"
-
-	"github.com/bittorrent/go-btfs/s3/consts"
 )
 
 // http Header "x-amz-content-sha256" == "UNSIGNED-PAYLOAD" indicates that the
 // client did not calculate sha256 of the payload.
 const unsignedPayload = "UNSIGNED-PAYLOAD"
+
+// SkipContentSha256Cksum returns true if caller needs to skip
+// payload checksum, false if not.
+func SkipContentSha256Cksum(r *http.Request) bool {
+	var (
+		v  []string
+		ok bool
+	)
+
+	if isRequestPresignedSignatureV4(r) {
+		v, ok = r.Form[consts.AmzContentSha256]
+		if !ok {
+			v, ok = r.Header[consts.AmzContentSha256]
+		}
+	} else {
+		v, ok = r.Header[consts.AmzContentSha256]
+	}
+
+	// Skip if no header was set.
+	if !ok {
+		return true
+	}
+
+	// If x-amz-content-sha256 is set and the value is not
+	// 'UNSIGNED-PAYLOAD' we should validate the content sha256.
+	switch v[0] {
+	case unsignedPayload:
+		return true
+	case consts.EmptySHA256:
+		// some broken clients set empty-sha256
+		// with > 0 content-length in the body,
+		// we should skip such clients and allow
+		// blindly such insecure clients only if
+		// S3 strict compatibility is disabled.
+		if r.ContentLength > 0 {
+			// We return true only in situations when
+			// deployment has asked MinIO to allow for
+			// such broken clients and content-length > 0.
+			return true
+		}
+	}
+	return false
+}
+
+// Returns SHA256 for calculating canonical-request.
+func GetContentSha256Cksum(r *http.Request, stype serviceType) string {
+	if stype == ServiceSTS {
+		payload, err := ioutil.ReadAll(io.LimitReader(r.Body, consts.StsRequestBodyLimit))
+		if err != nil {
+			log.Errorf("ServiceSTS ReadAll err:%v", err)
+		}
+		sum256 := sha256.Sum256(payload)
+		r.Body = ioutil.NopCloser(bytes.NewReader(payload))
+		return hex.EncodeToString(sum256[:])
+	}
+
+	var (
+		defaultSha256Cksum string
+		v                  []string
+		ok                 bool
+	)
+
+	// For a presigned request we look at the query param for sha256.
+	if isRequestPresignedSignatureV4(r) {
+		// X-Amz-Content-Sha256, if not set in presigned requests, checksum
+		// will default to 'UNSIGNED-PAYLOAD'.
+		defaultSha256Cksum = unsignedPayload
+		v, ok = r.Form[consts.AmzContentSha256]
+		if !ok {
+			v, ok = r.Header[consts.AmzContentSha256]
+		}
+	} else {
+		// X-Amz-Content-Sha256, if not set in signed requests, checksum
+		// will default to sha256([]byte("")).
+		defaultSha256Cksum = consts.EmptySHA256
+		v, ok = r.Header[consts.AmzContentSha256]
+	}
+
+	// We found 'X-Amz-Content-Sha256' return the captured value.
+	if ok {
+		return v[0]
+	}
+
+	// We couldn't find 'X-Amz-Content-Sha256'.
+	return defaultSha256Cksum
+}
 
 // isValidRegion - verify if incoming region value is valid with configured Region.
 func isValidRegion(reqRegion string, confRegion string) bool {
@@ -47,6 +134,28 @@ func isValidRegion(reqRegion string, confRegion string) bool {
 	return reqRegion == confRegion
 }
 
+// check if the access key is valid and recognized, additionally
+// also returns if the access key is owner/admin.
+func (s *AuthSys) checkKeyValid(r *http.Request, accessKey string) (auth.Credentials, bool, apierrors.ErrorCode) {
+
+	cred := s.AdminCred
+	if cred.AccessKey != accessKey {
+		// Check if the access key is part of users credentials.
+		ucred, ok := s.Iam.GetUser(r.Context(), accessKey)
+		if !ok {
+			// Credentials will be invalid but and disabled
+			// return a different error in such a scenario.
+			if ucred.Status == auth.AccountOff {
+				return cred, false, apierrors.ErrAccessKeyDisabled
+			}
+			return cred, false, apierrors.ErrInvalidAccessKeyID
+		}
+		cred = ucred
+	}
+	owner := cred.AccessKey == s.AdminCred.AccessKey
+	return cred, owner, apierrors.ErrNone
+}
+
 func contains(slice interface{}, elem interface{}) bool {
 	v := reflect.ValueOf(slice)
 	if v.Kind() == reflect.Slice {
@@ -60,13 +169,13 @@ func contains(slice interface{}, elem interface{}) bool {
 }
 
 // extractSignedHeaders extract signed headers from Authorization header
-func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header, error) {
+func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header, apierrors.ErrorCode) {
 	reqHeaders := r.Header
 	reqQueries := r.Form
 	// find whether "host" is part of list of signed headers.
-	// if not return ErrcodeUnsignedHeaders. "host" is mandatory.
+	// if not return ErrUnsignedHeaders. "host" is mandatory.
 	if !contains(signedHeaders, "host") {
-		return nil, responses.ErrUnsignedHeaders
+		return nil, apierrors.ErrUnsignedHeaders
 	}
 	extractedSignedHeaders := make(http.Header)
 	for _, header := range signedHeaders {
@@ -116,105 +225,8 @@ func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header,
 			// calculation to be compatible with such clients.
 			extractedSignedHeaders.Set(header, strconv.FormatInt(r.ContentLength, 10))
 		default:
-			return nil, responses.ErrUnsignedHeaders
+			return nil, apierrors.ErrUnsignedHeaders
 		}
 	}
-	return extractedSignedHeaders, nil
-}
-
-// Returns SHA256 for calculating canonical-request.
-func getContentSha256Cksum(r *http.Request, stype serviceType) string {
-	//if stype == ServiceSTS {
-	//	payload, err := ioutil.ReadAll(io.LimitReader(r.Body, consts.StsRequestBodyLimit))
-	//	if err != nil {
-	//		//log.Errorf("ServiceSTS ReadAll err:%v", err)
-	//	}
-	//	sum256 := sha256.Sum256(payload)
-	//	r.Body = ioutil.NopCloser(bytes.NewReader(payload))
-	//	return hex.EncodeToString(sum256[:])
-	//}
-
-	var (
-		defaultSha256Cksum string
-		v                  []string
-		ok                 bool
-	)
-
-	// For a presigned request we look at the query param for sha256.
-	if isRequestPresignedSignatureV4(r) {
-		// X-Amz-Content-Sha256, if not set in presigned requests, checksum
-		// will default to 'UNSIGNED-PAYLOAD'.
-		defaultSha256Cksum = unsignedPayload
-		v, ok = r.Form[consts.AmzContentSha256]
-		if !ok {
-			v, ok = r.Header[consts.AmzContentSha256]
-		}
-	} else {
-		// X-Amz-Content-Sha256, if not set in signed requests, checksum
-		// will default to sha256([]byte("")).
-		defaultSha256Cksum = consts.EmptySHA256
-		v, ok = r.Header[consts.AmzContentSha256]
-	}
-
-	// We found 'X-Amz-Content-Sha256' return the captured value.
-	if ok {
-		return v[0]
-	}
-
-	// We couldn't find 'X-Amz-Content-Sha256'.
-	return defaultSha256Cksum
-}
-
-// isRequestSignatureV4 Verify if request has AWS Signature Version '4'.
-func isRequestSignatureV4(r *http.Request) bool {
-	return strings.HasPrefix(r.Header.Get("Authorization"), signV4Algorithm)
-}
-
-// Verify if request has AWS PreSign Version '4'.
-func isRequestPresignedSignatureV4(r *http.Request) bool {
-	_, ok := r.URL.Query()["X-Amz-Credential"]
-	return ok
-}
-
-// SkipContentSha256Cksum returns true if caller needs to skip
-// payload checksum, false if not.
-func SkipContentSha256Cksum(r *http.Request) bool {
-	var (
-		v  []string
-		ok bool
-	)
-
-	if isRequestPresignedSignatureV4(r) {
-		v, ok = r.Form[consts.AmzContentSha256]
-		if !ok {
-			v, ok = r.Header[consts.AmzContentSha256]
-		}
-	} else {
-		v, ok = r.Header[consts.AmzContentSha256]
-	}
-
-	// Skip if no header was set.
-	if !ok {
-		return true
-	}
-
-	// If x-amz-content-sha256 is set and the value is not
-	// 'UNSIGNED-PAYLOAD' we should validate the content sha256.
-	switch v[0] {
-	case unsignedPayload:
-		return true
-	case consts.EmptySHA256:
-		// some broken clients set empty-sha256
-		// with > 0 content-length in the body,
-		// we should skip such clients and allow
-		// blindly such insecure clients only if
-		// S3 strict compatibility is disabled.
-		if r.ContentLength > 0 {
-			// We return true only in situations when
-			// deployment has asked MinIO to allow for
-			// such broken clients and content-length > 0.
-			return true
-		}
-	}
-	return false
+	return extractedSignedHeaders, apierrors.ErrNone
 }

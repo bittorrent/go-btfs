@@ -15,274 +15,221 @@
 // implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package auth
+package iam
 
 import (
-	"crypto/subtle"
-	"errors"
-	"github.com/bittorrent/go-btfs/s3/responses"
-	"github.com/bittorrent/go-btfs/s3/services/accesskey"
-	"net/http"
-	"net/url"
-	"strconv"
-	"time"
-
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"github.com/bittorrent/go-btfs/s3/apierrors"
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/set"
-	"github.com/bittorrent/go-btfs/s3/utils"
+	"github.com/bittorrent/go-btfs/s3/iam/auth"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"reflect"
+	"strconv"
 )
 
-// AWS Signature Version '4' constants.
-const (
-	signV4Algorithm = "AWS4-HMAC-SHA256"
-	iso8601Format   = "20060102T150405Z"
-	yyyymmdd        = "20060102"
-)
+// http Header "x-amz-content-sha256" == "UNSIGNED-PAYLOAD" indicates that the
+// client did not calculate sha256 of the payload.
+const unsignedPayload = "UNSIGNED-PAYLOAD"
 
-type serviceType string
-
-const (
-	ServiceS3 serviceType = "s3"
-	////ServiceSTS STS
-	//ServiceSTS serviceType = "sts"
-)
-
-// compareSignatureV4 returns true if and only if both signatures
-// are equal. The signatures are expected to be HEX encoded strings
-// according to the AWS S3 signature V4 spec.
-func compareSignatureV4(sig1, sig2 string) bool {
-	// The CTC using []byte(str) works because the hex encoding
-	// is unique for a sequence of bytes. See also compareSignatureV2.
-	return subtle.ConstantTimeCompare([]byte(sig1), []byte(sig2)) == 1
-}
-
-// DoesPresignedSignatureMatch - Verify queryString headers with presigned signature
-//   - http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html
-//
-// returns handlers.ErrcodeNone if the signature matches.
-func (s *service) doesPresignedSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) (ack *accesskey.AccessKey, err error) {
-	// Copy request
-	req := *r
-
-	// Parse request query string.
-	pSignValues, err := parsePreSignV4(req.Form, region, stype)
-	if err != nil {
-		return
-	}
-
-	// Check accesskey
-	ack, err = s.accessKeySvc.Get(pSignValues.Credential.accessKey)
-	if errors.Is(err, accesskey.ErrNotFound) {
-		err = responses.ErrInvalidAccessKeyID
-	}
-	if err != nil {
-		return
-	}
-	if !ack.Enable {
-		err = responses.ErrAccessKeyDisabled
-		return
-	}
-
-	// Extract all the signed headers along with its values.
-	extractedSignedHeaders, err := extractSignedHeaders(pSignValues.SignedHeaders, r)
-	if err != nil {
-		return
-	}
-
-	// If the host which signed the request is slightly ahead in time (by less than MaxSkewTime) the
-	// request should still be allowed.
-	if pSignValues.Date.After(time.Now().UTC().Add(consts.MaxSkewTime)) {
-		err = responses.ErrRequestNotReadyYet
-		return
-	}
-
-	if time.Now().UTC().Sub(pSignValues.Date) > pSignValues.Expires {
-		err = responses.ErrExpiredPresignRequest
-		return
-	}
-
-	// Save the date and expires.
-	t := pSignValues.Date
-	expireSeconds := int(pSignValues.Expires / time.Second)
-
-	// Construct new query.
-	query := make(url.Values)
-	clntHashedPayload := req.Form.Get(consts.AmzContentSha256)
-	if clntHashedPayload != "" {
-		query.Set(consts.AmzContentSha256, hashedPayload)
-	}
-
-	// not check token?
-	//token := req.Form.Get(consts.AmzSecurityToken)
-	//if token != "" {
-	//	query.Set(consts.AmzSecurityToken, cred.SessionToken)
-	//}
-
-	query.Set(consts.AmzAlgorithm, signV4Algorithm)
-
-	// Construct the query.
-	query.Set(consts.AmzDate, t.Format(iso8601Format))
-	query.Set(consts.AmzExpires, strconv.Itoa(expireSeconds))
-	query.Set(consts.AmzSignedHeaders, utils.GetSignedHeaders(extractedSignedHeaders))
-	query.Set(consts.AmzCredential, ack.Key+consts.SlashSeparator+pSignValues.Credential.getScope())
-
-	defaultSigParams := set.CreateStringSet(
-		consts.AmzContentSha256,
-		//consts.AmzSecurityToken,
-		consts.AmzAlgorithm,
-		consts.AmzDate,
-		consts.AmzExpires,
-		consts.AmzSignedHeaders,
-		consts.AmzCredential,
-		consts.AmzSignature,
+// SkipContentSha256Cksum returns true if caller needs to skip
+// payload checksum, false if not.
+func SkipContentSha256Cksum(r *http.Request) bool {
+	var (
+		v  []string
+		ok bool
 	)
 
-	// Add missing query parameters if any provided in the request URL
-	for k, v := range req.Form {
-		if !defaultSigParams.Contains(k) {
-			query[k] = v
+	if isRequestPresignedSignatureV4(r) {
+		v, ok = r.Form[consts.AmzContentSha256]
+		if !ok {
+			v, ok = r.Header[consts.AmzContentSha256]
+		}
+	} else {
+		v, ok = r.Header[consts.AmzContentSha256]
+	}
+
+	// Skip if no header was set.
+	if !ok {
+		return true
+	}
+
+	// If x-amz-content-sha256 is set and the value is not
+	// 'UNSIGNED-PAYLOAD' we should validate the content sha256.
+	switch v[0] {
+	case unsignedPayload:
+		return true
+	case consts.EmptySHA256:
+		// some broken clients set empty-sha256
+		// with > 0 content-length in the body,
+		// we should skip such clients and allow
+		// blindly such insecure clients only if
+		// S3 strict compatibility is disabled.
+		if r.ContentLength > 0 {
+			// We return true only in situations when
+			// deployment has asked MinIO to allow for
+			// such broken clients and content-length > 0.
+			return true
 		}
 	}
-
-	// Get the encoded query.
-	encodedQuery := query.Encode()
-
-	// Verify if date query is same.
-	if req.Form.Get(consts.AmzDate) != query.Get(consts.AmzDate) {
-		err = responses.ErrSignatureDoesNotMatch
-	}
-	// Verify if expires query is same.
-	if req.Form.Get(consts.AmzExpires) != query.Get(consts.AmzExpires) {
-		err = responses.ErrSignatureDoesNotMatch
-		return
-	}
-	// Verify if signed headers query is same.
-	if req.Form.Get(consts.AmzSignedHeaders) != query.Get(consts.AmzSignedHeaders) {
-		err = responses.ErrSignatureDoesNotMatch
-		return
-	}
-	// Verify if credential query is same.
-	if req.Form.Get(consts.AmzCredential) != query.Get(consts.AmzCredential) {
-		err = responses.ErrSignatureDoesNotMatch
-		return
-	}
-	// Verify if sha256 payload query is same.
-	if clntHashedPayload != "" && clntHashedPayload != query.Get(consts.AmzContentSha256) {
-		err = responses.ErrContentSHA256Mismatch
-		return
-	}
-	// not check SessionToken.
-	//// Verify if security token is correct.
-	//if token != "" && subtle.ConstantTimeCompare([]byte(token), []byte(cred.SessionToken)) != 1 {
-	//	return handlers.ErrInvalidToken
-	//}
-
-	// Verify finally if signature is same.
-
-	// Get canonical request.
-	presignedCanonicalReq := utils.GetCanonicalRequest(extractedSignedHeaders, hashedPayload, encodedQuery, req.URL.Path, req.Method)
-
-	// Get string to sign from canonical request.
-	presignedStringToSign := utils.GetStringToSign(presignedCanonicalReq, t, pSignValues.Credential.getScope())
-
-	// Get hmac presigned signing key.
-	presignedSigningKey := utils.GetSigningKey(ack.Secret, pSignValues.Credential.scope.date,
-		pSignValues.Credential.scope.region, string(stype))
-
-	// Get new signature.
-	newSignature := utils.GetSignature(presignedSigningKey, presignedStringToSign)
-
-	// Verify signature.
-	if !compareSignatureV4(req.Form.Get(consts.AmzSignature), newSignature) {
-		err = responses.ErrSignatureDoesNotMatch
-		return
-	}
-
-	return
+	return false
 }
 
-// DoesSignatureMatch - Verify authorization header with calculated header in accordance with
-//   - http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html
-func (s *service) doesSignatureMatch(hashedPayload string, r *http.Request, region string, stype serviceType) (ack *accesskey.AccessKey, err error) {
-	// Copy request.
-	req := *r
-
-	// Save authorization header.
-	v4Auth := req.Header.Get(consts.Authorization)
-
-	// Parse signature version '4' header.
-	signV4Values, err := parseSignV4(v4Auth, region, stype)
-	if err != nil {
-		return
+// Returns SHA256 for calculating canonical-request.
+func GetContentSha256Cksum(r *http.Request, stype serviceType) string {
+	if stype == ServiceSTS {
+		payload, err := ioutil.ReadAll(io.LimitReader(r.Body, consts.StsRequestBodyLimit))
+		if err != nil {
+			log.Errorf("ServiceSTS ReadAll err:%v", err)
+		}
+		sum256 := sha256.Sum256(payload)
+		r.Body = ioutil.NopCloser(bytes.NewReader(payload))
+		return hex.EncodeToString(sum256[:])
 	}
 
-	// Extract all the signed headers along with its values.
-	extractedSignedHeaders, err := extractSignedHeaders(signV4Values.SignedHeaders, r)
-	if err != nil {
-		return
+	var (
+		defaultSha256Cksum string
+		v                  []string
+		ok                 bool
+	)
+
+	// For a presigned request we look at the query param for sha256.
+	if isRequestPresignedSignatureV4(r) {
+		// X-Amz-Content-Sha256, if not set in presigned requests, checksum
+		// will default to 'UNSIGNED-PAYLOAD'.
+		defaultSha256Cksum = unsignedPayload
+		v, ok = r.Form[consts.AmzContentSha256]
+		if !ok {
+			v, ok = r.Header[consts.AmzContentSha256]
+		}
+	} else {
+		// X-Amz-Content-Sha256, if not set in signed requests, checksum
+		// will default to sha256([]byte("")).
+		defaultSha256Cksum = consts.EmptySHA256
+		v, ok = r.Header[consts.AmzContentSha256]
 	}
 
-	// Check accesskey
-	ack, err = s.accessKeySvc.Get(signV4Values.Credential.accessKey)
-	if errors.Is(err, accesskey.ErrNotFound) {
-		err = responses.ErrInvalidAccessKeyID
-	}
-	if err != nil {
-		return
-	}
-	if !ack.Enable {
-		err = responses.ErrAccessKeyDisabled
-		return
+	// We found 'X-Amz-Content-Sha256' return the captured value.
+	if ok {
+		return v[0]
 	}
 
-	// Extract date, if not present throw error.
-	var date string
-	if date = req.Header.Get(consts.AmzDate); date == "" {
-		if date = r.Header.Get(consts.Date); date == "" {
-			err = responses.ErrMissingDateHeader
-			return
+	// We couldn't find 'X-Amz-Content-Sha256'.
+	return defaultSha256Cksum
+}
+
+// isValidRegion - verify if incoming region value is valid with configured Region.
+func isValidRegion(reqRegion string, confRegion string) bool {
+	if confRegion == "" {
+		return true
+	}
+	if confRegion == "US" {
+		confRegion = consts.DefaultRegion
+	}
+	// Some older s3 clients set region as "US" instead of
+	// globalDefaultRegion, handle it.
+	if reqRegion == "US" {
+		reqRegion = consts.DefaultRegion
+	}
+	return reqRegion == confRegion
+}
+
+// check if the access key is valid and recognized, additionally
+// also returns if the access key is owner/admin.
+func (s *AuthSys) checkKeyValid(r *http.Request, accessKey string) (auth.Credentials, bool, apierrors.ErrorCode) {
+
+	cred := s.AdminCred
+	if cred.AccessKey != accessKey {
+		// Check if the access key is part of users credentials.
+		ucred, ok := s.Iam.GetUser(r.Context(), accessKey)
+		if !ok {
+			// Credentials will be invalid but and disabled
+			// return a different error in such a scenario.
+			if ucred.Status == auth.AccountOff {
+				return cred, false, apierrors.ErrAccessKeyDisabled
+			}
+			return cred, false, apierrors.ErrInvalidAccessKeyID
+		}
+		cred = ucred
+	}
+	owner := cred.AccessKey == s.AdminCred.AccessKey
+	return cred, owner, apierrors.ErrNone
+}
+
+func contains(slice interface{}, elem interface{}) bool {
+	v := reflect.ValueOf(slice)
+	if v.Kind() == reflect.Slice {
+		for i := 0; i < v.Len(); i++ {
+			if v.Index(i).Interface() == elem {
+				return true
+			}
 		}
 	}
-
-	// Parse date header.
-	t, err := time.Parse(iso8601Format, date)
-	if err != nil {
-		err = responses.ErrAuthorizationHeaderMalformed
-		return
-	}
-
-	// Query string.
-	queryStr := req.URL.Query().Encode()
-
-	// Get canonical request.
-	canonicalRequest := utils.GetCanonicalRequest(extractedSignedHeaders, hashedPayload, queryStr, req.URL.Path, req.Method)
-
-	// Get string to sign from canonical request.
-	stringToSign := utils.GetStringToSign(canonicalRequest, t, signV4Values.Credential.getScope())
-
-	// Get hmac signing key.
-	signingKey := utils.GetSigningKey(ack.Secret, signV4Values.Credential.scope.date,
-		signV4Values.Credential.scope.region, string(stype))
-
-	// Calculate signature.
-	newSignature := utils.GetSignature(signingKey, stringToSign)
-
-	// Verify if signature match.
-	if !compareSignatureV4(newSignature, signV4Values.Signature) {
-		err = responses.ErrSignatureDoesNotMatch
-		return
-	}
-
-	return
+	return false
 }
 
-//// getScope generate a string of a specific date, an AWS region, and a service.
-//func getScope(t time.Time, region string) string {
-//	scope := strings.Join([]string{
-//		t.Format(yyyymmdd),
-//		region,
-//		string(ServiceS3),
-//		"aws4_request",
-//	}, consts.SlashSeparator)
-//	return scope
-//}
+// extractSignedHeaders extract signed headers from Authorization header
+func extractSignedHeaders(signedHeaders []string, r *http.Request) (http.Header, apierrors.ErrorCode) {
+	reqHeaders := r.Header
+	reqQueries := r.Form
+	// find whether "host" is part of list of signed headers.
+	// if not return ErrUnsignedHeaders. "host" is mandatory.
+	if !contains(signedHeaders, "host") {
+		return nil, apierrors.ErrUnsignedHeaders
+	}
+	extractedSignedHeaders := make(http.Header)
+	for _, header := range signedHeaders {
+		// `host` will not be found in the headers, can be found in r.Host.
+		// but its alway necessary that the list of signed headers containing host in it.
+		val, ok := reqHeaders[http.CanonicalHeaderKey(header)]
+		if !ok {
+			// try to set headers from Query String
+			val, ok = reqQueries[header]
+		}
+		if ok {
+			extractedSignedHeaders[http.CanonicalHeaderKey(header)] = val
+			continue
+		}
+		switch header {
+		case "expect":
+			// Golang http server strips off 'Expect' header, if the
+			// client sent this as part of signed headers we need to
+			// handle otherwise we would see a signature mismatch.
+			// `aws-cli` sets this as part of signed headers.
+			//
+			// According to
+			// http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.20
+			// Expect header is always of form:
+			//
+			//   Expect       =  "Expect" ":" 1#expectation
+			//   expectation  =  "100-continue" | expectation-extension
+			//
+			// So it safe to assume that '100-continue' is what would
+			// be sent, for the time being keep this work around.
+			// Adding a *TODO* to remove this later when Golang server
+			// doesn't filter out the 'Expect' header.
+			extractedSignedHeaders.Set(header, "100-continue")
+		case "host":
+			// Go http server removes "host" from Request.Header
+
+			//extractedSignedHeaders.Set(header, r.Host)
+			// todo use r.Host, or filedag-web deal with
+			//value := strings.Split(r.Host, ":")
+			extractedSignedHeaders.Set(header, r.Host)
+		case "transfer-encoding":
+			// Go http server removes "host" from Request.Header
+			extractedSignedHeaders[http.CanonicalHeaderKey(header)] = r.TransferEncoding
+		case "content-length":
+			// Signature-V4 spec excludes Content-Length from signed headers list for signature calculation.
+			// But some clients deviate from this rule. Hence we consider Content-Length for signature
+			// calculation to be compatible with such clients.
+			extractedSignedHeaders.Set(header, strconv.FormatInt(r.ContentLength, 10))
+		default:
+			return nil, apierrors.ErrUnsignedHeaders
+		}
+	}
+	return extractedSignedHeaders, apierrors.ErrNone
+}

@@ -10,15 +10,11 @@ import (
 var _ Service = (*service)(nil)
 
 type service struct {
-	providers    providers.Providerser
-	accessKeySvc accesskey.Service
+	getSecret func(key string) (secret string, disabled bool, err error)
 }
 
 func NewService(providers providers.Providerser, accessKeySvc accesskey.Service, options ...Option) Service {
-	svc := &service{
-		providers:    providers,
-		accessKeySvc: accessKeySvc,
-	}
+	svc := &service{}
 	for _, option := range options {
 		option(svc)
 	}
