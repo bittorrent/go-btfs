@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"github.com/bittorrent/go-btfs/s3/providers"
-	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"time"
 
 	"github.com/bittorrent/go-btfs/s3/action"
@@ -40,7 +39,7 @@ func NewService(providers providers.Providerser, options ...Option) Service {
 	return s
 }
 
-func (s *service) CheckACL(ack *accesskey.AccessKey, bucketName string, act action.Action) (err error) {
+func (s *service) CheckACL(ack string, bucketName string, act action.Action) (err error) {
 	var bucketMeta Bucket
 	if act != action.CreateBucketAction && act != action.ListBucketAction {
 		if bucketName == "" {
@@ -52,7 +51,7 @@ func (s *service) CheckACL(ack *accesskey.AccessKey, bucketName string, act acti
 		}
 	}
 
-	if policy.IsAllowed(bucketMeta.Owner == ack.Key, bucketMeta.Acl, act) == false {
+	if policy.IsAllowed(bucketMeta.Owner == ack, bucketMeta.Acl, act) == false {
 		return errors.New("not allowed")
 	}
 	return

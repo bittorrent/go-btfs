@@ -15,14 +15,13 @@
 // implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package auth
+package sign
 
 import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/iam/auth"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"io"
 	"io/ioutil"
@@ -79,15 +78,15 @@ func SkipContentSha256Cksum(r *http.Request) bool {
 }
 
 // Returns SHA256 for calculating canonical-request.
-func GetContentSha256Cksum(r *http.Request, stype serviceType) string {
+func GetContentSha256Cksum(r *http.Request, stype serviceType) (string, error) {
 	if stype == ServiceSTS {
 		payload, err := ioutil.ReadAll(io.LimitReader(r.Body, consts.StsRequestBodyLimit))
 		if err != nil {
-			log.Errorf("ServiceSTS ReadAll err:%v", err)
+			return "", err
 		}
 		sum256 := sha256.Sum256(payload)
 		r.Body = ioutil.NopCloser(bytes.NewReader(payload))
-		return hex.EncodeToString(sum256[:])
+		return hex.EncodeToString(sum256[:]), nil
 	}
 
 	var (
@@ -114,11 +113,11 @@ func GetContentSha256Cksum(r *http.Request, stype serviceType) string {
 
 	// We found 'X-Amz-Content-Sha256' return the captured value.
 	if ok {
-		return v[0]
+		return v[0], nil
 	}
 
 	// We couldn't find 'X-Amz-Content-Sha256'.
-	return defaultSha256Cksum
+	return defaultSha256Cksum, nil
 }
 
 // isValidRegion - verify if incoming region value is valid with configured Region.
@@ -139,24 +138,24 @@ func isValidRegion(reqRegion string, confRegion string) bool {
 
 // check if the access key is valid and recognized, additionally
 // also returns if the access key is owner/admin.
-func (s *service) checkKeyValid(r *http.Request, accessKey string) (auth.Credentials, bool, *responses.Error) {
-
-	cred := s.AdminCred
-	if cred.AccessKey != accessKey {
-		// Check if the access key is part of users credentials.
-		ucred, ok := s.Iam.GetUser(r.Context(), accessKey)
-		if !ok {
-			// Credentials will be invalid but and disabled
-			// return a different error in such a scenario.
-			if ucred.Status == auth.AccountOff {
-				return cred, false, responses.ErrAccessKeyDisabled
-			}
-			return cred, false, responses.ErrInvalidAccessKeyID
-		}
-		cred = ucred
+func (s *service) checkKeyValid(ack string) (secret string, rerr *responses.Error) {
+	secret, exists, enable, err := s.getSecret(ack)
+	if err != nil {
+		rerr = responses.ErrInternalError
+		return
 	}
-	owner := cred.AccessKey == s.AdminCred.AccessKey
-	return cred, owner, nil
+
+	if !exists {
+		rerr = responses.ErrInvalidAccessKeyID
+		return
+	}
+
+	if !enable {
+		rerr = responses.ErrAccessKeyDisabled
+		return
+	}
+
+	return
 }
 
 func contains(slice interface{}, elem interface{}) bool {

@@ -101,7 +101,6 @@ func WriteXMLResponse(w http.ResponseWriter, r *http.Request, statusCode int, re
 }
 
 func writeResponse(w http.ResponseWriter, r *http.Request, statusCode int, response []byte, mType mimeType) {
-	fmt.Println(r.Method, r.URL, statusCode)
 	setCommonHeaders(w, r)
 	if response != nil {
 		w.Header().Set(consts.ContentLength, strconv.Itoa(len(response)))

@@ -6,9 +6,9 @@ import (
 	"github.com/bittorrent/go-btfs/s3/routers"
 	"github.com/bittorrent/go-btfs/s3/server"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
-	"github.com/bittorrent/go-btfs/s3/services/auth"
 	"github.com/bittorrent/go-btfs/s3/services/bucket"
 	"github.com/bittorrent/go-btfs/s3/services/cors"
+	"github.com/bittorrent/go-btfs/s3/services/sign"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"sync"
 )
@@ -23,7 +23,6 @@ func GetProviders(storageStore storage.StateStorer) *providers.Providers {
 		sstore := providers.NewStorageStateStoreProxy(storageStore)
 		fstore := providers.NewFileStore()
 		ps = providers.NewProviders(sstore, fstore)
-
 	})
 	return ps
 }
@@ -32,14 +31,14 @@ func NewServer(storageStore storage.StateStorer) *server.Server {
 	_ = GetProviders(storageStore)
 
 	// services
-	corsSvc := cors.NewService()
-	accessKeySvc := accesskey.NewService(ps)
-	authSvc := auth.NewService(ps, accessKeySvc)
-	bucketSvc := bucket.NewService(ps)
-	bucketSvc.SetEmptyBucket(bucketSvc.EmptyBucket) //todo EmptyBucket参数后续更新为object对象
+	corsvc := cors.NewService()
+	acksvc := accesskey.NewService(ps)
+	sigsvc := sign.NewService()
+	bucsvc := bucket.NewService(ps)
+	bucsvc.SetEmptyBucket(bucsvc.EmptyBucket) //todo EmptyBucket参数后续更新为object对象
 
 	// handlers
-	hs := handlers.NewHandlers(corsSvc, authSvc, bucketSvc)
+	hs := handlers.NewHandlers(corsvc, acksvc, sigsvc, bucsvc)
 
 	// routers
 	rs := routers.NewRouters(hs)

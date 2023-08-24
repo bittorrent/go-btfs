@@ -264,6 +264,11 @@ var (
 		description:    "The authorization header is malformed; the region is wrong; expecting 'us-east-1'.",
 		httpStatusCode: http.StatusBadRequest,
 	}
+	ErrMalformedDate = &Error{ // todo
+		code:           "ErrMalformedDate",
+		description:    "ErrMalformedDate",
+		httpStatusCode: http.StatusBadRequest,
+	}
 	ErrMalformedPOSTRequest = &Error{
 		code:           "MalformedPOSTRequest",
 		description:    "The body of your POST request is not well-formed multipart/form-data.",

@@ -1,24 +1,4 @@
-/*
- * The following code tries to reverse engineer the Amazon S3 APIs,
- * and is mostly copied from minio implementation.
- */
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-//
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-// Package cmd This file implements helper functions to validate Streaming AWS
-// Signature Version '4' authorization header.
-package auth
+package sign
 
 import (
 	"bufio"
@@ -26,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/utils"
 	"hash"
 	"io"
@@ -34,7 +15,6 @@ import (
 	"time"
 
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/iam/auth"
 	humanize "github.com/dustin/go-humanize"
 )
 
@@ -50,7 +30,7 @@ const (
 var errSignatureMismatch = errors.New("Signature does not match")
 
 // getChunkSignature - get chunk signature.
-func getChunkSignature(cred auth.Credentials, seedSignature string, region string, date time.Time, hashedChunk string) string {
+func getChunkSignature(secret, seedSignature string, region string, stype serviceType, date time.Time, hashedChunk string) string {
 	// Calculate string to sign.
 	stringToSign := signV4ChunkedAlgorithm + "\n" +
 		date.Format(iso8601Format) + "\n" +
@@ -60,7 +40,7 @@ func getChunkSignature(cred auth.Credentials, seedSignature string, region strin
 		hashedChunk
 
 	// Get hmac signing key.
-	signingKey := utils.GetSigningKey(cred.SecretKey, date, region, string(ServiceS3))
+	signingKey := utils.GetSigningKey(secret, date, region, string(stype))
 
 	// Calculate signature.
 	newSignature := utils.GetSignature(signingKey, stringToSign)
@@ -68,12 +48,12 @@ func getChunkSignature(cred auth.Credentials, seedSignature string, region strin
 	return newSignature
 }
 
-// CalculateSeedSignature - Calculate seed signature in accordance with
+// calculateSeedSignature - Calculate seed signature in accordance with
 //   - http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-streaming.html
 //
 // returns signature, error otherwise if the signature mismatches or any other
 // error while parsing and validating.
-func (s *service) CalculateSeedSignature(r *http.Request) (cred auth.Credentials, signature string, region string, date time.Time, errCode *responses.Error) {
+func (s *service) calculateSeedSignature(r *http.Request, iregion string, stype serviceType) (ack, sec string, signature string, region string, date time.Time, rerr *responses.Error) {
 	// Copy request.
 	req := *r
 
@@ -81,9 +61,9 @@ func (s *service) CalculateSeedSignature(r *http.Request) (cred auth.Credentials
 	v4Auth := req.Header.Get(consts.Authorization)
 
 	// Parse signature version '4' header.
-	signV4Values, errCode := parseSignV4(v4Auth, "", ServiceS3)
-	if errCode != nil {
-		return cred, "", "", time.Time{}, errCode
+	signV4Values, rerr := parseSignV4(v4Auth, "", stype)
+	if rerr != nil {
+		return
 	}
 
 	// Payload streaming.
@@ -91,36 +71,43 @@ func (s *service) CalculateSeedSignature(r *http.Request) (cred auth.Credentials
 
 	// Payload for STREAMING signature should be 'STREAMING-AWS4-HMAC-SHA256-PAYLOAD'
 	if payload != req.Header.Get(consts.AmzContentSha256) {
-		return cred, "", "", time.Time{}, responses.ErrContentSHA256Mismatch
+		rerr = responses.ErrContentSHA256Mismatch
+		return
 	}
 
 	// Extract all the signed headers along with its values.
-	extractedSignedHeaders, errCode := extractSignedHeaders(signV4Values.SignedHeaders, r)
-	if errCode != nil {
-		return cred, "", "", time.Time{}, errCode
+	extractedSignedHeaders, rerr := extractSignedHeaders(signV4Values.SignedHeaders, r)
+	if rerr != nil {
+		return
 	}
 
-	cred, _, errCode = s.checkKeyValid(r, signV4Values.Credential.accessKey)
-	if errCode != nil {
-		return cred, "", "", time.Time{}, errCode
+	ack = signV4Values.Credential.accessKey
+
+	sec, rerr = s.checkKeyValid(ack)
+	if rerr != nil {
+		return
 	}
 
 	// Verify if region is valid.
-	region = signV4Values.Credential.scope.region
+	region = iregion
+	if region == "" {
+		region = signV4Values.Credential.scope.region
+	}
 
 	// Extract date, if not present throw error.
 	var dateStr string
 	if dateStr = req.Header.Get("x-amz-date"); dateStr == "" {
 		if dateStr = r.Header.Get("Date"); dateStr == "" {
-			return cred, "", "", time.Time{}, responses.ErrMissingDateHeader
+			rerr = responses.ErrMissingDateHeader
+			return
 		}
 	}
 
 	// Parse date header.
-	var err error
-	date, err = time.Parse(iso8601Format, dateStr)
+	date, err := time.Parse(iso8601Format, dateStr)
 	if err != nil {
-		return cred, "", "", time.Time{}, responses.ErrMalformedDate
+		rerr = responses.ErrMalformedDate
+		return
 	}
 
 	// Query string.
@@ -133,18 +120,19 @@ func (s *service) CalculateSeedSignature(r *http.Request) (cred auth.Credentials
 	stringToSign := utils.GetStringToSign(canonicalRequest, date, signV4Values.Credential.getScope())
 
 	// Get hmac signing key.
-	signingKey := utils.GetSigningKey(cred.SecretKey, signV4Values.Credential.scope.date, region, string(ServiceS3))
+	signingKey := utils.GetSigningKey(sec, signV4Values.Credential.scope.date, region, string(stype))
 
 	// Calculate signature.
 	newSignature := utils.GetSignature(signingKey, stringToSign)
 
 	// Verify if signature match.
 	if !compareSignatureV4(newSignature, signV4Values.Signature) {
-		return cred, "", "", time.Time{}, responses.ErrSignatureDoesNotMatch
+		rerr = responses.ErrSignatureDoesNotMatch
+		return
 	}
 
 	// Return caculated signature.
-	return cred, newSignature, region, date, nil
+	return
 }
 
 const maxLineLength = 4 * humanize.KiByte // assumed <= bufio.defaultBufSize 4KiB
@@ -158,37 +146,33 @@ var errMalformedEncoding = errors.New("malformed chunked encoding")
 // chunk is considered too big if its bigger than > 16MiB.
 var errChunkTooBig = errors.New("chunk too big: choose chunk size <= 16MiB")
 
-// NewSignV4ChunkedReader returns a new s3ChunkedReader that translates the data read from r
-// out of HTTP "chunked" format before returning it.
-// The s3ChunkedReader returns io.EOF when the final 0-length chunk is read.
-//
-// NewChunkedReader is not needed by normal applications. The http package
-// automatically decodes chunking when reading response bodies.
-func NewSignV4ChunkedReader(req *http.Request, s *service) (io.ReadCloser, *responses.Error) {
-	cred, seedSignature, region, seedDate, errCode := s.CalculateSeedSignature(req)
-	if errCode != nil {
-		return nil, errCode
+func (s *service) setReqBodySignV4ChunkedReader(req *http.Request, region string, stype serviceType) (ack string, rerr *responses.Error) {
+	ack, sec, seedSignature, region, seedDate, rerr := s.calculateSeedSignature(req, region, stype)
+	if rerr != nil {
+		return
 	}
-
-	return &s3ChunkedReader{
+	req.Body = &s3ChunkedReader{
 		reader:            bufio.NewReader(req.Body),
-		cred:              cred,
+		secret:            sec,
 		seedSignature:     seedSignature,
 		seedDate:          seedDate,
 		region:            region,
+		stype:             stype,
 		chunkSHA256Writer: sha256.New(),
 		buffer:            make([]byte, 64*1024),
-	}, nil
+	}
+	return
 }
 
 // Represents the overall state that is required for decoding a
 // AWS Signature V4 chunked reader.
 type s3ChunkedReader struct {
 	reader        *bufio.Reader
-	cred          auth.Credentials
+	secret        string
 	seedSignature string
 	seedDate      time.Time
 	region        string
+	stype         serviceType
 
 	chunkSHA256Writer hash.Hash // Calculates sha256 of chunk data.
 	buffer            []byte
@@ -346,7 +330,7 @@ func (cr *s3ChunkedReader) Read(buf []byte) (n int, err error) {
 	// Once we have read the entire chunk successfully, we verify
 	// that the received signature matches our computed signature.
 	cr.chunkSHA256Writer.Write(cr.buffer)
-	newSignature := getChunkSignature(cr.cred, cr.seedSignature, cr.region, cr.seedDate, hex.EncodeToString(cr.chunkSHA256Writer.Sum(nil)))
+	newSignature := getChunkSignature(cr.secret, cr.seedSignature, cr.region, cr.stype, cr.seedDate, hex.EncodeToString(cr.chunkSHA256Writer.Sum(nil)))
 	if !compareSignatureV4(string(signature[16:]), newSignature) {
 		cr.err = errSignatureMismatch
 		return n, cr.err

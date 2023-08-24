@@ -1,4 +1,4 @@
-package auth
+package sign
 
 import (
 	"github.com/bittorrent/go-btfs/s3/consts"
@@ -93,8 +93,4 @@ func GetRequestAuthType(r *http.Request) AuthType {
 		return AuthTypeAnonymous
 	}
 	return AuthTypeUnknown
-}
-
-func IsAuthTypeStreamingSigned(atype AuthType) bool {
-	return atype == AuthTypeStreamingSigned
 }

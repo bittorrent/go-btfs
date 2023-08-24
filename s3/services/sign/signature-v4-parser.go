@@ -15,13 +15,11 @@
 // implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package auth
+package sign
 
 import (
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/iam/auth"
 	"github.com/bittorrent/go-btfs/s3/responses"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -49,30 +47,8 @@ func (c credentialHeader) getScope() string {
 	}, consts.SlashSeparator)
 }
 
-func (s *service) GetReqAccessKeyV4(r *http.Request, region string, stype serviceType) (auth.Credentials, bool, *responses.Error) {
-	ch, s3Err := parseCredentialHeader("Credential="+r.Form.Get(consts.AmzCredential), region, stype)
-	if s3Err != nil {
-		// Strip off the Algorithm prefix.
-		v4Auth := strings.TrimPrefix(r.Header.Get("Authorization"), signV4Algorithm)
-		authFields := strings.Split(strings.TrimSpace(v4Auth), ",")
-		if len(authFields) != 3 {
-			return auth.Credentials{}, false, responses.ErrMissingFields
-		}
-		ch, s3Err = parseCredentialHeader(authFields[0], region, stype)
-		if s3Err != nil {
-			return auth.Credentials{}, false, s3Err
-		}
-	}
-	// TODO: Why should a temporary user be replaced with the parent user's account name?
-	//cerd, _ := s.Iam.GetUser(r.Context(), ch.accessKey)
-	//if cerd.IsTemp() {
-	//	ch.accessKey = cerd.ParentUser
-	//}
-	return s.checkKeyValid(r, ch.accessKey)
-}
-
 // parse credentialHeader string into its structured form.
-func parseCredentialHeader(credElement string, region string, stype serviceType) (ch credentialHeader, aec *responses.Error) {
+func parseCredentialHeader(credElement string, region string, stype serviceType) (ch credentialHeader, rerr *responses.Error) {
 	creds := strings.SplitN(strings.TrimSpace(credElement), "=", 2)
 	if len(creds) != 2 {
 		return ch, responses.ErrMissingFields
@@ -85,9 +61,7 @@ func parseCredentialHeader(credElement string, region string, stype serviceType)
 		return ch, responses.ErrCredMalformed
 	}
 	accessKey := strings.Join(credElements[:len(credElements)-4], consts.SlashSeparator) // The access key may contain one or more `/`
-	if !auth.IsAccessKeyValid(accessKey) {
-		return ch, responses.ErrInvalidAccessKeyID
-	}
+
 	// Save access key id.
 	cred := credentialHeader{
 		accessKey: accessKey,
@@ -195,11 +169,11 @@ func doesV4PresignParamsExist(query url.Values) *responses.Error {
 }
 
 // Parses all the presigned signature values into separate elements.
-func parsePreSignV4(query url.Values, region string, stype serviceType) (psv preSignValues, aec *responses.Error) {
+func parsePreSignV4(query url.Values, region string, stype serviceType) (psv preSignValues, rerr *responses.Error) {
 	// verify whether the required query params exist.
-	aec = doesV4PresignParamsExist(query)
-	if aec != nil {
-		return psv, aec
+	rerr = doesV4PresignParamsExist(query)
+	if rerr != nil {
+		return psv, rerr
 	}
 
 	// Verify if the query algorithm is supported or not.
@@ -211,9 +185,9 @@ func parsePreSignV4(query url.Values, region string, stype serviceType) (psv pre
 	preSignV4Values := preSignValues{}
 
 	// Save credential.
-	preSignV4Values.Credential, aec = parseCredentialHeader("Credential="+query.Get(consts.AmzCredential), region, stype)
-	if aec != nil {
-		return psv, aec
+	preSignV4Values.Credential, rerr = parseCredentialHeader("Credential="+query.Get(consts.AmzCredential), region, stype)
+	if rerr != nil {
+		return psv, rerr
 	}
 
 	var e error
@@ -239,15 +213,15 @@ func parsePreSignV4(query url.Values, region string, stype serviceType) (psv pre
 	}
 
 	// Save signed headers.
-	preSignV4Values.SignedHeaders, aec = parseSignedHeader("SignedHeaders=" + query.Get(consts.AmzSignedHeaders))
-	if aec != nil {
-		return psv, aec
+	preSignV4Values.SignedHeaders, rerr = parseSignedHeader("SignedHeaders=" + query.Get(consts.AmzSignedHeaders))
+	if rerr != nil {
+		return psv, rerr
 	}
 
 	// Save signature.
-	preSignV4Values.Signature, aec = parseSignature("Signature=" + query.Get(consts.AmzSignature))
-	if aec != nil {
-		return psv, aec
+	preSignV4Values.Signature, rerr = parseSignature("Signature=" + query.Get(consts.AmzSignature))
+	if rerr != nil {
+		return psv, rerr
 	}
 
 	// Return structed form of signature query string.

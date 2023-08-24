@@ -1,3 +1,3 @@
-package auth
+package sign
 
 type Option func(svc *service)
