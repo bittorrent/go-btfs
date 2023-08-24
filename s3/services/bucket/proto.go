@@ -17,6 +17,7 @@ type Service interface {
 	GetAllBucketsOfUser(username string) (list []*Bucket, err error)
 	UpdateBucketAcl(ctx context.Context, bucket, acl string) error
 	GetBucketAcl(ctx context.Context, bucket string) (string, error)
+	EmptyBucket(ctx context.Context, bucket string) (bool, error)
 }
 
 // Bucket contains bucket metadata.

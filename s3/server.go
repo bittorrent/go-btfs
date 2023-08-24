@@ -36,6 +36,7 @@ func NewServer(storageStore storage.StateStorer) *server.Server {
 	accessKeySvc := accesskey.NewService(ps)
 	authSvc := auth.NewService(ps, accessKeySvc)
 	bucketSvc := bucket.NewService(ps)
+	bucketSvc.SetEmptyBucket(bucketSvc.EmptyBucket) //todo EmptyBucket参数后续更新为object对象
 
 	// handlers
 	hs := handlers.NewHandlers(corsSvc, authSvc, bucketSvc)

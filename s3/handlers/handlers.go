@@ -147,14 +147,14 @@ func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ack := cctx.GetAccessKey(r)
 
-	err = h.bucketSvc.CheckACL(ack, req.Bucket, s3action.HeadBucketAction)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
+	if ok := h.bucketSvc.HasBucket(ctx, req.Bucket); !ok {
+		responses.WriteErrorResponseHeadersOnly(w, r, services.RespErrNoSuchBucket)
 		return
 	}
 
-	if ok := h.bucketSvc.HasBucket(ctx, req.Bucket); !ok {
-		responses.WriteErrorResponseHeadersOnly(w, r, services.RespErrNoSuchBucket)
+	err = h.bucketSvc.CheckACL(ack, req.Bucket, s3action.HeadBucketAction)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, err)
 		return
 	}
 
@@ -199,18 +199,9 @@ func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 		cctx.SetHandleInf(r, fnName(), err)
 	}()
 
-	req := &requests.ListBucketsRequest{}
-	err = req.Bind(r)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, services.RespErrInvalidRequestBody)
-		return
-	}
-
 	ack := cctx.GetAccessKey(r)
-
-	err = h.bucketSvc.CheckACL(ack, req.Bucket, s3action.ListBucketAction)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
+	if ack.Key == "" {
+		responses.WriteErrorResponse(w, r, services.RespErrNoAccessKey)
 		return
 	}
 
@@ -240,16 +231,17 @@ func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ack := cctx.GetAccessKey(r)
 
+	if !h.bucketSvc.HasBucket(ctx, req.Bucket) {
+		responses.WriteErrorResponseHeadersOnly(w, r, services.RespErrNoSuchBucket)
+		return
+	}
+
 	err = h.bucketSvc.CheckACL(ack, req.Bucket, s3action.GetBucketAclAction)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, err)
 		return
 	}
 
-	if !h.bucketSvc.HasBucket(ctx, req.Bucket) {
-		responses.WriteErrorResponseHeadersOnly(w, r, services.RespErrNoSuchBucket)
-		return
-	}
 	//todo check all errors
 	acl, err := h.bucketSvc.GetBucketAcl(ctx, req.Bucket)
 	if err != nil {
