@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-//some const
+// some const
 const (
 	// Iso8601TimeFormat RFC3339 a subset of the ISO8601 timestamp format. e.g 2014-04-29T18:30:38Z
 	Iso8601TimeFormat = "2006-01-02T15:04:05.000Z" // Reply date format with nanosecond precision.
@@ -146,7 +146,12 @@ const (
 	Range              = "Range"
 )
 
-//object const
+// Standard BTFS HTTP response constants
+const (
+	BTFSHash = "BTFS-Hash"
+)
+
+// object const
 const (
 	MaxObjectSize = 5 * humanize.TiByte
 

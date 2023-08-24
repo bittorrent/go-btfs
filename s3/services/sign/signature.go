@@ -15,39 +15,67 @@ func (s *service) isReqAuthenticated(r *http.Request, region string, stype servi
 	if rerr != nil {
 		return
 	}
-	clientETag, err := etag.FromContentMD5(r.Header)
-	if err != nil {
-		rerr = responses.ErrInvalidDigest
+
+	size := r.ContentLength
+
+	if size == -1 {
+		rerr = responses.ErrMissingContentLength
 		return
 	}
 
-	// Extract either 'X-Amz-Content-Sha256' header or 'X-Amz-Content-Sha256' query parameter (if V4 presigned)
-	// Do not verify 'X-Amz-Content-Sha256' if skipSHA256.
-	var contentSHA256 []byte
-	if skipSHA256 := SkipContentSha256Cksum(r); !skipSHA256 && isRequestPresignedSignatureV4(r) {
-		if sha256Sum, ok := r.Form[consts.AmzContentSha256]; ok && len(sha256Sum) > 0 {
-			contentSHA256, err = hex.DecodeString(sha256Sum[0])
-			if err != nil {
-				rerr = responses.ErrContentSHA256Mismatch
-				return
-			}
-		}
-	} else if _, ok := r.Header[consts.AmzContentSha256]; !skipSHA256 && ok {
-		contentSHA256, err = hex.DecodeString(r.Header.Get(consts.AmzContentSha256))
-		if err != nil || len(contentSHA256) == 0 {
-			rerr = responses.ErrContentSHA256Mismatch
-		}
+	if size > consts.MaxObjectSize {
+		rerr = responses.ErrEntityTooLarge
+		return
 	}
 
-	// Verify 'Content-Md5' and/or 'X-Amz-Content-Sha256' if present.
-	// The verification happens implicit during reading.
-	reader, err := hash.NewReader(r.Body, -1, clientETag.String(), hex.EncodeToString(contentSHA256), -1)
+	md5Hex, sha256Hex, rerr := s.getClientCheckSum(r)
+	if rerr != nil {
+		return
+	}
+
+	reader, err := hash.NewReader(r.Body, size, md5Hex, sha256Hex, size)
 	if err != nil {
 		rerr = responses.ErrInternalError
 		return
 	}
 
 	r.Body = reader
+
+	return
+}
+
+func (s *service) getClientCheckSum(r *http.Request) (md5TagStr, sha256SumStr string, rerr *responses.Error) {
+	eTag, err := etag.FromContentMD5(r.Header)
+	if err != nil {
+		rerr = responses.ErrInvalidDigest
+		return
+	}
+	md5TagStr = eTag.String()
+
+	skipSHA256 := SkipContentSha256Cksum(r)
+	if skipSHA256 {
+		return
+	}
+
+	var (
+		contentSHA256 []byte
+		sha256Sum     []string
+	)
+
+	if isRequestPresignedSignatureV4(r) {
+		sha256Sum = r.Form[consts.AmzContentSha256]
+	} else {
+		sha256Sum = r.Header[consts.AmzContentSha256]
+	}
+
+	if len(sha256Sum) > 0 {
+		contentSHA256, err = hex.DecodeString(sha256Sum[0])
+		if err != nil || len(contentSHA256) == 0 {
+			rerr = responses.ErrContentSHA256Mismatch
+			return
+		}
+		sha256SumStr = hex.EncodeToString(contentSHA256)
+	}
 
 	return
 }

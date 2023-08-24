@@ -1032,4 +1032,9 @@ var (
 		description:    "The JSON was not well-formed or did not validate against our published format.",
 		httpStatusCode: http.StatusBadRequest,
 	}
+	ErrInvalidRequest = &Error{
+		code:           "InvalidRequest",
+		description:    "InvalidRequest",
+		httpStatusCode: http.StatusBadRequest,
+	}
 )

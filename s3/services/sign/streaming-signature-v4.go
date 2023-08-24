@@ -8,6 +8,7 @@ import (
 	"errors"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/utils"
+	s3hash "github.com/bittorrent/go-btfs/s3/utils/hash"
 	"hash"
 	"io"
 	"net/http"
@@ -146,13 +147,14 @@ var errMalformedEncoding = errors.New("malformed chunked encoding")
 // chunk is considered too big if its bigger than > 16MiB.
 var errChunkTooBig = errors.New("chunk too big: choose chunk size <= 16MiB")
 
-func (s *service) setReqBodySignV4ChunkedReader(req *http.Request, region string, stype serviceType) (ack string, rerr *responses.Error) {
-	ack, sec, seedSignature, region, seedDate, rerr := s.calculateSeedSignature(req, region, stype)
+func (s *service) setReqBodySignV4ChunkedReader(r *http.Request, region string, stype serviceType) (ack string, rerr *responses.Error) {
+	ack, sec, seedSignature, region, seedDate, rerr := s.calculateSeedSignature(r, region, stype)
 	if rerr != nil {
 		return
 	}
-	req.Body = &s3ChunkedReader{
-		reader:            bufio.NewReader(req.Body),
+
+	crdr := &s3ChunkedReader{
+		reader:            bufio.NewReader(r.Body),
 		secret:            sec,
 		seedSignature:     seedSignature,
 		seedDate:          seedDate,
@@ -161,6 +163,32 @@ func (s *service) setReqBodySignV4ChunkedReader(req *http.Request, region string
 		chunkSHA256Writer: sha256.New(),
 		buffer:            make([]byte, 64*1024),
 	}
+
+	size := r.ContentLength
+
+	if size == -1 {
+		rerr = responses.ErrMissingContentLength
+		return
+	}
+
+	if size > consts.MaxObjectSize {
+		rerr = responses.ErrEntityTooLarge
+		return
+	}
+
+	md5Hex, sha256Hex, rerr := s.getClientCheckSum(r)
+	if rerr != nil {
+		return
+	}
+
+	hrdr, err := s3hash.NewReader(crdr, size, md5Hex, sha256Hex, size)
+	if err != nil {
+		rerr = responses.ErrInternalError
+		return
+	}
+
+	r.Body = hrdr
+
 	return
 }
 

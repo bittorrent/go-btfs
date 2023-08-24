@@ -8,6 +8,7 @@ import (
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"github.com/bittorrent/go-btfs/s3/services/bucket"
 	"github.com/bittorrent/go-btfs/s3/services/cors"
+	"github.com/bittorrent/go-btfs/s3/services/object"
 	"github.com/bittorrent/go-btfs/s3/services/sign"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"sync"
@@ -36,9 +37,10 @@ func NewServer(storageStore storage.StateStorer) *server.Server {
 	sigsvc := sign.NewService()
 	bucsvc := bucket.NewService(ps)
 	bucsvc.SetEmptyBucket(bucsvc.EmptyBucket) //todo EmptyBucket参数后续更新为object对象
+	objsvc := object.NewService(ps)
 
 	// handlers
-	hs := handlers.NewHandlers(corsvc, acksvc, sigsvc, bucsvc)
+	hs := handlers.NewHandlers(corsvc, acksvc, sigsvc, bucsvc, objsvc)
 
 	// routers
 	rs := routers.NewRouters(hs)

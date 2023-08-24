@@ -2,12 +2,12 @@ package responses
 
 import (
 	"fmt"
-	"github.com/bittorrent/go-btfs/s3/services/bucket"
-	"net/http"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/consts"
+	"github.com/bittorrent/go-btfs/s3/services/bucket"
+	"github.com/bittorrent/go-btfs/s3/services/object"
+	"net/http"
 )
 
 func WritePutBucketResponse(w http.ResponseWriter, r *http.Request) {
@@ -78,4 +78,9 @@ func WriteGetBucketAclResponse(w http.ResponseWriter, r *http.Request, key strin
 func WritePutBucketAclResponse(w http.ResponseWriter, r *http.Request) {
 	WriteSuccessResponse(w, r)
 	return
+}
+
+func WritePutObjectResponse(w http.ResponseWriter, r *http.Request, obj object.Object, delete bool) {
+	setPutObjHeaders(w, obj, delete)
+	WriteSuccessResponseHeadersOnly(w, r)
 }
