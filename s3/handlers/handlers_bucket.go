@@ -13,7 +13,7 @@ import (
 func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
-		cctx.SetHandleInf(r, fnName(), err)
+		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
 	req, err := requests.ParseDeleteBucketRequest(r)
@@ -44,7 +44,7 @@ func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
-		cctx.SetHandleInf(r, fnName(), err)
+		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
 	ack := cctx.GetAccessKey(r)
@@ -66,7 +66,7 @@ func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
-		cctx.SetHandleInf(r, fnName(), err)
+		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
 	req, err := requests.ParseGetBucketAclRequest(r)
@@ -102,7 +102,7 @@ func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
-		cctx.SetHandleInf(r, fnName(), err)
+		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
 	req, err := requests.ParsePutBucketAclRequest(r)
@@ -139,7 +139,7 @@ func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
-		cctx.SetHandleInf(r, fnName(), err)
+		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
 	req, err := requests.ParseHeadBucketRequest(r)

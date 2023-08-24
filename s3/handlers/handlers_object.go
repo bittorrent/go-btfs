@@ -16,7 +16,7 @@ import (
 func (h *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
-		cctx.SetHandleInf(r, fnName(), err)
+		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
 	// X-Amz-Copy-Source shouldn't be set for this call.
