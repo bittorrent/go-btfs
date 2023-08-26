@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-const defaultServerAddress = ":15001"
+const defaultServerAddress = "127.0.0.1:15001"
 
 var (
 	ErrServerStarted    = errors.New("server started")
