@@ -32,6 +32,7 @@ func (routers *Routers) Register() http.Handler {
 
 	bucket := root.PathPrefix("/{bucket}").Subrouter()
 
+	// multipart object...
 	// CreateMultipart
 	bucket.Methods(http.MethodPost).Path("/{object:.+}").HandlerFunc(hs.CreateMultipartUploadHandler).Queries("uploads", "")
 	// UploadPart
@@ -41,9 +42,27 @@ func (routers *Routers) Register() http.Handler {
 	// AbortMultipart
 	bucket.Methods(http.MethodDelete).Path("/{object:.+}").HandlerFunc(hs.AbortMultipartUploadHandler).Queries("uploadId", "{uploadId:.*}")
 
+	//object...
+	// ListObjectsV2
+	bucket.Methods(http.MethodGet).HandlerFunc(hs.ListObjectsV2Handler).Queries("list-type", "2")
+	// ListObjectsV1
+	bucket.Methods(http.MethodGet).HandlerFunc(hs.ListObjectsV1Handler)
+	// HeadObject
+	bucket.Methods(http.MethodHead).Path("/{object:.+}").HandlerFunc(hs.HeadObjectHandler)
 	// PutObject
 	bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(hs.PutObjectHandler)
+	// CopyObject
+	bucket.Methods(http.MethodPut).Path("/{object:.+}").HeadersRegexp("X-Amz-Copy-Source", ".*?(\\/|%2F).*?").HandlerFunc(hs.CopyObjectHandler)
+	// DeleteObject
+	bucket.Methods(http.MethodDelete).Path("/{object:.+}").HandlerFunc(hs.DeleteObjectHandler)
+	//todo DeleteObjects new ?
+	bucket.Methods(http.MethodDelete).Path("/{object:.+}").HandlerFunc(hs.DeleteObjectHandler)
+	// GetObject
+	bucket.Methods(http.MethodGet).Path("/{object:.+}").HandlerFunc(hs.GetObjectHandler)
+	// GetObjectACL
+	bucket.Methods(http.MethodGet).Path("/{object:.+}").HandlerFunc(hs.GetObjectACLHandler).Queries("acl", "")
 
+	//bucket...
 	// GetBucketAcl
 	bucket.Methods(http.MethodGet).HandlerFunc(hs.GetBucketAclHandler).Queries("acl", "")
 	// PutBucketAcl

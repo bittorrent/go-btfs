@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/bittorrent/go-btfs/s3/utils/hash"
+	"io"
 	"time"
 )
 
@@ -13,7 +14,15 @@ var (
 )
 
 type Service interface {
+	// object
 	PutObject(ctx context.Context, bucname, objname string, reader *hash.Reader, size int64, meta map[string]string) (obj Object, err error)
+	CopyObject(ctx context.Context, bucket, object string, info Object, size int64, meta map[string]string) (Object, error)
+	GetObject(ctx context.Context, bucket, object string) (Object, io.ReadCloser, error)
+	GetObjectInfo(ctx context.Context, bucket, object string) (Object, error)
+	DeleteObject(ctx context.Context, bucket, object string) error
+	ListObjects(ctx context.Context, bucket string, prefix string, marker string, delimiter string, maxKeys int) (loi ListObjectsInfo, err error)
+	EmptyBucket(ctx context.Context, bucket string) (bool, error)
+	ListObjectsV2(ctx context.Context, bucket string, prefix string, continuationToken string, delimiter string, maxKeys int, owner bool, startAfter string) (ListObjectsV2Info, error)
 
 	// martipart
 	CreateMultipartUpload(ctx context.Context, bucname string, objname string, meta map[string]string) (mtp Multipart, err error)

@@ -1,9 +1,12 @@
 package responses
 
 import (
+	"encoding/base64"
 	"encoding/xml"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/services/object"
+	"github.com/bittorrent/go-btfs/s3/utils"
 )
 
 type GetBucketAclResponse AccessControlPolicy
@@ -232,4 +235,99 @@ func GenerateCompleteMultipartUploadResponse(bucname, objname, location string, 
 		ETag: "\"" + obj.ETag + "\"",
 	}
 	return c
+}
+
+// GenerateListObjectsV2Response Generates an ListObjectsV2 response for the said bucket with other enumerated options.
+func GenerateListObjectsV2Response(bucket, prefix, token, nextToken, startAfter, delimiter, encodingType string, isTruncated bool, maxKeys int, objects []object.Object, prefixes []string) ListObjectsV2Response {
+	contents := make([]Object, 0, len(objects))
+	id := consts.DefaultOwnerID
+	name := consts.DisplayName
+	owner := s3.Owner{
+		ID:          &id,
+		DisplayName: &name,
+	}
+	data := ListObjectsV2Response{}
+
+	for _, object := range objects {
+		content := Object{}
+		if object.Name == "" {
+			continue
+		}
+		content.Key = utils.S3EncodeName(object.Name, encodingType)
+		content.LastModified = object.ModTime.UTC().Format(consts.Iso8601TimeFormat)
+		if object.ETag != "" {
+			content.ETag = "\"" + object.ETag + "\""
+		}
+		content.Size = object.Size
+		content.Owner = owner
+		contents = append(contents, content)
+	}
+	data.Name = bucket
+	data.Contents = contents
+
+	data.EncodingType = encodingType
+	data.StartAfter = utils.S3EncodeName(startAfter, encodingType)
+	data.Delimiter = utils.S3EncodeName(delimiter, encodingType)
+	data.Prefix = utils.S3EncodeName(prefix, encodingType)
+	data.MaxKeys = maxKeys
+	data.ContinuationToken = base64.StdEncoding.EncodeToString([]byte(token))
+	data.NextContinuationToken = base64.StdEncoding.EncodeToString([]byte(nextToken))
+	data.IsTruncated = isTruncated
+
+	commonPrefixes := make([]CommonPrefix, 0, len(prefixes))
+	for _, prefix := range prefixes {
+		prefixItem := CommonPrefix{}
+		prefixItem.Prefix = utils.S3EncodeName(prefix, encodingType)
+		commonPrefixes = append(commonPrefixes, prefixItem)
+	}
+	data.CommonPrefixes = commonPrefixes
+	data.KeyCount = len(data.Contents) + len(data.CommonPrefixes)
+	return data
+}
+
+// generates an ListObjectsV1 response for the said bucket with other enumerated options.
+func GenerateListObjectsV1Response(bucket, prefix, marker, delimiter, encodingType string, maxKeys int, resp object.ListObjectsInfo) ListObjectsResponse {
+	contents := make([]Object, 0, len(resp.Objects))
+	id := consts.DefaultOwnerID
+	name := consts.DisplayName
+	owner := s3.Owner{
+		ID:          &id,
+		DisplayName: &name,
+	}
+	data := ListObjectsResponse{}
+
+	for _, object := range resp.Objects {
+		content := Object{}
+		if object.Name == "" {
+			continue
+		}
+		content.Key = utils.S3EncodeName(object.Name, encodingType)
+		content.LastModified = object.ModTime.UTC().Format(consts.Iso8601TimeFormat)
+		if object.ETag != "" {
+			content.ETag = "\"" + object.ETag + "\""
+		}
+		content.Size = object.Size
+		content.StorageClass = ""
+		content.Owner = owner
+		contents = append(contents, content)
+	}
+	data.Name = bucket
+	data.Contents = contents
+
+	data.EncodingType = encodingType
+	data.Prefix = utils.S3EncodeName(prefix, encodingType)
+	data.Marker = utils.S3EncodeName(marker, encodingType)
+	data.Delimiter = utils.S3EncodeName(delimiter, encodingType)
+	data.MaxKeys = maxKeys
+	data.NextMarker = utils.S3EncodeName(resp.NextMarker, encodingType)
+	data.IsTruncated = resp.IsTruncated
+
+	prefixes := make([]CommonPrefix, 0, len(resp.Prefixes))
+	for _, prefix := range resp.Prefixes {
+		prefixItem := CommonPrefix{}
+		prefixItem.Prefix = utils.S3EncodeName(prefix, encodingType)
+		prefixes = append(prefixes, prefixItem)
+	}
+	data.CommonPrefixes = prefixes
+	return data
 }
