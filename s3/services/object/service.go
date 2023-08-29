@@ -72,7 +72,7 @@ func getUploadKey(bucname, objname, uploadID string) string {
 }
 
 func (s *service) PutObject(ctx context.Context, bucname, objname string, reader *hash.Reader, size int64, meta map[string]string) (obj Object, err error) {
-	cid, err := s.providers.GetFileStore().AddWithOpts(reader, true, true)
+	cid, err := s.providers.GetFileStore().Store(reader)
 	if err != nil {
 		return
 	}
@@ -128,7 +128,7 @@ func (s *service) CreateMultipartUpload(ctx context.Context, bucname string, obj
 }
 
 func (s *service) UploadPart(ctx context.Context, bucname string, objname string, uploadID string, partID int, reader *hash.Reader, size int64, meta map[string]string) (part ObjectPart, err error) {
-	cid, err := s.providers.GetFileStore().AddWithOpts(reader, true, true)
+	cid, err := s.providers.GetFileStore().Store(reader)
 	if err != nil {
 		return
 	}
@@ -162,9 +162,8 @@ func (s *service) AbortMultipartUpload(ctx context.Context, bucname string, objn
 	}
 
 	for _, part := range mtp.Parts {
-		ok := s.providers.GetFileStore().Remove(part.Cid)
-		if !ok {
-			err = errors.New("remove  file failed")
+		err = s.providers.GetFileStore().Remove(part.Cid)
+		if err != nil {
 			return
 		}
 	}
@@ -239,7 +238,7 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, bucname string, o
 		readers = append(readers, rdr)
 	}
 
-	cid, err := s.providers.GetFileStore().AddWithOpts(io.MultiReader(readers...), true, true)
+	cid, err := s.providers.GetFileStore().Store(io.MultiReader(readers...))
 	if err != nil {
 		return
 	}

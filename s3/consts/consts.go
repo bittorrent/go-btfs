@@ -143,7 +143,18 @@ const (
 	ContentDisposition = "Content-Disposition"
 	Authorization      = "Authorization"
 	Action             = "Action"
+	XRequestWith       = "X-Requested-With"
 	Range              = "Range"
+	UserAgent          = "User-Agent"
+)
+
+// Standard HTTP cors headers
+const (
+	AccessControlAllowOrigin      = "Access-Control-Allow-Origin"
+	AccessControlAllowMethods     = "Access-Control-Allow-Methods"
+	AccessControlAllowHeaders     = "Access-Control-Allow-Headers"
+	AccessControlExposeHeaders    = "Access-Control-Expose-Headers"
+	AccessControlAllowCredentials = "Access-Control-Allow-Credentials"
 )
 
 // Standard BTFS HTTP response constants

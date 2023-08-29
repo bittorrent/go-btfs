@@ -25,9 +25,9 @@ func (routers *Routers) Register() http.Handler {
 
 	root := mux.NewRouter()
 	root.Use(
-		routers.handlers.Cors,
-		routers.handlers.Log,
-		routers.handlers.Sign,
+		hs.Cors,
+		hs.Log,
+		hs.Sign,
 	)
 
 	bucket := root.PathPrefix("/{bucket}").Subrouter()

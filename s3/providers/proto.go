@@ -5,16 +5,20 @@ import (
 	"io"
 )
 
+var (
+	ErrStateStoreNotFound = errors.New("not found in state store")
+	ErrFileStoreNotFound  = errors.New("not found in file store")
+)
+
 type Providerser interface {
 	GetFileStore() FileStorer
 	GetStateStore() StateStorer
 }
 
 type FileStorer interface {
-	AddWithOpts(r io.Reader, pin bool, rawLeaves bool) (hash string, err error)
-	Remove(hash string) (removed bool)
-	Cat(path string) (readCloser io.ReadCloser, err error)
-	Unpin(path string) (err error)
+	Store(r io.Reader) (id string, err error)
+	Remove(id string) (err error)
+	Cat(id string) (readCloser io.ReadCloser, err error)
 }
 
 type StateStorer interface {
@@ -25,7 +29,3 @@ type StateStorer interface {
 }
 
 type StateStoreIterFunc func(key, value []byte) (stop bool, err error)
-
-var (
-	ErrStateStoreNotFound = errors.New("not found")
-)

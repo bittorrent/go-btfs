@@ -8,7 +8,6 @@ import (
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"github.com/bittorrent/go-btfs/s3/services/bucket"
-	"github.com/bittorrent/go-btfs/s3/services/cors"
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"github.com/bittorrent/go-btfs/s3/services/sign"
 	"net/http"
@@ -22,16 +21,16 @@ const lockPrefix = "s3:lock/"
 var _ Handlerser = (*Handlers)(nil)
 
 type Handlers struct {
-	corsvc cors.Service
+	headers map[string][]string
+	nslock  ctxmu.MultiCtxRWLocker
+
 	acksvc accesskey.Service
 	sigsvc sign.Service
 	bucsvc bucket.Service
 	objsvc object.Service
-	nslock ctxmu.MultiCtxRWLocker
 }
 
 func NewHandlers(
-	corsvc cors.Service,
 	acksvc accesskey.Service,
 	sigsvc sign.Service,
 	bucsvc bucket.Service,
@@ -39,12 +38,12 @@ func NewHandlers(
 	options ...Option,
 ) (handlers *Handlers) {
 	handlers = &Handlers{
-		corsvc: corsvc,
-		acksvc: acksvc,
-		sigsvc: sigsvc,
-		bucsvc: bucsvc,
-		objsvc: objsvc,
-		nslock: ctxmu.NewDefaultMultiCtxRWMutex(),
+		headers: defaultHeaders,
+		nslock:  ctxmu.NewDefaultMultiCtxRWMutex(),
+		acksvc:  acksvc,
+		sigsvc:  sigsvc,
+		bucsvc:  bucsvc,
+		objsvc:  objsvc,
 	}
 	for _, option := range options {
 		option(handlers)

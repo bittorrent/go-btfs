@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bittorrent/go-btfs/s3/cctx"
+	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	rscors "github.com/rs/cors"
@@ -11,13 +12,24 @@ import (
 )
 
 func (h *Handlers) Cors(handler http.Handler) http.Handler {
-	return rscors.New(rscors.Options{
-		AllowedOrigins:   h.corsvc.GetAllowOrigins(),
-		AllowedMethods:   h.corsvc.GetAllowMethods(),
-		AllowedHeaders:   h.corsvc.GetAllowHeaders(),
-		ExposedHeaders:   h.corsvc.GetAllowHeaders(),
-		AllowCredentials: true,
-	}).Handler(handler)
+	headers := h.headers
+	cred := len(headers[consts.AccessControlAllowCredentials]) > 0 &&
+		headers[consts.AccessControlAllowCredentials][0] == "true"
+	ch := rscors.New(rscors.Options{
+		AllowedOrigins:   headers[consts.AccessControlAllowOrigin],
+		AllowedMethods:   headers[consts.AccessControlAllowMethods],
+		AllowedHeaders:   headers[consts.AccessControlExposeHeaders],
+		ExposedHeaders:   headers[consts.AccessControlAllowHeaders],
+		AllowCredentials: cred,
+	})
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// add all user headers
+		for k, v := range h.headers {
+			w.Header()[k] = v
+		}
+		// next
+		ch.Handler(handler).ServeHTTP(w, r)
+	})
 }
 
 func (h *Handlers) Log(handler http.Handler) http.Handler {

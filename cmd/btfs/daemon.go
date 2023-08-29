@@ -102,6 +102,7 @@ const (
 	chainID                   = "chain-id"
 	// apiAddrKwd    = "address-api"
 	// swarmAddrKwd  = "address-swarm"
+	enableS3CompatibleAPIKwd = "s3-compatible-api"
 )
 
 // BTFS daemon test exit error code
@@ -229,6 +230,7 @@ Headers.
 		// TODO: add way to override addresses. tricky part: updating the config if also --init.
 		// cmds.StringOption(apiAddrKwd, "Address for the daemon rpc API (overrides config)"),
 		// cmds.StringOption(swarmAddrKwd, "Address for the swarm socket (overrides config)"),
+		cmds.BoolOption(enableS3CompatibleAPIKwd, "Enable s3-compatible-api server"),
 	},
 	Subcommands: map[string]*cmds.Command{},
 	NoRemote:    true,
@@ -716,10 +718,15 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	}
 
 	// access-key init
-	accesskey.InitService(s3.GetProviders(statestore))
-	s3Server := s3.NewServer(statestore)
-	_ = s3Server.Start()
-	defer s3Server.Stop()
+	accesskey.InitService(s3.GetProviders())
+
+	// start s3-compatible-api server
+	s3OptEnable, s3Opt := req.Options[enableS3CompatibleAPIKwd].(bool)
+	if s3OptEnable || (!s3Opt && cfg.S3CompatibleAPI.Enable) {
+		s3Server := s3.NewServer(cfg.S3CompatibleAPI)
+		_ = s3Server.Start()
+		defer s3Server.Stop()
+	}
 
 	if SimpleMode == false {
 		// set Analytics flag if specified

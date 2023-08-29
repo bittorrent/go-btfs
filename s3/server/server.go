@@ -9,8 +9,6 @@ import (
 	"sync"
 )
 
-const defaultServerAddress = "127.0.0.1:15001"
-
 var (
 	ErrServerStarted    = errors.New("server started")
 	ErrServerNotStarted = errors.New("server not started")
@@ -56,11 +54,9 @@ func (s *Server) Start() (err error) {
 	}
 
 	go func() {
-		fmt.Printf("start s3-compatible-api server\n")
+		fmt.Printf("Start s3-compatible-api server, endpoint-url: http://%s\n", httpSvr.Addr)
 		lErr := httpSvr.ListenAndServe()
-		if lErr != nil && !errors.Is(lErr, http.ErrServerClosed) {
-			fmt.Printf("start s3-compatible-api server: %v\n", lErr)
-		}
+		fmt.Printf("Stop s3-compatible-api server: %v\n", lErr)
 	}()
 
 	return
@@ -70,11 +66,10 @@ func (s *Server) Stop() (err error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if s.shutdown == nil {
-		err = ErrServerNotStarted
+		err = ErrServerStarted
 		return
 	}
 	err = s.shutdown()
 	s.shutdown = nil
-	fmt.Printf("stoped s3-compatible-api server: %v\n", err)
 	return
 }
