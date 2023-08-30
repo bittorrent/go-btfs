@@ -174,14 +174,6 @@ func (h *Handlers) HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // CopyObjectHandler - Copy Object
-// ----------
-// This implementation of the PUT operation adds an object to a bucket
-// while reading the object from another source.
-// Notice: The S3 client can send secret keys in headers for encryption related jobs,
-// the handler should ensure to remove these keys before sending them to the object layer.
-// Currently these keys are:
-//   - X-Amz-Server-Side-Encryption-Customer-Key
-//   - X-Amz-Copy-Source-Server-Side-Encryption-Customer-Key
 func (h *Handlers) CopyObjectHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ack := cctx.GetAccessKey(r)
@@ -308,7 +300,6 @@ func (h *Handlers) CopyObjectHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteObjectHandler - delete an object
-// Delete objectAPIHandlers
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
 func (h *Handlers) DeleteObjectHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -369,7 +360,6 @@ func (h *Handlers) DeleteObjectHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteObjectsHandler - delete objects
-// Delete objectsAPIHandlers
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjects.html
 func (h *Handlers) DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -430,9 +420,6 @@ func (h *Handlers) DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 // GetObjectHandler - GET Object
-// ----------
-// This implementation of the GET operation retrieves object. To use GET,
-// you must have READ access to the object.
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
 func (h *Handlers) GetObjectHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -495,9 +482,6 @@ func (h *Handlers) GetObjectHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetObjectACLHandler - GET Object ACL
-// -----------------
-// This operation uses the ACL
-// subresource to return the ACL of a specified object.
 func (h *Handlers) GetObjectACLHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ack := cctx.GetAccessKey(r)
