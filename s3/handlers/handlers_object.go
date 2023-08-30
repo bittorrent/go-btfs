@@ -142,6 +142,20 @@ func (h *Handlers) HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// rlock bucket
+	runlock, err := h.rlock(ctx, bucname, w, r)
+	if err != nil {
+		return
+	}
+	defer runlock()
+
+	// rlock object
+	runlockObj, err := h.rlock(ctx, bucname+"/"+objname, w, r)
+	if err != nil {
+		return
+	}
+	defer runlockObj()
+
 	//objsvc
 	obj, err := h.objsvc.GetObjectInfo(ctx, bucname, objname)
 	if err != nil {
@@ -227,6 +241,34 @@ func (h *Handlers) CopyObjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("CopyObjectHandler %s %s => %s %s \n", srcBucket, srcObject, dstBucket, dstObject)
 
+	// rlock bucket 1
+	runlock1, err := h.rlock(ctx, srcBucket, w, r)
+	if err != nil {
+		return
+	}
+	defer runlock1()
+
+	// rlock object 1
+	runlockObj1, err := h.rlock(ctx, srcBucket+"/"+srcObject, w, r)
+	if err != nil {
+		return
+	}
+	defer runlockObj1()
+
+	// rlock bucket 2
+	runlock2, err := h.rlock(ctx, dstBucket, w, r)
+	if err != nil {
+		return
+	}
+	defer runlock2()
+
+	// lock object 2
+	unlockObj2, err := h.lock(ctx, dstBucket+"/"+dstObject, w, r)
+	if err != nil {
+		return
+	}
+	defer unlockObj2()
+
 	//objsvc
 	srcObjInfo, err := h.objsvc.GetObjectInfo(ctx, srcBucket, srcObject)
 	if err != nil {
@@ -296,6 +338,20 @@ func (h *Handlers) DeleteObjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// rlock bucket
+	runlock, err := h.rlock(ctx, bucname, w, r)
+	if err != nil {
+		return
+	}
+	defer runlock()
+
+	// lock object
+	unlock, err := h.lock(ctx, bucname+"/"+objname, w, r)
+	if err != nil {
+		return
+	}
+	defer unlock()
+
 	//objsvc
 	obj, err := h.objsvc.GetObjectInfo(ctx, bucname, objname)
 	if err != nil {
@@ -345,6 +401,20 @@ func (h *Handlers) GetObjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// rlock bucket
+	runlock, err := h.rlock(ctx, bucname, w, r)
+	if err != nil {
+		return
+	}
+	defer runlock()
+
+	// rlock object
+	runlockObj, err := h.rlock(ctx, bucname+"/"+objname, w, r)
+	if err != nil {
+		return
+	}
+	defer runlockObj()
+
 	//objsvc
 	obj, reader, err := h.objsvc.GetObject(ctx, bucname, objname)
 	if err != nil {
@@ -391,6 +461,13 @@ func (h *Handlers) GetObjectACLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// rlock bucket
+	runlock, err := h.rlock(ctx, bucname, w, r)
+	if err != nil {
+		return
+	}
+	defer runlock()
+
 	acl, err := h.bucsvc.GetBucketAcl(ctx, bucname)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, err)
@@ -435,6 +512,13 @@ func (h *Handlers) ListObjectsV1Handler(w http.ResponseWriter, r *http.Request) 
 		responses.WriteErrorResponse(w, r, err)
 		return
 	}
+
+	// rlock bucket
+	runlock, err := h.rlock(ctx, bucname, w, r)
+	if err != nil {
+		return
+	}
+	defer runlock()
 
 	//objsvc
 	objs, err := h.objsvc.ListObjects(ctx, bucname, prefix, marker, delimiter, maxKeys)
@@ -495,6 +579,13 @@ func (h *Handlers) ListObjectsV2Handler(w http.ResponseWriter, r *http.Request) 
 		responses.WriteErrorResponse(w, r, s3Error)
 		return
 	}
+
+	// rlock bucket
+	runlock, err := h.rlock(ctx, bucname, w, r)
+	if err != nil {
+		return
+	}
+	defer runlock()
 
 	// Initiate a list objects operation based on the input params.
 	// On success would return back ListObjectsInfo object to be
