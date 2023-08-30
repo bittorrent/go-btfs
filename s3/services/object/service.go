@@ -27,6 +27,7 @@ const (
 	chunkSize int = 1 << 20
 
 	objectKeyFormat        = "obj/%s/%s"
+	objectPrefix           = "obj/%s/"
 	allObjectPrefixFormat  = "obj/%s/%s"
 	allObjectSeekKeyFormat = "obj/%s/%s"
 
@@ -259,41 +260,61 @@ func (s *service) ListObjects(ctx context.Context, bucket string, prefix string,
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
 	seekKey := ""
 	if marker != "" {
 		seekKey = fmt.Sprintf(allObjectSeekKeyFormat, bucket, marker)
 	}
+
 	prefixKey := fmt.Sprintf(allObjectPrefixFormat, bucket, prefix)
+	objPrefix := fmt.Sprintf(objectPrefix, bucket)
 
-	begin := false
-	index := 0
+	begin := seekKey == ""
+	nkeys := 0
+	seen := make(map[string]bool)
 	err = s.providers.GetStateStore().Iterate(prefixKey, func(key, _ []byte) (stop bool, er error) {
-		record := &Object{}
-		er = s.providers.GetStateStore().Get(string(key), record)
-		if er != nil {
-			return
+		objKey := (string(key))[len(objPrefix):]
+		commonPrefix := prefix
+
+		if delimiter != "" {
+			idx := strings.Index(objKey[len(prefix):], delimiter)
+			if idx >= 0 {
+				commonPrefix = objKey[:idx] + delimiter
+			}
 		}
-		if seekKey == string(key) {
+
+		if !begin && (seekKey == objKey || seekKey == commonPrefix) {
 			begin = true
-		}
-
-		if begin {
-			loi.Objects = append(loi.Objects, *record)
-			index++
-		}
-
-		if index == maxKeys {
-			loi.IsTruncated = true
-			begin = false
 			return
+		}
+
+		if !begin {
+			return
+		}
+
+		if commonPrefix == prefix {
+			record := &Object{}
+			er = s.providers.GetStateStore().Get(string(key), record)
+			if er != nil {
+				return
+			}
+			loi.Objects = append(loi.Objects, *record)
+			loi.NextMarker = record.Name
+			nkeys++
+		} else if !seen[commonPrefix] {
+			loi.Prefixes = append(loi.Prefixes, commonPrefix)
+			seen[commonPrefix] = true
+			loi.NextMarker = commonPrefix
+			nkeys++
+		}
+
+		if nkeys == maxKeys {
+			loi.IsTruncated = true
+			stop = true
 		}
 
 		return
 	})
-
-	if loi.IsTruncated {
-		loi.NextMarker = loi.Objects[len(loi.Objects)-1].Name
-	}
 
 	return loi, nil
 }

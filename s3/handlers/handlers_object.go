@@ -536,16 +536,6 @@ func (h *Handlers) ListObjectsV1Handler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = h.bucsvc.CheckACL(ack, bucname, action.ListObjectsAction)
-	if errors.Is(err, bucket.ErrNotFound) {
-		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
-		return
-	}
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
-		return
-	}
-
 	// Extract all the litsObjectsV1 query params to their native values.
 	prefix, marker, delimiter, maxKeys, encodingType, s3Error := getListObjectsV1Args(r.Form)
 	if s3Error != nil {
@@ -564,6 +554,16 @@ func (h *Handlers) ListObjectsV1Handler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	defer runlock()
+
+	err = h.bucsvc.CheckACL(ack, bucname, action.ListObjectsAction)
+	if errors.Is(err, bucket.ErrNotFound) {
+		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
+		return
+	}
+	if err != nil {
+		responses.WriteErrorResponse(w, r, err)
+		return
+	}
 
 	//objsvc
 	objs, err := h.objsvc.ListObjects(ctx, bucname, prefix, marker, delimiter, maxKeys)
