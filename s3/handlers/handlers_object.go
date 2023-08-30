@@ -368,6 +368,67 @@ func (h *Handlers) DeleteObjectHandler(w http.ResponseWriter, r *http.Request) {
 	responses.WriteSuccessNoContent(w)
 }
 
+// DeleteObjectsHandler - delete objects
+// Delete objectsAPIHandlers
+// https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjects.html
+func (h *Handlers) DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ack := cctx.GetAccessKey(r)
+	var err error
+	defer func() {
+		cctx.SetHandleInf(r, h.name(), err)
+	}()
+
+	bucname, objname, err := requests.ParseBucketAndObject(r)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestParameter)
+		return
+	}
+	if err := s3utils.CheckDelObjArgs(ctx, bucname, objname); err != nil {
+		responses.WriteErrorResponse(w, r, err)
+		return
+	}
+
+	err = h.bucsvc.CheckACL(ack, bucname, action.DeleteObjectAction)
+	if errors.Is(err, bucket.ErrNotFound) {
+		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
+		return
+	}
+	if err != nil {
+		responses.WriteErrorResponse(w, r, err)
+		return
+	}
+
+	// rlock bucket
+	runlock, err := h.rlock(ctx, bucname, w, r)
+	if err != nil {
+		return
+	}
+	defer runlock()
+
+	// lock object
+	unlock, err := h.lock(ctx, bucname+"/"+objname, w, r)
+	if err != nil {
+		return
+	}
+	defer unlock()
+
+	//objsvc
+	obj, err := h.objsvc.GetObjectInfo(ctx, bucname, objname)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, err)
+		return
+	}
+	//objsvc
+	err = h.objsvc.DeleteObject(ctx, bucname, objname)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, err)
+		return
+	}
+	setPutObjHeaders(w, obj, true)
+	responses.WriteSuccessNoContent(w)
+}
+
 // GetObjectHandler - GET Object
 // ----------
 // This implementation of the GET operation retrieves object. To use GET,
