@@ -184,7 +184,7 @@ func (s *service) DeleteObject(ctx context.Context, bucket, object string) error
 	}
 
 	//todo 是否先进性unpin，然后remove？
-	if bl := s.providers.GetFileStore().Remove(obj.Cid); !bl {
+	if err := s.providers.GetFileStore().Remove(obj.Cid); err != nil {
 		errMsg := fmt.Sprintf("mark Objet to delete error, bucket:%s, object:%s, cid:%s, error:%v \n", bucket, object, obj.Cid, err)
 		return errors.New(errMsg)
 	}
@@ -264,23 +264,33 @@ func (s *service) ListObjects(ctx context.Context, bucket string, prefix string,
 		seekKey = fmt.Sprintf(allObjectSeekKeyFormat, bucket, marker)
 	}
 	prefixKey := fmt.Sprintf(allObjectPrefixFormat, bucket, prefix)
-	all, err := s.providers.GetStateStore().ReadAllChan(ctx, prefixKey, seekKey)
-	if err != nil {
-		return loi, err
-	}
+
+	begin := false
 	index := 0
-	for entry := range all {
+	err = s.providers.GetStateStore().Iterate(prefixKey, func(key, _ []byte) (stop bool, er error) {
+		record := &Object{}
+		er = s.providers.GetStateStore().Get(string(key), record)
+		if er != nil {
+			return
+		}
+		if seekKey == string(key) {
+			begin = true
+		}
+
+		if begin {
+			loi.Objects = append(loi.Objects, *record)
+			index++
+		}
+
 		if index == maxKeys {
 			loi.IsTruncated = true
-			break
+			begin = false
+			return
 		}
-		var o Object
-		if err = entry.UnmarshalValue(&o); err != nil {
-			return loi, err
-		}
-		index++
-		loi.Objects = append(loi.Objects, o)
-	}
+
+		return
+	})
+
 	if loi.IsTruncated {
 		loi.NextMarker = loi.Objects[len(loi.Objects)-1].Name
 	}

@@ -39,8 +39,9 @@ func NewServer(cfg config.S3CompatibleAPI) *server.Server {
 	// services
 	acksvc := accesskey.NewService(ps)
 	sigsvc := sign.NewService()
-	bucsvc := bucket.NewService(ps)
 	objsvc := object.NewService(ps)
+	bucsvc := bucket.NewService(ps)
+	bucsvc.EmptyBucket(objsvc.EmptyBucket)
 
 	// handlers
 	hs := handlers.NewHandlers(

@@ -194,11 +194,6 @@ func (s *service) GetBucketAcl(ctx context.Context, bucket string) (string, erro
 }
 
 // EmptyBucket object中后续添加
-func (s *service) EmptyBucket(ctx context.Context, bucket string) (bool, error) {
-	//loi, err := s.ListObjects(ctx, bucket, "", "", "", 1)
-	//if err != nil {
-	//	return false, err
-	//}
-	//return len(loi.Objects) == 0, nil
-	return true, nil
+func (s *service) EmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error)) {
+	s.emptyBucket = emptyBucket
 }
