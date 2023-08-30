@@ -149,7 +149,7 @@ type Object struct {
 	Key          string
 	LastModified string // time string of format "2006-01-02T15:04:05.000Z"
 	ETag         string
-	BTFSHash     string // BTFS Cid
+	CID          string // CID
 	Size         int64
 
 	// Owner of the object.
@@ -261,6 +261,7 @@ func GenerateListObjectsV2Response(bucket, prefix, token, nextToken, startAfter,
 		}
 		content.Size = object.Size
 		content.Owner = owner
+		content.CID = object.Cid
 		contents = append(contents, content)
 	}
 	data.Name = bucket
@@ -307,7 +308,7 @@ func GenerateListObjectsV1Response(bucket, prefix, marker, delimiter, encodingTy
 		if object.ETag != "" {
 			content.ETag = "\"" + object.ETag + "\""
 		}
-		content.BTFSHash = object.Cid
+		content.CID = object.Cid
 		content.Size = object.Size
 		content.StorageClass = ""
 		content.Owner = owner

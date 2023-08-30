@@ -16,7 +16,7 @@ var defaultCorsMethods = []string{
 }
 
 var defaultCorsHeaders = []string{
-	consts.BTFSHash,
+	consts.CID,
 	consts.Date,
 	consts.ETag,
 	consts.ServerInfo,

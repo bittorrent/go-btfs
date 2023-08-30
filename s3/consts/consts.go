@@ -146,6 +146,7 @@ const (
 	XRequestWith       = "X-Requested-With"
 	Range              = "Range"
 	UserAgent          = "User-Agent"
+	CID                = "CID"
 )
 
 // Standard HTTP cors headers
@@ -155,11 +156,6 @@ const (
 	AccessControlAllowHeaders     = "Access-Control-Allow-Headers"
 	AccessControlExposeHeaders    = "Access-Control-Expose-Headers"
 	AccessControlAllowCredentials = "Access-Control-Allow-Credentials"
-)
-
-// Standard BTFS HTTP response constants
-const (
-	BTFSHash = "BTFS-Hash"
 )
 
 // object const

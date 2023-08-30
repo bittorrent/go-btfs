@@ -45,8 +45,8 @@ func (routers *Routers) Register() http.Handler {
 	//object...
 	// ListObjectsV2
 	bucket.Methods(http.MethodGet).HandlerFunc(hs.ListObjectsV2Handler).Queries("list-type", "2")
-	// ListObjectsV1
-	bucket.Methods(http.MethodGet).HandlerFunc(hs.ListObjectsV1Handler)
+	// ListObjects
+	bucket.Methods(http.MethodGet).HandlerFunc(hs.ListObjectsHandler)
 	// HeadObject
 	bucket.Methods(http.MethodHead).Path("/{object:.+}").HandlerFunc(hs.HeadObjectHandler)
 	// PutObject

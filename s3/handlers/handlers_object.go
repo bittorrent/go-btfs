@@ -522,7 +522,7 @@ func (h *Handlers) GetObjectACLHandler(w http.ResponseWriter, r *http.Request) {
 	responses.WriteGetBucketAclResponse(w, r, ack, acl)
 }
 
-func (h *Handlers) ListObjectsV1Handler(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ack := cctx.GetAccessKey(r)
 	var err error
