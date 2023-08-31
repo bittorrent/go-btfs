@@ -13,11 +13,12 @@ import (
 )
 
 const (
-	defaultKeySeparator     = "/"
-	defaultBucketSpace      = "bkt"
-	defaultObjectSpace      = "obj"
-	defaultUploadSpace      = "upl"
-	defaultOperationTimeout = 5 * time.Minute
+	defaultKeySeparator      = "/"
+	defaultBucketSpace       = "bkt"
+	defaultObjectSpace       = "obj"
+	defaultUploadSpace       = "upl"
+	defaultOperationTimeout  = 5 * time.Minute
+	defaultReadObjectTimeout = 1 * time.Hour
 
 	bucketPrefix           = "bkt/"
 	objectKeyFormat        = "obj/%s/%s"
@@ -45,13 +46,14 @@ var _ Service = (*service)(nil)
 
 // service captures all bucket metadata for a given cluster.
 type service struct {
-	providers        providers.Providerser
-	lock             ctxmu.MultiCtxRWLocker
-	keySeparator     string
-	bucketSpace      string
-	objectSpace      string
-	uploadSpace      string
-	operationTimeout time.Duration
+	providers         providers.Providerser
+	lock              ctxmu.MultiCtxRWLocker
+	keySeparator      string
+	bucketSpace       string
+	objectSpace       string
+	uploadSpace       string
+	operationTimeout  time.Duration
+	readObjectTimeout time.Duration
 }
 
 func NewService(providers providers.Providerser, options ...Option) Service {
@@ -73,17 +75,17 @@ func NewService(providers providers.Providerser, options ...Option) Service {
 // common helper methods
 
 func (s *service) getBucketKeyPrefix() (prefix string) {
-	prefix = strings.Join([]string{s.bucketSpace}, s.keySeparator)
+	prefix = strings.Join([]string{s.bucketSpace, ""}, s.keySeparator)
 	return
 }
 
 func (s *service) getObjectKeyPrefix(bucname string) (prefix string) {
-	prefix = strings.Join([]string{s.objectSpace, bucname}, s.keySeparator)
+	prefix = strings.Join([]string{s.objectSpace, bucname, ""}, s.keySeparator)
 	return
 }
 
 func (s *service) getUploadKeyPrefix(bucname, objname string) (prefix string) {
-	prefix = strings.Join([]string{s.uploadSpace, bucname, objname}, s.keySeparator)
+	prefix = strings.Join([]string{s.uploadSpace, bucname, objname, ""}, s.keySeparator)
 	return
 }
 

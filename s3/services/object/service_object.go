@@ -2,29 +2,86 @@ package object
 
 import (
 	"context"
-	"encoding/hex"
-	"fmt"
+	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/etag"
-	"github.com/bittorrent/go-btfs/s3/s3utils"
 	"github.com/bittorrent/go-btfs/s3/utils/hash"
-	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"strings"
 	"time"
 )
 
-func (s *service) PutObject(ctx context.Context, bucname, objname string, reader *hash.Reader, size int64, meta map[string]string) (obj Object, err error) {
+// PutObject put a user specified object
+func (s *service) PutObject(ctx context.Context, user string, bucname, objname string, reader *hash.Reader, size int64, meta map[string]string) (object *Object, err error) {
+	// operation context
+	ctx, cancel := s.opctx(ctx)
+	defer cancel()
+
+	// bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// rlock bucket
+	err = s.lock.RLock(ctx, buckey)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(buckey)
+
+	// get bucket
+	bucket, err := s.getBucket(buckey)
+	if err != nil {
+		return
+	}
+	if bucket == nil {
+		err = ErrBucketNotFound
+		return
+	}
+
+	// check acl
+	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.PutObjectAction)
+	if !allow {
+		err = ErrNotAllowed
+		return
+	}
+
+	// object key
+	objkey := s.getObjectKey(bucname, objname)
+
+	// lock object
+	err = s.lock.Lock(ctx, objkey)
+	if err != nil {
+		return
+	}
+	defer s.lock.Unlock(objkey)
+
+	// get old object
+	oldObject, err := s.getObject(objkey)
+	if err != nil {
+		return
+	}
+
+	// remove old file, if old object exists and put new object successfully
+	defer func() {
+		if oldObject != nil && err == nil {
+			_ = s.providers.FileStore().Remove(oldObject.Cid)
+			// todo: log this remove error
+		}
+	}()
+
+	// store file
 	cid, err := s.providers.FileStore().Store(reader)
 	if err != nil {
 		return
 	}
 
-	obj = Object{
+	// now
+	now := time.Now()
+
+	// new object
+	object = &Object{
 		Bucket:           bucname,
 		Name:             objname,
-		ModTime:          time.Now().UTC(),
+		ModTime:          now.UTC(),
 		Size:             size,
 		IsDir:            false,
 		ETag:             reader.ETag().String(),
@@ -35,510 +92,463 @@ func (s *service) PutObject(ctx context.Context, bucname, objname string, reader
 		Acl:              meta[consts.AmzACL],
 		ContentType:      meta[strings.ToLower(consts.ContentType)],
 		ContentEncoding:  meta[strings.ToLower(consts.ContentEncoding)],
-		SuccessorModTime: time.Now().UTC(),
+		SuccessorModTime: now.UTC(),
 	}
 
-	// Update expires
-	if exp, ok := meta[strings.ToLower(consts.Expires)]; ok {
-		if t, e := time.Parse(http.TimeFormat, exp); e == nil {
-			obj.Expires = t.UTC()
-		}
+	// set object expires
+	exp, er := time.Parse(http.TimeFormat, meta[strings.ToLower(consts.Expires)])
+	if er == nil {
+		object.Expires = exp.UTC()
 	}
 
-	err = s.providers.StateStore().Put(getObjectKey(bucname, objname), obj)
-	if err != nil {
-		return
-	}
+	// put object
+	err = s.providers.StateStore().Put(objkey, object)
 
 	return
 }
 
-// CopyObject store object
-func (s *service) CopyObject(ctx context.Context, bucket, object string, info Object, size int64, meta map[string]string) (Object, error) {
-	obj := Object{
-		Bucket:           bucket,
-		Name:             object,
-		ModTime:          time.Now().UTC(),
-		Size:             size,
+// CopyObject copy from a user specified source object to a desert object
+func (s *service) CopyObject(ctx context.Context, user string, srcBucname, srcObjname, dstBucname, dstObjname string, meta map[string]string) (dstObject *Object, err error) {
+	// operation context
+	ctx, cancel := s.opctx(ctx)
+	defer cancel()
+
+	// source bucket key
+	srcBuckey := s.getBucketKey(srcBucname)
+
+	// rlock source bucket
+	err = s.lock.RLock(ctx, srcBuckey)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(srcBuckey)
+
+	// get source bucket
+	srcBucket, err := s.getBucket(srcBuckey)
+	if err != nil {
+		return
+	}
+	if srcBucket == nil {
+		err = ErrBucketNotFound
+		return
+	}
+
+	// check source acl
+	srcAllow := s.checkAcl(srcBucket.Owner, srcBucket.Acl, user, action.GetObjectAction)
+	if !srcAllow {
+		err = ErrNotAllowed
+		return
+	}
+
+	// source object key
+	srcObjkey := s.getObjectKey(srcBucname, srcObjname)
+
+	// rlock source object
+	err = s.lock.RLock(ctx, srcObjkey)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(srcObjkey)
+
+	// get source object
+	srcObject, err := s.getObject(srcObjkey)
+	if err != nil {
+		return
+	}
+	if srcObject == nil {
+		err = ErrObjectNotFound
+		return
+	}
+
+	// desert bucket key
+	dstBuckey := s.getBucketKey(dstBucname)
+
+	// rlock desert bucket
+	err = s.lock.RLock(ctx, dstBuckey)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(dstBuckey)
+
+	// get desert bucket
+	dstBucket, err := s.getBucket(dstBuckey)
+	if err != nil {
+		return
+	}
+	if dstBucket == nil {
+		err = ErrBucketNotFound
+		return
+	}
+
+	// check desert acl
+	dstAllow := s.checkAcl(dstBucket.Owner, dstBucket.Acl, user, action.PutObjectAction)
+	if !dstAllow {
+		err = ErrNotAllowed
+		return
+	}
+
+	// desert object key
+	dstObjkey := s.getObjectKey(dstBucname, dstObjname)
+
+	// lock desert object
+	err = s.lock.Lock(ctx, dstObjkey)
+	if err != nil {
+		return
+	}
+	defer s.lock.Unlock(dstObjkey)
+
+	// now
+	now := time.Now()
+
+	// desert object
+	dstObject = &Object{
+		Bucket:           dstBucname,
+		Name:             dstObjname,
+		ModTime:          now.UTC(),
+		Size:             srcObject.Size,
 		IsDir:            false,
-		ETag:             info.ETag,
-		Cid:              info.Cid,
+		ETag:             srcObject.ETag,
+		Cid:              srcObject.Cid,
 		VersionID:        "",
 		IsLatest:         true,
 		DeleteMarker:     false,
 		ContentType:      meta[strings.ToLower(consts.ContentType)],
 		ContentEncoding:  meta[strings.ToLower(consts.ContentEncoding)],
-		SuccessorModTime: time.Now().UTC(),
-	}
-	// Update expires
-	if exp, ok := meta[strings.ToLower(consts.Expires)]; ok {
-		if t, e := time.Parse(http.TimeFormat, exp); e == nil {
-			obj.Expires = t.UTC()
-		}
+		SuccessorModTime: now.UTC(),
 	}
 
-	err := s.providers.StateStore().Put(getObjectKey(bucket, object), obj)
-	if err != nil {
-		return Object{}, err
+	// set object desert expires
+	exp, er := time.Parse(http.TimeFormat, strings.ToLower(consts.Expires))
+	if er != nil {
+		dstObject.Expires = exp.UTC()
 	}
-	return obj, nil
+
+	// put desert object
+	err = s.providers.StateStore().Put(dstObjkey, dstObject)
+
+	return
 }
 
-// GetObject Get object
-func (s *service) GetObject(ctx context.Context, bucket, object string) (Object, io.ReadCloser, error) {
-	var obj Object
-	err := s.providers.StateStore().Get(getObjectKey(bucket, object), &obj)
-	if errors.Is(err, providers.ErrStateStoreNotFound) {
-		err = ErrObjectNotFound
-		return Object{}, nil, err
-	}
-
-	reader, err := s.providers.FileStore().Cat(obj.Cid)
-	if err != nil {
-		return Object{}, nil, err
-	}
-
-	return obj, reader, nil
-}
-
-// GetObjectInfo Get object info
-func (s *service) GetObjectInfo(ctx context.Context, bucket, object string) (Object, error) {
-	var obj Object
-	err := s.providers.StateStore().Get(getObjectKey(bucket, object), &obj)
-	if errors.Is(err, providers.ErrStateStoreNotFound) {
-		err = ErrObjectNotFound
-		return Object{}, err
-	}
-
-	return obj, nil
-}
-
-// DeleteObject delete object
-func (s *service) DeleteObject(ctx context.Context, bucket, object string) error {
-	var obj Object
-	err := s.providers.StateStore().Get(getObjectKey(bucket, object), &obj)
-	if errors.Is(err, providers.ErrStateStoreNotFound) {
-		err = ErrObjectNotFound
-		return err
-	}
-
-	if err = s.providers.StateStore().Delete(getObjectKey(bucket, object)); err != nil {
-		return err
-	}
-
-	//todo 是否先进性unpin，然后remove？
-	if err := s.providers.FileStore().Remove(obj.Cid); err != nil {
-		errMsg := fmt.Sprintf("mark Objet to delete error, bucket:%s, object:%s, cid:%s, error:%v \n", bucket, object, obj.Cid, err)
-		return errors.New(errMsg)
-	}
-	return nil
-}
-
-func (s *service) CleanObjectsInBucket(ctx context.Context, bucket string) error {
-	ctx, cancel := context.WithCancel(ctx)
+// GetObject get an object for the specified user
+func (s *service) GetObject(ctx context.Context, user, bucname, objname string) (object *Object, body io.ReadCloser, err error) {
+	// operation context
+	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
-	prefixKey := fmt.Sprintf(allObjectPrefixFormat, bucket, "")
-	err := s.providers.StateStore().Iterate(prefixKey, func(key, _ []byte) (stop bool, er error) {
-		record := &Object{}
-		er = s.providers.StateStore().Get(string(key), record)
-		if er != nil {
-			return
-		}
+	// bucket key
+	buckey := s.getBucketKey(bucname)
 
-		if err := s.DeleteObject(ctx, bucket, record.Name); err != nil {
-			return
-		}
+	// rlock bucket
+	err = s.lock.RLock(ctx, buckey)
+	if err != nil {
 		return
-	})
-
-	return err
-}
-
-// ListObjectsInfo - container for list objects.
-type ListObjectsInfo struct {
-	// Indicates whether the returned list objects response is truncated. A
-	// value of true indicates that the list was truncated. The list can be truncated
-	// if the number of objects exceeds the limit allowed or specified
-	// by max keys.
-	IsTruncated bool
-
-	// When response is truncated (the IsTruncated element value in the response is true),
-	// you can use the key name in this field as marker in the subsequent
-	// request to get next set of objects.
-	//
-	// NOTE: AWS S3 returns NextMarker only if you have delimiter request parameter specified,
-	NextMarker string
-
-	// List of objects info for this request.
-	Objects []Object
-
-	// List of prefixes for this request.
-	Prefixes []string
-}
-
-// ListObjects list user object
-// TODO use more params
-func (s *service) ListObjects(ctx context.Context, bucket string, prefix string, marker string, delimiter string, maxKeys int) (loi ListObjectsInfo, err error) {
-	if maxKeys == 0 {
-		return loi, nil
 	}
-
-	if len(prefix) > 0 && maxKeys == 1 && delimiter == "" && marker == "" {
-		// Optimization for certain applications like
-		// - Cohesity
-		// - Actifio, Splunk etc.
-		// which send ListObjects requests where the actual object
-		// itself is the prefix and max-keys=1 in such scenarios
-		// we can simply verify locally if such an object exists
-		// to avoid the need for ListObjects().
-		var obj Object
-		err = s.providers.StateStore().Get(getObjectKey(bucket, prefix), &obj)
-		if err == nil {
-			loi.Objects = append(loi.Objects, obj)
-			return loi, nil
+	defer func() {
+		// rUnlock bucket just if getting failed
+		if err != nil {
+			s.lock.RUnlock(buckey)
 		}
+	}()
+
+	// get bucket
+	bucket, err := s.getBucket(buckey)
+	if err != nil {
+		return
+	}
+	if bucket == nil {
+		err = ErrBucketNotFound
+		return
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
+	// check acl
+	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.GetObjectAction)
+	if !allow {
+		err = ErrNotAllowed
+		return
+	}
+
+	// object key
+	objkey := s.getObjectKey(bucname, objname)
+
+	// rlock object
+	err = s.lock.RLock(ctx, objkey)
+	if err != nil {
+		return
+	}
+	defer func() {
+		// rUnlock object just if getting failed
+		if err != nil {
+			s.lock.RUnlock(objkey)
+		}
+	}()
+
+	// get object
+	object, err = s.getObject(objkey)
+	if err != nil {
+		return
+	}
+	if object == nil {
+		err = ErrObjectNotFound
+		return
+	}
+
+	// get object body
+	body, err = s.providers.FileStore().Cat(object.Cid)
+	if err != nil {
+		return
+	}
+
+	// wrap the body with timeout and unlock hooks
+	// this will enable the bucket and object keep rlocked until
+	// read timout or read closed. Normally, these locks will
+	// be released as soon as leave from the call
+	body = WrapCleanReadCloser(
+		body,
+		s.readObjectTimeout,
+		func() {
+			s.lock.RUnlock(objkey) // note: release object first
+			s.lock.RUnlock(buckey)
+		},
+	)
+
+	return
+}
+
+// DeleteObject delete a user specified object
+func (s *service) DeleteObject(ctx context.Context, user, bucname, objname string) (err error) {
+	// operation context
+	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
-	seekKey := ""
-	if marker != "" {
-		seekKey = fmt.Sprintf(allObjectSeekKeyFormat, bucket, marker)
+	// bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// rlock bucket
+	err = s.lock.RLock(ctx, buckey)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(buckey)
+
+	// get bucket
+	bucket, err := s.getBucket(buckey)
+	if err != nil {
+		return
+	}
+	if bucket == nil {
+		err = ErrBucketNotFound
+		return
 	}
 
-	prefixKey := fmt.Sprintf(allObjectPrefixFormat, bucket, prefix)
-	objPrefix := fmt.Sprintf(objectPrefix, bucket)
+	// check acl
+	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.DeleteObjectAction)
+	if !allow {
+		err = ErrNotAllowed
+		return
+	}
 
-	begin := seekKey == ""
-	nkeys := 0
+	// object key
+	objkey := s.getObjectKey(bucname, objname)
+
+	// lock object
+	err = s.lock.Lock(ctx, objkey)
+	if err != nil {
+		return
+	}
+	defer s.lock.Unlock(objkey)
+
+	// get object
+	object, err := s.getObject(objkey)
+	if err != nil {
+		return
+	}
+	if object == nil {
+		err = ErrObjectNotFound
+		return
+	}
+
+	// delete object body
+	err = s.providers.FileStore().Remove(object.Cid)
+	if err != nil {
+		return
+	}
+
+	// delete object
+	err = s.providers.StateStore().Delete(objkey)
+
+	return
+}
+
+// ListObjects list user specified objects
+func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimiter, marker string, max int) (list *ObjectsList, err error) {
+	// operation context
+	ctx, cancel := s.opctx(ctx)
+	defer cancel()
+
+	// bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// rlock bucket
+	err = s.lock.RLock(ctx, buckey)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(buckey)
+
+	// get bucket
+	bucket, err := s.getBucket(buckey)
+	if err != nil {
+		return
+	}
+	if bucket == nil {
+		err = ErrBucketNotFound
+		return
+	}
+
+	// check acl
+	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.ListObjectsAction)
+	if !allow {
+		err = ErrNotAllowed
+		return
+	}
+
+	// object key prefix
+	objkeyPrefix := s.getObjectKeyPrefix(bucname)
+
+	// objects key prefix
+	objskeyPrefix := objkeyPrefix + prefix
+
+	// accumulate count
+	count := 0
+
+	// begin collect
+	begin := marker == ""
+
+	// seen keys
 	seen := make(map[string]bool)
-	err = s.providers.StateStore().Iterate(prefixKey, func(key, _ []byte) (stop bool, er error) {
-		objKey := (string(key))[len(objPrefix):]
-		commonPrefix := prefix
 
+	// iterate all objects with the specified prefix to collect and group specified range items
+	err = s.providers.StateStore().Iterate(objskeyPrefix, func(key, _ []byte) (stop bool, er error) {
+		// object key
+		objkey := string(key)
+
+		// object name
+		objname := objkey[len(objkeyPrefix):]
+
+		// common prefix: if the part of object name without prefix include delimiter
+		// it is the string truncated object name after the delimiter, else
+		// it is the bucket name itself
+		commonPrefix := objname
 		if delimiter != "" {
-			idx := strings.Index(objKey[len(prefix):], delimiter)
-			if idx >= 0 {
-				commonPrefix = objKey[:idx] + delimiter
+			dl := len(delimiter)
+			pl := len(prefix)
+			di := strings.Index(objname[pl:], delimiter)
+			if di >= 0 {
+				commonPrefix = objname[:(pl + di + dl)]
 			}
 		}
 
-		if !begin && (seekKey == objKey || seekKey == commonPrefix) {
+		// if collect not begin, check the marker, if it is matched
+		// with the common prefix, then begin collection from next iterate turn
+		// and mark this common prefix as seen
+		// note: common prefix also can be object name, so when marker is
+		// an object name, the check will be also done correctly
+		if !begin && marker == commonPrefix {
 			begin = true
+			seen[commonPrefix] = true
 			return
 		}
 
+		// no begin, jump the item
 		if !begin {
 			return
 		}
 
-		if commonPrefix == prefix {
-			record := &Object{}
-			er = s.providers.StateStore().Get(string(key), record)
+		// objects with same common prefix will be grouped into one
+		// note: the objects without common prefix will present only once, so
+		// it is not necessary to add these objects names in the seen map
+		if seen[commonPrefix] {
+			return
+		}
+
+		// objects with common prefix grouped int one
+		if commonPrefix != objname {
+			list.Prefixes = append(list.Prefixes, commonPrefix)
+			list.NextMarker = commonPrefix
+			seen[commonPrefix] = true
+		} else {
+			// object without common prefix
+			var object *Object
+			er = s.providers.StateStore().Get(objkey, object)
 			if er != nil {
 				return
 			}
-			loi.Objects = append(loi.Objects, *record)
-			loi.NextMarker = record.Name
-			nkeys++
-		} else if !seen[commonPrefix] {
-			loi.Prefixes = append(loi.Prefixes, commonPrefix)
-			seen[commonPrefix] = true
-			loi.NextMarker = commonPrefix
-			nkeys++
+			list.Objects = append(list.Objects, object)
+			list.NextMarker = objname
 		}
 
-		if nkeys == maxKeys {
-			loi.IsTruncated = true
+		// increment collection count
+		count++
+
+		// check the count, if it matched the max, means
+		// the collect is complete, but the items may remain, so stop the
+		// iteration, and mark the list was truncated
+		if count == max {
+			list.IsTruncated = true
 			stop = true
 		}
 
 		return
 	})
 
-	return loi, nil
-}
-
-func (s *service) EmptyBucket(ctx context.Context, bucket string) (bool, error) {
-	loi, err := s.ListObjects(ctx, bucket, "", "", "", 1)
-	if err != nil {
-		return false, err
-	}
-	return len(loi.Objects) == 0, nil
-}
-
-// ListObjectsV2Info - container for list objects version 2.
-type ListObjectsV2Info struct {
-	// Indicates whether the returned list objects response is truncated. A
-	// value of true indicates that the list was truncated. The list can be truncated
-	// if the number of objects exceeds the limit allowed or specified
-	// by max keys.
-	IsTruncated bool
-
-	// When response is truncated (the IsTruncated element value in the response
-	// is true), you can use the key name in this field as marker in the subsequent
-	// request to get next set of objects.
-	//
-	// NOTE: This element is returned only if you have delimiter request parameter
-	// specified.
-	ContinuationToken     string
-	NextContinuationToken string
-
-	// List of objects info for this request.
-	Objects []Object
-
-	// List of prefixes for this request.
-	Prefixes []string
-}
-
-// ListObjectsV2 list objects
-func (s *service) ListObjectsV2(ctx context.Context, bucket string, prefix string, continuationToken string, delimiter string, maxKeys int, owner bool, startAfter string) (ListObjectsV2Info, error) {
-	marker := continuationToken
-	if marker == "" {
-		marker = startAfter
-	}
-	loi, err := s.ListObjects(ctx, bucket, prefix, marker, delimiter, maxKeys)
-	if err != nil {
-		return ListObjectsV2Info{}, err
-	}
-	listV2Info := ListObjectsV2Info{
-		IsTruncated:           loi.IsTruncated,
-		ContinuationToken:     continuationToken,
-		NextContinuationToken: loi.NextMarker,
-		Objects:               loi.Objects,
-		Prefixes:              loi.Prefixes,
-	}
-	return listV2Info, nil
-}
-
-/*---------------------------------------------------*/
-
-func (s *service) CreateMultipartUpload(ctx context.Context, bucname string, objname string, meta map[string]string) (mtp Multipart, err error) {
-	uploadId := uuid.NewString()
-	mtp = Multipart{
-		Bucket:    bucname,
-		Object:    objname,
-		UploadID:  uploadId,
-		MetaData:  meta,
-		Initiated: time.Now().UTC(),
-	}
-
-	err = s.providers.StateStore().Put(getUploadKey(bucname, objname, uploadId), mtp)
-	if err != nil {
-		return
-	}
-
 	return
 }
 
-func (s *service) UploadPart(ctx context.Context, bucname string, objname string, uploadID string, partID int, reader *hash.Reader, size int64, meta map[string]string) (part ObjectPart, err error) {
-	cid, err := s.providers.FileStore().Store(reader)
+// EmptyBucket check if the user specified bucked is empty
+func (s *service) EmptyBucket(ctx context.Context, user, bucname string) (empty bool, err error) {
+	ctx, cancel := s.opctx(ctx)
+	defer cancel()
+
+	// bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// rlock bucket
+	err = s.lock.RLock(ctx, buckey)
 	if err != nil {
 		return
 	}
+	defer s.lock.RUnlock(buckey)
 
-	part = ObjectPart{
-		Number:  partID,
-		ETag:    reader.ETag().String(),
-		Cid:     cid,
-		Size:    size,
-		ModTime: time.Now().UTC(),
-	}
-
-	mtp, err := s.getMultipart(ctx, bucname, objname, uploadID)
+	// get bucket
+	bucket, err := s.getBucket(buckey)
 	if err != nil {
 		return
 	}
-
-	mtp.Parts = append(mtp.Parts, part)
-	err = s.providers.StateStore().Put(getUploadKey(bucname, objname, uploadID), mtp)
-	if err != nil {
-		return part, err
+	if bucket == nil {
+		err = ErrBucketNotFound
+		return
 	}
+
+	// check acl
+	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.HeadBucketAction)
+	if !allow {
+		err = ErrNotAllowed
+		return
+	}
+
+	// object key prefix
+	objkeyPrefix := s.getObjectKeyPrefix(bucname)
+
+	// initially set empty to true
+	empty = true
+
+	// iterate the bucket objects, if no item, empty keep true
+	// if at least one, set empty to false, and stop iterate
+	err = s.providers.StateStore().Iterate(objkeyPrefix, func(_, _ []byte) (stop bool, er error) {
+		empty = false
+		stop = true
+		return
+	})
 
 	return
-}
-
-func (s *service) AbortMultipartUpload(ctx context.Context, bucname string, objname string, uploadID string) (err error) {
-	mtp, err := s.getMultipart(ctx, bucname, objname, uploadID)
-	if err != nil {
-		return
-	}
-
-	for _, part := range mtp.Parts {
-		err = s.providers.FileStore().Remove(part.Cid)
-		if err != nil {
-			return
-		}
-	}
-
-	err = s.removeMultipart(ctx, bucname, objname, uploadID)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func (s *service) CompleteMultiPartUpload(ctx context.Context, bucname string, objname string, uploadID string, parts []CompletePart) (obj Object, err error) {
-	mi, err := s.getMultipart(ctx, bucname, objname, uploadID)
-	if err != nil {
-		return
-	}
-
-	var (
-		readers    []io.Reader
-		objectSize int64
-	)
-
-	defer func() {
-		for _, rdr := range readers {
-			_ = rdr.(io.ReadCloser).Close()
-		}
-	}()
-
-	idxMap := objectPartIndexMap(mi.Parts)
-	for i, part := range parts {
-		partIndex, ok := idxMap[part.PartNumber]
-		if !ok {
-			err = s3utils.InvalidPart{
-				PartNumber: part.PartNumber,
-				GotETag:    part.ETag,
-			}
-			return
-		}
-
-		gotPart := mi.Parts[partIndex]
-
-		part.ETag = canonicalizeETag(part.ETag)
-		if gotPart.ETag != part.ETag {
-			err = s3utils.InvalidPart{
-				PartNumber: part.PartNumber,
-				ExpETag:    gotPart.ETag,
-				GotETag:    part.ETag,
-			}
-			return
-		}
-
-		// All parts except the last part has to be at least 5MB.
-		if (i < len(parts)-1) && !(gotPart.Size >= consts.MinPartSize) {
-			err = s3utils.PartTooSmall{
-				PartNumber: part.PartNumber,
-				PartSize:   gotPart.Size,
-				PartETag:   part.ETag,
-			}
-			return
-		}
-
-		// Save for total objname size.
-		objectSize += gotPart.Size
-
-		var rdr io.ReadCloser
-		rdr, err = s.providers.FileStore().Cat(gotPart.Cid)
-		if err != nil {
-			return
-		}
-
-		readers = append(readers, rdr)
-	}
-
-	cid, err := s.providers.FileStore().Store(io.MultiReader(readers...))
-	if err != nil {
-		return
-	}
-
-	obj = Object{
-		Bucket:           bucname,
-		Name:             objname,
-		ModTime:          time.Now().UTC(),
-		Size:             objectSize,
-		IsDir:            false,
-		ETag:             computeCompleteMultipartMD5(parts),
-		Cid:              cid,
-		VersionID:        "",
-		IsLatest:         true,
-		DeleteMarker:     false,
-		ContentType:      mi.MetaData[strings.ToLower(consts.ContentType)],
-		ContentEncoding:  mi.MetaData[strings.ToLower(consts.ContentEncoding)],
-		SuccessorModTime: time.Now().UTC(),
-	}
-
-	if exp, ok := mi.MetaData[strings.ToLower(consts.Expires)]; ok {
-		if t, e := time.Parse(http.TimeFormat, exp); e == nil {
-			obj.Expires = t.UTC()
-		}
-	}
-
-	err = s.providers.StateStore().Put(getObjectKey(bucname, objname), obj)
-	if err != nil {
-		return
-	}
-
-	err = s.removeMultipartInfo(ctx, bucname, objname, uploadID)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func (s *service) GetMultipart(ctx context.Context, bucname string, objname string, uploadID string) (mtp Multipart, err error) {
-	return s.getMultipart(ctx, bucname, objname, uploadID)
-}
-
-func (s *service) getMultipart(ctx context.Context, bucname string, objname string, uploadID string) (mtp Multipart, err error) {
-	err = s.providers.StateStore().Get(getUploadKey(bucname, objname, uploadID), &mtp)
-	if errors.Is(err, providers.ErrStateStoreNotFound) {
-		err = ErrUploadNotFound
-		return
-	}
-	return
-}
-
-func (s *service) removeMultipart(ctx context.Context, bucname string, objname string, uploadID string) (err error) {
-	err = s.providers.StateStore().Delete(getUploadKey(bucname, objname, uploadID))
-	if errors.Is(err, providers.ErrStateStoreNotFound) {
-		err = ErrUploadNotFound
-		return
-	}
-	return
-}
-
-func (s *service) removeMultipartInfo(ctx context.Context, bucname string, objname string, uploadID string) (err error) {
-	err = s.providers.StateStore().Delete(getUploadKey(bucname, objname, uploadID))
-	if errors.Is(err, providers.ErrStateStoreNotFound) {
-		err = ErrUploadNotFound
-		return
-	}
-	return
-}
-
-func objectPartIndexMap(parts []ObjectPart) map[int]int {
-	mp := make(map[int]int)
-	for i, part := range parts {
-		mp[part.Number] = i
-	}
-	return mp
-}
-
-// canonicalizeETag returns ETag with leading and trailing double-quotes removed,
-// if any present
-func canonicalizeETag(etag string) string {
-	return etagRegex.ReplaceAllString(etag, "$1")
-}
-
-func computeCompleteMultipartMD5(parts []CompletePart) string {
-	var finalMD5Bytes []byte
-	for _, part := range parts {
-		md5Bytes, err := hex.DecodeString(canonicalizeETag(part.ETag))
-		if err != nil {
-			finalMD5Bytes = append(finalMD5Bytes, []byte(part.ETag)...)
-		} else {
-			finalMD5Bytes = append(finalMD5Bytes, md5Bytes...)
-		}
-	}
-	s3MD5 := fmt.Sprintf("%s-%d", etag.Multipart(finalMD5Bytes), len(parts))
-	return s3MD5
 }

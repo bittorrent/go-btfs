@@ -34,7 +34,7 @@ type Service interface {
 	GetObject(ctx context.Context, bucket, object string) (Object, io.ReadCloser, error)
 	GetObjectInfo(ctx context.Context, bucket, object string) (Object, error)
 	DeleteObject(ctx context.Context, bucket, object string) error
-	ListObjects(ctx context.Context, bucket string, prefix string, marker string, delimiter string, maxKeys int) (loi ListObjectsInfo, err error)
+	ListObjects(ctx context.Context, bucket string, prefix string, marker string, delimiter string, maxKeys int) (loi Object, err error)
 	ListObjectsV2(ctx context.Context, bucket string, prefix string, continuationToken string, delimiter string, maxKeys int, owner bool, startAfter string) (ListObjectsV2Info, error)
 
 	// martipart
@@ -88,6 +88,28 @@ type ObjectPart struct {
 	Number  int       `json:"number"`
 	Size    int64     `json:"size"`
 	ModTime time.Time `json:"mod_time"`
+}
+
+// ListObjectsInfo - container for list objects.
+type ObjectsList struct {
+	// Indicates whether the returned list objects response is truncated. A
+	// value of true indicates that the list was truncated. The list can be truncated
+	// if the number of objects exceeds the limit allowed or specified
+	// by max keys.
+	IsTruncated bool
+
+	// When response is truncated (the IsTruncated element value in the response is true),
+	// you can use the key name in this field as marker in the subsequent
+	// request to get next set of objects.
+	//
+	// NOTE: AWS S3 returns NextMarker only if you have delimiter request parameter specified,
+	NextMarker string
+
+	// List of objects info for this request.
+	Objects []*Object
+
+	// List of prefixes for this request.
+	Prefixes []string
 }
 
 type CompletePart struct {

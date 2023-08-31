@@ -117,8 +117,15 @@ func (s *service) DeleteBucket(ctx context.Context, user, bucname string) (err e
 	}
 
 	err = s.providers.StateStore().Delete(buckey)
+	if err != nil {
+		return
+	}
 
-	// todo: delete all objects below to this bucket
+	// bucket objects prefix
+	objectsPrefix := s.getObjectKeyPrefix(bucname)
+
+	// delete all objects of the bucket
+	err = s.deleteObjectsByPrefix(objectsPrefix)
 
 	return
 }
