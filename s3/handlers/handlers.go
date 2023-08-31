@@ -7,7 +7,6 @@ import (
 	"github.com/bittorrent/go-btfs/s3/ctxmu"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
-	"github.com/bittorrent/go-btfs/s3/services/bucket"
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"github.com/bittorrent/go-btfs/s3/services/sign"
 	"net/http"
@@ -26,14 +25,14 @@ type Handlers struct {
 
 	acksvc accesskey.Service
 	sigsvc sign.Service
-	bucsvc bucket.Service
+	bucsvc object.Service
 	objsvc object.Service
 }
 
 func NewHandlers(
 	acksvc accesskey.Service,
 	sigsvc sign.Service,
-	bucsvc bucket.Service,
+	bucsvc object.Service,
 	objsvc object.Service,
 	options ...Option,
 ) (handlers *Handlers) {

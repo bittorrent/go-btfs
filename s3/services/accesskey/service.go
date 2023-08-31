@@ -51,7 +51,7 @@ func (svc *service) Generate() (record *AccessKey, err error) {
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	err = svc.providers.GetStateStore().Put(svc.getStoreKey(record.Key), record)
+	err = svc.providers.StateStore().Put(svc.getStoreKey(record.Key), record)
 	return
 }
 
@@ -89,7 +89,7 @@ func (svc *service) Delete(key string) (err error) {
 
 func (svc *service) Get(key string) (ack *AccessKey, err error) {
 	ack = &AccessKey{}
-	err = svc.providers.GetStateStore().Get(svc.getStoreKey(key), ack)
+	err = svc.providers.StateStore().Get(svc.getStoreKey(key), ack)
 	if err != nil && !errors.Is(err, providers.ErrStateStoreNotFound) {
 		return
 	}
@@ -100,9 +100,9 @@ func (svc *service) Get(key string) (ack *AccessKey, err error) {
 }
 
 func (svc *service) List() (list []*AccessKey, err error) {
-	err = svc.providers.GetStateStore().Iterate(svc.storeKeyPrefix, func(key, _ []byte) (stop bool, er error) {
+	err = svc.providers.StateStore().Iterate(svc.storeKeyPrefix, func(key, _ []byte) (stop bool, er error) {
 		record := &AccessKey{}
-		er = svc.providers.GetStateStore().Get(string(key), record)
+		er = svc.providers.StateStore().Get(string(key), record)
 		if er != nil {
 			return
 		}
@@ -149,7 +149,7 @@ func (svc *service) update(key string, args *updateArgs) (err error) {
 	record := &AccessKey{}
 	stk := svc.getStoreKey(key)
 
-	err = svc.providers.GetStateStore().Get(stk, record)
+	err = svc.providers.StateStore().Get(stk, record)
 	if err != nil && !errors.Is(err, storage.ErrNotFound) {
 		return
 	}
@@ -170,7 +170,7 @@ func (svc *service) update(key string, args *updateArgs) (err error) {
 
 	record.UpdatedAt = time.Now()
 
-	err = svc.providers.GetStateStore().Put(stk, record)
+	err = svc.providers.StateStore().Put(stk, record)
 
 	return
 }

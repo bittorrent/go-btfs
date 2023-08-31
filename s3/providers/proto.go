@@ -11,8 +11,8 @@ var (
 )
 
 type Providerser interface {
-	GetFileStore() FileStorer
-	GetStateStore() StateStorer
+	FileStore() FileStorer
+	StateStore() StateStorer
 }
 
 type FileStorer interface {

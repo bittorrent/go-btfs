@@ -9,11 +9,25 @@ import (
 )
 
 var (
-	ErrObjectNotFound = errors.New("object not found")
-	ErrUploadNotFound = errors.New("upload not found")
+	ErrBucketNotFound      = errors.New("bucket not found")
+	ErrObjectNotFound      = errors.New("object not found")
+	ErrUploadNotFound      = errors.New("upload not found")
+	ErrNotAllowed          = errors.New("not allowed")
+	ErrBucketAlreadyExists = errors.New("bucket already exists")
 )
 
 type Service interface {
+	// bucket
+	CreateBucket(ctx context.Context, bucket, region, accessKey, acl string) error
+	GetBucketMeta(ctx context.Context, bucket string) (meta Bucket, err error)
+	HasBucket(ctx context.Context, bucket string) bool
+	SetEmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error))
+	DeleteBucket(ctx context.Context, bucket string) error
+	GetAllBucketsOfUser(username string) (list []*Bucket, err error)
+	UpdateBucketAcl(ctx context.Context, bucket, acl string) error
+	GetBucketAcl(ctx context.Context, bucket string) (string, error)
+	EmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error))
+
 	// object
 	PutObject(ctx context.Context, bucname, objname string, reader *hash.Reader, size int64, meta map[string]string) (obj Object, err error)
 	CopyObject(ctx context.Context, bucket, object string, info Object, size int64, meta map[string]string) (Object, error)
@@ -21,7 +35,6 @@ type Service interface {
 	GetObjectInfo(ctx context.Context, bucket, object string) (Object, error)
 	DeleteObject(ctx context.Context, bucket, object string) error
 	ListObjects(ctx context.Context, bucket string, prefix string, marker string, delimiter string, maxKeys int) (loi ListObjectsInfo, err error)
-	EmptyBucket(ctx context.Context, bucket string) (bool, error)
 	ListObjectsV2(ctx context.Context, bucket string, prefix string, continuationToken string, delimiter string, maxKeys int, owner bool, startAfter string) (ListObjectsV2Info, error)
 
 	// martipart
@@ -32,54 +45,31 @@ type Service interface {
 	GetMultipart(ctx context.Context, bucname string, objname string, uploadID string) (mtp Multipart, err error)
 }
 
+// Bucket contains bucket metadata.
+type Bucket struct {
+	Name    string
+	Region  string
+	Owner   string
+	Acl     string
+	Created time.Time
+}
+
 type Object struct {
-	// Name of the bucket.
-	Bucket string
-
-	// Name of the object.
-	Name string
-
-	// Date and time when the object was last modified.
-	ModTime time.Time
-
-	// Total object size.
-	Size int64
-
-	// IsDir indicates if the object is prefix.
-	IsDir bool
-
-	// Hex encoded unique entity tag of the object.
-	ETag string
-
-	// ipfs key
-	Cid string
-	Acl string
-	// Version ID of this object.
-	VersionID string
-
-	// IsLatest indicates if this is the latest current version
-	// latest can be true for delete marker or a version.
-	IsLatest bool
-
-	// DeleteMarker indicates if the versionId corresponds
-	// to a delete marker on an object.
-	DeleteMarker bool
-
-	// A standard MIME type describing the format of the object.
-	ContentType string
-
-	// Specifies what content encodings have been applied to the object and thus
-	// what decoding mechanisms must be applied to obtain the object referenced
-	// by the Content-Type header field.
-	ContentEncoding string
-
-	// Date and time at which the object is no longer able to be cached
-	Expires time.Time
-
-	// Date and time when the object was last accessed.
-	AccTime time.Time
-
-	//  The mod time of the successor object version if any
+	Bucket           string
+	Name             string
+	ModTime          time.Time
+	Size             int64
+	IsDir            bool
+	ETag             string
+	Cid              string
+	Acl              string
+	VersionID        string
+	IsLatest         bool
+	DeleteMarker     bool
+	ContentType      string
+	ContentEncoding  string
+	Expires          time.Time
+	AccTime          time.Time
 	SuccessorModTime time.Time
 }
 
@@ -89,12 +79,9 @@ type Multipart struct {
 	UploadID  string
 	Initiated time.Time
 	MetaData  map[string]string
-	// List of individual parts, maximum size of upto 10,000
-	Parts []ObjectPart
+	Parts     []ObjectPart
 }
 
-// objectPartInfo Info of each part kept in the multipart metadata
-// file after CompleteMultipartUpload() is called.
 type ObjectPart struct {
 	ETag    string    `json:"etag,omitempty"`
 	Cid     string    `json:"cid,omitempty"`
@@ -103,32 +90,21 @@ type ObjectPart struct {
 	ModTime time.Time `json:"mod_time"`
 }
 
-// CompletePart - represents the part that was completed, this is sent by the client
-// during CompleteMultipartUpload request.
 type CompletePart struct {
-	// Part number identifying the part. This is a positive integer between 1 and
-	// 10,000
-	PartNumber int
-
-	// Entity tag returned when the part was uploaded.
-	ETag string
-
-	// Checksum values. Optional.
+	PartNumber     int
+	ETag           string
 	ChecksumCRC32  string
 	ChecksumCRC32C string
 	ChecksumSHA1   string
 	ChecksumSHA256 string
 }
 
-// CompletedParts - is a collection satisfying sort.Interface.
 type CompletedParts []CompletePart
 
 func (a CompletedParts) Len() int           { return len(a) }
 func (a CompletedParts) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a CompletedParts) Less(i, j int) bool { return a[i].PartNumber < a[j].PartNumber }
 
-// CompleteMultipartUpload - represents list of parts which are completed, this is sent by the
-// client during CompleteMultipartUpload request.
 type CompleteMultipartUpload struct {
 	Parts []CompletePart `xml:"Part"`
 }

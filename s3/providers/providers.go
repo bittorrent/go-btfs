@@ -18,10 +18,10 @@ func NewProviders(stateStore StateStorer, fileStore FileStorer, options ...Optio
 	return
 }
 
-func (p *Providers) GetStateStore() StateStorer {
+func (p *Providers) StateStore() StateStorer {
 	return p.stateStore
 }
 
-func (p *Providers) GetFileStore() FileStorer {
+func (p *Providers) FileStore() FileStorer {
 	return p.fileStore
 }

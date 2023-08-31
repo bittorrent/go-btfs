@@ -8,7 +8,6 @@ import (
 	"github.com/bittorrent/go-btfs/s3/requests"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/s3utils"
-	"github.com/bittorrent/go-btfs/s3/services/bucket"
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"github.com/bittorrent/go-btfs/s3/utils"
 	"github.com/bittorrent/go-btfs/s3/utils/hash"
@@ -58,7 +57,7 @@ func (h *Handlers) CreateMultipartUploadHandler(w http.ResponseWriter, r *http.R
 	defer unlock()
 
 	err = h.bucsvc.CheckACL(ack, bucname, action.CreateMultipartUploadAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}
@@ -158,7 +157,7 @@ func (h *Handlers) UploadPartHandler(w http.ResponseWriter, r *http.Request) {
 	defer unlock()
 
 	err = h.bucsvc.CheckACL(ack, bucname, action.PutObjectAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}
@@ -220,7 +219,7 @@ func (h *Handlers) AbortMultipartUploadHandler(w http.ResponseWriter, r *http.Re
 	defer unlock()
 
 	err = h.bucsvc.CheckACL(ack, bucname, action.AbortMultipartUploadAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}
@@ -303,7 +302,7 @@ func (h *Handlers) CompleteMultipartUploadHandler(w http.ResponseWriter, r *http
 	defer unlock()
 
 	err = h.bucsvc.CheckACL(ack, bucname, action.CompleteMultipartUploadAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}

@@ -18,7 +18,6 @@ import (
 	"github.com/bittorrent/go-btfs/s3/requests"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/s3utils"
-	"github.com/bittorrent/go-btfs/s3/services/bucket"
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"github.com/bittorrent/go-btfs/s3/utils/hash"
 )
@@ -91,7 +90,7 @@ func (h *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 	defer unlock()
 
 	err = h.bucsvc.CheckACL(ack, bucname, action.PutObjectAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}
@@ -133,7 +132,7 @@ func (h *Handlers) HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.bucsvc.CheckACL(ack, bucname, action.HeadObjectAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}
@@ -192,7 +191,7 @@ func (h *Handlers) CopyObjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = h.bucsvc.CheckACL(ack, dstBucket, action.CopyObjectAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}
@@ -222,7 +221,7 @@ func (h *Handlers) CopyObjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = h.bucsvc.CheckACL(ack, srcBucket, action.CopyObjectAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}
@@ -320,7 +319,7 @@ func (h *Handlers) DeleteObjectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.bucsvc.CheckACL(ack, bucname, action.DeleteObjectAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}
@@ -380,7 +379,7 @@ func (h *Handlers) DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	err = h.bucsvc.CheckACL(ack, bucname, action.DeleteObjectAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}
@@ -440,7 +439,7 @@ func (h *Handlers) GetObjectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.bucsvc.CheckACL(ack, bucname, action.GetObjectAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}
@@ -497,7 +496,7 @@ func (h *Handlers) GetObjectACLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.bucsvc.CheckACL(ack, bucname, action.GetBucketAclAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}
@@ -556,7 +555,7 @@ func (h *Handlers) ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	defer runlock()
 
 	err = h.bucsvc.CheckACL(ack, bucname, action.ListObjectsAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}
@@ -591,7 +590,7 @@ func (h *Handlers) ListObjectsV2Handler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	err = h.bucsvc.CheckACL(ack, bucname, action.ListObjectsAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}

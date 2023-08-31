@@ -8,7 +8,7 @@ import (
 	"github.com/bittorrent/go-btfs/s3/requests"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/s3utils"
-	"github.com/bittorrent/go-btfs/s3/services/bucket"
+	"github.com/bittorrent/go-btfs/s3/services/object"
 	"net/http"
 )
 
@@ -202,7 +202,7 @@ func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 	ack := cctx.GetAccessKey(r)
 
 	err = h.bucsvc.CheckACL(ack, req.Bucket, s3action.HeadBucketAction)
-	if errors.Is(err, bucket.ErrNotFound) {
+	if errors.Is(err, object.ErrBucketNotFound) {
 		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
 		return
 	}

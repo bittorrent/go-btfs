@@ -5,7 +5,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/services/bucket"
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"net/http"
 )
@@ -25,7 +24,7 @@ func WriteDeleteBucketResponse(w http.ResponseWriter) {
 	return
 }
 
-func WriteListBucketsResponse(w http.ResponseWriter, r *http.Request, bucketMetas []*bucket.Bucket) {
+func WriteListBucketsResponse(w http.ResponseWriter, r *http.Request, bucketMetas []*object.Bucket) {
 	var buckets []*s3.Bucket
 	for _, b := range bucketMetas {
 		buckets = append(buckets, &s3.Bucket{
