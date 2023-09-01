@@ -1,106 +1,338 @@
 package object
 
 import (
+	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/etag"
+	"github.com/bittorrent/go-btfs/s3/providers"
 	"github.com/bittorrent/go-btfs/s3/s3utils"
 	"github.com/bittorrent/go-btfs/s3/utils/hash"
 	"github.com/google/uuid"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
 
-func (s *service) CreateMultipartUpload(ctx context.Context, bucname string, objname string, meta map[string]string) (mtp Multipart, err error) {
-	uploadId := uuid.NewString()
-	mtp = Multipart{
+// CreateMultipartUpload create user specified multipart upload
+func (s *service) CreateMultipartUpload(ctx context.Context, user, bucname, objname string, meta map[string]string) (multipart *Multipart, err error) {
+	// Operation context
+	ctx, cancel := s.opctx(ctx)
+	defer cancel()
+
+	// Bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// RLock bucket
+	err = s.lock.RLock(ctx, buckey)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(buckey)
+
+	// Get bucket
+	bucket, err := s.getBucket(buckey)
+	if err != nil {
+		return
+	}
+	if bucket == nil {
+		err = ErrBucketNotFound
+		return
+	}
+
+	// Check action acl
+	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.CreateMultipartUploadAction)
+	if !allow {
+		err = ErrNotAllowed
+		return
+	}
+
+	// Upload id
+	uplid := uuid.NewString()
+
+	// upload key
+	uplkey := s.getUploadKey(bucname, objname, uplid)
+
+	// Lock upload
+	err = s.lock.Lock(ctx, uplkey)
+	if err != nil {
+		return
+	}
+	defer s.lock.Unlock(uplkey)
+
+	// Multipart upload
+	multipart = &Multipart{
 		Bucket:    bucname,
 		Object:    objname,
-		UploadID:  uploadId,
+		UploadID:  uplid,
 		MetaData:  meta,
 		Initiated: time.Now().UTC(),
 	}
 
-	err = s.providers.StateStore().Put(getUploadKey(bucname, objname, uploadId), mtp)
-	if err != nil {
-		return
-	}
+	// Put multipart upload
+	err = s.providers.StateStore().Put(uplkey, multipart)
 
 	return
 }
 
-func (s *service) UploadPart(ctx context.Context, bucname string, objname string, uploadID string, partID int, reader *hash.Reader, size int64, meta map[string]string) (part ObjectPart, err error) {
-	cid, err := s.providers.FileStore().Store(reader)
+// UploadPart upload user specified multipart part
+func (s *service) UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, body *hash.Reader, size int64, meta map[string]string) (part *ObjectPart, err error) {
+	// Operation context
+	ctx, cancel := s.opctx(ctx)
+	defer cancel()
+
+	// Bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// RLock bucket
+	err = s.lock.RLock(ctx, buckey)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(buckey)
+
+	// Get bucket
+	bucket, err := s.getBucket(buckey)
+	if err != nil {
+		return
+	}
+	if bucket == nil {
+		err = ErrBucketNotFound
+		return
+	}
+
+	// Check acl
+	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.UploadPartAction)
+	if !allow {
+		err = ErrNotAllowed
+		return
+	}
+
+	// Upload key
+	uplkey := s.getUploadKey(bucname, objname, uplid)
+
+	// Lock upload
+	err = s.lock.Lock(ctx, uplkey)
+	if err != nil {
+		return
+	}
+	defer s.lock.Unlock(uplkey)
+
+	// Get multipart upload
+	multipart, err := s.getMultipart(uplkey)
+	if err != nil {
+		return
+	}
+	if multipart == nil {
+		err = ErrUploadNotFound
+		return
+	}
+
+	// Store part body
+	cid, err := s.providers.FileStore().Store(body)
 	if err != nil {
 		return
 	}
 
-	part = ObjectPart{
-		Number:  partID,
-		ETag:    reader.ETag().String(),
+	// Init a flag to mark if the part body should be removed, this
+	// flag will be set to false if the multipart has been successfully put
+	var removePartBody = true
+
+	// Try to remove the part body
+	defer func() {
+		if removePartBody {
+			_ = s.providers.FileStore().Remove(cid)
+		}
+	}()
+
+	// Part
+	part = &ObjectPart{
+		Number:  partId,
+		ETag:    body.ETag().String(),
 		Cid:     cid,
 		Size:    size,
 		ModTime: time.Now().UTC(),
 	}
 
-	mtp, err := s.getMultipart(ctx, bucname, objname, uploadID)
+	// Append part
+	multipart.Parts = append(multipart.Parts, part)
+
+	// Put multipart upload
+	err = s.providers.StateStore().Put(uplkey, multipart)
 	if err != nil {
 		return
 	}
 
-	mtp.Parts = append(mtp.Parts, part)
-	err = s.providers.StateStore().Put(getUploadKey(bucname, objname, uploadID), mtp)
+	// Set remove part body flag to false, because this part body has been referenced by the upload
+	removePartBody = false
+
+	return
+}
+
+// AbortMultipartUpload abort user specified multipart upload
+func (s *service) AbortMultipartUpload(ctx context.Context, user, bucname, objname, uplid string) (err error) {
+	// Operation context
+	ctx, cancel := s.opctx(ctx)
+	defer cancel()
+
+	// Bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// RLock bucket
+	err = s.lock.RLock(ctx, buckey)
 	if err != nil {
-		return part, err
+		return
+	}
+	defer s.lock.RUnlock(buckey)
+
+	// Get bucket
+	bucket, err := s.getBucket(buckey)
+	if err != nil {
+		return
+	}
+	if bucket == nil {
+		err = ErrBucketNotFound
+		return
+	}
+
+	// Check action acl
+	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.AbortMultipartUploadAction)
+	if !allow {
+		err = ErrNotAllowed
+		return
+	}
+
+	// Multipart upload key
+	uplkey := s.getUploadKey(bucname, objname, uplid)
+
+	// Lock upload
+	err = s.lock.Lock(ctx, uplkey)
+	if err != nil {
+		return
+	}
+	defer s.lock.Unlock(uplkey)
+
+	// Get multipart upload
+	multipart, err := s.getMultipart(uplkey)
+	if err != nil {
+		return
+	}
+	if multipart == nil {
+		err = ErrUploadNotFound
+		return
+	}
+
+	// Delete multipart upload
+	err = s.providers.StateStore().Delete(uplkey)
+	if err != nil {
+		return
+	}
+
+	// Try to remove all parts body
+	for _, part := range multipart.Parts {
+		_ = s.providers.FileStore().Remove(part.Cid)
 	}
 
 	return
 }
 
-func (s *service) AbortMultipartUpload(ctx context.Context, bucname string, objname string, uploadID string) (err error) {
-	mtp, err := s.getMultipart(ctx, bucname, objname, uploadID)
+// CompleteMultiPartUpload complete user specified multipart upload
+func (s *service) CompleteMultiPartUpload(ctx context.Context, user string, bucname, objname, uplid string, parts []*CompletePart) (object *Object, err error) {
+	// Operation context
+	ctx, cancel := s.opctx(ctx)
+	defer cancel()
+
+	// Bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// RLock bucket
+	err = s.lock.RLock(ctx, buckey)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(buckey)
+
+	// Get bucket
+	bucket, err := s.getBucket(buckey)
+	if err != nil {
+		return
+	}
+	if bucket == nil {
+		err = ErrBucketNotFound
+		return
+	}
+
+	// Check acl
+	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.CompleteMultipartUploadAction)
+	if !allow {
+		err = ErrNotAllowed
+		return
+	}
+
+	// Object key
+	objkey := s.getObjectKey(bucname, objname)
+
+	// Lock object
+	err = s.lock.Lock(ctx, objkey)
+	if err != nil {
+		return
+	}
+	defer s.lock.Unlock(objkey)
+
+	// Get old object for try to remove the old body
+	objectOld, err := s.getObject(objkey)
 	if err != nil {
 		return
 	}
 
-	for _, part := range mtp.Parts {
-		err = s.providers.FileStore().Remove(part.Cid)
-		if err != nil {
-			return
-		}
-	}
+	// Upload key
+	uplkey := s.getUploadKey(bucname, objname, uplid)
 
-	err = s.removeMultipart(ctx, bucname, objname, uploadID)
+	// Lock upload
+	err = s.lock.Lock(ctx, uplkey)
 	if err != nil {
 		return
 	}
+	defer s.lock.Unlock(uplkey)
 
-	return
-}
-
-func (s *service) CompleteMultiPartUpload(ctx context.Context, bucname string, objname string, uploadID string, parts []CompletePart) (obj Object, err error) {
-	mi, err := s.getMultipart(ctx, bucname, objname, uploadID)
+	// Get multipart upload
+	multipart, err := s.getMultipart(uplkey)
 	if err != nil {
 		return
 	}
+	if multipart == nil {
+		err = ErrUploadNotFound
+		return
+	}
 
-	var (
-		readers    []io.Reader
-		objectSize int64
-	)
+	// All parts body readers
+	var readers []io.Reader
 
+	// Try to close all parts body readers, because some or all of
+	// these body may not be used
 	defer func() {
 		for _, rdr := range readers {
 			_ = rdr.(io.ReadCloser).Close()
 		}
 	}()
 
-	idxMap := objectPartIndexMap(mi.Parts)
+	// Total object size
+	var size int64
+
+	// Mapping of part number to part index in multipart.Parts
+	idxmp := s.partIdxMap(multipart.Parts)
+
+	// Iterate all parts to collect all body readers
 	for i, part := range parts {
-		partIndex, ok := idxMap[part.PartNumber]
+		// Index in multipart.Parts
+		partIndex, ok := idxmp[part.PartNumber]
+
+		// Part not exists in multipart
 		if !ok {
 			err = s3utils.InvalidPart{
 				PartNumber: part.PartNumber,
@@ -109,9 +341,13 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, bucname string, o
 			return
 		}
 
-		gotPart := mi.Parts[partIndex]
+		// Got part in multipart.Parts
+		gotPart := multipart.Parts[partIndex]
 
-		part.ETag = canonicalizeETag(part.ETag)
+		// Canonicalize part etag
+		part.ETag = s.canonicalizeETag(part.ETag)
+
+		// Check got part etag with part etag
 		if gotPart.ETag != part.ETag {
 			err = s3utils.InvalidPart{
 				PartNumber: part.PartNumber,
@@ -131,90 +367,100 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, bucname string, o
 			return
 		}
 
-		// Save for total objname size.
-		objectSize += gotPart.Size
+		// Save for total object size.
+		size += gotPart.Size
 
+		// Get part body reader
 		var rdr io.ReadCloser
 		rdr, err = s.providers.FileStore().Cat(gotPart.Cid)
 		if err != nil {
 			return
 		}
 
+		// Collect part body reader
 		readers = append(readers, rdr)
 	}
 
-	cid, err := s.providers.FileStore().Store(io.MultiReader(readers...))
+	// Concat all parts body to one
+	body := io.MultiReader(readers...)
+
+	// Store object body
+	cid, err := s.providers.FileStore().Store(body)
 	if err != nil {
 		return
 	}
 
-	obj = Object{
+	// Init a flag to mark if the object body should be removed, this
+	// flag will be set to false if the object has been successfully put
+	var removeObjectBody = true
+
+	// Try to remove stored body if put object failed
+	defer func() {
+		if removeObjectBody {
+			_ = s.providers.FileStore().Remove(cid)
+		}
+	}()
+
+	// Object
+	object = &Object{
 		Bucket:           bucname,
 		Name:             objname,
 		ModTime:          time.Now().UTC(),
-		Size:             objectSize,
+		Size:             size,
 		IsDir:            false,
-		ETag:             computeCompleteMultipartMD5(parts),
+		ETag:             s.computeMultipartMD5(parts),
 		Cid:              cid,
 		VersionID:        "",
 		IsLatest:         true,
 		DeleteMarker:     false,
-		ContentType:      mi.MetaData[strings.ToLower(consts.ContentType)],
-		ContentEncoding:  mi.MetaData[strings.ToLower(consts.ContentEncoding)],
+		ContentType:      multipart.MetaData[strings.ToLower(consts.ContentType)],
+		ContentEncoding:  multipart.MetaData[strings.ToLower(consts.ContentEncoding)],
 		SuccessorModTime: time.Now().UTC(),
 	}
 
-	if exp, ok := mi.MetaData[strings.ToLower(consts.Expires)]; ok {
-		if t, e := time.Parse(http.TimeFormat, exp); e == nil {
-			obj.Expires = t.UTC()
-		}
+	// Set object expires
+	exp, e := time.Parse(http.TimeFormat, multipart.MetaData[strings.ToLower(consts.Expires)])
+	if e == nil {
+		object.Expires = exp.UTC()
 	}
 
-	err = s.providers.StateStore().Put(getObjectKey(bucname, objname), obj)
+	// Put object
+	err = s.providers.StateStore().Put(objkey, object)
 	if err != nil {
 		return
 	}
 
-	err = s.removeMultipartInfo(ctx, bucname, objname, uploadID)
+	// Set remove object body flag to false, because it has been referenced by the object
+	removeObjectBody = false
+
+	// Try to remove old object body if exists, because it has been covered by new one
+	if objectOld != nil {
+		_ = s.providers.FileStore().Remove(objectOld.Cid)
+	}
+
+	// Remove multipart upload
+	err = s.providers.StateStore().Delete(uplkey)
 	if err != nil {
 		return
 	}
 
+	// Try to remove all parts body, because they are no longer be referenced
+	for _, part := range multipart.Parts {
+		_ = s.providers.FileStore().Remove(part.Cid)
+	}
+
 	return
 }
 
-func (s *service) GetMultipart(ctx context.Context, bucname string, objname string, uploadID string) (mtp Multipart, err error) {
-	return s.getMultipart(ctx, bucname, objname, uploadID)
-}
-
-func (s *service) getMultipart(ctx context.Context, bucname string, objname string, uploadID string) (mtp Multipart, err error) {
-	err = s.providers.StateStore().Get(getUploadKey(bucname, objname, uploadID), &mtp)
+func (s *service) getMultipart(uplkey string) (multipart *Multipart, err error) {
+	err = s.providers.StateStore().Get(uplkey, multipart)
 	if errors.Is(err, providers.ErrStateStoreNotFound) {
-		err = ErrUploadNotFound
-		return
+		err = nil
 	}
 	return
 }
 
-func (s *service) removeMultipart(ctx context.Context, bucname string, objname string, uploadID string) (err error) {
-	err = s.providers.StateStore().Delete(getUploadKey(bucname, objname, uploadID))
-	if errors.Is(err, providers.ErrStateStoreNotFound) {
-		err = ErrUploadNotFound
-		return
-	}
-	return
-}
-
-func (s *service) removeMultipartInfo(ctx context.Context, bucname string, objname string, uploadID string) (err error) {
-	err = s.providers.StateStore().Delete(getUploadKey(bucname, objname, uploadID))
-	if errors.Is(err, providers.ErrStateStoreNotFound) {
-		err = ErrUploadNotFound
-		return
-	}
-	return
-}
-
-func objectPartIndexMap(parts []ObjectPart) map[int]int {
+func (s *service) partIdxMap(parts []*ObjectPart) map[int]int {
 	mp := make(map[int]int)
 	for i, part := range parts {
 		mp[part.Number] = i
@@ -222,49 +468,44 @@ func objectPartIndexMap(parts []ObjectPart) map[int]int {
 	return mp
 }
 
+var etagRegex = regexp.MustCompile("\"*?([^\"]*?)\"*?$")
+
 // canonicalizeETag returns ETag with leading and trailing double-quotes removed,
 // if any present
-func canonicalizeETag(etag string) string {
+func (s *service) canonicalizeETag(etag string) string {
 	return etagRegex.ReplaceAllString(etag, "$1")
 }
 
-func computeCompleteMultipartMD5(parts []CompletePart) string {
+func (s *service) computeMultipartMD5(parts []*CompletePart) (md5 string) {
 	var finalMD5Bytes []byte
 	for _, part := range parts {
-		md5Bytes, err := hex.DecodeString(canonicalizeETag(part.ETag))
+		md5Bytes, err := hex.DecodeString(s.canonicalizeETag(part.ETag))
 		if err != nil {
 			finalMD5Bytes = append(finalMD5Bytes, []byte(part.ETag)...)
 		} else {
 			finalMD5Bytes = append(finalMD5Bytes, md5Bytes...)
 		}
 	}
-	s3MD5 := fmt.Sprintf("%s-%d", etag.Multipart(finalMD5Bytes), len(parts))
-	return s3MD5
-}
-
-func (s *service) getObject(objkey string) (object *Object, err error) {
-	err = s.providers.StateStore().Get(objkey, object)
-	if errors.Is(err, providers.ErrStateStoreNotFound) {
-		err = nil
-	}
+	md5 = fmt.Sprintf("%s-%d", etag.Multipart(finalMD5Bytes), len(parts))
 	return
 }
 
-// deleteObjectsByPrefix delete all objects have common prefix
-// it will continue even if one of the objects be deleted fail
-func (s *service) deleteObjectsByPrefix(objectPrefix string) (err error) {
-	err = s.providers.StateStore().Iterate(objectPrefix, func(key, _ []byte) (stop bool, er error) {
-		keyStr := string(key)
-		var object *Object
-		er = s.providers.StateStore().Get(keyStr, object)
+// deleteUploadsByPrefix try to delete all multipart uploads with the specified common prefix
+func (s *service) deleteUploadsByPrefix(uploadsPrefix string) (err error) {
+	err = s.providers.StateStore().Iterate(uploadsPrefix, func(key, _ []byte) (stop bool, er error) {
+		uplkey := string(key)
+		var multipart *Multipart
+		er = s.providers.StateStore().Get(uplkey, multipart)
 		if er != nil {
 			return
 		}
-		er = s.providers.FileStore().Remove(object.Cid)
+		er = s.providers.StateStore().Delete(uplkey)
 		if er != nil {
 			return
 		}
-		er = s.providers.StateStore().Delete(keyStr)
+		for _, part := range multipart.Parts {
+			_ = s.providers.FileStore().Remove(part.Cid)
+		}
 		return
 	})
 

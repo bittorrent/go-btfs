@@ -15,7 +15,7 @@ func WrapCleanReadCloser(rc io.ReadCloser, timeout time.Duration, afterCloseHook
 	go func() {
 		<-ctx.Done()
 		_ = rc.Close()
-		// call after hooks stack
+		// call after hooks by stack order
 		for len(afterCloseHooks) > 0 {
 			idx := len(afterCloseHooks) - 1
 			f := afterCloseHooks[idx]

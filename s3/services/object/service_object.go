@@ -2,8 +2,10 @@ package object
 
 import (
 	"context"
+	"errors"
 	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/consts"
+	"github.com/bittorrent/go-btfs/s3/providers"
 	"github.com/bittorrent/go-btfs/s3/utils/hash"
 	"io"
 	"net/http"
@@ -12,22 +14,22 @@ import (
 )
 
 // PutObject put a user specified object
-func (s *service) PutObject(ctx context.Context, user string, bucname, objname string, reader *hash.Reader, size int64, meta map[string]string) (object *Object, err error) {
-	// operation context
+func (s *service) PutObject(ctx context.Context, user string, bucname, objname string, body *hash.Reader, size int64, meta map[string]string) (object *Object, err error) {
+	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
-	// bucket key
+	// Bucket key
 	buckey := s.getBucketKey(bucname)
 
-	// rlock bucket
+	// RLock bucket
 	err = s.lock.RLock(ctx, buckey)
 	if err != nil {
 		return
 	}
 	defer s.lock.RUnlock(buckey)
 
-	// get bucket
+	// Get bucket
 	bucket, err := s.getBucket(buckey)
 	if err != nil {
 		return
@@ -37,42 +39,45 @@ func (s *service) PutObject(ctx context.Context, user string, bucname, objname s
 		return
 	}
 
-	// check acl
+	// Check action acl
 	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.PutObjectAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
-	// object key
+	// Object key
 	objkey := s.getObjectKey(bucname, objname)
 
-	// lock object
+	// Lock object
 	err = s.lock.Lock(ctx, objkey)
 	if err != nil {
 		return
 	}
 	defer s.lock.Unlock(objkey)
 
-	// get old object
-	oldObject, err := s.getObject(objkey)
+	// Get old object
+	objectOld, err := s.getObject(objkey)
 	if err != nil {
 		return
 	}
 
-	// remove old file, if old object exists and put new object successfully
+	// Store object body
+	cid, err := s.providers.FileStore().Store(body)
+	if err != nil {
+		return
+	}
+
+	// Init a flag to mark if the object body should be removed, this
+	// flag will be set to false if the object has been successfully put
+	var removeObjectBody = true
+
+	// Try to remove stored body if put object failed
 	defer func() {
-		if oldObject != nil && err == nil {
-			_ = s.providers.FileStore().Remove(oldObject.Cid)
-			// todo: log this remove error
+		if removeObjectBody {
+			_ = s.providers.FileStore().Remove(cid)
 		}
 	}()
-
-	// store file
-	cid, err := s.providers.FileStore().Store(reader)
-	if err != nil {
-		return
-	}
 
 	// now
 	now := time.Now()
@@ -84,7 +89,7 @@ func (s *service) PutObject(ctx context.Context, user string, bucname, objname s
 		ModTime:          now.UTC(),
 		Size:             size,
 		IsDir:            false,
-		ETag:             reader.ETag().String(),
+		ETag:             body.ETag().String(),
 		Cid:              cid,
 		VersionID:        "",
 		IsLatest:         true,
@@ -103,27 +108,38 @@ func (s *service) PutObject(ctx context.Context, user string, bucname, objname s
 
 	// put object
 	err = s.providers.StateStore().Put(objkey, object)
+	if err != nil {
+		return
+	}
+
+	// Set remove object body flag to false, because it has been referenced by the object
+	removeObjectBody = false
+
+	// Try to remove old object body if exists, because it has been covered by new one
+	if objectOld != nil {
+		_ = s.providers.FileStore().Remove(objectOld.Cid)
+	}
 
 	return
 }
 
 // CopyObject copy from a user specified source object to a desert object
 func (s *service) CopyObject(ctx context.Context, user string, srcBucname, srcObjname, dstBucname, dstObjname string, meta map[string]string) (dstObject *Object, err error) {
-	// operation context
+	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
-	// source bucket key
+	// Source bucket key
 	srcBuckey := s.getBucketKey(srcBucname)
 
-	// rlock source bucket
+	// RLock source bucket
 	err = s.lock.RLock(ctx, srcBuckey)
 	if err != nil {
 		return
 	}
 	defer s.lock.RUnlock(srcBuckey)
 
-	// get source bucket
+	// Get source bucket
 	srcBucket, err := s.getBucket(srcBuckey)
 	if err != nil {
 		return
@@ -133,24 +149,24 @@ func (s *service) CopyObject(ctx context.Context, user string, srcBucname, srcOb
 		return
 	}
 
-	// check source acl
+	// Check source action acl
 	srcAllow := s.checkAcl(srcBucket.Owner, srcBucket.Acl, user, action.GetObjectAction)
 	if !srcAllow {
 		err = ErrNotAllowed
 		return
 	}
 
-	// source object key
+	// Source object key
 	srcObjkey := s.getObjectKey(srcBucname, srcObjname)
 
-	// rlock source object
+	// RLock source object
 	err = s.lock.RLock(ctx, srcObjkey)
 	if err != nil {
 		return
 	}
 	defer s.lock.RUnlock(srcObjkey)
 
-	// get source object
+	// Get source object
 	srcObject, err := s.getObject(srcObjkey)
 	if err != nil {
 		return
@@ -160,17 +176,17 @@ func (s *service) CopyObject(ctx context.Context, user string, srcBucname, srcOb
 		return
 	}
 
-	// desert bucket key
+	// Desert bucket key
 	dstBuckey := s.getBucketKey(dstBucname)
 
-	// rlock desert bucket
+	// RLock destination bucket
 	err = s.lock.RLock(ctx, dstBuckey)
 	if err != nil {
 		return
 	}
 	defer s.lock.RUnlock(dstBuckey)
 
-	// get desert bucket
+	// Get destination bucket
 	dstBucket, err := s.getBucket(dstBuckey)
 	if err != nil {
 		return
@@ -180,17 +196,17 @@ func (s *service) CopyObject(ctx context.Context, user string, srcBucname, srcOb
 		return
 	}
 
-	// check desert acl
+	// Check destination action acl
 	dstAllow := s.checkAcl(dstBucket.Owner, dstBucket.Acl, user, action.PutObjectAction)
 	if !dstAllow {
 		err = ErrNotAllowed
 		return
 	}
 
-	// desert object key
+	// Destination object key
 	dstObjkey := s.getObjectKey(dstBucname, dstObjname)
 
-	// lock desert object
+	// Lock Destination object
 	err = s.lock.Lock(ctx, dstObjkey)
 	if err != nil {
 		return
@@ -200,7 +216,7 @@ func (s *service) CopyObject(ctx context.Context, user string, srcBucname, srcOb
 	// now
 	now := time.Now()
 
-	// desert object
+	// Destination object
 	dstObject = &Object{
 		Bucket:           dstBucname,
 		Name:             dstObjname,
@@ -217,40 +233,40 @@ func (s *service) CopyObject(ctx context.Context, user string, srcBucname, srcOb
 		SuccessorModTime: now.UTC(),
 	}
 
-	// set object desert expires
+	// Set destination object expires
 	exp, er := time.Parse(http.TimeFormat, strings.ToLower(consts.Expires))
 	if er != nil {
 		dstObject.Expires = exp.UTC()
 	}
 
-	// put desert object
+	// Put destination object
 	err = s.providers.StateStore().Put(dstObjkey, dstObject)
 
 	return
 }
 
-// GetObject get an object for the specified user
+// GetObject get a user specified object
 func (s *service) GetObject(ctx context.Context, user, bucname, objname string) (object *Object, body io.ReadCloser, err error) {
-	// operation context
+	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
 	// bucket key
 	buckey := s.getBucketKey(bucname)
 
-	// rlock bucket
+	// RLock bucket
 	err = s.lock.RLock(ctx, buckey)
 	if err != nil {
 		return
 	}
 	defer func() {
-		// rUnlock bucket just if getting failed
+		// RUnlock bucket just if getting failed
 		if err != nil {
 			s.lock.RUnlock(buckey)
 		}
 	}()
 
-	// get bucket
+	// Get bucket
 	bucket, err := s.getBucket(buckey)
 	if err != nil {
 		return
@@ -260,29 +276,29 @@ func (s *service) GetObject(ctx context.Context, user, bucname, objname string) 
 		return
 	}
 
-	// check acl
+	// Check action acl
 	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.GetObjectAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
-	// object key
+	// Object key
 	objkey := s.getObjectKey(bucname, objname)
 
-	// rlock object
+	// RLock object
 	err = s.lock.RLock(ctx, objkey)
 	if err != nil {
 		return
 	}
 	defer func() {
-		// rUnlock object just if getting failed
+		// RUnlock object just if getting failed
 		if err != nil {
 			s.lock.RUnlock(objkey)
 		}
 	}()
 
-	// get object
+	// Get object
 	object, err = s.getObject(objkey)
 	if err != nil {
 		return
@@ -292,21 +308,21 @@ func (s *service) GetObject(ctx context.Context, user, bucname, objname string) 
 		return
 	}
 
-	// get object body
+	// Get object body
 	body, err = s.providers.FileStore().Cat(object.Cid)
 	if err != nil {
 		return
 	}
 
-	// wrap the body with timeout and unlock hooks
+	// Wrap the body with timeout and unlock hooks,
 	// this will enable the bucket and object keep rlocked until
 	// read timout or read closed. Normally, these locks will
 	// be released as soon as leave from the call
 	body = WrapCleanReadCloser(
 		body,
-		s.readObjectTimeout,
+		s.closeBodyTimeout,
 		func() {
-			s.lock.RUnlock(objkey) // note: release object first
+			s.lock.RUnlock(objkey) // Note: Release object first
 			s.lock.RUnlock(buckey)
 		},
 	)
@@ -316,21 +332,21 @@ func (s *service) GetObject(ctx context.Context, user, bucname, objname string) 
 
 // DeleteObject delete a user specified object
 func (s *service) DeleteObject(ctx context.Context, user, bucname, objname string) (err error) {
-	// operation context
+	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
-	// bucket key
+	// Bucket key
 	buckey := s.getBucketKey(bucname)
 
-	// rlock bucket
+	// RLock bucket
 	err = s.lock.RLock(ctx, buckey)
 	if err != nil {
 		return
 	}
 	defer s.lock.RUnlock(buckey)
 
-	// get bucket
+	// Get bucket
 	bucket, err := s.getBucket(buckey)
 	if err != nil {
 		return
@@ -340,24 +356,24 @@ func (s *service) DeleteObject(ctx context.Context, user, bucname, objname strin
 		return
 	}
 
-	// check acl
+	// Check action acl
 	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.DeleteObjectAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
-	// object key
+	// Object key
 	objkey := s.getObjectKey(bucname, objname)
 
-	// lock object
+	// Lock object
 	err = s.lock.Lock(ctx, objkey)
 	if err != nil {
 		return
 	}
 	defer s.lock.Unlock(objkey)
 
-	// get object
+	// Get object
 	object, err := s.getObject(objkey)
 	if err != nil {
 		return
@@ -367,35 +383,35 @@ func (s *service) DeleteObject(ctx context.Context, user, bucname, objname strin
 		return
 	}
 
-	// delete object body
-	err = s.providers.FileStore().Remove(object.Cid)
+	// Delete object
+	err = s.providers.StateStore().Delete(objkey)
 	if err != nil {
 		return
 	}
 
-	// delete object
-	err = s.providers.StateStore().Delete(objkey)
+	// Try to delete object body
+	_ = s.providers.FileStore().Remove(object.Cid)
 
 	return
 }
 
 // ListObjects list user specified objects
 func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimiter, marker string, max int) (list *ObjectsList, err error) {
-	// operation context
+	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
-	// bucket key
+	// Bucket key
 	buckey := s.getBucketKey(bucname)
 
-	// rlock bucket
+	// RLock bucket
 	err = s.lock.RLock(ctx, buckey)
 	if err != nil {
 		return
 	}
 	defer s.lock.RUnlock(buckey)
 
-	// get bucket
+	// Get bucket
 	bucket, err := s.getBucket(buckey)
 	if err != nil {
 		return
@@ -405,37 +421,38 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 		return
 	}
 
-	// check acl
+	// Check action acl
 	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.ListObjectsAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
-	// object key prefix
-	objkeyPrefix := s.getObjectKeyPrefix(bucname)
+	// All bucket objects key prefix
+	allObjectsKeyPrefix := s.getAllObjectsKeyPrefix(bucname)
 
-	// objects key prefix
-	objskeyPrefix := objkeyPrefix + prefix
+	// List objects key prefix
+	listObjectsKeyPrefix := allObjectsKeyPrefix + prefix
 
-	// accumulate count
+	// Accumulate count
 	count := 0
 
-	// begin collect
+	// Flag mark if begin collect, it initialized to true if
+	// marker is ""
 	begin := marker == ""
 
-	// seen keys
+	// Seen keys, used to group common keys
 	seen := make(map[string]bool)
 
-	// iterate all objects with the specified prefix to collect and group specified range items
-	err = s.providers.StateStore().Iterate(objskeyPrefix, func(key, _ []byte) (stop bool, er error) {
-		// object key
+	// Iterate all objects with the specified prefix to collect and group specified range items
+	err = s.providers.StateStore().Iterate(listObjectsKeyPrefix, func(key, _ []byte) (stop bool, er error) {
+		// Object key
 		objkey := string(key)
 
-		// object name
-		objname := objkey[len(objkeyPrefix):]
+		// Object name
+		objname := strings.TrimPrefix(objkey, allObjectsKeyPrefix)
 
-		// common prefix: if the part of object name without prefix include delimiter
+		// Common prefix: if the part of object name without prefix include delimiter
 		// it is the string truncated object name after the delimiter, else
 		// it is the bucket name itself
 		commonPrefix := objname
@@ -448,7 +465,7 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 			}
 		}
 
-		// if collect not begin, check the marker, if it is matched
+		// If collect not begin, check the marker, if it is matched
 		// with the common prefix, then begin collection from next iterate turn
 		// and mark this common prefix as seen
 		// note: common prefix also can be object name, so when marker is
@@ -459,19 +476,19 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 			return
 		}
 
-		// no begin, jump the item
+		// Not begin, jump the item
 		if !begin {
 			return
 		}
 
-		// objects with same common prefix will be grouped into one
+		// Objects with same common prefix will be grouped into one
 		// note: the objects without common prefix will present only once, so
 		// it is not necessary to add these objects names in the seen map
 		if seen[commonPrefix] {
 			return
 		}
 
-		// objects with common prefix grouped int one
+		// Objects with common prefix grouped int one
 		if commonPrefix != objname {
 			list.Prefixes = append(list.Prefixes, commonPrefix)
 			list.NextMarker = commonPrefix
@@ -487,10 +504,10 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 			list.NextMarker = objname
 		}
 
-		// increment collection count
+		// Increment collection count
 		count++
 
-		// check the count, if it matched the max, means
+		// Check the count, if it matched the max, means
 		// the collect is complete, but the items may remain, so stop the
 		// iteration, and mark the list was truncated
 		if count == max {
@@ -504,49 +521,28 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 	return
 }
 
-// EmptyBucket check if the user specified bucked is empty
-func (s *service) EmptyBucket(ctx context.Context, user, bucname string) (empty bool, err error) {
-	ctx, cancel := s.opctx(ctx)
-	defer cancel()
-
-	// bucket key
-	buckey := s.getBucketKey(bucname)
-
-	// rlock bucket
-	err = s.lock.RLock(ctx, buckey)
-	if err != nil {
-		return
+func (s *service) getObject(objkey string) (object *Object, err error) {
+	err = s.providers.StateStore().Get(objkey, object)
+	if errors.Is(err, providers.ErrStateStoreNotFound) {
+		err = nil
 	}
-	defer s.lock.RUnlock(buckey)
+	return
+}
 
-	// get bucket
-	bucket, err := s.getBucket(buckey)
-	if err != nil {
-		return
-	}
-	if bucket == nil {
-		err = ErrBucketNotFound
-		return
-	}
-
-	// check acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.HeadBucketAction)
-	if !allow {
-		err = ErrNotAllowed
-		return
-	}
-
-	// object key prefix
-	objkeyPrefix := s.getObjectKeyPrefix(bucname)
-
-	// initially set empty to true
-	empty = true
-
-	// iterate the bucket objects, if no item, empty keep true
-	// if at least one, set empty to false, and stop iterate
-	err = s.providers.StateStore().Iterate(objkeyPrefix, func(_, _ []byte) (stop bool, er error) {
-		empty = false
-		stop = true
+// deleteObjectsByPrefix try to delete all objects with the specified common prefix
+func (s *service) deleteObjectsByPrefix(objectsPrefix string) (err error) {
+	err = s.providers.StateStore().Iterate(objectsPrefix, func(key, _ []byte) (stop bool, er error) {
+		objkey := string(key)
+		var object *Object
+		er = s.providers.StateStore().Get(objkey, object)
+		if er != nil {
+			return
+		}
+		er = s.providers.StateStore().Delete(objkey)
+		if er != nil {
+			return
+		}
+		_ = s.providers.FileStore().Remove(object.Cid)
 		return
 	})
 

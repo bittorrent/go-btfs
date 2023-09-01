@@ -11,73 +11,80 @@ import (
 )
 
 // CreateBucket create a new bucket for the specified user
-func (s *service) CreateBucket(ctx context.Context, user, bucname, region, acl string) (err error) {
-	buckey := s.getBucketKey(bucname)
-
+func (s *service) CreateBucket(ctx context.Context, user, bucname, region, acl string) (bucket *Bucket, err error) {
+	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
+	// Bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// Lock bucket
 	err = s.lock.Lock(ctx, buckey)
 	if err != nil {
 		return
 	}
-
 	defer s.lock.Unlock(buckey)
 
+	// Get old bucket
+	bucketOld, err := s.getBucket(buckey)
+	if err == nil {
+		return
+	}
+	if bucketOld != nil {
+		err = ErrBucketAlreadyExists
+		return
+	}
+
+	// Check action acl
 	allow := s.checkAcl(user, acl, user, action.CreateBucketAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
-	bucket, err := s.getBucket(buckey)
-	if err == nil {
-		return
+	// Bucket
+	bucket = &Bucket{
+		Name:    bucname,
+		Region:  region,
+		Owner:   user,
+		Acl:     acl,
+		Created: time.Now().UTC(),
 	}
 
-	if bucket != nil {
-		err = ErrBucketAlreadyExists
-		return
-	}
-
-	err = s.providers.StateStore().Put(
-		buckey,
-		&Bucket{
-			Name:    bucname,
-			Region:  region,
-			Owner:   user,
-			Acl:     acl,
-			Created: time.Now().UTC(),
-		},
-	)
+	// Put bucket
+	err = s.providers.StateStore().Put(buckey, bucket)
 
 	return
 }
 
-// GetBucket get a bucket for the specified user
+// GetBucket get a user specified bucket
 func (s *service) GetBucket(ctx context.Context, user, bucname string) (bucket *Bucket, err error) {
-	buckey := s.getBucketKey(bucname)
-
+	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
+	// Bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// RLock bucket
 	err = s.lock.RLock(ctx, buckey)
 	if err != nil {
 		return
 	}
-
 	defer s.lock.RUnlock(buckey)
 
+	// Get bucket
 	bucket, err = s.getBucket(buckey)
 	if err != nil {
 		return
 	}
-
 	if bucket == nil {
 		err = ErrBucketNotFound
 		return
 	}
 
+	// Check action acl
 	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.HeadBucketAction)
 	if !allow {
 		err = ErrNotAllowed
@@ -86,82 +93,99 @@ func (s *service) GetBucket(ctx context.Context, user, bucname string) (bucket *
 	return
 }
 
-// DeleteBucket delete the specified user bucket and all the bucket's objects
+// DeleteBucket delete a user specified bucket and clear all bucket objects and uploads
 func (s *service) DeleteBucket(ctx context.Context, user, bucname string) (err error) {
-	buckey := s.getBucketKey(bucname)
-
+	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
+	// Bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// Lock bucket
 	err = s.lock.Lock(ctx, buckey)
 	if err != nil {
 		return
 	}
-
 	defer s.lock.Unlock(buckey)
 
+	// Get bucket
 	bucket, err := s.getBucket(buckey)
 	if err != nil {
 		return
 	}
-
 	if bucket == nil {
 		err = ErrBucketNotFound
 		return
 	}
 
+	// Check action acl
 	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.DeleteBucketAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
+	// Delete bucket
 	err = s.providers.StateStore().Delete(buckey)
 	if err != nil {
 		return
 	}
 
-	// bucket objects prefix
-	objectsPrefix := s.getObjectKeyPrefix(bucname)
+	// All bucket objects prefix
+	objectsPrefix := s.getAllObjectsKeyPrefix(bucname)
 
-	// delete all objects of the bucket
-	err = s.deleteObjectsByPrefix(objectsPrefix)
+	// Try to delete all bucket objects
+	_ = s.deleteObjectsByPrefix(objectsPrefix)
+
+	// All bucket uploads prefix
+	uploadsPrefix := s.getAllUploadsKeyPrefix(bucname)
+
+	// Try to delete all bucket uploads
+	_ = s.deleteUploadsByPrefix(uploadsPrefix)
 
 	return
 }
 
 // GetAllBuckets get all buckets of the specified user
 func (s *service) GetAllBuckets(ctx context.Context, user string) (list []*Bucket, err error) {
-	bucprefix := s.getBucketKeyPrefix()
-
+	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
+	// Check action acl
 	allow := s.checkAcl(user, policy.Private, user, action.ListBucketAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
+	// All buckets prefix
+	bucketsPrefix := s.getAllBucketsKeyPrefix()
 
-	err = s.providers.StateStore().Iterate(bucprefix, func(key, _ []byte) (stop bool, er error) {
+	// Collect user's buckets from all buckets
+	err = s.providers.StateStore().Iterate(bucketsPrefix, func(key, _ []byte) (stop bool, er error) {
+		// Stop the iteration if error occurred
 		defer func() {
 			if er != nil {
 				stop = true
 			}
 		}()
 
-		er = ctx.Err()
+		// Bucket key
+		buckey := string(key)
+
+		// Get Bucket
+		bucket, er := s.getBucket(buckey)
 		if er != nil {
 			return
 		}
 
-		var bucket *Bucket
-
-		er = s.providers.StateStore().Get(string(key), bucket)
-		if er != nil {
+		// Bucket has been deleted
+		if bucket == nil {
 			return
 		}
 
+		// Collect user's bucket
 		if bucket.Owner == user {
 			list = append(list, bucket)
 		}
@@ -172,74 +196,148 @@ func (s *service) GetAllBuckets(ctx context.Context, user string) (list []*Bucke
 	return
 }
 
-// PutBucketAcl update the acl field value of the specified user's bucket
+// PutBucketAcl update user specified bucket's acl field value
 func (s *service) PutBucketAcl(ctx context.Context, user, bucname, acl string) (err error) {
-	buckey := s.getBucketKey(bucname)
-
+	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
+	// Bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// Lock bucket
 	err = s.lock.Lock(ctx, buckey)
 	if err != nil {
 		return
 	}
-
 	defer s.lock.Unlock(buckey)
 
+	// Get bucket
 	bucket, err := s.getBucket(buckey)
 	if err != nil {
 		return
 	}
-
 	if bucket == nil {
 		err = ErrBucketNotFound
 		return
 	}
 
+	// Check action acl
 	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.PutBucketAclAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
+	// Update bucket acl
 	bucket.Acl = acl
 
+	// Put bucket
 	err = s.providers.StateStore().Put(buckey, bucket)
 
 	return
 }
 
-// GetBucketAcl get the acl field value of the specified user's bucket
+// GetBucketAcl get user specified bucket acl field value
 func (s *service) GetBucketAcl(ctx context.Context, user, bucname string) (acl string, err error) {
-	buckey := s.getBucketKey(bucname)
-
+	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
+	// Bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// RLock bucket
 	err = s.lock.RLock(ctx, buckey)
 	if err != nil {
 		return
 	}
-
 	defer s.lock.RUnlock(buckey)
 
+	// Get bucket
 	bucket, err := s.getBucket(buckey)
 	if err != nil {
 		return
 	}
-
 	if bucket == nil {
 		err = ErrBucketNotFound
 		return
 	}
 
+	// Check action acl
 	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.GetBucketAclAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
+	// Get acl field value
 	acl = bucket.Acl
+
+	return
+}
+
+// EmptyBucket check if the user specified bucked is empty
+func (s *service) EmptyBucket(ctx context.Context, user, bucname string) (empty bool, err error) {
+	ctx, cancel := s.opctx(ctx)
+	defer cancel()
+
+	// Bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// RLock bucket
+	err = s.lock.RLock(ctx, buckey)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(buckey)
+
+	// Get bucket
+	bucket, err := s.getBucket(buckey)
+	if err != nil {
+		return
+	}
+	if bucket == nil {
+		err = ErrBucketNotFound
+		return
+	}
+
+	// Check action acl
+	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.ListObjectsAction)
+	if !allow {
+		err = ErrNotAllowed
+		return
+	}
+
+	// All bucket objects prefix
+	objectsPrefix := s.getAllObjectsKeyPrefix(bucname)
+
+	// Initially set empty to true
+	empty = true
+
+	// Iterate the bucket objects, if no item, empty keep true
+	// if at least one, set empty to false, and stop iterate
+	err = s.providers.StateStore().Iterate(objectsPrefix, func(_, _ []byte) (stop bool, er error) {
+		empty = false
+		stop = true
+		return
+	})
+
+	// If bucket have at least one object, return not empty, else check if bucket
+	// have at least one upload
+	if !empty {
+		return
+	}
+
+	// All bucket uploads prefix
+	uploadsPrefix := s.getAllUploadsKeyPrefix(bucname)
+
+	// Set empty to false if bucket has at least one upload
+	err = s.providers.StateStore().Iterate(uploadsPrefix, func(_, _ []byte) (stop bool, er error) {
+		empty = false
+		stop = true
+		return
+	})
 
 	return
 }

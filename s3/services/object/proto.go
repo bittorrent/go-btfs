@@ -17,32 +17,25 @@ var (
 )
 
 type Service interface {
-	// bucket
-	CreateBucket(ctx context.Context, bucket, region, accessKey, acl string) error
-	GetBucketMeta(ctx context.Context, bucket string) (meta Bucket, err error)
-	HasBucket(ctx context.Context, bucket string) bool
-	SetEmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error))
-	DeleteBucket(ctx context.Context, bucket string) error
-	GetAllBucketsOfUser(username string) (list []*Bucket, err error)
-	UpdateBucketAcl(ctx context.Context, bucket, acl string) error
-	GetBucketAcl(ctx context.Context, bucket string) (string, error)
-	EmptyBucket(emptyBucket func(ctx context.Context, bucket string) (bool, error))
+	CreateBucket(ctx context.Context, user, bucname, region, acl string) (bucket *Bucket, err error)
+	GetBucket(ctx context.Context, user, bucname string) (bucket *Bucket, err error)
+	DeleteBucket(ctx context.Context, user, bucname string) (err error)
+	GetAllBuckets(ctx context.Context, user string) (list []*Bucket, err error)
+	PutBucketAcl(ctx context.Context, user, bucname, acl string) (err error)
+	GetBucketAcl(ctx context.Context, user, bucname string) (acl string, err error)
+	EmptyBucket(ctx context.Context, user, bucname string) (empty bool, err error)
 
-	// object
-	PutObject(ctx context.Context, bucname, objname string, reader *hash.Reader, size int64, meta map[string]string) (obj Object, err error)
-	CopyObject(ctx context.Context, bucket, object string, info Object, size int64, meta map[string]string) (Object, error)
-	GetObject(ctx context.Context, bucket, object string) (Object, io.ReadCloser, error)
-	GetObjectInfo(ctx context.Context, bucket, object string) (Object, error)
-	DeleteObject(ctx context.Context, bucket, object string) error
-	ListObjects(ctx context.Context, bucket string, prefix string, marker string, delimiter string, maxKeys int) (loi Object, err error)
-	ListObjectsV2(ctx context.Context, bucket string, prefix string, continuationToken string, delimiter string, maxKeys int, owner bool, startAfter string) (ListObjectsV2Info, error)
+	PutObject(ctx context.Context, user string, bucname, objname string, body *hash.Reader, size int64, meta map[string]string) (object *Object, err error)
+	CopyObject(ctx context.Context, user string, srcBucname, srcObjname, dstBucname, dstObjname string, meta map[string]string) (dstObject *Object, err error)
+	GetObject(ctx context.Context, user, bucname, objname string) (object *Object, body io.ReadCloser, err error)
+	DeleteObject(ctx context.Context, user, bucname, objname string) (err error)
+	// todo: DeleteObjects
+	ListObjects(ctx context.Context, user, bucname, prefix, delimiter, marker string, max int) (list *ObjectsList, err error)
 
-	// martipart
-	CreateMultipartUpload(ctx context.Context, bucname string, objname string, meta map[string]string) (mtp Multipart, err error)
-	AbortMultipartUpload(ctx context.Context, bucname string, objname string, uploadID string) (err error)
-	UploadPart(ctx context.Context, bucname string, objname string, uploadID string, partID int, reader *hash.Reader, size int64, meta map[string]string) (part ObjectPart, err error)
-	CompleteMultiPartUpload(ctx context.Context, bucname string, objname string, uploadID string, parts []CompletePart) (obj Object, err error)
-	GetMultipart(ctx context.Context, bucname string, objname string, uploadID string) (mtp Multipart, err error)
+	CreateMultipartUpload(ctx context.Context, user, bucname, objname string, meta map[string]string) (multipart *Multipart, err error)
+	UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, reader *hash.Reader, size int64, meta map[string]string) (part *ObjectPart, err error)
+	AbortMultipartUpload(ctx context.Context, user, bucname, objname, uplid string) (err error)
+	CompleteMultiPartUpload(ctx context.Context, user string, bucname, objname, uplid string, parts []*CompletePart) (object *Object, err error)
 }
 
 // Bucket contains bucket metadata.
@@ -79,7 +72,7 @@ type Multipart struct {
 	UploadID  string
 	Initiated time.Time
 	MetaData  map[string]string
-	Parts     []ObjectPart
+	Parts     []*ObjectPart
 }
 
 type ObjectPart struct {
