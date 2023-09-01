@@ -1,14 +1,12 @@
 package requests
 
 import (
-	"encoding/xml"
+	"github.com/bittorrent/go-btfs/s3/cctx"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"net/http"
 	"path"
 
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/policy"
-	"github.com/bittorrent/go-btfs/s3/utils"
 	"github.com/gorilla/mux"
 )
 
@@ -22,25 +20,18 @@ import (
 //	return
 //}
 
-func ParsePutBucketRequest(r *http.Request) (req *PutBucketRequest, err error) {
+func ParsePutBucketRequest(r *http.Request) (req *PutBucketRequest, rerr *responses.Error) {
 	req = &PutBucketRequest{}
-
-	vars := mux.Vars(r)
-	bucket := vars["bucket"]
-
-	region, _ := parseLocationConstraint(r)
-
-	acl := r.Header.Get(consts.AmzACL)
-
-	//set request
-	req.Bucket = bucket
-	req.ACL = acl
-	req.Region = region
-
-	if req.ACL == "" {
-		req.ACL = policy.PublicRead
+	req.User = cctx.GetAccessKey(r)
+	req.Bucket, rerr = parseBucket(r)
+	if rerr != nil {
+		return
 	}
-
+	req.ACL, rerr = parseAcl(r)
+	if rerr != nil {
+		return
+	}
+	req.Region, rerr = parseLocationConstraint(r)
 	return
 }
 
@@ -118,33 +109,6 @@ func ParsePutBucketAclRequest(r *http.Request) (req *PutBucketAclRequest, err er
 	return
 }
 
-/*********************************/
-
-// Parses location constraint from the incoming reader.
-func parseLocationConstraint(r *http.Request) (location string, s3Error *responses.Error) {
-	// If the request has no body with content-length set to 0,
-	// we do not have to validate location constraint. Bucket will
-	// be created at default region.
-	locationConstraint := createBucketLocationConfiguration{}
-	err := utils.XmlDecoder(r.Body, &locationConstraint, r.ContentLength)
-	if err != nil && r.ContentLength != 0 {
-		// Treat all other failures as XML parsing errors.
-		return "", responses.ErrMalformedXML
-	} // else for both err as nil or io.EOF
-	location = locationConstraint.Location
-	if location == "" {
-		location = consts.DefaultRegion
-	}
-	return location, nil
-}
-
-// createBucketConfiguration container for bucket configuration request from client.
-// Used for parsing the location from the request body for Makebucket.
-type createBucketLocationConfiguration struct {
-	XMLName  xml.Name `xml:"CreateBucketConfiguration" json:"-"`
-	Location string   `xml:"LocationConstraint"`
-}
-
 // pathClean is like path.Clean but does not return "." for
 // empty inputs, instead returns "empty" as is.
 func PathClean(p string) string {
@@ -170,19 +134,7 @@ func PathClean(p string) string {
 //	return tagging, nil
 //}
 
-func CheckAclPermissionType(s *string) bool {
-	if len(*s) == 0 {
-		*s = policy.PublicRead
-		return true
-	}
-
-	switch *s {
-	case policy.PublicRead:
-		return true
-	case policy.PublicReadWrite:
-		return true
-	case policy.Private:
-		return true
-	}
-	return false
+func checkAcl(acl string) (ok bool) {
+	_, ok = supportAcls[acl]
+	return
 }

@@ -2,6 +2,7 @@ package requests
 
 // PutBucketRequest .
 type PutBucketRequest struct {
+	User   string
 	Bucket string
 	ACL    string
 	Region string

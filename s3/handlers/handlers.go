@@ -90,7 +90,7 @@ func (h *Handlers) lock(ctx context.Context, key string, w http.ResponseWriter, 
 }
 
 // Parse object url queries
-func (h *Handlers) getObjectResources(values url.Values) (uploadID string, partNumberMarker, maxParts int, encodingType string, rerr *responses.Error) {
+func (h *Handlers) getObjectResources(values url.Values) (uploadId string, partNumberMarker, maxParts int, encodingType string, rerr *responses.Error) {
 	var err error
 	if values.Get("max-parts") != "" {
 		if maxParts, err = strconv.Atoi(values.Get("max-parts")); err != nil {
@@ -108,7 +108,7 @@ func (h *Handlers) getObjectResources(values url.Values) (uploadID string, partN
 		}
 	}
 
-	uploadID = values.Get("uploadId")
+	uploadId = values.Get("uploadId")
 	encodingType = values.Get("encoding-type")
 	return
 }

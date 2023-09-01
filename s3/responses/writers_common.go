@@ -11,6 +11,7 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 	"time"
 )
@@ -205,4 +206,12 @@ func setPutObjHeaders(w http.ResponseWriter, etag, cid string, delete bool) {
 	if cid != "" {
 		w.Header()[consts.CID] = []string{cid}
 	}
+}
+
+func pathClean(p string) string {
+	cp := path.Clean(p)
+	if cp == "." {
+		return ""
+	}
+	return cp
 }

@@ -14,7 +14,7 @@ import (
 )
 
 // PutObject put a user specified object
-func (s *service) PutObject(ctx context.Context, user string, bucname, objname string, body *hash.Reader, size int64, meta map[string]string) (object *Object, err error) {
+func (s *service) PutObject(ctx context.Context, user, bucname, objname string, body *hash.Reader, size int64, meta map[string]string) (object *Object, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
@@ -124,7 +124,7 @@ func (s *service) PutObject(ctx context.Context, user string, bucname, objname s
 }
 
 // CopyObject copy from a user specified source object to a desert object
-func (s *service) CopyObject(ctx context.Context, user string, srcBucname, srcObjname, dstBucname, dstObjname string, meta map[string]string) (dstObject *Object, err error) {
+func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, dstBucname, dstObjname string, meta map[string]string) (dstObject *Object, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()

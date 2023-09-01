@@ -17,7 +17,7 @@ var (
 )
 
 type Service interface {
-	CreateBucket(ctx context.Context, user, bucname, region, acl string) (bucket *Bucket, err error)
+	PutBucket(ctx context.Context, user, bucname, region, acl string) (bucket *Bucket, err error)
 	GetBucket(ctx context.Context, user, bucname string) (bucket *Bucket, err error)
 	DeleteBucket(ctx context.Context, user, bucname string) (err error)
 	GetAllBuckets(ctx context.Context, user string) (list []*Bucket, err error)
@@ -25,8 +25,8 @@ type Service interface {
 	GetBucketAcl(ctx context.Context, user, bucname string) (acl string, err error)
 	EmptyBucket(ctx context.Context, user, bucname string) (empty bool, err error)
 
-	PutObject(ctx context.Context, user string, bucname, objname string, body *hash.Reader, size int64, meta map[string]string) (object *Object, err error)
-	CopyObject(ctx context.Context, user string, srcBucname, srcObjname, dstBucname, dstObjname string, meta map[string]string) (dstObject *Object, err error)
+	PutObject(ctx context.Context, user, bucname, objname string, body *hash.Reader, size int64, meta map[string]string) (object *Object, err error)
+	CopyObject(ctx context.Context, user, srcBucname, srcObjname, dstBucname, dstObjname string, meta map[string]string) (dstObject *Object, err error)
 	GetObject(ctx context.Context, user, bucname, objname string) (object *Object, body io.ReadCloser, err error)
 	DeleteObject(ctx context.Context, user, bucname, objname string) (err error)
 	// todo: DeleteObjects
@@ -35,7 +35,7 @@ type Service interface {
 	CreateMultipartUpload(ctx context.Context, user, bucname, objname string, meta map[string]string) (multipart *Multipart, err error)
 	UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, reader *hash.Reader, size int64, meta map[string]string) (part *ObjectPart, err error)
 	AbortMultipartUpload(ctx context.Context, user, bucname, objname, uplid string) (err error)
-	CompleteMultiPartUpload(ctx context.Context, user string, bucname, objname, uplid string, parts []*CompletePart) (object *Object, err error)
+	CompleteMultiPartUpload(ctx context.Context, user, bucname, objname, uplid string, parts []*CompletePart) (object *Object, err error)
 }
 
 // Bucket contains bucket metadata.

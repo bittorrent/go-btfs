@@ -10,6 +10,9 @@ import (
 )
 
 func WritePutBucketResponse(w http.ResponseWriter, r *http.Request) {
+	if cp := pathClean(r.URL.Path); cp != "" {
+		w.Header().Set(consts.Location, cp)
+	}
 	WriteSuccessResponse(w, r)
 	return
 }

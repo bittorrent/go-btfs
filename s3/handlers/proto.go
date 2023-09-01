@@ -5,12 +5,14 @@ import (
 )
 
 type Handlerser interface {
-	// middlewares
+	// Middlewares
+
 	Cors(handler http.Handler) http.Handler
 	Sign(handler http.Handler) http.Handler
 	Log(handler http.Handler) http.Handler
 
-	// bucket
+	// Bucket
+
 	PutBucketHandler(w http.ResponseWriter, r *http.Request)
 	HeadBucketHandler(w http.ResponseWriter, r *http.Request)
 	DeleteBucketHandler(w http.ResponseWriter, r *http.Request)
@@ -18,7 +20,8 @@ type Handlerser interface {
 	GetBucketAclHandler(w http.ResponseWriter, r *http.Request)
 	PutBucketAclHandler(w http.ResponseWriter, r *http.Request)
 
-	// object
+	// Object
+
 	PutObjectHandler(w http.ResponseWriter, r *http.Request)
 	HeadObjectHandler(w http.ResponseWriter, r *http.Request)
 	CopyObjectHandler(w http.ResponseWriter, r *http.Request)
@@ -28,7 +31,8 @@ type Handlerser interface {
 	ListObjectsHandler(w http.ResponseWriter, r *http.Request)
 	ListObjectsV2Handler(w http.ResponseWriter, r *http.Request)
 
-	// multipart
+	// Multipart
+
 	CreateMultipartUploadHandler(w http.ResponseWriter, r *http.Request)
 	UploadPartHandler(w http.ResponseWriter, r *http.Request)
 	AbortMultipartUploadHandler(w http.ResponseWriter, r *http.Request)

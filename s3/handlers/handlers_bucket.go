@@ -4,13 +4,27 @@ import (
 	"errors"
 	s3action "github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/cctx"
-	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/requests"
 	"github.com/bittorrent/go-btfs/s3/responses"
-	"github.com/bittorrent/go-btfs/s3/s3utils"
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"net/http"
 )
+
+var errToRespErr = map[error]*responses.Error{
+	object.ErrBucketNotFound:      responses.ErrNoSuchBucket,
+	object.ErrObjectNotFound:      responses.ErrNoSuchKey,
+	object.ErrUploadNotFound:      responses.ErrNoSuchUpload,
+	object.ErrBucketAlreadyExists: responses.ErrBucketAlreadyExists,
+	object.ErrNotAllowed:          responses.ErrAccessDenied,
+}
+
+func (h *Handlers) respErr(err error) (rerr *responses.Error) {
+	rerr, ok := errToRespErr[err]
+	if !ok {
+		err = responses.ErrInternalError
+	}
+	return
+}
 
 func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
@@ -18,42 +32,20 @@ func (h *Handlers) PutBucketHandler(w http.ResponseWriter, r *http.Request) {
 		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
-	req, err := requests.ParsePutBucketRequest(r)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestBody)
-		return
-	}
-
-	// issue: lock for check
 	ctx := r.Context()
-	ack := cctx.GetAccessKey(r)
 
-	if err = s3utils.CheckValidBucketNameStrict(req.Bucket); err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidBucketName)
+	req, rerr := requests.ParsePutBucketRequest(r)
+	if rerr != nil {
+		err = rerr
+		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
 
-	if !requests.CheckAclPermissionType(&req.ACL) {
-		err = responses.ErrNotImplemented
-		responses.WriteErrorResponse(w, r, responses.ErrNotImplemented)
-		return
-	}
-
-	if ok := h.bucsvc.HasBucket(ctx, req.Bucket); ok {
-		err = responses.ErrBucketAlreadyExists
-		responses.WriteErrorResponseHeadersOnly(w, r, responses.ErrBucketAlreadyExists)
-		return
-	}
-
-	err = h.bucsvc.CreateBucket(ctx, req.Bucket, req.Region, ack, req.ACL)
+	_, err = h.objsvc.PutBucket(ctx, req.User, req.Bucket, req.Region, req.ACL)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrInternalError)
+		rerr = h.respErr(err)
+		responses.WriteErrorResponse(w, r, rerr)
 		return
-	}
-
-	// Make sure to add Location information here only for bucket
-	if cp := requests.PathClean(r.URL.Path); cp != "" {
-		w.Header().Set(consts.Location, cp) // Clean any trailing slashes.
 	}
 
 	responses.WritePutBucketResponse(w, r)

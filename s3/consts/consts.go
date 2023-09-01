@@ -17,6 +17,7 @@ const (
 	EmptySHA256               = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 	StsRequestBodyLimit       = 10 * (1 << 20) // 10 MiB
 	DefaultRegion             = ""
+	DefaultAcl                = "public-read"
 	SlashSeparator            = "/"
 
 	MaxSkewTime = 15 * time.Minute // 15 minutes skew allowed.

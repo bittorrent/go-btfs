@@ -11,7 +11,7 @@ import (
 )
 
 // CreateBucket create a new bucket for the specified user
-func (s *service) CreateBucket(ctx context.Context, user, bucname, region, acl string) (bucket *Bucket, err error) {
+func (s *service) PutBucket(ctx context.Context, user, bucname, region, acl string) (bucket *Bucket, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()

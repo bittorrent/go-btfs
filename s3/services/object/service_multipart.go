@@ -242,7 +242,7 @@ func (s *service) AbortMultipartUpload(ctx context.Context, user, bucname, objna
 }
 
 // CompleteMultiPartUpload complete user specified multipart upload
-func (s *service) CompleteMultiPartUpload(ctx context.Context, user string, bucname, objname, uplid string, parts []*CompletePart) (object *Object, err error) {
+func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, objname, uplid string, parts []*CompletePart) (object *Object, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
