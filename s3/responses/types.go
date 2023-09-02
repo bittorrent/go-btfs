@@ -30,6 +30,7 @@ type GetBucketAclResponse AccessControlPolicy
 //
 // </AccessControlPolicy>
 type AccessControlPolicy struct {
+	s3.AccessControlPolicy
 	Owner             canonicalUser     `xml:"Owner"`
 	AccessControlList accessControlList `xml:"AccessControlList"`
 }
@@ -288,7 +289,7 @@ func GenerateListObjectsV2Response(bucket, prefix, token, nextToken, startAfter,
 }
 
 // generates an ListObjectsV1 response for the said bucket with other enumerated options.
-func GenerateListObjectsV1Response(bucket, prefix, marker, delimiter, encodingType string, maxKeys int, resp object.ListObjectsInfo) ListObjectsResponse {
+func GenerateListObjectsV1Response(bucket, prefix, marker, delimiter, encodingType string, maxKeys int, resp object.ObjectsList) ListObjectsResponse {
 	contents := make([]Object, 0, len(resp.Objects))
 	id := consts.DefaultOwnerID
 	name := consts.DisplayName

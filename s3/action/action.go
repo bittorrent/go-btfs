@@ -11,8 +11,8 @@ type Action string
 const (
 	//--- bucket
 
-	// CreateBucketAction - PutBucket Rest API action.
-	CreateBucketAction = "s3:PutBucket"
+	// CreateBucketAction - CreateBucket Rest API action.
+	CreateBucketAction = "s3:CreateBucket"
 
 	// HeadBucketAction - HeadBucket Rest API action.
 	HeadBucketAction = "s3:HeadBucket"

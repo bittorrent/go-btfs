@@ -17,7 +17,7 @@ var (
 )
 
 type Service interface {
-	PutBucket(ctx context.Context, user, bucname, region, acl string) (bucket *Bucket, err error)
+	CreateBucket(ctx context.Context, user, bucname, region, acl string) (bucket *Bucket, err error)
 	GetBucket(ctx context.Context, user, bucname string) (bucket *Bucket, err error)
 	DeleteBucket(ctx context.Context, user, bucname string) (err error)
 	GetAllBuckets(ctx context.Context, user string) (list []*Bucket, err error)

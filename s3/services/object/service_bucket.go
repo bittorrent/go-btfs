@@ -11,7 +11,7 @@ import (
 )
 
 // CreateBucket create a new bucket for the specified user
-func (s *service) PutBucket(ctx context.Context, user, bucname, region, acl string) (bucket *Bucket, err error) {
+func (s *service) CreateBucket(ctx context.Context, user, bucname, region, acl string) (bucket *Bucket, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
@@ -28,7 +28,7 @@ func (s *service) PutBucket(ctx context.Context, user, bucname, region, acl stri
 
 	// Get old bucket
 	bucketOld, err := s.getBucket(buckey)
-	if err == nil {
+	if err != nil {
 		return
 	}
 	if bucketOld != nil {
@@ -343,7 +343,7 @@ func (s *service) EmptyBucket(ctx context.Context, user, bucname string) (empty 
 }
 
 func (s *service) getBucket(buckey string) (bucket *Bucket, err error) {
-	err = s.providers.StateStore().Get(buckey, bucket)
+	err = s.providers.StateStore().Get(buckey, &bucket)
 	if errors.Is(err, providers.ErrStateStoreNotFound) {
 		err = nil
 	}

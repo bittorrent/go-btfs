@@ -67,18 +67,11 @@ func WriteErrorResponseHeadersOnly(w http.ResponseWriter, r *http.Request, err e
 }
 
 // WriteErrorResponse write ErrorResponse
-func WriteErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
-	var rerr *Error
-	if !errors.As(err, &rerr) {
-		rerr = ErrInternalError
-	}
-	vars := mux.Vars(r)
-	bucket := vars["bucket"]
-	object := vars["object"]
+func WriteErrorResponse(w http.ResponseWriter, r *http.Request, rerr *Error) {
 	errorResponse := RESTErrorResponse{
 		Code:       rerr.Code(),
-		BucketName: bucket,
-		Key:        object,
+		BucketName: mux.Vars(r)["bucket"],
+		Key:        mux.Vars(r)["object"],
 		Message:    rerr.Description(),
 		Resource:   r.URL.Path,
 		RequestID:  fmt.Sprintf("%d", time.Now().UnixNano()),

@@ -453,7 +453,7 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 }
 
 func (s *service) getMultipart(uplkey string) (multipart *Multipart, err error) {
-	err = s.providers.StateStore().Get(uplkey, multipart)
+	err = s.providers.StateStore().Get(uplkey, &multipart)
 	if errors.Is(err, providers.ErrStateStoreNotFound) {
 		err = nil
 	}

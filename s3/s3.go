@@ -8,7 +8,6 @@ import (
 	"github.com/bittorrent/go-btfs/s3/routers"
 	"github.com/bittorrent/go-btfs/s3/server"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
-	"github.com/bittorrent/go-btfs/s3/services/bucket"
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"github.com/bittorrent/go-btfs/s3/services/sign"
 	"sync"
@@ -40,16 +39,10 @@ func NewServer(cfg config.S3CompatibleAPI) *server.Server {
 	acksvc := accesskey.NewService(ps)
 	sigsvc := sign.NewService()
 	objsvc := object.NewService(ps)
-	bucsvc := bucket.NewService(ps)
-	bucsvc.EmptyBucket(objsvc.EmptyBucket)
 
 	// handlers
 	hs := handlers.NewHandlers(
-		acksvc,
-		sigsvc,
-		bucsvc,
-		objsvc,
-		handlers.WithHeaders(cfg.HTTPHeaders),
+		acksvc, sigsvc, objsvc, handlers.WithHeaders(cfg.HTTPHeaders),
 	)
 
 	// routers

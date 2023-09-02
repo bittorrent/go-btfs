@@ -5,24 +5,19 @@ import (
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"net/http"
 	"path"
-
-	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/gorilla/mux"
 )
 
-//type PutObjectRequest struct {
-//	Bucket string
-//	Object string
-//	Body   io.Reader
-//}
-//
-//func (req *PutObjectRequest) Bind(r *http.Request) (err error) {
-//	return
-//}
+// PutBucketRequest .
+type PutBucketRequest struct {
+	AccessKey string
+	Bucket    string
+	ACL       string
+	Region    string
+}
 
 func ParsePutBucketRequest(r *http.Request) (req *PutBucketRequest, rerr *responses.Error) {
 	req = &PutBucketRequest{}
-	req.User = cctx.GetAccessKey(r)
+	req.AccessKey = cctx.GetAccessKey(r)
 	req.Bucket, rerr = parseBucket(r)
 	if rerr != nil {
 		return
@@ -35,77 +30,71 @@ func ParsePutBucketRequest(r *http.Request) (req *PutBucketRequest, rerr *respon
 	return
 }
 
-func ParseHeadBucketRequest(r *http.Request) (req *HeadBucketRequest, err error) {
-	req = &HeadBucketRequest{}
-	vars := mux.Vars(r)
-	bucket := vars["bucket"]
+// DeleteBucketRequest .
+type DeleteBucketRequest struct {
+	AccessKey string
+	Bucket    string
+}
 
-	//set request
-	req.Bucket = bucket
+func ParseDeleteBucketRequest(r *http.Request) (req *DeleteBucketRequest, rerr *responses.Error) {
+	req = &DeleteBucketRequest{}
+	req.AccessKey = cctx.GetAccessKey(r)
+	req.Bucket, rerr = parseBucket(r)
 	return
 }
 
-// DeleteBucketRequest .
-type DeleteBucketRequest struct {
-	Bucket string
+// HeadBucketRequest .
+type HeadBucketRequest struct {
+	AccessKey string
+	Bucket    string
 }
 
-func ParseDeleteBucketRequest(r *http.Request) (req *DeleteBucketRequest, err error) {
-	vars := mux.Vars(r)
-	bucket := vars["bucket"]
-
-	//set request
-	req = &DeleteBucketRequest{}
-	req.Bucket = bucket
+func ParseHeadBucketRequest(r *http.Request) (req *HeadBucketRequest, rerr *responses.Error) {
+	req = &HeadBucketRequest{}
+	req.AccessKey = cctx.GetAccessKey(r)
+	req.Bucket, rerr = parseBucket(r)
 	return
 }
 
 // ListBucketsRequest .
 type ListBucketsRequest struct {
-	Bucket string
+	AccessKey string
 }
 
-func ParseListBucketsRequest(r *http.Request) (req *ListBucketsRequest, err error) {
-	vars := mux.Vars(r)
-	bucket := vars["bucket"]
-
-	//set request
+func ParseListBucketsRequest(r *http.Request) (req *ListBucketsRequest, rerr *responses.Error) {
 	req = &ListBucketsRequest{}
-	req.Bucket = bucket
+	req.AccessKey = cctx.GetAccessKey(r)
 	return
 }
 
 // GetBucketAclRequest .
 type GetBucketAclRequest struct {
-	Bucket string
+	AccessKey string
+	Bucket    string
 }
 
-func ParseGetBucketAclRequest(r *http.Request) (req *GetBucketAclRequest, err error) {
-	vars := mux.Vars(r)
-	bucket := vars["bucket"]
-
-	//set request
+func ParseGetBucketAclRequest(r *http.Request) (req *GetBucketAclRequest, rerr *responses.Error) {
 	req = &GetBucketAclRequest{}
-	req.Bucket = bucket
+	req.AccessKey = cctx.GetAccessKey(r)
+	req.Bucket, rerr = parseBucket(r)
 	return
 }
 
 // PutBucketAclRequest .
 type PutBucketAclRequest struct {
-	Bucket string
-	ACL    string
+	AccessKey string
+	Bucket    string
+	ACL       string
 }
 
-func ParsePutBucketAclRequest(r *http.Request) (req *PutBucketAclRequest, err error) {
-	vars := mux.Vars(r)
-	bucket := vars["bucket"]
-
-	acl := r.Header.Get(consts.AmzACL)
-
-	//set request
+func ParsePutBucketAclRequest(r *http.Request) (req *PutBucketAclRequest, rerr *responses.Error) {
 	req = &PutBucketAclRequest{}
-	req.Bucket = bucket
-	req.ACL = acl
+	req.AccessKey = cctx.GetAccessKey(r)
+	req.Bucket, rerr = parseBucket(r)
+	if rerr != nil {
+		return
+	}
+	req.ACL, rerr = parseAcl(r)
 	return
 }
 

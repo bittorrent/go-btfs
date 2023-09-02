@@ -2,14 +2,11 @@
 package handlers
 
 import (
-	"context"
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/ctxmu"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"github.com/bittorrent/go-btfs/s3/services/sign"
-	"net/http"
 	"net/url"
 	"runtime"
 	"strconv"
@@ -21,27 +18,16 @@ var _ Handlerser = (*Handlers)(nil)
 
 type Handlers struct {
 	headers map[string][]string
-	nslock  ctxmu.MultiCtxRWLocker
-
-	acksvc accesskey.Service
-	sigsvc sign.Service
-	bucsvc object.Service
-	objsvc object.Service
+	acksvc  accesskey.Service
+	sigsvc  sign.Service
+	objsvc  object.Service
 }
 
-func NewHandlers(
-	acksvc accesskey.Service,
-	sigsvc sign.Service,
-	bucsvc object.Service,
-	objsvc object.Service,
-	options ...Option,
-) (handlers *Handlers) {
+func NewHandlers(acksvc accesskey.Service, sigsvc sign.Service, objsvc object.Service, options ...Option) (handlers *Handlers) {
 	handlers = &Handlers{
 		headers: defaultHeaders,
-		nslock:  ctxmu.NewDefaultMultiCtxRWMutex(),
 		acksvc:  acksvc,
 		sigsvc:  sigsvc,
-		bucsvc:  bucsvc,
 		objsvc:  objsvc,
 	}
 	for _, option := range options {
@@ -55,38 +41,6 @@ func (h *Handlers) name() string {
 	runtime.Callers(3, pc)
 	f := runtime.FuncForPC(pc[0])
 	return f.Name()
-}
-
-func (h *Handlers) rlock(ctx context.Context, key string, w http.ResponseWriter, r *http.Request) (runlock func(), err error) {
-	key = lockPrefix + key
-	ctx, cancel := context.WithTimeout(ctx, lockWaitTimeout)
-	err = h.nslock.RLock(ctx, key)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
-		cancel()
-		return
-	}
-	runlock = func() {
-		h.nslock.RUnlock(key)
-		cancel()
-	}
-	return
-}
-
-func (h *Handlers) lock(ctx context.Context, key string, w http.ResponseWriter, r *http.Request) (unlock func(), err error) {
-	key = lockPrefix + key
-	ctx, cancel := context.WithTimeout(ctx, lockWaitTimeout)
-	err = h.nslock.Lock(ctx, key)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, err)
-		cancel()
-		return
-	}
-	unlock = func() {
-		h.nslock.Unlock(key)
-		cancel()
-	}
-	return
 }
 
 // Parse object url queries

@@ -522,7 +522,7 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 }
 
 func (s *service) getObject(objkey string) (object *Object, err error) {
-	err = s.providers.StateStore().Get(objkey, object)
+	err = s.providers.StateStore().Get(objkey, &object)
 	if errors.Is(err, providers.ErrStateStoreNotFound) {
 		err = nil
 	}
