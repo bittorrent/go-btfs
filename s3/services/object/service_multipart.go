@@ -45,8 +45,8 @@ func (s *service) CreateMultipartUpload(ctx context.Context, user, bucname, objn
 		return
 	}
 
-	// Check action acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.CreateMultipartUploadAction)
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.CreateMultipartUploadAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
@@ -81,7 +81,7 @@ func (s *service) CreateMultipartUpload(ctx context.Context, user, bucname, objn
 }
 
 // UploadPart upload user specified multipart part
-func (s *service) UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, body *hash.Reader, size int64, meta map[string]string) (part *ObjectPart, err error) {
+func (s *service) UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, body *hash.Reader, size int64, meta map[string]string) (part *Part, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
@@ -106,8 +106,8 @@ func (s *service) UploadPart(ctx context.Context, user, bucname, objname, uplid 
 		return
 	}
 
-	// Check acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.UploadPartAction)
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.UploadPartAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
@@ -151,10 +151,10 @@ func (s *service) UploadPart(ctx context.Context, user, bucname, objname, uplid 
 	}()
 
 	// Part
-	part = &ObjectPart{
+	part = &Part{
 		Number:  partId,
 		ETag:    body.ETag().String(),
-		Cid:     cid,
+		CID:     cid,
 		Size:    size,
 		ModTime: time.Now().UTC(),
 	}
@@ -200,8 +200,8 @@ func (s *service) AbortMultipartUpload(ctx context.Context, user, bucname, objna
 		return
 	}
 
-	// Check action acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.AbortMultipartUploadAction)
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.AbortMultipartUploadAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
@@ -235,7 +235,7 @@ func (s *service) AbortMultipartUpload(ctx context.Context, user, bucname, objna
 
 	// Try to remove all parts body
 	for _, part := range multipart.Parts {
-		_ = s.providers.FileStore().Remove(part.Cid)
+		_ = s.providers.FileStore().Remove(part.CID)
 	}
 
 	return
@@ -267,8 +267,8 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 		return
 	}
 
-	// Check acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.CompleteMultipartUploadAction)
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.CompleteMultipartUploadAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
@@ -372,7 +372,7 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 
 		// Get part body reader
 		var rdr io.ReadCloser
-		rdr, err = s.providers.FileStore().Cat(gotPart.Cid)
+		rdr, err = s.providers.FileStore().Cat(gotPart.CID)
 		if err != nil {
 			return
 		}
@@ -409,7 +409,7 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 		Size:             size,
 		IsDir:            false,
 		ETag:             s.computeMultipartMD5(parts),
-		Cid:              cid,
+		CID:              cid,
 		VersionID:        "",
 		IsLatest:         true,
 		DeleteMarker:     false,
@@ -435,7 +435,7 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 
 	// Try to remove old object body if exists, because it has been covered by new one
 	if objectOld != nil {
-		_ = s.providers.FileStore().Remove(objectOld.Cid)
+		_ = s.providers.FileStore().Remove(objectOld.CID)
 	}
 
 	// Remove multipart upload
@@ -446,7 +446,7 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 
 	// Try to remove all parts body, because they are no longer be referenced
 	for _, part := range multipart.Parts {
-		_ = s.providers.FileStore().Remove(part.Cid)
+		_ = s.providers.FileStore().Remove(part.CID)
 	}
 
 	return
@@ -460,7 +460,7 @@ func (s *service) getMultipart(uplkey string) (multipart *Multipart, err error) 
 	return
 }
 
-func (s *service) partIdxMap(parts []*ObjectPart) map[int]int {
+func (s *service) partIdxMap(parts []*Part) map[int]int {
 	mp := make(map[int]int)
 	for i, part := range parts {
 		mp[part.Number] = i
@@ -504,7 +504,7 @@ func (s *service) deleteUploadsByPrefix(uploadsPrefix string) (err error) {
 			return
 		}
 		for _, part := range multipart.Parts {
-			_ = s.providers.FileStore().Remove(part.Cid)
+			_ = s.providers.FileStore().Remove(part.CID)
 		}
 		return
 	})

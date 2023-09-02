@@ -1,11 +1,12 @@
 package requests
 
 import (
+	"encoding/xml"
+	"github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/policy"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/s3utils"
-	"github.com/bittorrent/go-btfs/s3/utils"
 	"github.com/gorilla/mux"
 	"net/http"
 	"net/url"
@@ -13,8 +14,7 @@ import (
 )
 
 func parseBucket(r *http.Request) (bucket string, rerr *responses.Error) {
-	bucket = mux.Vars(r)["bucket"]
-	err := s3utils.CheckValidBucketNameStrict(bucket)
+	err := s3utils.CheckValidBucketNameStrict(mux.Vars(r)["bucket"])
 	if err != nil {
 		rerr = responses.ErrInvalidBucketName
 	}
@@ -29,39 +29,44 @@ func parseObject(r *http.Request) (object string, rerr *responses.Error) {
 	return
 }
 
-// Parses location constraint from the incoming reader.
-func parseLocationConstraint(r *http.Request) (location string, rerr *responses.Error) {
-	// If the request has no body with content-length set to 0,
-	// we do not have to validate location constraint. Bucket will
-	// be created at default region.
-	locationConstraint := createBucketLocationConfiguration{}
-	err := utils.XmlDecoder(r.Body, &locationConstraint, r.ContentLength)
-	if err != nil && r.ContentLength != 0 {
-		rerr = responses.ErrMalformedXML
-		return
-	} // else for both err as nil or io.EOF
-
-	location = locationConstraint.Location
-	if location == "" {
-		location = consts.DefaultRegion
+func parseLocation(r *http.Request) (location string, rerr *responses.Error) {
+	if r.ContentLength != 0 {
+		locationCfg := s3.CreateBucketConfiguration{}
+		decoder := xml.NewDecoder(r.Body)
+		err := xmlutil.UnmarshalXML(&locationCfg, decoder, "")
+		if err != nil {
+			rerr = responses.ErrMalformedXML
+			return
+		}
+		location = *locationCfg.LocationConstraint
+	}
+	if len(location) == 0 {
+		location = consts.DefaultLocation
+	}
+	if !consts.SupportedLocations[location] {
+		rerr = responses.ErrNotImplemented
 	}
 
 	return
 }
 
-var supportAcls = map[string]struct{}{
-	policy.Private:         {},
-	policy.PublicRead:      {},
-	policy.PublicReadWrite: {},
+func parseBucketACL(r *http.Request) (acl string, rerr *responses.Error) {
+	acl = r.Header.Get(consts.AmzACL)
+	if len(acl) == 0 {
+		acl = consts.DefaultBucketACL
+	}
+	if !consts.SupportedBucketACLs[acl] {
+		rerr = responses.ErrNotImplemented
+	}
+	return
 }
 
-func parseAcl(r *http.Request) (acl string, rerr *responses.Error) {
+func parseObjectACL(r *http.Request) (acl string, rerr *responses.Error) {
 	acl = r.Header.Get(consts.AmzACL)
-	if acl == "" {
-		acl = consts.DefaultAcl
+	if len(acl) == 0 {
+		acl = consts.DefaultObjectACL
 	}
-	_, ok := supportAcls[acl]
-	if !ok {
+	if !consts.SupportedObjectACLs[acl] {
 		rerr = responses.ErrNotImplemented
 	}
 	return

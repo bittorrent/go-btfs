@@ -63,9 +63,9 @@ func (routers *Routers) Register() http.Handler {
 	//bucket.Methods(http.MethodGet).Path("/{object:.+}").HandlerFunc(hs.GetObjectACLHandler).Queries("acl", "")
 
 	//bucket...
-	// GetBucketAcl
+	// GetBucketACL
 	bucket.Methods(http.MethodGet).HandlerFunc(hs.GetBucketAclHandler).Queries("acl", "")
-	// PutBucketAcl
+	// PutBucketACL
 	bucket.Methods(http.MethodPut).HandlerFunc(hs.PutBucketAclHandler).Queries("acl", "")
 	// CreateBucket
 	bucket.Methods(http.MethodPut).HandlerFunc(hs.CreateBucketHandler)

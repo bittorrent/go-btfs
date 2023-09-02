@@ -1,32 +1,51 @@
 package requests
 
 import (
+	"errors"
+	"fmt"
 	"github.com/bittorrent/go-btfs/s3/cctx"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"net/http"
-	"path"
+	"reflect"
 )
 
-// PutBucketRequest .
-type PutBucketRequest struct {
+// CreateBucketRequest .
+type CreateBucketRequest struct {
 	AccessKey string
 	Bucket    string
 	ACL       string
 	Region    string
 }
 
-func ParsePutBucketRequest(r *http.Request) (req *PutBucketRequest, rerr *responses.Error) {
-	req = &PutBucketRequest{}
+// todo: parse aws request use aws struct
+func ParseS3Request(r *http.Request, v interface{}) (err error) {
+	rv := reflect.ValueOf(v)
+	if rv.Kind() != reflect.Pointer || rv.IsNil() {
+		err = errors.New("invalid value must be non nil pointer")
+		return
+	}
+
+	rt := reflect.TypeOf(v).Elem()
+	n := rt.NumField()
+	for i := 0; i < n; i++ {
+		f := rt.Field(i)
+		fmt.Println(f)
+	}
+	return
+}
+
+func ParseCreateBucketRequest(r *http.Request) (req *CreateBucketRequest, rerr *responses.Error) {
+	req = &CreateBucketRequest{}
 	req.AccessKey = cctx.GetAccessKey(r)
 	req.Bucket, rerr = parseBucket(r)
 	if rerr != nil {
 		return
 	}
-	req.ACL, rerr = parseAcl(r)
+	req.ACL, rerr = parseBucketACL(r)
 	if rerr != nil {
 		return
 	}
-	req.Region, rerr = parseLocationConstraint(r)
+	req.Region, rerr = parseLocation(r)
 	return
 }
 
@@ -67,63 +86,33 @@ func ParseListBucketsRequest(r *http.Request) (req *ListBucketsRequest, rerr *re
 	return
 }
 
-// GetBucketAclRequest .
-type GetBucketAclRequest struct {
+// GetBucketACLRequest .
+type GetBucketACLRequest struct {
 	AccessKey string
 	Bucket    string
 }
 
-func ParseGetBucketAclRequest(r *http.Request) (req *GetBucketAclRequest, rerr *responses.Error) {
-	req = &GetBucketAclRequest{}
+func ParseGetBucketACLRequest(r *http.Request) (req *GetBucketACLRequest, rerr *responses.Error) {
+	req = &GetBucketACLRequest{}
 	req.AccessKey = cctx.GetAccessKey(r)
 	req.Bucket, rerr = parseBucket(r)
 	return
 }
 
-// PutBucketAclRequest .
-type PutBucketAclRequest struct {
+// PutBucketACLRequest .
+type PutBucketACLRequest struct {
 	AccessKey string
 	Bucket    string
 	ACL       string
 }
 
-func ParsePutBucketAclRequest(r *http.Request) (req *PutBucketAclRequest, rerr *responses.Error) {
-	req = &PutBucketAclRequest{}
+func ParsePutBucketAclRequest(r *http.Request) (req *PutBucketACLRequest, rerr *responses.Error) {
+	req = &PutBucketACLRequest{}
 	req.AccessKey = cctx.GetAccessKey(r)
 	req.Bucket, rerr = parseBucket(r)
 	if rerr != nil {
 		return
 	}
-	req.ACL, rerr = parseAcl(r)
-	return
-}
-
-// pathClean is like path.Clean but does not return "." for
-// empty inputs, instead returns "empty" as is.
-func PathClean(p string) string {
-	cp := path.Clean(p)
-	if cp == "." {
-		return ""
-	}
-	return cp
-}
-
-//func unmarshalXML(reader io.Reader, isObject bool) (*store.Tags, error) {
-//	tagging := &store.Tags{
-//		TagSet: &store.TagSet{
-//			TagMap:   make(map[string]string),
-//			IsObject: isObject,
-//		},
-//	}
-//
-//	if err := xml.NewDecoder(reader).Decode(tagging); err != nil {
-//		return nil, err
-//	}
-//
-//	return tagging, nil
-//}
-
-func checkAcl(acl string) (ok bool) {
-	_, ok = supportAcls[acl]
+	req.ACL, rerr = parseBucketACL(r)
 	return
 }

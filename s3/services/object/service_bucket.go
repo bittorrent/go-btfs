@@ -36,8 +36,8 @@ func (s *service) CreateBucket(ctx context.Context, user, bucname, region, acl s
 		return
 	}
 
-	// Check action acl
-	allow := s.checkAcl(user, acl, user, action.CreateBucketAction)
+	// Check action ACL
+	allow := s.checkACL(user, policy.Private, user, action.CreateBucketAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
@@ -48,7 +48,7 @@ func (s *service) CreateBucket(ctx context.Context, user, bucname, region, acl s
 		Name:    bucname,
 		Region:  region,
 		Owner:   user,
-		Acl:     acl,
+		ACL:     acl,
 		Created: time.Now().UTC(),
 	}
 
@@ -84,8 +84,8 @@ func (s *service) GetBucket(ctx context.Context, user, bucname string) (bucket *
 		return
 	}
 
-	// Check action acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.HeadBucketAction)
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.HeadBucketAction)
 	if !allow {
 		err = ErrNotAllowed
 	}
@@ -119,8 +119,8 @@ func (s *service) DeleteBucket(ctx context.Context, user, bucname string) (err e
 		return
 	}
 
-	// Check action acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.DeleteBucketAction)
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.DeleteBucketAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
@@ -153,8 +153,8 @@ func (s *service) GetAllBuckets(ctx context.Context, user string) (list []*Bucke
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
-	// Check action acl
-	allow := s.checkAcl(user, policy.Private, user, action.ListBucketAction)
+	// Check action ACL
+	allow := s.checkACL(user, policy.Private, user, action.ListBucketAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
@@ -196,8 +196,8 @@ func (s *service) GetAllBuckets(ctx context.Context, user string) (list []*Bucke
 	return
 }
 
-// PutBucketAcl update user specified bucket's acl field value
-func (s *service) PutBucketAcl(ctx context.Context, user, bucname, acl string) (err error) {
+// PutBucketACL update user specified bucket's ACL field value
+func (s *service) PutBucketACL(ctx context.Context, user, bucname, acl string) (err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
@@ -222,15 +222,15 @@ func (s *service) PutBucketAcl(ctx context.Context, user, bucname, acl string) (
 		return
 	}
 
-	// Check action acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.PutBucketAclAction)
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.PutBucketAclAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
-	// Update bucket acl
-	bucket.Acl = acl
+	// Update bucket ACL
+	bucket.ACL = acl
 
 	// Put bucket
 	err = s.providers.StateStore().Put(buckey, bucket)
@@ -238,8 +238,8 @@ func (s *service) PutBucketAcl(ctx context.Context, user, bucname, acl string) (
 	return
 }
 
-// GetBucketAcl get user specified bucket acl field value
-func (s *service) GetBucketAcl(ctx context.Context, user, bucname string) (acl string, err error) {
+// GetBucketACL get user specified bucket ACL field value
+func (s *service) GetBucketACL(ctx context.Context, user, bucname string) (acl string, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
@@ -264,15 +264,15 @@ func (s *service) GetBucketAcl(ctx context.Context, user, bucname string) (acl s
 		return
 	}
 
-	// Check action acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.GetBucketAclAction)
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.GetBucketAclAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
-	// Get acl field value
-	acl = bucket.Acl
+	// Get ACL field value
+	acl = bucket.ACL
 
 	return
 }
@@ -302,8 +302,8 @@ func (s *service) EmptyBucket(ctx context.Context, user, bucname string) (empty 
 		return
 	}
 
-	// Check action acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.ListObjectsAction)
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.ListObjectsAction)
 	if !allow {
 		err = ErrNotAllowed
 		return

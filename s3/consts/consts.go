@@ -1,6 +1,7 @@
 package consts
 
 import (
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/dustin/go-humanize"
 	"time"
 )
@@ -16,8 +17,6 @@ const (
 	MaxLocationConstraintSize = 3 * humanize.MiByte
 	EmptySHA256               = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 	StsRequestBodyLimit       = 10 * (1 << 20) // 10 MiB
-	DefaultRegion             = ""
-	DefaultAcl                = "public-read"
 	SlashSeparator            = "/"
 
 	MaxSkewTime = 15 * time.Minute // 15 minutes skew allowed.
@@ -29,10 +28,25 @@ const (
 	AssumeRole      = "AssumeRole"
 	SignV4Algorithm = "AWS4-HMAC-SHA256"
 
-	DefaultOwnerID      = "02d6176db174dc93cb1b899f7c6078f08654445fe8cf1b6ce98d8855f66bdbf4"
-	DisplayName         = "FileDagStorage"
-	DefaultStorageClass = "DAGSTORE"
+	DefaultLocation  = "us-east-1"
+	DefaultBucketACL = s3.BucketCannedACLPublicRead
+	DefaultObjectACL = ""
+	AllUsersURI      = "http://acs.amazonaws.com/groups/global/AllUsers"
 )
+
+var SupportedLocations = map[string]bool{
+	DefaultLocation: true,
+}
+
+var SupportedBucketACLs = map[string]bool{
+	s3.BucketCannedACLPrivate:         true,
+	s3.BucketCannedACLPublicRead:      true,
+	s3.BucketCannedACLPublicReadWrite: true,
+}
+
+var SupportedObjectACLs = map[string]bool{
+	DefaultObjectACL: true,
+}
 
 // Standard S3 HTTP request constants
 const (

@@ -79,7 +79,7 @@ func (s *service) opctx(parent context.Context) (ctx context.Context, cancel con
 	return
 }
 
-func (s *service) checkAcl(owner, acl, user string, act action.Action) (allow bool) {
+func (s *service) checkACL(owner, acl, user string, act action.Action) (allow bool) {
 	own := user != "" && user == owner
 	allow = policy.IsAllowed(own, acl, act)
 	return

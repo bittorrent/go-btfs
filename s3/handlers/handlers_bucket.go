@@ -30,7 +30,7 @@ func (h *Handlers) CreateBucketHandler(w http.ResponseWriter, r *http.Request) {
 		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
-	req, rerr := requests.ParsePutBucketRequest(r)
+	req, rerr := requests.ParseCreateBucketRequest(r)
 	if rerr != nil {
 		err = rerr
 		responses.WriteErrorResponse(w, r, rerr)
@@ -119,7 +119,7 @@ func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responses.WriteListBucketsResponse(w, r, req.AccessKey, "", list)
+	responses.WriteListBucketsResponse(w, r, req.AccessKey, list)
 
 	return
 }
@@ -130,21 +130,21 @@ func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
-	req, rerr := requests.ParseGetBucketAclRequest(r)
+	req, rerr := requests.ParseGetBucketACLRequest(r)
 	if rerr != nil {
 		err = rerr
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
 
-	acl, err := h.objsvc.GetBucketAcl(r.Context(), req.AccessKey, req.Bucket)
+	acl, err := h.objsvc.GetBucketACL(r.Context(), req.AccessKey, req.Bucket)
 	if err != nil {
 		rerr = h.respErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
 
-	responses.WriteGetBucketAclResponse(w, r, req.AccessKey, "", acl)
+	responses.WriteGetBucketACLResponse(w, r, req.AccessKey, acl)
 }
 
 func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
@@ -160,7 +160,7 @@ func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.objsvc.PutBucketAcl(r.Context(), req.AccessKey, req.Bucket, req.ACL)
+	err = h.objsvc.PutBucketACL(r.Context(), req.AccessKey, req.Bucket, req.ACL)
 	if err != nil {
 		rerr = h.respErr(err)
 		responses.WriteErrorResponse(w, r, rerr)

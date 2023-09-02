@@ -21,8 +21,8 @@ type Service interface {
 	GetBucket(ctx context.Context, user, bucname string) (bucket *Bucket, err error)
 	DeleteBucket(ctx context.Context, user, bucname string) (err error)
 	GetAllBuckets(ctx context.Context, user string) (list []*Bucket, err error)
-	PutBucketAcl(ctx context.Context, user, bucname, acl string) (err error)
-	GetBucketAcl(ctx context.Context, user, bucname string) (acl string, err error)
+	PutBucketACL(ctx context.Context, user, bucname, acl string) (err error)
+	GetBucketACL(ctx context.Context, user, bucname string) (acl string, err error)
 	EmptyBucket(ctx context.Context, user, bucname string) (empty bool, err error)
 
 	PutObject(ctx context.Context, user, bucname, objname string, body *hash.Reader, size int64, meta map[string]string) (object *Object, err error)
@@ -33,7 +33,7 @@ type Service interface {
 	ListObjects(ctx context.Context, user, bucname, prefix, delimiter, marker string, max int) (list *ObjectsList, err error)
 
 	CreateMultipartUpload(ctx context.Context, user, bucname, objname string, meta map[string]string) (multipart *Multipart, err error)
-	UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, reader *hash.Reader, size int64, meta map[string]string) (part *ObjectPart, err error)
+	UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, reader *hash.Reader, size int64, meta map[string]string) (part *Part, err error)
 	AbortMultipartUpload(ctx context.Context, user, bucname, objname, uplid string) (err error)
 	CompleteMultiPartUpload(ctx context.Context, user, bucname, objname, uplid string, parts []*CompletePart) (object *Object, err error)
 }
@@ -43,7 +43,7 @@ type Bucket struct {
 	Name    string
 	Region  string
 	Owner   string
-	Acl     string
+	ACL     string
 	Created time.Time
 }
 
@@ -54,8 +54,8 @@ type Object struct {
 	Size             int64
 	IsDir            bool
 	ETag             string
-	Cid              string
-	Acl              string
+	CID              string
+	ACL              string
 	VersionID        string
 	IsLatest         bool
 	DeleteMarker     bool
@@ -72,37 +72,22 @@ type Multipart struct {
 	UploadID  string
 	Initiated time.Time
 	MetaData  map[string]string
-	Parts     []*ObjectPart
+	Parts     []*Part
 }
 
-type ObjectPart struct {
+type Part struct {
 	ETag    string    `json:"etag,omitempty"`
-	Cid     string    `json:"cid,omitempty"`
+	CID     string    `json:"cid,omitempty"`
 	Number  int       `json:"number"`
 	Size    int64     `json:"size"`
 	ModTime time.Time `json:"mod_time"`
 }
 
-// ListObjectsInfo - container for list objects.
 type ObjectsList struct {
-	// Indicates whether the returned list objects response is truncated. A
-	// value of true indicates that the list was truncated. The list can be truncated
-	// if the number of objects exceeds the limit allowed or specified
-	// by max keys.
 	IsTruncated bool
-
-	// When response is truncated (the IsTruncated element value in the response is true),
-	// you can use the key name in this field as marker in the subsequent
-	// request to get next set of objects.
-	//
-	// NOTE: AWS S3 returns NextMarker only if you have delimiter request parameter specified,
-	NextMarker string
-
-	// List of objects info for this request.
-	Objects []*Object
-
-	// List of prefixes for this request.
-	Prefixes []string
+	NextMarker  string
+	Objects     []*Object
+	Prefixes    []string
 }
 
 type CompletePart struct {

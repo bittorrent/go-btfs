@@ -39,8 +39,8 @@ func (s *service) PutObject(ctx context.Context, user, bucname, objname string, 
 		return
 	}
 
-	// Check action acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.PutObjectAction)
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.PutObjectAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
@@ -90,11 +90,11 @@ func (s *service) PutObject(ctx context.Context, user, bucname, objname string, 
 		Size:             size,
 		IsDir:            false,
 		ETag:             body.ETag().String(),
-		Cid:              cid,
+		CID:              cid,
 		VersionID:        "",
 		IsLatest:         true,
 		DeleteMarker:     false,
-		Acl:              meta[consts.AmzACL],
+		ACL:              meta[consts.AmzACL],
 		ContentType:      meta[strings.ToLower(consts.ContentType)],
 		ContentEncoding:  meta[strings.ToLower(consts.ContentEncoding)],
 		SuccessorModTime: now.UTC(),
@@ -117,7 +117,7 @@ func (s *service) PutObject(ctx context.Context, user, bucname, objname string, 
 
 	// Try to remove old object body if exists, because it has been covered by new one
 	if objectOld != nil {
-		_ = s.providers.FileStore().Remove(objectOld.Cid)
+		_ = s.providers.FileStore().Remove(objectOld.CID)
 	}
 
 	return
@@ -149,8 +149,8 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 		return
 	}
 
-	// Check source action acl
-	srcAllow := s.checkAcl(srcBucket.Owner, srcBucket.Acl, user, action.GetObjectAction)
+	// Check source action ACL
+	srcAllow := s.checkACL(srcBucket.Owner, srcBucket.ACL, user, action.GetObjectAction)
 	if !srcAllow {
 		err = ErrNotAllowed
 		return
@@ -196,8 +196,8 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 		return
 	}
 
-	// Check destination action acl
-	dstAllow := s.checkAcl(dstBucket.Owner, dstBucket.Acl, user, action.PutObjectAction)
+	// Check destination action ACL
+	dstAllow := s.checkACL(dstBucket.Owner, dstBucket.ACL, user, action.PutObjectAction)
 	if !dstAllow {
 		err = ErrNotAllowed
 		return
@@ -224,7 +224,7 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 		Size:             srcObject.Size,
 		IsDir:            false,
 		ETag:             srcObject.ETag,
-		Cid:              srcObject.Cid,
+		CID:              srcObject.CID,
 		VersionID:        "",
 		IsLatest:         true,
 		DeleteMarker:     false,
@@ -276,8 +276,8 @@ func (s *service) GetObject(ctx context.Context, user, bucname, objname string) 
 		return
 	}
 
-	// Check action acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.GetObjectAction)
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.GetObjectAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
@@ -309,7 +309,7 @@ func (s *service) GetObject(ctx context.Context, user, bucname, objname string) 
 	}
 
 	// Get object body
-	body, err = s.providers.FileStore().Cat(object.Cid)
+	body, err = s.providers.FileStore().Cat(object.CID)
 	if err != nil {
 		return
 	}
@@ -356,8 +356,8 @@ func (s *service) DeleteObject(ctx context.Context, user, bucname, objname strin
 		return
 	}
 
-	// Check action acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.DeleteObjectAction)
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.DeleteObjectAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
@@ -390,7 +390,7 @@ func (s *service) DeleteObject(ctx context.Context, user, bucname, objname strin
 	}
 
 	// Try to delete object body
-	_ = s.providers.FileStore().Remove(object.Cid)
+	_ = s.providers.FileStore().Remove(object.CID)
 
 	return
 }
@@ -421,8 +421,8 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 		return
 	}
 
-	// Check action acl
-	allow := s.checkAcl(bucket.Owner, bucket.Acl, user, action.ListObjectsAction)
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.ListObjectsAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
@@ -542,7 +542,7 @@ func (s *service) deleteObjectsByPrefix(objectsPrefix string) (err error) {
 		if er != nil {
 			return
 		}
-		_ = s.providers.FileStore().Remove(object.Cid)
+		_ = s.providers.FileStore().Remove(object.CID)
 		return
 	})
 

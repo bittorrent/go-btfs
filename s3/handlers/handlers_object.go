@@ -494,7 +494,7 @@ const lockWaitTimeout = 5 * time.Minute
 //	}
 //	defer runlock()
 //
-//	acl, err := h.bucsvc.GetBucketAcl(ctx, bucname)
+//	acl, err := h.bucsvc.GetBucketACL(ctx, bucname)
 //	if err != nil {
 //		responses.WriteErrorResponse(w, r, err)
 //		return

@@ -117,7 +117,7 @@ The optional format string is a printf style format string:
 }
 
 type CidFormatRes struct {
-	CidStr    string // Original Cid String passed in
+	CidStr    string // Original CID String passed in
 	Formatted string // Formatted Result
 	ErrorMsg  string // Error
 }

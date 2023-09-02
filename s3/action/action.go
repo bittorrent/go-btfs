@@ -23,11 +23,11 @@ const (
 	// DeleteBucketAction - DeleteBucket Rest API action.
 	DeleteBucketAction = "s3:DeleteBucket"
 
-	// PutBucketAclAction - PutBucketAcl Rest API action.
-	PutBucketAclAction = "s3:PutBucketAcl"
+	// PutBucketAclAction - PutBucketACL Rest API action.
+	PutBucketAclAction = "s3:PutBucketACL"
 
-	// GetBucketAclAction - GetBucketAcl Rest API action.
-	GetBucketAclAction = "s3:GetBucketAcl"
+	// GetBucketAclAction - GetBucketACL Rest API action.
+	GetBucketAclAction = "s3:GetBucketACL"
 
 	//--- object
 

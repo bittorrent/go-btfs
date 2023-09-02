@@ -6,6 +6,8 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/gorilla/mux"
 	logging "github.com/ipfs/go-log/v2"
@@ -25,6 +27,19 @@ const (
 	mimeJSON mimeType = "application/json"
 	//mimeXML application/xml UTF-8
 	mimeXML mimeType = " application/xml"
+)
+
+func owner(accessKey string) *s3.Owner {
+	return new(s3.Owner).SetID(accessKey).SetDisplayName(accessKey)
+}
+
+func ownerFullControlGrant(accessKey string) *s3.Grant {
+	return new(s3.Grant).SetGrantee(new(s3.Grantee).SetType(s3.TypeCanonicalUser).SetID(accessKey).SetDisplayName(accessKey)).SetPermission(s3.PermissionFullControl)
+}
+
+var (
+	allUsersReadGrant  = new(s3.Grant).SetGrantee(new(s3.Grantee).SetType(s3.TypeGroup).SetURI(consts.AllUsersURI)).SetPermission(s3.PermissionRead)
+	allUsersWriteGrant = new(s3.Grant).SetGrantee(new(s3.Grantee).SetType(s3.TypeGroup).SetURI(consts.AllUsersURI)).SetPermission(s3.PermissionWrite)
 )
 
 // APIErrorResponse - error response format
@@ -109,7 +124,6 @@ func writeResponse(w http.ResponseWriter, r *http.Request, statusCode int, respo
 	}
 	w.WriteHeader(statusCode)
 	if response != nil {
-		log.Debugf("status %d %s: %s", statusCode, mType, string(response))
 		_, err := w.Write(response)
 		if err != nil {
 			log.Errorf("write err: %v", err)
@@ -130,11 +144,15 @@ func setCommonHeaders(w http.ResponseWriter, r *http.Request) {
 
 // encodeXMLResponse Encodes the response headers into XML format.
 func encodeXMLResponse(response interface{}) []byte {
-	var bytesBuffer bytes.Buffer
-	bytesBuffer.WriteString(xml.Header)
-	e := xml.NewEncoder(&bytesBuffer)
-	e.Encode(response)
-	return bytesBuffer.Bytes()
+	var buf bytes.Buffer
+	buf.WriteString(xml.Header)
+	err := xmlutil.BuildXML(response, xml.NewEncoder(&buf))
+	if err != nil {
+		panic(err)
+	}
+	bs := buf.Bytes()
+	fmt.Println(string(bs))
+	return bs
 }
 
 // WriteErrorResponseJSON - writes error response in JSON format;

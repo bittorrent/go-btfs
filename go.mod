@@ -5,7 +5,7 @@ go 1.18
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137
-	github.com/aws/aws-sdk-go v1.27.0
+	github.com/aws/aws-sdk-go v1.45.2
 	github.com/bittorrent/go-btfs-api v0.5.0
 	github.com/bittorrent/go-btfs-chunker v0.4.0
 	github.com/bittorrent/go-btfs-cmds v0.3.0
@@ -181,7 +181,7 @@ require (
 	github.com/ipfs/go-ipld-legacy v0.1.1 // indirect
 	github.com/ipfs/go-ipns v0.3.0 // indirect
 	github.com/ipld/edelweiss v0.2.0 // indirect
-	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/libp2p/go-libp2p-core v0.20.1 // indirect
 	github.com/libp2p/go-libp2p-xor v0.1.0 // indirect
 	github.com/libp2p/go-yamux/v4 v4.0.0 // indirect
