@@ -2,7 +2,7 @@ package s3
 
 import (
 	config "github.com/bittorrent/go-btfs-config"
-	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/s3/ctxmu"
 	"github.com/bittorrent/go-btfs/s3/handlers"
 	"github.com/bittorrent/go-btfs/s3/providers"
 	"github.com/bittorrent/go-btfs/s3/routers"
@@ -10,6 +10,7 @@ import (
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"github.com/bittorrent/go-btfs/s3/services/sign"
+	"github.com/bittorrent/go-btfs/transaction/storage"
 	"sync"
 )
 
@@ -18,31 +19,31 @@ var (
 	once sync.Once
 )
 
-func initProviders() {
+func InitProviders(stateStore storage.StateStorer) {
 	once.Do(func() {
-		sstore := providers.NewStorageStateStoreProxy(chain.StateStore)
+		sstore := providers.NewStorageStateStoreProxy(stateStore)
 		fstore := providers.NewBtfsAPI("")
 		ps = providers.NewProviders(sstore, fstore)
 	})
 }
 
 func GetProviders() *providers.Providers {
-	initProviders()
 	return ps
 }
 
 func NewServer(cfg config.S3CompatibleAPI) *server.Server {
-	// providers
-	initProviders()
+	// lock global multiple keys read write lock
+	lock := ctxmu.NewDefaultMultiCtxRWMutex()
 
 	// services
-	acksvc := accesskey.NewService(ps)
 	sigsvc := sign.NewService()
-	objsvc := object.NewService(ps)
+	acksvc := accesskey.NewService(ps, accesskey.WithLock(lock))
+	objsvc := object.NewService(ps, object.WithLock(lock))
 
 	// handlers
 	hs := handlers.NewHandlers(
-		acksvc, sigsvc, objsvc, handlers.WithHeaders(cfg.HTTPHeaders),
+		acksvc, sigsvc, objsvc,
+		handlers.WithHeaders(cfg.HTTPHeaders),
 	)
 
 	// routers

@@ -735,7 +735,7 @@ stat' on the file or any of its ancestors.
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("path", true, false, "Path to write to."),
-		cmds.FileArg("data", true, false, "Data to write.").EnableStdin(),
+		cmds.FileArg("data", true, false, "data to write.").EnableStdin(),
 	},
 	Options: []cmds.Option{
 		cmds.Int64Option(filesOffsetOptionName, "o", "Byte offset to begin writing at."),

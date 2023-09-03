@@ -44,7 +44,7 @@ func (h *Handlers) CreateBucketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responses.WritePutBucketResponse(w, r)
+	responses.WriteCreateBucketResponse(w, r)
 
 	return
 }
@@ -154,7 +154,7 @@ func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	req, rerr := requests.ParsePutBucketAclRequest(r)
-	if err != nil {
+	if rerr != nil {
 		err = rerr
 		responses.WriteErrorResponse(w, r, rerr)
 		return

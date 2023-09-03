@@ -46,7 +46,7 @@ the limit will not be respected by the network.
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("root", true, false, "The hash of the node to modify."),
-		cmds.FileArg("data", true, false, "Data to append.").EnableStdin(),
+		cmds.FileArg("data", true, false, "data to append.").EnableStdin(),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		api, err := cmdenv.GetApi(env, req)

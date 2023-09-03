@@ -12,8 +12,6 @@ import (
 	"strconv"
 )
 
-const lockPrefix = "s3:lock/"
-
 var _ Handlerser = (*Handlers)(nil)
 
 type Handlers struct {

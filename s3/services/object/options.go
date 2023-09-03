@@ -7,9 +7,9 @@ import (
 
 const (
 	defaultKeySeparator     = "/"
-	defaultBucketSpace      = "bkt"
-	defaultObjectSpace      = "obj"
-	defaultUploadSpace      = "upl"
+	defaultBucketSpace      = "s3:bkt"
+	defaultObjectSpace      = "s3:obj"
+	defaultUploadSpace      = "s3:upl"
 	defaultOperationTimeout = 5 * time.Minute
 	defaultCloseBodyTimeout = 10 * time.Minute
 )

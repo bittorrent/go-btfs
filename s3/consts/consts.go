@@ -28,10 +28,11 @@ const (
 	AssumeRole      = "AssumeRole"
 	SignV4Algorithm = "AWS4-HMAC-SHA256"
 
-	DefaultLocation  = "us-east-1"
-	DefaultBucketACL = s3.BucketCannedACLPublicRead
-	DefaultObjectACL = ""
-	AllUsersURI      = "http://acs.amazonaws.com/groups/global/AllUsers"
+	DefaultServerInfo = "BTFS"
+	DefaultLocation   = "us-east-1"
+	DefaultBucketACL  = s3.BucketCannedACLPublicRead
+	DefaultObjectACL  = ""
+	AllUsersURI       = "http://acs.amazonaws.com/groups/global/AllUsers"
 )
 
 var SupportedLocations = map[string]bool{

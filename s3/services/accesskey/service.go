@@ -11,29 +11,24 @@ import (
 	"time"
 )
 
-const (
-	defaultSecretLength    = 32
-	defaultStoreKeyPrefix  = "access-keys:"
-	defaultUpdateTimeoutMS = 200
-)
-
 var _ Service = (*service)(nil)
 
 type service struct {
-	providers      providers.Providerser
-	secretLength   int
-	storeKeyPrefix string
-	locks          *ctxmu.MultiCtxRWMutex
-	updateTimeout  time.Duration
+	providers       providers.Providerser
+	secretLength    int
+	storeKeyPrefix  string
+	lock            ctxmu.MultiCtxRWLocker
+	waitLockTimeout time.Duration
 }
+
 
 func NewService(providers providers.Providerser, options ...Option) Service {
 	svc := &service{
-		providers:      providers,
-		secretLength:   defaultSecretLength,
-		storeKeyPrefix: defaultStoreKeyPrefix,
-		locks:          ctxmu.NewDefaultMultiCtxRWMutex(),
-		updateTimeout:  time.Duration(defaultUpdateTimeoutMS) * time.Millisecond,
+		providers:       providers,
+		secretLength:    defaultSecretLength,
+		storeKeyPrefix:  defaultStoreKeyPrefix,
+		lock:            defaultLock,
+		waitLockTimeout: defaultWaitLockTimout,
 	}
 	for _, option := range options {
 		option(svc)
@@ -137,14 +132,14 @@ type updateArgs struct {
 }
 
 func (svc *service) update(key string, args *updateArgs) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), svc.updateTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), svc.waitLockTimeout)
 	defer cancel()
 
-	err = svc.locks.Lock(ctx, key)
+	err = svc.lock.Lock(ctx, key)
 	if err != nil {
 		return
 	}
-	defer svc.locks.Unlock(key)
+	defer svc.lock.Unlock(key)
 
 	record := &AccessKey{}
 	stk := svc.getStoreKey(key)

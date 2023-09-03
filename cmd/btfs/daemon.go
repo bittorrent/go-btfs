@@ -717,6 +717,9 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		functest(cfg.Services.OnlineServerDomain, cfg.Identity.PeerID, hValue)
 	}
 
+	// init s3 providers
+	s3.InitProviders(statestore)
+
 	// access-key init
 	accesskey.InitService(s3.GetProviders())
 

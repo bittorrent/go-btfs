@@ -1,12 +1,9 @@
 package requests
 
 import (
-	"errors"
-	"fmt"
 	"github.com/bittorrent/go-btfs/s3/cctx"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"net/http"
-	"reflect"
 )
 
 // CreateBucketRequest .
@@ -15,23 +12,6 @@ type CreateBucketRequest struct {
 	Bucket    string
 	ACL       string
 	Region    string
-}
-
-// todo: parse aws request use aws struct
-func ParseS3Request(r *http.Request, v interface{}) (err error) {
-	rv := reflect.ValueOf(v)
-	if rv.Kind() != reflect.Pointer || rv.IsNil() {
-		err = errors.New("invalid value must be non nil pointer")
-		return
-	}
-
-	rt := reflect.TypeOf(v).Elem()
-	n := rt.NumField()
-	for i := 0; i < n; i++ {
-		f := rt.Field(i)
-		fmt.Println(f)
-	}
-	return
 }
 
 func ParseCreateBucketRequest(r *http.Request) (req *CreateBucketRequest, rerr *responses.Error) {

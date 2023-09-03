@@ -14,7 +14,8 @@ import (
 )
 
 func parseBucket(r *http.Request) (bucket string, rerr *responses.Error) {
-	err := s3utils.CheckValidBucketNameStrict(mux.Vars(r)["bucket"])
+	bucket = mux.Vars(r)["bucket"]
+	err := s3utils.CheckValidBucketNameStrict(bucket)
 	if err != nil {
 		rerr = responses.ErrInvalidBucketName
 	}
