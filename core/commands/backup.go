@@ -85,7 +85,8 @@ This command will create a backup of the data from the current BTFS node.
 		if err != nil {
 			return err
 		}
-		// TODO
+		fmt.Printf(`Backup successful! The backup path is %s
+		`, absPath)
 		return nil
 	},
 }
@@ -112,9 +113,8 @@ var RecoveryCmd = &cmds.Command{
 			if err != nil {
 				return err
 			}
-			fmt.Printf(`btfs configuration file already exists!
-			We have renamed it to %s
-			`, newPath)
+			fmt.Println("btfs configuration file already exists!")
+			fmt.Println("We have renamed it to %s", newPath)
 		}
 
 		if err := UnTar(backupPath, dstPath); err != nil {
@@ -123,8 +123,8 @@ var RecoveryCmd = &cmds.Command{
 				return errors.New("your file format is not tar.gz or zip, please check again")
 			}
 		}
-		// TODO
-		return resp.Emit(nil)
+		fmt.Println("Recovery successful!")
+		return nil
 	},
 }
 
