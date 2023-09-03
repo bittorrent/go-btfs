@@ -85,8 +85,7 @@ This command will create a backup of the data from the current BTFS node.
 		if err != nil {
 			return err
 		}
-		fmt.Printf(`Backup successful! The backup path is %s
-		`, absPath)
+		fmt.Printf("Backup successful! The backup path is %s\n", absPath)
 		return nil
 	},
 }
