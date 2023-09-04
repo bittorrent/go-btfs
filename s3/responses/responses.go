@@ -46,15 +46,17 @@ func WriteResponse(w http.ResponseWriter, statusCode int, output interface{}, lo
 		}
 	}()
 
-	if !outputFilled(output) {
+	if !valid(output) {
 		w.WriteHeader(statusCode)
 		return
 	}
 
-	typ := getPayloadType(output)
-
-	if typ == noPayload {
-		err = buildHeader(w.Header(), output)
+	body, clen, ctyp, err := extractBody(output)
+	if err != nil {
+		return
+	}
+	if body == nil {
+		err = extractHeaders(w.Header(), output)
 		if err != nil {
 			return
 		}
@@ -62,45 +64,21 @@ func WriteResponse(w http.ResponseWriter, statusCode int, output interface{}, lo
 		return
 	}
 
-	var (
-		body          io.ReadCloser
-		contentLength int
-		contentType   string
-	)
 	defer func() {
-		if body != nil {
-			_ = body.Close()
-		}
+		_ = body.Close()
 	}()
 
-	switch typ {
-	case "structure", "":
-		body, contentLength, contentType, err = buildXMLBody(output)
-	default:
-		body, contentLength, contentType, err = buildRESTBody(output)
-	}
-	if err != nil {
-		return
-	}
+	w.Header().Set(consts.ContentLength, fmt.Sprintf("%d", clen))
+	w.Header().Set(consts.ContentType, ctyp)
 
-	if contentLength != -1 {
-		w.Header().Set(consts.ContentLength, fmt.Sprintf("%d", contentLength))
-	}
-
-	if contentType != "" {
-		w.Header().Set(consts.ContentType, contentType)
-	}
-
-	err = buildHeader(w.Header(), output)
+	err = extractHeaders(w.Header(), output)
 	if err != nil {
 		return
 	}
 
 	w.WriteHeader(statusCode)
 
-	if body != nil {
-		_, err = io.Copy(w, body)
-	}
+	_, err = io.Copy(w, body)
 
 	return
 }
@@ -127,12 +105,51 @@ func wrapOutput(v interface{}, locationName string) (wrapper interface{}) {
 	return
 }
 
-func outputFilled(output interface{}) bool {
-	return reflect.Indirect(reflect.ValueOf(output)).IsValid()
+func extractBody(output interface{}) (body io.ReadCloser, clen int, ctyp string, err error) {
+	ptyp, plod := getPayload(output)
+	if ptyp == noPayload {
+		return
+	}
+
+	if ptyp == "structure" || ptyp == "" {
+		var buf bytes.Buffer
+		buf.WriteString(xml.Header)
+		err = xmlutil.BuildXML(output, xml.NewEncoder(&buf))
+		if err != nil {
+			return
+		}
+		body = io.NopCloser(&buf)
+		clen = buf.Len()
+		ctyp = mimeTypeXml
+		return
+	}
+
+	if plod.Interface() == nil {
+		return
+	}
+
+	switch pifc := plod.Interface().(type) {
+	case io.ReadCloser:
+		body = pifc
+		clen = -1
+	case []byte:
+		body = io.NopCloser(bytes.NewBuffer(pifc))
+		clen = len(pifc)
+	case string:
+		body = io.NopCloser(bytes.NewBufferString(pifc))
+		clen = len(pifc)
+	default:
+		err = fmt.Errorf(
+			"unknown payload type %s",
+			plod.Type(),
+		)
+	}
+
+	return
 }
 
-func getPayloadType(output interface{}) (typ string) {
-	typ = noPayload
+func getPayload(output interface{}) (ptyp string, plod reflect.Value) {
+	ptyp = noPayload
 	v := reflect.Indirect(reflect.ValueOf(output))
 	if !v.IsValid() {
 		return
@@ -153,51 +170,12 @@ func getPayloadType(output interface{}) (typ string) {
 	if !ok {
 		return
 	}
-	typ = member.Tag.Get("type")
+	ptyp = member.Tag.Get("type")
+	plod = reflect.Indirect(v.FieldByName(payloadName))
 	return
 }
 
-func buildXMLBody(output interface{}) (body io.ReadCloser, contentLength int, contentType string, err error) {
-	var buf bytes.Buffer
-	buf.WriteString(xml.Header)
-	err = xmlutil.BuildXML(output, xml.NewEncoder(&buf))
-	if err != nil {
-		return
-	}
-	body = io.NopCloser(&buf)
-	contentLength = buf.Len()
-	contentType = mimeTypeXml
-	return
-}
-
-func buildRESTBody(output interface{}) (body io.ReadCloser, contentLength int, contentType string, err error) {
-	v := reflect.Indirect(reflect.ValueOf(output))
-	field, _ := v.Type().FieldByName("_")
-	payloadName := field.Tag.Get("payload")
-	payload := reflect.Indirect(v.FieldByName(payloadName))
-	if !payload.IsValid() || payload.Interface() == nil {
-		return
-	}
-	switch pIface := payload.Interface().(type) {
-	case io.ReadCloser:
-		body = pIface
-		contentLength = -1
-	case []byte:
-		body = io.NopCloser(bytes.NewBuffer(pIface))
-		contentLength = len(pIface)
-	case string:
-		body = io.NopCloser(bytes.NewBufferString(pIface))
-		contentLength = len(pIface)
-	default:
-		err = fmt.Errorf(
-			"unknown payload type %s",
-			payload.Type(),
-		)
-	}
-	return
-}
-
-func buildHeader(header http.Header, output interface{}) (err error) {
+func extractHeaders(header http.Header, output interface{}) (err error) {
 	v := reflect.ValueOf(output).Elem()
 	for i := 0; i < v.NumField(); i++ {
 		ft := v.Type().Field(i)
@@ -233,14 +211,11 @@ func buildHeader(header http.Header, output interface{}) (err error) {
 		}
 
 		switch ft.Tag.Get("location") {
+		case "header":
+			name := ifemp(ft.Tag.Get("locationName"), ft.Name)
+			err = writeHeader(&header, fv, name, ft.Tag)
 		case "headers":
 			err = writeHeaderMap(&header, fv, ft.Tag)
-		case "header":
-			name := ft.Tag.Get("locationName")
-			if name == "" {
-				name = ft.Name
-			}
-			err = writeHeader(&header, fv, name, ft.Tag)
 		}
 
 		if err != nil {
@@ -361,4 +336,15 @@ func convertType(v reflect.Value, tag reflect.StructTag) (str string, err error)
 	}
 
 	return
+}
+
+func ifemp(a, b string) string {
+	if a != "" {
+		return a
+	}
+	return b
+}
+
+func valid(ifce interface{}) bool {
+	return reflect.Indirect(reflect.ValueOf(ifce)).IsValid()
 }
