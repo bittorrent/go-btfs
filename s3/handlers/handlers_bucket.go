@@ -4,6 +4,7 @@ import (
 	"github.com/bittorrent/go-btfs/s3/cctx"
 	"github.com/bittorrent/go-btfs/s3/requests"
 	"github.com/bittorrent/go-btfs/s3/responses"
+	"github.com/bittorrent/go-btfs/s3/s3utils"
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"net/http"
 )
@@ -18,7 +19,21 @@ var errToRespErr = map[error]*responses.Error{
 
 func (h *Handlers) respErr(err error) (rerr *responses.Error) {
 	rerr, ok := errToRespErr[err]
-	if !ok {
+	if ok {
+		return
+	}
+	switch err.(type) {
+	case s3utils.BucketNameInvalid:
+		rerr = responses.ErrInvalidBucketName
+	case s3utils.ObjectNameInvalid:
+		rerr = responses.ErrInvalidObjectName
+	case s3utils.InvalidPart:
+		rerr = responses.ErrInvalidPart
+	case s3utils.InvalidUploadID:
+		rerr = responses.ErrNoSuchUpload
+	case s3utils.InvalidMarkerPrefixCombination:
+		rerr = responses.ErrInvalidRequestParameter
+	default:
 		rerr = responses.ErrInternalError
 	}
 	return

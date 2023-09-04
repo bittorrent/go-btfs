@@ -22,7 +22,7 @@ type Handlerser interface {
 
 	// Object
 
-	//PutObjectHandler(w http.ResponseWriter, r *http.Request)
+	PutObjectHandler(w http.ResponseWriter, r *http.Request)
 	//HeadObjectHandler(w http.ResponseWriter, r *http.Request)
 	//CopyObjectHandler(w http.ResponseWriter, r *http.Request)
 	//DeleteObjectHandler(w http.ResponseWriter, r *http.Request)

@@ -30,7 +30,7 @@ func (routers *Routers) Register() http.Handler {
 		hs.Sign,
 	)
 
-	bucket := root.PathPrefix("/{Bucket}").Subrouter()
+	bucket := root.PathPrefix("/{bucket}").Subrouter()
 
 	// multipart object...
 	// CreateMultipart
@@ -49,8 +49,8 @@ func (routers *Routers) Register() http.Handler {
 	//bucket.Methods(http.MethodGet).HandlerFunc(hs.ListObjectsHandler)
 	//// HeadObject
 	//bucket.Methods(http.MethodHead).Path("/{object:.+}").HandlerFunc(hs.HeadObjectHandler)
-	//// PutObject
-	//bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(hs.PutObjectHandler)
+	// PutObject
+	bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(hs.PutObjectHandler)
 	//// CopyObject
 	//bucket.Methods(http.MethodPut).Path("/{object:.+}").HeadersRegexp("X-Amz-Copy-Source", ".*?(\\/|%2F).*?").HandlerFunc(hs.CopyObjectHandler)
 	//// DeleteObject

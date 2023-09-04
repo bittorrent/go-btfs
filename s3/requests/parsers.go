@@ -17,15 +17,15 @@ type CreateBucketRequest struct {
 func ParseCreateBucketRequest(r *http.Request) (req *CreateBucketRequest, rerr *responses.Error) {
 	req = &CreateBucketRequest{}
 	req.AccessKey = cctx.GetAccessKey(r)
-	req.Bucket, rerr = parseBucket(r)
+	req.Bucket, rerr = ParseBucket(r)
 	if rerr != nil {
 		return
 	}
-	req.ACL, rerr = parseBucketACL(r)
+	req.ACL, rerr = ParseBucketACL(r)
 	if rerr != nil {
 		return
 	}
-	req.Region, rerr = parseLocation(r)
+	req.Region, rerr = ParseLocation(r)
 	return
 }
 
@@ -38,7 +38,7 @@ type DeleteBucketRequest struct {
 func ParseDeleteBucketRequest(r *http.Request) (req *DeleteBucketRequest, rerr *responses.Error) {
 	req = &DeleteBucketRequest{}
 	req.AccessKey = cctx.GetAccessKey(r)
-	req.Bucket, rerr = parseBucket(r)
+	req.Bucket, rerr = ParseBucket(r)
 	return
 }
 
@@ -51,7 +51,7 @@ type HeadBucketRequest struct {
 func ParseHeadBucketRequest(r *http.Request) (req *HeadBucketRequest, rerr *responses.Error) {
 	req = &HeadBucketRequest{}
 	req.AccessKey = cctx.GetAccessKey(r)
-	req.Bucket, rerr = parseBucket(r)
+	req.Bucket, rerr = ParseBucket(r)
 	return
 }
 
@@ -75,7 +75,7 @@ type GetBucketACLRequest struct {
 func ParseGetBucketACLRequest(r *http.Request) (req *GetBucketACLRequest, rerr *responses.Error) {
 	req = &GetBucketACLRequest{}
 	req.AccessKey = cctx.GetAccessKey(r)
-	req.Bucket, rerr = parseBucket(r)
+	req.Bucket, rerr = ParseBucket(r)
 	return
 }
 
@@ -89,10 +89,10 @@ type PutBucketACLRequest struct {
 func ParsePutBucketAclRequest(r *http.Request) (req *PutBucketACLRequest, rerr *responses.Error) {
 	req = &PutBucketACLRequest{}
 	req.AccessKey = cctx.GetAccessKey(r)
-	req.Bucket, rerr = parseBucket(r)
+	req.Bucket, rerr = ParseBucket(r)
 	if rerr != nil {
 		return
 	}
-	req.ACL, rerr = parseBucketACL(r)
+	req.ACL, rerr = ParseBucketACL(r)
 	return
 }

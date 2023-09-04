@@ -13,7 +13,7 @@ import (
 	"path"
 )
 
-func parseBucket(r *http.Request) (bucket string, rerr *responses.Error) {
+func ParseBucket(r *http.Request) (bucket string, rerr *responses.Error) {
 	bucket = mux.Vars(r)["bucket"]
 	err := s3utils.CheckValidBucketNameStrict(bucket)
 	if err != nil {
@@ -22,7 +22,7 @@ func parseBucket(r *http.Request) (bucket string, rerr *responses.Error) {
 	return
 }
 
-func parseObject(r *http.Request) (object string, rerr *responses.Error) {
+func ParseObject(r *http.Request) (object string, rerr *responses.Error) {
 	object, err := unescapePath(mux.Vars(r)["object"])
 	if err != nil {
 		rerr = responses.ErrInvalidRequestParameter
@@ -30,7 +30,7 @@ func parseObject(r *http.Request) (object string, rerr *responses.Error) {
 	return
 }
 
-func parseLocation(r *http.Request) (location string, rerr *responses.Error) {
+func ParseLocation(r *http.Request) (location string, rerr *responses.Error) {
 	if r.ContentLength != 0 {
 		locationCfg := s3.CreateBucketConfiguration{}
 		decoder := xml.NewDecoder(r.Body)
@@ -51,7 +51,7 @@ func parseLocation(r *http.Request) (location string, rerr *responses.Error) {
 	return
 }
 
-func parseBucketACL(r *http.Request) (acl string, rerr *responses.Error) {
+func ParseBucketACL(r *http.Request) (acl string, rerr *responses.Error) {
 	acl = r.Header.Get(consts.AmzACL)
 	if len(acl) == 0 {
 		acl = consts.DefaultBucketACL
@@ -62,7 +62,7 @@ func parseBucketACL(r *http.Request) (acl string, rerr *responses.Error) {
 	return
 }
 
-func parseObjectACL(r *http.Request) (acl string, rerr *responses.Error) {
+func ParseObjectACL(r *http.Request) (acl string, rerr *responses.Error) {
 	acl = r.Header.Get(consts.AmzACL)
 	if len(acl) == 0 {
 		acl = consts.DefaultObjectACL
