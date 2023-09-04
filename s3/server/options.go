@@ -1,6 +1,6 @@
 package server
 
-const defaultServerAddress = "127.0.0.1:15001"
+const defaultServerAddress = "127.0.0.1:6001"
 
 type Option func(*Server)
 

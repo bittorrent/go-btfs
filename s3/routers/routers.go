@@ -30,7 +30,7 @@ func (routers *Routers) Register() http.Handler {
 		hs.Sign,
 	)
 
-	bucket := root.PathPrefix("/{bucket}").Subrouter()
+	bucket := root.PathPrefix("/{Bucket}").Subrouter()
 
 	// multipart object...
 	// CreateMultipart

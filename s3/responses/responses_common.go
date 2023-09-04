@@ -26,11 +26,6 @@ func getRequestID() string {
 	return fmt.Sprintf("%d", time.Now().UnixNano())
 }
 
-func setCommonHeader(w http.ResponseWriter, requestId string) {
-	w.Header().Set(consts.ServerInfo, consts.DefaultServerInfo)
-	w.Header().Set(consts.AmzRequestID, requestId)
-	w.Header().Set(consts.AcceptRanges, "bytes")
-}
 
 type ErrorOutput struct {
 	_         struct{} `type:"structure"`
@@ -40,27 +35,22 @@ type ErrorOutput struct {
 	RequestID string   `locationName:"RequestID" type:"string"`
 }
 
-func WriteErrorResponse(w http.ResponseWriter, r *http.Request, rerr *Error) {
-	reqID := getRequestID()
-	setCommonHeader(w, reqID)
-	output := &ErrorOutput{
+func NewErrOutput(r *http.Request, rerr *Error) *ErrorOutput {
+	return &ErrorOutput{
 		Code:      rerr.Code(),
 		Message:   rerr.Description(),
 		Resource:  pathClean(r.URL.Path),
-		RequestID: reqID,
-	}
-	err := WriteResponse(w, rerr.HTTPStatusCode(), output, "Error")
-	if err != nil {
-		fmt.Println("write response: ", err)
+		RequestID: "", // this field value will be automatically filled
 	}
 }
 
+func WriteErrorResponse(w http.ResponseWriter, r *http.Request, rerr *Error) {
+	output := NewErrOutput(r, rerr)
+	_ = WriteResponse(w, rerr.HTTPStatusCode(), output, "Error")
+}
+
 func WriteSuccessResponse(w http.ResponseWriter, output interface{}, locationName string) {
-	setCommonHeader(w, getRequestID())
-	err := WriteResponse(w, http.StatusOK, output, locationName)
-	if err != nil {
-		fmt.Println("write response: ", err)
-	}
+	_ = WriteResponse(w, http.StatusOK, output, locationName)
 }
 
 func setPutObjHeaders(w http.ResponseWriter, etag, cid string, delete bool) {
