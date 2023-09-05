@@ -113,7 +113,7 @@ var RecoveryCmd = &cmds.Command{
 				return err
 			}
 			fmt.Println("btfs configuration file already exists!")
-			fmt.Println("We have renamed it to %s", newPath)
+			fmt.Println("We have renamed it to ", newPath)
 		}
 
 		if err := UnTar(backupPath, dstPath); err != nil {
