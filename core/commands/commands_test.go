@@ -347,6 +347,8 @@ func TestCommands(t *testing.T) {
 		"/multibase/decode",
 		"/multibase/transcode",
 		"/multibase/list",
+		"/backup",
+		"/recovery",
 	}
 
 	cmdSet := make(map[string]struct{})
