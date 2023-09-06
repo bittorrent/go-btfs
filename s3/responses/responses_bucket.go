@@ -18,7 +18,6 @@ func WriteHeadBucketResponse(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-
 func WriteDeleteBucketResponse(w http.ResponseWriter) {
 	output := new(s3.DeleteBucketOutput)
 	_ = WriteResponse(w, http.StatusOK, output, "")

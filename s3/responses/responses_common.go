@@ -1,12 +1,10 @@
 package responses
 
 import (
-	"fmt"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"net/http"
 	"path"
-	"time"
 )
 
 func owner(accessKey string) *s3.Owner {
@@ -21,11 +19,6 @@ var (
 	allUsersReadGrant  = new(s3.Grant).SetGrantee(new(s3.Grantee).SetType(s3.TypeGroup).SetURI(consts.AllUsersURI)).SetPermission(s3.PermissionRead)
 	allUsersWriteGrant = new(s3.Grant).SetGrantee(new(s3.Grantee).SetType(s3.TypeGroup).SetURI(consts.AllUsersURI)).SetPermission(s3.PermissionWrite)
 )
-
-func getRequestID() string {
-	return fmt.Sprintf("%d", time.Now().UnixNano())
-}
-
 
 type ErrorOutput struct {
 	_         struct{} `type:"structure"`

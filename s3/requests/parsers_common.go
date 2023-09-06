@@ -13,6 +13,15 @@ import (
 	"path"
 )
 
+func ParseBucketAndObject(r *http.Request) (bucket string, object string, rerr *responses.Error) {
+	bucket, rerr = ParseBucket(r)
+	if rerr != nil {
+		return
+	}
+	object, rerr = ParseObject(r)
+	return
+}
+
 func ParseBucket(r *http.Request) (bucket string, rerr *responses.Error) {
 	bucket = mux.Vars(r)["bucket"]
 	err := s3utils.CheckValidBucketNameStrict(bucket)

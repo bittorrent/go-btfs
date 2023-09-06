@@ -134,8 +134,8 @@ func Parse(s string) (ETag, error) {
 
 // parse parse s as an S3 ETag, returning the result.
 // It operates in one of two modes:
-//  - strict
-//  - non-strict
+//   - strict
+//   - non-strict
 //
 // In strict mode, parse only accepts ETags that
 // are AWS S3 compatible. In particular, an AWS

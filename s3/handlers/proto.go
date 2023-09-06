@@ -23,12 +23,12 @@ type Handlerser interface {
 	// Object
 
 	PutObjectHandler(w http.ResponseWriter, r *http.Request)
-	//HeadObjectHandler(w http.ResponseWriter, r *http.Request)
-	//CopyObjectHandler(w http.ResponseWriter, r *http.Request)
-	//DeleteObjectHandler(w http.ResponseWriter, r *http.Request)
-	//GetObjectHandler(w http.ResponseWriter, r *http.Request)
-	//GetObjectACLHandler(w http.ResponseWriter, r *http.Request)
-	//ListObjectsHandler(w http.ResponseWriter, r *http.Request)
+	HeadObjectHandler(w http.ResponseWriter, r *http.Request)
+	CopyObjectHandler(w http.ResponseWriter, r *http.Request)
+	DeleteObjectHandler(w http.ResponseWriter, r *http.Request)
+	GetObjectHandler(w http.ResponseWriter, r *http.Request)
+	GetObjectACLHandler(w http.ResponseWriter, r *http.Request)
+	ListObjectsHandler(w http.ResponseWriter, r *http.Request)
 	//ListObjectsV2Handler(w http.ResponseWriter, r *http.Request)
 
 	//// Multipart

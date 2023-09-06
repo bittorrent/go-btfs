@@ -21,7 +21,6 @@ type service struct {
 	waitLockTimeout time.Duration
 }
 
-
 func NewService(providers providers.Providerser, options ...Option) Service {
 	svc := &service{
 		providers:       providers,

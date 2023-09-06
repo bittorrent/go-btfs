@@ -84,9 +84,9 @@ func WriteResponse(w http.ResponseWriter, statusCode int, output interface{}, lo
 	return
 }
 
-func wrapOutput(v interface{}, locationName string) (wrapper interface{}) {
+func wrapOutput(output interface{}, locationName string) (wrapper interface{}) {
 	if locationName == "" {
-		wrapper = v
+		wrapper = output
 		return
 	}
 
@@ -100,19 +100,19 @@ func wrapOutput(v interface{}, locationName string) (wrapper interface{}) {
 		},
 		{
 			Name: "Output",
-			Type: reflect.TypeOf(v),
+			Type: reflect.TypeOf(output),
 			Tag:  reflect.StructTag(outputTag),
 		},
 	}
-	wrapperTyp := reflect.StructOf(fields)
-	wrapperVal := reflect.New(wrapperTyp)
-	wrapperVal.Elem().Field(1).Set(reflect.ValueOf(v))
-	wrapper = wrapperVal.Interface()
+	wrtyp := reflect.StructOf(fields)
+	wrval := reflect.New(wrtyp)
+	wrval.Elem().FieldByName("Output").Set(reflect.ValueOf(output))
+	wrapper = wrval.Interface()
 	return
 }
 
 func extractBody(v reflect.Value) (body io.ReadCloser, clen int, ctyp string, err error) {
-	ptyp, plod := getPayload(v)
+	ptyp, _, pfvl := getPayload(v)
 	if ptyp == noPayload {
 		return
 	}
@@ -130,11 +130,11 @@ func extractBody(v reflect.Value) (body io.ReadCloser, clen int, ctyp string, er
 		return
 	}
 
-	if plod.Interface() == nil {
+	if pfvl.Interface() == nil {
 		return
 	}
 
-	switch pifc := plod.Interface().(type) {
+	switch pifc := pfvl.Interface().(type) {
 	case io.ReadCloser:
 		body = pifc
 		clen = -1
@@ -156,7 +156,7 @@ func extractBody(v reflect.Value) (body io.ReadCloser, clen int, ctyp string, er
 	default:
 		err = fmt.Errorf(
 			"unknown payload type %s",
-			plod.Type(),
+			pfvl.Type(),
 		)
 	}
 
@@ -184,17 +184,19 @@ func setFieldRequestID(headers http.Header, outv reflect.Value) (err error) {
 }
 
 func setCommonHeaders(headers http.Header) {
-	reqId := getRequestID()
 	headers.Set(consts.ServerInfo, consts.DefaultServerInfo)
 	headers.Set(consts.AcceptRanges, "bytes")
-	headers.Set(consts.AmzRequestID, reqId)
+	headers.Set(consts.AmzRequestID, getRequestID())
+}
+
+func getRequestID() string {
+	return fmt.Sprintf("%d", time.Now().UnixNano())
 }
 
 func setLocationHeaders(header http.Header, v reflect.Value) (err error) {
 	for i := 0; i < v.NumField(); i++ {
-		fv := v.Field(i)
+		fv := reflect.Indirect(v.Field(i))
 		ft := v.Type().Field(i)
-		fk := fv.Kind()
 
 		if n := ft.Name; n[0:1] == strings.ToLower(n[0:1]) {
 			continue
@@ -204,16 +206,8 @@ func setLocationHeaders(header http.Header, v reflect.Value) (err error) {
 			continue
 		}
 
-		if fk == reflect.Ptr {
-			fv = fv.Elem()
-			fk = fv.Kind()
-			if !fv.IsValid() {
-				continue
-			}
-		} else if fk == reflect.Interface {
-			if !fv.Elem().IsValid() {
-				continue
-			}
+		if fv.Kind() == reflect.Interface && !fv.Elem().IsValid() {
+			continue
 		}
 
 		switch ft.Tag.Get("location") {
@@ -234,10 +228,6 @@ func setLocationHeaders(header http.Header, v reflect.Value) (err error) {
 
 func setHeaders(header *http.Header, v reflect.Value, name string, tag reflect.StructTag) (err error) {
 	str, err := convertType(v, tag)
-	if errors.Is(err, errValueNotSet) {
-		err = nil
-		return
-	}
 	if err != nil {
 		return
 	}
@@ -266,7 +256,7 @@ func setHeadersMap(header *http.Header, v reflect.Value, tag reflect.StructTag) 
 	return
 }
 
-func getPayload(v reflect.Value) (ptyp string, plod reflect.Value) {
+func getPayload(v reflect.Value) (ptyp string, pftp reflect.Type, pfvl reflect.Value) {
 	ptyp = noPayload
 
 	field, ok := v.Type().FieldByName("_")
@@ -284,13 +274,14 @@ func getPayload(v reflect.Value) (ptyp string, plod reflect.Value) {
 		return
 	}
 
-	member, ok := v.Type().FieldByName(payloadName)
+	pfld, ok := v.Type().FieldByName(payloadName)
 	if !ok {
 		return
 	}
 
-	ptyp = member.Tag.Get("type")
-	plod = reflect.Indirect(v.FieldByName(payloadName))
+	ptyp = pfld.Tag.Get("type")
+	pftp = pfld.Type
+	pfvl = reflect.Indirect(v.FieldByName(payloadName))
 
 	return
 }

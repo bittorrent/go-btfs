@@ -35,7 +35,7 @@ func deepMatchRune(str, pattern []rune, simple bool) bool {
 	return len(str) == 0 && len(pattern) == 0
 }
 
-//Match regular match
+// Match regular match
 func Match(pattern, name string) (matched bool) {
 	if pattern == "" {
 		return name == pattern

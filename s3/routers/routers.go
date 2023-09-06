@@ -45,22 +45,22 @@ func (routers *Routers) Register() http.Handler {
 	////object...
 	//// ListObjectsV2
 	//bucket.Methods(http.MethodGet).HandlerFunc(hs.ListObjectsV2Handler).Queries("list-type", "2")
-	//// ListObjects
-	//bucket.Methods(http.MethodGet).HandlerFunc(hs.ListObjectsHandler)
-	//// HeadObject
-	//bucket.Methods(http.MethodHead).Path("/{object:.+}").HandlerFunc(hs.HeadObjectHandler)
+	// HeadObject
+	bucket.Methods(http.MethodHead).Path("/{object:.+}").HandlerFunc(hs.HeadObjectHandler)
 	// PutObject
 	bucket.Methods(http.MethodPut).Path("/{object:.+}").HandlerFunc(hs.PutObjectHandler)
-	//// CopyObject
-	//bucket.Methods(http.MethodPut).Path("/{object:.+}").HeadersRegexp("X-Amz-Copy-Source", ".*?(\\/|%2F).*?").HandlerFunc(hs.CopyObjectHandler)
-	//// DeleteObject
-	//bucket.Methods(http.MethodDelete).Path("/{object:.+}").HandlerFunc(hs.DeleteObjectHandler)
+	// CopyObject
+	bucket.Methods(http.MethodPut).Path("/{object:.+}").HeadersRegexp("X-Amz-Copy-Source", ".*?(\\/|%2F).*?").HandlerFunc(hs.CopyObjectHandler)
+	// DeleteObject
+	bucket.Methods(http.MethodDelete).Path("/{object:.+}").HandlerFunc(hs.DeleteObjectHandler)
 	////todo DeleteObjects new ?
 	//bucket.Methods(http.MethodDelete).Path("/{object:.+}").HandlerFunc(hs.DeleteObjectHandler)
-	//// GetObject
-	//bucket.Methods(http.MethodGet).Path("/{object:.+}").HandlerFunc(hs.GetObjectHandler)
-	//// GetObjectACL
-	//bucket.Methods(http.MethodGet).Path("/{object:.+}").HandlerFunc(hs.GetObjectACLHandler).Queries("acl", "")
+	// GetObject
+	bucket.Methods(http.MethodGet).Path("/{object:.+}").HandlerFunc(hs.GetObjectHandler)
+	// GetObjectACL
+	bucket.Methods(http.MethodGet).Path("/{object:.+}").HandlerFunc(hs.GetObjectACLHandler).Queries("acl", "")
+	// ListObjects
+	bucket.Methods(http.MethodGet).HandlerFunc(hs.ListObjectsHandler)
 
 	//bucket...
 	// GetBucketACL

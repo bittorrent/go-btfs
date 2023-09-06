@@ -228,15 +228,27 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 		VersionID:        "",
 		IsLatest:         true,
 		DeleteMarker:     false,
-		ContentType:      meta[strings.ToLower(consts.ContentType)],
-		ContentEncoding:  meta[strings.ToLower(consts.ContentEncoding)],
+		ContentType:     srcObject.ContentType,
+		ContentEncoding: srcObject.ContentEncoding,
 		SuccessorModTime: now.UTC(),
+		Expires:         srcObject.Expires,
 	}
 
-	// Set destination object expires
-	exp, er := time.Parse(http.TimeFormat, strings.ToLower(consts.Expires))
-	if er != nil {
-		dstObject.Expires = exp.UTC()
+	// Set destination object metadata
+	val, ok := meta[consts.ContentType]
+	if ok {
+		dstObject.ContentType = val
+	}
+	val, ok = meta[consts.ContentEncoding]
+	if ok {
+		dstObject.ContentEncoding = val
+	}
+	val, ok = meta[strings.ToLower(consts.Expires)]
+	if ok {
+		exp, er := time.Parse(http.TimeFormat, val)
+		if er != nil {
+			dstObject.Expires = exp.UTC()
+		}
 	}
 
 	// Put destination object
@@ -246,7 +258,7 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 }
 
 // GetObject get a user specified object
-func (s *service) GetObject(ctx context.Context, user, bucname, objname string) (object *Object, body io.ReadCloser, err error) {
+func (s *service) GetObject(ctx context.Context, user, bucname, objname string, withBody bool) (object *Object, body io.ReadCloser, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
@@ -305,6 +317,11 @@ func (s *service) GetObject(ctx context.Context, user, bucname, objname string) 
 	}
 	if object == nil {
 		err = ErrObjectNotFound
+		return
+	}
+
+	// no need body
+	if !withBody {
 		return
 	}
 
@@ -396,7 +413,7 @@ func (s *service) DeleteObject(ctx context.Context, user, bucname, objname strin
 }
 
 // ListObjects list user specified objects
-func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimiter, marker string, max int) (list *ObjectsList, err error) {
+func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimiter, marker string, max int64) (list *ObjectsList, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
@@ -428,6 +445,8 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 		return
 	}
 
+	list = &ObjectsList{}
+
 	// All bucket objects key prefix
 	allObjectsKeyPrefix := s.getAllObjectsKeyPrefix(bucname)
 
@@ -435,7 +454,7 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 	listObjectsKeyPrefix := allObjectsKeyPrefix + prefix
 
 	// Accumulate count
-	count := 0
+	count := int64(0)
 
 	// Flag mark if begin collect, it initialized to true if
 	// marker is ""
@@ -496,7 +515,7 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 		} else {
 			// object without common prefix
 			var object *Object
-			er = s.providers.StateStore().Get(objkey, object)
+			er = s.providers.StateStore().Get(objkey, &object)
 			if er != nil {
 				return
 			}

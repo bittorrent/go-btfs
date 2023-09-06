@@ -9,11 +9,14 @@ import (
 )
 
 var (
-	ErrBucketNotFound      = errors.New("bucket not found")
-	ErrObjectNotFound      = errors.New("object not found")
-	ErrUploadNotFound      = errors.New("upload not found")
-	ErrNotAllowed          = errors.New("not allowed")
-	ErrBucketAlreadyExists = errors.New("bucket already exists")
+	ErrBucketNotFound        = errors.New("bucket not found")
+	ErrObjectNotFound        = errors.New("object not found")
+	ErrUploadNotFound        = errors.New("upload not found")
+	ErrNotAllowed            = errors.New("not allowed")
+	ErrBucketAlreadyExists   = errors.New("bucket already exists")
+	ErrOperationTimeout      = errors.New("operation timeout")
+	ErrContentSHA256Mismatch = errors.New("sha256 mismatch")
+	ErrBadDigest             = errors.New("bad digest")
 )
 
 type Service interface {
@@ -27,10 +30,10 @@ type Service interface {
 
 	PutObject(ctx context.Context, user, bucname, objname string, body *hash.Reader, size int64, meta map[string]string) (object *Object, err error)
 	CopyObject(ctx context.Context, user, srcBucname, srcObjname, dstBucname, dstObjname string, meta map[string]string) (dstObject *Object, err error)
-	GetObject(ctx context.Context, user, bucname, objname string) (object *Object, body io.ReadCloser, err error)
+	GetObject(ctx context.Context, user, bucname, objname string, withBody bool) (object *Object, body io.ReadCloser, err error)
 	DeleteObject(ctx context.Context, user, bucname, objname string) (err error)
 	// todo: DeleteObjects
-	ListObjects(ctx context.Context, user, bucname, prefix, delimiter, marker string, max int) (list *ObjectsList, err error)
+	ListObjects(ctx context.Context, user, bucname, prefix, delimiter, marker string, max int64) (list *ObjectsList, err error)
 
 	CreateMultipartUpload(ctx context.Context, user, bucname, objname string, meta map[string]string) (multipart *Multipart, err error)
 	UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, reader *hash.Reader, size int64, meta map[string]string) (part *Part, err error)
