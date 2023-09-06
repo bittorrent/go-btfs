@@ -4,8 +4,8 @@ import "time"
 
 type BtfsAPIOption func(api *BtfsAPI)
 
-const(
-	defaultBtfsAPIEndpointUrl = ""
+const (
+	defaultBtfsAPIEndpointUrl           = ""
 	defaultBtfsAPITimeout               = 20 * time.Minute
 	defaultBtfsAPIResponseHeaderTimeout = 1 * time.Minute
 )

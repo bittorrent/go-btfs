@@ -35,7 +35,7 @@ func NewService(providers providers.Providerser, options ...Option) Service {
 		bucketSpace:      defaultBucketSpace,
 		objectSpace:      defaultObjectSpace,
 		uploadSpace:      defaultUploadSpace,
-		cidrefSpace: defaultCidrefSpace,
+		cidrefSpace:      defaultCidrefSpace,
 		operationTimeout: defaultOperationTimeout,
 		closeBodyTimeout: defaultCloseBodyTimeout,
 	}

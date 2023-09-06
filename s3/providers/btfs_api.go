@@ -15,10 +15,10 @@ import (
 var _ FileStorer = (*BtfsAPI)(nil)
 
 type BtfsAPI struct {
-	shell *shell.Shell
+	shell        *shell.Shell
 	headerTimout time.Duration
-	timeout time.Duration
-	endpointUrl string
+	timeout      time.Duration
+	endpointUrl  string
 }
 
 func NewBtfsAPI(options ...BtfsAPIOption) (api *BtfsAPI, err error) {
