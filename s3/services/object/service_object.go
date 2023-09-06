@@ -251,10 +251,10 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 		VersionID:        "",
 		IsLatest:         true,
 		DeleteMarker:     false,
-		ContentType:     srcObject.ContentType,
-		ContentEncoding: srcObject.ContentEncoding,
+		ContentType:      srcObject.ContentType,
+		ContentEncoding:  srcObject.ContentEncoding,
 		SuccessorModTime: now.UTC(),
-		Expires:         srcObject.Expires,
+		Expires:          srcObject.Expires,
 	}
 
 	// Set destination object metadata
@@ -273,7 +273,6 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 			dstObject.Expires = exp.UTC()
 		}
 	}
-
 
 	// Put destination object
 	err = s.putObject(dstObjkey, dstObject)
@@ -442,7 +441,7 @@ func (s *service) DeleteObject(ctx context.Context, user, bucname, objname strin
 	}
 
 	// Try to delete object body
-	_ = s.removeBodyRef(ctx, object.CID, objkey)
+	_ = s.removeBody(ctx, object.CID, objkey)
 
 	return
 }

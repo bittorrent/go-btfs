@@ -210,7 +210,6 @@ func (h *Handlers) DeleteObjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//objsvc
 	err = h.objsvc.DeleteObject(ctx, ack, bucname, objname)
 	if err != nil {
 		rerr = h.respErr(err)
@@ -434,7 +433,6 @@ func (h *Handlers) ListObjectsV2Handler(w http.ResponseWriter, r *http.Request) 
 	responses.WriteListObjectsV2Response(w, r, ack, bucname, prefix, token, startAfter,
 		delimiter, encodingType, maxKeys, list)
 }
-
 
 func pathToBucketAndObject(path string) (bucket, object string) {
 	path = strings.TrimPrefix(path, consts.SlashSeparator)
