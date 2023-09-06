@@ -10,6 +10,7 @@ const (
 	defaultBucketSpace      = "s3:bkt"
 	defaultObjectSpace      = "s3:obj"
 	defaultUploadSpace      = "s3:upl"
+	defaultCidrefSpace      = "s3:cid"
 	defaultOperationTimeout = 5 * time.Minute
 	defaultCloseBodyTimeout = 10 * time.Minute
 )
@@ -39,6 +40,12 @@ func WithObjectSpace(space string) Option {
 func WithUploadSpace(space string) Option {
 	return func(svc *service) {
 		svc.uploadSpace = space
+	}
+}
+
+func WithCidrefSpace(space string) Option {
+	return func(svc *service) {
+		svc.cidrefSpace = space
 	}
 }
 

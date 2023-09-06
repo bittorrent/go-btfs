@@ -156,7 +156,7 @@ func (h *Handlers) CopyObjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if srcBucket == dstBucket && srcObject == dstObject {
-		err = responses.ErrInvalidCopySource
+		err = responses.ErrInvalidCopyDest
 		responses.WriteErrorResponse(w, r, responses.ErrInvalidCopyDest)
 		return
 	}

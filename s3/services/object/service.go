@@ -2,6 +2,7 @@ package object
 
 import (
 	"context"
+	"fmt"
 	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/ctxmu"
 	"github.com/bittorrent/go-btfs/s3/policy"
@@ -21,6 +22,7 @@ type service struct {
 	bucketSpace      string
 	objectSpace      string
 	uploadSpace      string
+	cidrefSpace      string
 	operationTimeout time.Duration
 	closeBodyTimeout time.Duration
 }
@@ -33,6 +35,7 @@ func NewService(providers providers.Providerser, options ...Option) Service {
 		bucketSpace:      defaultBucketSpace,
 		objectSpace:      defaultObjectSpace,
 		uploadSpace:      defaultUploadSpace,
+		cidrefSpace: defaultCidrefSpace,
 		operationTimeout: defaultOperationTimeout,
 		closeBodyTimeout: defaultCloseBodyTimeout,
 	}
@@ -70,7 +73,22 @@ func (s *service) getAllUploadsKeyPrefix(bucname string) (prefix string) {
 }
 
 func (s *service) getUploadKey(bucname, objname, uploadid string) (key string) {
-	key = strings.Join([]string{s.getAllUploadsKeyPrefix(bucname), objname, uploadid}, s.keySeparator)
+	key = s.getAllUploadsKeyPrefix(bucname) + strings.Join([]string{objname, uploadid}, s.keySeparator)
+	return
+}
+
+func (s *service) getUploadPartKey(uplkey string, idx int) (key string) {
+	key = fmt.Sprintf("%s_%d", uplkey, idx)
+	return
+}
+
+func (s *service) getAllCidrefsKeyPrefix(cid string) (prefix string) {
+	prefix = strings.Join([]string{s.cidrefSpace, cid, ""}, s.keySeparator)
+	return
+}
+
+func (s *service) getCidrefKey(cid, to string) (key string) {
+	key = s.getAllCidrefsKeyPrefix(cid) + to
 	return
 }
 

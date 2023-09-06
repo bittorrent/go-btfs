@@ -19,12 +19,20 @@ var (
 	once sync.Once
 )
 
-func InitProviders(stateStore storage.StateStorer) {
+func InitProviders(stateStore storage.StateStorer) (err error) {
 	once.Do(func() {
-		sstore := providers.NewStorageStateStoreProxy(stateStore)
-		fstore := providers.NewBtfsAPI("")
+		var (
+			sstore providers.StateStorer
+			fstore providers.FileStorer
+		)
+		sstore = providers.NewStorageStateStoreProxy(stateStore)
+		fstore, err = providers.NewBtfsAPI()
+		if err != nil {
+			return
+		}
 		ps = providers.NewProviders(sstore, fstore)
 	})
+	return
 }
 
 func GetProviders() *providers.Providers {

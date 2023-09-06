@@ -718,7 +718,10 @@ If the user need to start multiple nodes on the same machine, the configuration 
 	}
 
 	// init s3 providers
-	s3.InitProviders(statestore)
+	err = s3.InitProviders(statestore)
+	if err != nil {
+		return err
+	}
 
 	// access-key init
 	accesskey.InitService(s3.GetProviders())

@@ -133,8 +133,11 @@ func (s *service) UploadPart(ctx context.Context, user, bucname, objname, uplid 
 		return
 	}
 
+	// Upload part key
+	prtkey := s.getUploadPartKey(uplkey, len(multipart.Parts))
+
 	// Store part body
-	cid, err := s.providers.FileStore().Store(body)
+	cid, err := s.storeBody(ctx, body, prtkey)
 	if err != nil {
 		return
 	}
@@ -146,7 +149,7 @@ func (s *service) UploadPart(ctx context.Context, user, bucname, objname, uplid 
 	// Try to remove the part body
 	defer func() {
 		if removePartBody {
-			_ = s.providers.FileStore().Remove(cid)
+			_ = s.removeBody(ctx, cid, prtkey)
 		}
 	}()
 
@@ -234,8 +237,9 @@ func (s *service) AbortMultipartUpload(ctx context.Context, user, bucname, objna
 	}
 
 	// Try to remove all parts body
-	for _, part := range multipart.Parts {
-		_ = s.providers.FileStore().Remove(part.CID)
+	for i, part := range multipart.Parts {
+		prtkey := s.getUploadPartKey(uplkey, i)
+		_ = s.removeBody(ctx, part.CID, prtkey)
 	}
 
 	return
@@ -385,7 +389,7 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 	body := io.MultiReader(readers...)
 
 	// Store object body
-	cid, err := s.providers.FileStore().Store(body)
+	cid, err := s.storeBody(ctx, body, objkey)
 	if err != nil {
 		return
 	}
@@ -435,7 +439,7 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 
 	// Try to remove old object body if exists, because it has been covered by new one
 	if objectOld != nil {
-		_ = s.providers.FileStore().Remove(objectOld.CID)
+		_ = s.removeBody(ctx, objectOld.CID, objkey)
 	}
 
 	// Remove multipart upload
@@ -445,8 +449,9 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 	}
 
 	// Try to remove all parts body, because they are no longer be referenced
-	for _, part := range multipart.Parts {
-		_ = s.providers.FileStore().Remove(part.CID)
+	for i, part := range multipart.Parts {
+		prtkey := s.getUploadPartKey(uplkey, i)
+		_ = s.removeBody(ctx, part.CID, prtkey)
 	}
 
 	return
@@ -491,7 +496,7 @@ func (s *service) computeMultipartMD5(parts []*CompletePart) (md5 string) {
 }
 
 // deleteUploadsByPrefix try to delete all multipart uploads with the specified common prefix
-func (s *service) deleteUploadsByPrefix(uploadsPrefix string) (err error) {
+func (s *service) deleteUploadsByPrefix(ctx context.Context, uploadsPrefix string) (err error) {
 	err = s.providers.StateStore().Iterate(uploadsPrefix, func(key, _ []byte) (stop bool, er error) {
 		uplkey := string(key)
 		var multipart *Multipart
@@ -503,8 +508,9 @@ func (s *service) deleteUploadsByPrefix(uploadsPrefix string) (err error) {
 		if er != nil {
 			return
 		}
-		for _, part := range multipart.Parts {
-			_ = s.providers.FileStore().Remove(part.CID)
+		for i, part := range multipart.Parts {
+			prtkey := s.getUploadPartKey(uplkey, i)
+			_ = s.removeBody(ctx, part.CID, prtkey)
 		}
 		return
 	})

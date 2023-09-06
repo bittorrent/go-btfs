@@ -20,6 +20,9 @@ func WritePutObjectResponse(w http.ResponseWriter, r *http.Request, obj *object.
 func WriteHeadObjectResponse(w http.ResponseWriter, r *http.Request, obj *object.Object) {
 	output := new(s3.HeadObjectOutput)
 	w.Header().Set(consts.Cid, obj.CID)
+	output.SetMetadata(map[string]*string{
+		consts.Cid: &obj.CID,
+	})
 	SetObjectHeaders(w, r, obj)
 	SetHeadGetRespHeaders(w, r.Form)
 	WriteSuccessResponse(w, output, "")
@@ -30,7 +33,7 @@ func WriteCopyObjectResponse(w http.ResponseWriter, r *http.Request, obj *object
 	output.SetETag(`"` + obj.ETag + `"`)
 	output.SetLastModified(obj.ModTime)
 	w.Header().Set(consts.Cid, obj.CID)
-	WriteSuccessResponse(w, output, "")
+	WriteSuccessResponse(w, output, "CopyObjectResult")
 }
 
 func WriteDeleteObjectResponse(w http.ResponseWriter, r *http.Request, obj *object.Object) {

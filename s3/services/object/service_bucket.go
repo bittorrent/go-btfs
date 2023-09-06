@@ -136,13 +136,13 @@ func (s *service) DeleteBucket(ctx context.Context, user, bucname string) (err e
 	objectsPrefix := s.getAllObjectsKeyPrefix(bucname)
 
 	// Try to delete all bucket objects
-	_ = s.deleteObjectsByPrefix(objectsPrefix)
+	_ = s.deleteObjectsByPrefix(ctx, objectsPrefix)
 
 	// All bucket uploads prefix
 	uploadsPrefix := s.getAllUploadsKeyPrefix(bucname)
 
 	// Try to delete all bucket uploads
-	_ = s.deleteUploadsByPrefix(uploadsPrefix)
+	_ = s.deleteUploadsByPrefix(ctx, uploadsPrefix)
 
 	return
 }

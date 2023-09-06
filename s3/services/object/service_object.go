@@ -64,7 +64,7 @@ func (s *service) PutObject(ctx context.Context, user, bucname, objname string, 
 	}
 
 	// Store object body
-	cid, err := s.providers.FileStore().Store(body)
+	cid, err := s.storeBody(ctx, body, objkey)
 	if err != nil {
 		return
 	}
@@ -76,7 +76,7 @@ func (s *service) PutObject(ctx context.Context, user, bucname, objname string, 
 	// Try to remove stored body if put object failed
 	defer func() {
 		if removeObjectBody {
-			_ = s.providers.FileStore().Remove(cid)
+			_ = s.removeBody(ctx, cid, objkey)
 		}
 	}()
 
@@ -108,7 +108,7 @@ func (s *service) PutObject(ctx context.Context, user, bucname, objname string, 
 	}
 
 	// put object
-	err = s.providers.StateStore().Put(objkey, object)
+	err = s.putObject(objkey, object)
 	if err != nil {
 		return
 	}
@@ -118,7 +118,7 @@ func (s *service) PutObject(ctx context.Context, user, bucname, objname string, 
 
 	// Try to remove old object body if exists, because it has been covered by new one
 	if objectOld != nil {
-		_ = s.providers.FileStore().Remove(objectOld.CID)
+		_ = s.removeBody(ctx, objectOld.CID, objkey)
 	}
 
 	return
@@ -214,6 +214,28 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 	}
 	defer s.lock.Unlock(dstObjkey)
 
+	// Add body Refer
+	err = s.addBodyRef(ctx, srcObject.CID, dstObjkey)
+	if err != nil {
+		return
+	}
+
+	// Mark if delete the cid ref
+	deleteRef := true
+
+	// If put new object failed, try to delete it's reference
+	defer func() {
+		if deleteRef {
+			_ = s.removeBodyRef(ctx, srcObject.CID, dstObjkey)
+		}
+	}()
+
+	// Old desert object
+	oldDstObject, err := s.getObject(dstObjkey)
+	if err != nil {
+		return
+	}
+
 	// now
 	now := time.Now()
 
@@ -252,8 +274,20 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 		}
 	}
 
+
 	// Put destination object
-	err = s.providers.StateStore().Put(dstObjkey, dstObject)
+	err = s.putObject(dstObjkey, dstObject)
+	if err != nil {
+		return
+	}
+
+	// Mark the delete ref to false
+	deleteRef = false
+
+	// Try to remove the old object body
+	if oldDstObject != nil {
+		_ = s.removeBody(ctx, oldDstObject.CID, dstObjkey)
+	}
 
 	return
 }
@@ -402,13 +436,13 @@ func (s *service) DeleteObject(ctx context.Context, user, bucname, objname strin
 	}
 
 	// Delete object
-	err = s.providers.StateStore().Delete(objkey)
+	err = s.deleteObject(objkey)
 	if err != nil {
 		return
 	}
 
 	// Try to delete object body
-	_ = s.providers.FileStore().Remove(object.CID)
+	_ = s.removeBodyRef(ctx, object.CID, objkey)
 
 	return
 }
@@ -560,6 +594,16 @@ func (s *service) ListObjectsV2(ctx context.Context, user string, bucket string,
 	return
 }
 
+func (s *service) deleteObject(objkey string) (err error) {
+	err = s.providers.StateStore().Delete(objkey)
+	return
+}
+
+func (s *service) putObject(objkey string, object *Object) (err error) {
+	err = s.providers.StateStore().Put(objkey, object)
+	return
+}
+
 func (s *service) getObject(objkey string) (object *Object, err error) {
 	err = s.providers.StateStore().Get(objkey, &object)
 	if errors.Is(err, providers.ErrStateStoreNotFound) {
@@ -569,7 +613,7 @@ func (s *service) getObject(objkey string) (object *Object, err error) {
 }
 
 // deleteObjectsByPrefix try to delete all objects with the specified common prefix
-func (s *service) deleteObjectsByPrefix(objectsPrefix string) (err error) {
+func (s *service) deleteObjectsByPrefix(ctx context.Context, objectsPrefix string) (err error) {
 	err = s.providers.StateStore().Iterate(objectsPrefix, func(key, _ []byte) (stop bool, er error) {
 		objkey := string(key)
 		var object *Object
@@ -581,9 +625,98 @@ func (s *service) deleteObjectsByPrefix(objectsPrefix string) (err error) {
 		if er != nil {
 			return
 		}
-		_ = s.providers.FileStore().Remove(object.CID)
+		_ = s.removeBody(ctx, object.CID, objkey)
 		return
 	})
+
+	return
+}
+
+func (s *service) addBodyRef(ctx context.Context, cid, toKey string) (err error) {
+	// Cid reference key
+	crfKey := s.getCidrefKey(cid, toKey)
+
+	// Add cid reference
+	err = s.providers.StateStore().Put(crfKey, nil)
+
+	return
+}
+
+func (s *service) removeBodyRef(ctx context.Context, cid, toKey string) (err error) {
+	// This object cid reference key
+	crfKey := s.getCidrefKey(cid, toKey)
+
+	// Delete cid ref of this object
+	err = s.providers.StateStore().Delete(crfKey)
+
+	return
+}
+
+func (s *service) storeBody(ctx context.Context, body io.Reader, toKey string) (cid string, err error) {
+	// RLock all cid refs to enable no cid will be deleted
+	err = s.lock.RLock(ctx, s.cidrefSpace)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(s.cidrefSpace)
+
+	// Store body and get the cid
+	cid, err = s.providers.FileStore().Store(body)
+	if err != nil {
+		return
+	}
+
+	// Cid reference key
+	crfKey := s.getCidrefKey(cid, toKey)
+
+	// Add cid reference
+	err = s.providers.StateStore().Put(crfKey, nil)
+
+	return
+}
+
+func (s *service) removeBody(ctx context.Context, cid, toKey string) (err error) {
+	// Lock all cid refs to enable new cid reference can not be added when
+	// remove is executing
+	err = s.lock.Lock(ctx, s.cidrefSpace)
+	if err != nil {
+		return
+	}
+	defer s.lock.Unlock(s.cidrefSpace)
+
+	// This object cid reference key
+	crfKey := s.getCidrefKey(cid, toKey)
+
+	// Delete cid ref of this object
+	err = s.providers.StateStore().Delete(crfKey)
+	if err != nil {
+		return
+	}
+
+	// All this cid references prefix
+	allRefsPrefix := s.getAllCidrefsKeyPrefix(cid)
+
+	// Flag to mark cid be referenced by other object
+	otherRef := false
+
+	// Iterate all this cid refs, if exists other object's ref, set
+	// the otherRef mark to true
+	err = s.providers.StateStore().Iterate(allRefsPrefix, func(key, _ []byte) (stop bool, err error) {
+		otherRef = true
+		stop = true
+		return
+	})
+	if err != nil {
+		return
+	}
+
+	// Exists other refs, cid body can not be removed
+	if otherRef {
+		return
+	}
+
+	// No other refs to this cid, remove it
+	err = s.providers.FileStore().Remove(cid)
 
 	return
 }
