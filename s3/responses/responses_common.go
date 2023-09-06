@@ -51,7 +51,7 @@ func setPutObjHeaders(w http.ResponseWriter, etag, cid string, delete bool) {
 		w.Header()[consts.ETag] = []string{`"` + etag + `"`}
 	}
 	if cid != "" {
-		w.Header()[consts.CID] = []string{cid}
+		w.Header()[consts.Cid] = []string{cid}
 	}
 }
 

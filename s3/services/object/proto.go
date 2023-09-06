@@ -34,6 +34,7 @@ type Service interface {
 	DeleteObject(ctx context.Context, user, bucname, objname string) (err error)
 	// todo: DeleteObjects
 	ListObjects(ctx context.Context, user, bucname, prefix, delimiter, marker string, max int64) (list *ObjectsList, err error)
+	ListObjectsV2(ctx context.Context, user string, bucket string, prefix string, token, delimiter string, max int64, owner bool, after string) (list *ObjectsListV2, err error)
 
 	CreateMultipartUpload(ctx context.Context, user, bucname, objname string, meta map[string]string) (multipart *Multipart, err error)
 	UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, reader *hash.Reader, size int64, meta map[string]string) (part *Part, err error)
@@ -91,6 +92,14 @@ type ObjectsList struct {
 	NextMarker  string
 	Objects     []*Object
 	Prefixes    []string
+}
+
+type ObjectsListV2 struct {
+	IsTruncated           bool
+	ContinuationToken     string
+	NextContinuationToken string
+	Objects               []*Object
+	Prefixes              []string
 }
 
 type CompletePart struct {

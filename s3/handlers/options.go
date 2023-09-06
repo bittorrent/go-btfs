@@ -16,7 +16,6 @@ var defaultCorsMethods = []string{
 }
 
 var defaultCorsHeaders = []string{
-	consts.CID,
 	consts.Date,
 	consts.ETag,
 	consts.ServerInfo,
@@ -31,6 +30,7 @@ var defaultCorsHeaders = []string{
 	consts.LastModified,
 	consts.ContentLanguage,
 	consts.CacheControl,
+	consts.Location,
 	consts.RetryAfter,
 	consts.AmzBucketRegion,
 	consts.Expires,
@@ -42,6 +42,8 @@ var defaultCorsHeaders = []string{
 	"X-Amz*",
 	"x-amz*",
 	"*",
+	consts.Cid,
+	consts.CidList,
 }
 
 var defaultHeaders = map[string][]string{

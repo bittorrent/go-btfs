@@ -355,10 +355,10 @@ func (h *Handlers) ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract all the litsObjectsV1 query params to their native values.
-	prefix, marker, delimiter, maxKeys, encodingType, err := getListObjectsV1Args(r.Form)
-	if err != nil {
-		rerr = h.respErr(err)
+	// Extract all the listsObjectsV1 query params to their native values.
+	prefix, marker, delimiter, maxKeys, encodingType, rerr := getListObjectsV1Args(r.Form)
+	if rerr != nil {
+		err = rerr
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
@@ -369,8 +369,7 @@ func (h *Handlers) ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
-
-	list, err := h.objsvc.ListObjects(ctx, ack, bucname, prefix, marker, delimiter, maxKeys)
+	list, err := h.objsvc.ListObjects(ctx, ack, bucname, prefix, delimiter, marker, maxKeys)
 	if err != nil {
 		rerr = h.respErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
@@ -380,106 +379,62 @@ func (h *Handlers) ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	responses.WriteListObjectsResponse(w, r, ack, bucname, prefix, marker, delimiter, encodingType, maxKeys, list)
 }
 
-//func (h *Handlers) ListObjectsV2Handler(w http.ResponseWriter, r *http.Request) {
-//	ctx := r.Context()
-//	ack := cctx.GetAccessKey(r)
-//	var err error
-//	defer func() {
-//		cctx.SetHandleInf(r, h.name(), err)
-//	}()
-//
-//	bucname, _, err := requests.ParseBucketAndObject(r)
-//	if err != nil {
-//		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestParameter)
-//		return
-//	}
-//
-//	err = h.bucsvc.CheckACL(ack, bucname, action.ListObjectsAction)
-//	if errors.Is(err, object.ErrBucketNotFound) {
-//		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
-//		return
-//	}
-//	if err != nil {
-//		responses.WriteErrorResponse(w, r, err)
-//		return
-//	}
-//
-//	urlValues := r.Form
-//	// Extract all the listObjectsV2 query params to their native values.
-//	prefix, token, startAfter, delimiter, fetchOwner, maxKeys, encodingType, errCode := getListObjectsV2Args(urlValues)
-//	if errCode != nil {
-//		responses.WriteErrorResponse(w, r, errCode)
-//		return
-//	}
-//
-//	marker := token
-//	if marker == "" {
-//		marker = startAfter
-//	}
-//	if err := s3utils.CheckListObjsArgs(ctx, bucname, prefix, marker); err != nil {
-//		responses.WriteErrorResponse(w, r, err)
-//		return
-//	}
-//
-//	// Validate the query params before beginning to serve the request.
-//	// fetch-owner is not validated since it is a boolean
-//	s3Error := validateListObjectsArgs(token, delimiter, encodingType, maxKeys)
-//	if s3Error != nil {
-//		responses.WriteErrorResponse(w, r, s3Error)
-//		return
-//	}
-//
-//	// rlock bucket
-//	runlock, err := h.rlock(ctx, bucname, w, r)
-//	if err != nil {
-//		return
-//	}
-//	defer runlock()
-//
-//	// Initiate a list objects operation based on the input params.
-//	// On success would return back ListObjectsInfo object to be
-//	// marshaled into S3 compatible XML header.
-//	//objsvc
-//	listObjectsV2Info, err := h.objsvc.ListObjectsV2(ctx, bucname, prefix, token, delimiter,
-//		maxKeys, fetchOwner, startAfter)
-//	if err != nil {
-//		responses.WriteErrorResponse(w, r, err)
-//		return
-//	}
-//
-//	resp := responses.GenerateListObjectsV2Response(
-//		bucname, prefix, token, listObjectsV2Info.NextContinuationToken, startAfter,
-//		delimiter, encodingType, listObjectsV2Info.IsTruncated,
-//		maxKeys, listObjectsV2Info.Objects, listObjectsV2Info.Prefixes)
-//
-//	// Write success response.
-//	responses.WriteSuccessResponseXML(w, r, resp)
-//}
-//
-//// setPutObjHeaders sets all the necessary headers returned back
-//// upon a success Put/Copy/CompleteMultipart/Delete requests
-//// to activate delete only headers set delete as true
-//func setPutObjHeaders(w http.ResponseWriter, obj object.Object, delete bool) {
-//	// We must not use the http.Header().Set method here because some (broken)
-//	// clients expect the ETag header key to be literally "ETag" - not "Etag" (case-sensitive).
-//	// Therefore, we have to set the ETag directly as map entry.
-//	if obj.ETag != "" && !delete {
-//		w.Header()[consts.ETag] = []string{`"` + obj.ETag + `"`}
-//	}
-//
-//	// Set the relevant version ID as part of the response header.
-//	if obj.VersionID != "" {
-//		w.Header()[consts.AmzVersionID] = []string{obj.VersionID}
-//		// If version is a deleted marker, set this header as well
-//		if obj.DeleteMarker && delete { // only returned during delete object
-//			w.Header()[consts.AmzDeleteMarker] = []string{strconv.FormatBool(obj.DeleteMarker)}
-//		}
-//	}
-//
-//	if obj.Bucket != "" && obj.Name != "" {
-//		// do something
-//	}
-//}
+func (h *Handlers) ListObjectsV2Handler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ack := cctx.GetAccessKey(r)
+	var err error
+	defer func() {
+		cctx.SetHandleInf(r, h.name(), err)
+	}()
+
+	bucname, rerr := requests.ParseBucket(r)
+	if rerr != nil {
+		err = rerr
+		responses.WriteErrorResponse(w, r, rerr)
+		return
+	}
+
+	urlValues := r.Form
+	// Extract all the listObjectsV2 query params to their native values.
+	prefix, token, startAfter, delimiter, fetchOwner, maxKeys, encodingType, rerr := getListObjectsV2Args(urlValues)
+	if rerr != nil {
+		err = rerr
+		responses.WriteErrorResponse(w, r, rerr)
+		return
+	}
+
+	marker := token
+	if marker == "" {
+		marker = startAfter
+	}
+	err = s3utils.CheckListObjsArgs(ctx, bucname, prefix, marker)
+	if err != nil {
+		rerr = h.respErr(err)
+		responses.WriteErrorResponse(w, r, rerr)
+		return
+	}
+
+	// Validate the query params before beginning to serve the request.
+	// fetch-owner is not validated since it is a boolean
+	rerr = validateListObjectsArgs(token, delimiter, encodingType, maxKeys)
+	if rerr != nil {
+		err = rerr
+		responses.WriteErrorResponse(w, r, rerr)
+		return
+	}
+
+	list, err := h.objsvc.ListObjectsV2(ctx, ack, bucname, prefix, token, delimiter,
+		maxKeys, fetchOwner, startAfter)
+	if err != nil {
+		rerr = h.respErr(err)
+		responses.WriteErrorResponse(w, r, rerr)
+		return
+	}
+
+	responses.WriteListObjectsV2Response(w, r, ack, bucname, prefix, token, startAfter,
+		delimiter, encodingType, maxKeys, list)
+}
+
 
 func pathToBucketAndObject(path string) (bucket, object string) {
 	path = strings.TrimPrefix(path, consts.SlashSeparator)
@@ -496,12 +451,12 @@ func isReplace(r *http.Request) bool {
 
 // Parse bucket url queries
 func getListObjectsV1Args(values url.Values) (
-	prefix, marker, delimiter string, maxkeys int64, encodingType string, errCode error) {
+	prefix, marker, delimiter string, maxkeys int64, encodingType string, rerr *responses.Error) {
 
 	if values.Get("max-keys") != "" {
 		var err error
 		if maxkeys, err = strconv.ParseInt(values.Get("max-keys"), 10, 64); err != nil {
-			errCode = responses.ErrInvalidMaxKeys
+			rerr = responses.ErrInvalidMaxKeys
 			return
 		}
 	} else {
@@ -518,20 +473,20 @@ func getListObjectsV1Args(values url.Values) (
 // Parse bucket url queries for ListObjects V2.
 func getListObjectsV2Args(values url.Values) (
 	prefix, token, startAfter, delimiter string,
-	fetchOwner bool, maxkeys int, encodingType string, errCode error) {
+	fetchOwner bool, maxkeys int64, encodingType string, rerr *responses.Error) {
 
 	// The continuation-token cannot be empty.
 	if val, ok := values["continuation-token"]; ok {
 		if len(val[0]) == 0 {
-			errCode = responses.ErrInvalidToken
+			rerr = responses.ErrInvalidToken
 			return
 		}
 	}
 
 	if values.Get("max-keys") != "" {
 		var err error
-		if maxkeys, err = strconv.Atoi(values.Get("max-keys")); err != nil {
-			errCode = responses.ErrInvalidMaxKeys
+		if maxkeys, err = strconv.ParseInt(values.Get("max-keys"), 10, 64); err != nil {
+			rerr = responses.ErrInvalidMaxKeys
 			return
 		}
 		// Over flowing count - reset to maxObjectList.
@@ -551,7 +506,7 @@ func getListObjectsV2Args(values url.Values) (
 	if token = values.Get("continuation-token"); token != "" {
 		decodedToken, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
-			errCode = responses.ErrIncorrectContinuationToken
+			rerr = responses.ErrIncorrectContinuationToken
 			return
 		}
 		token = string(decodedToken)
@@ -578,7 +533,7 @@ func trimLeadingSlash(ep string) string {
 //   - delimiter if set should be equal to '/', otherwise the request is rejected.
 //   - marker if set should have a common prefix with 'prefix' param, otherwise
 //     the request is rejected.
-func validateListObjectsArgs(marker, delimiter, encodingType string, maxKeys int) error {
+func validateListObjectsArgs(marker, delimiter, encodingType string, maxKeys int64) (rerr *responses.Error) {
 	// Max keys cannot be negative.
 	if maxKeys < 0 {
 		return responses.ErrInvalidMaxKeys

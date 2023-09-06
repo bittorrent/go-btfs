@@ -3,6 +3,7 @@ package object
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/providers"
@@ -473,8 +474,8 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 
 		// Common prefix: if the part of object name without prefix include delimiter
 		// it is the string truncated object name after the delimiter, else
-		// it is the bucket name itself
-		commonPrefix := objname
+		// it is empty string
+		commonPrefix := ""
 		if delimiter != "" {
 			dl := len(delimiter)
 			pl := len(prefix)
@@ -484,31 +485,30 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 			}
 		}
 
-		// If collect not begin, check the marker, if it is matched
-		// with the common prefix, then begin collection from next iterate turn
-		// and mark this common prefix as seen
-		// note: common prefix also can be object name, so when marker is
-		// an object name, the check will be also done correctly
-		if !begin && marker == commonPrefix {
-			begin = true
-			seen[commonPrefix] = true
-			return
-		}
+		fmt.Printf("%-18s | %10s\n", objname, commonPrefix)
 
-		// Not begin, jump the item
+		// If collect not begin, check the marker, if it is matched
+		// with the common prefix or object name, then begin collection from next iterate
+		// and if common prefix matched, mark this common prefix as seen
 		if !begin {
+			if commonPrefix != "" && marker == commonPrefix {
+				seen[commonPrefix] = true
+				begin = true
+			} else if marker == objname {
+				begin = true
+			}
 			return
 		}
 
 		// Objects with same common prefix will be grouped into one
 		// note: the objects without common prefix will present only once, so
 		// it is not necessary to add these objects names in the seen map
-		if seen[commonPrefix] {
-			return
-		}
 
 		// Objects with common prefix grouped int one
-		if commonPrefix != objname {
+		if commonPrefix != "" {
+			if seen[commonPrefix] {
+				return
+			}
 			list.Prefixes = append(list.Prefixes, commonPrefix)
 			list.NextMarker = commonPrefix
 			seen[commonPrefix] = true
@@ -537,6 +537,26 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 		return
 	})
 
+	return
+}
+
+func (s *service) ListObjectsV2(ctx context.Context, user string, bucket string, prefix string, token, delimiter string, max int64, owner bool, after string) (list *ObjectsListV2, err error) {
+	marker := token
+	if marker == "" {
+		marker = after
+	}
+	loi, err := s.ListObjects(ctx, user, bucket, prefix, delimiter, marker, max)
+	if err != nil {
+		return
+	}
+
+	list = &ObjectsListV2{
+		IsTruncated:           loi.IsTruncated,
+		ContinuationToken:     token,
+		NextContinuationToken: loi.NextMarker,
+		Objects:               loi.Objects,
+		Prefixes:              loi.Prefixes,
+	}
 	return
 }
 

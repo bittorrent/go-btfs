@@ -75,6 +75,7 @@ func s3URLEncode(s string) string {
 	}
 	return string(t)
 }
+
 func shouldEscape(c byte) bool {
 	if 'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z' || '0' <= c && c <= '9' {
 		return false

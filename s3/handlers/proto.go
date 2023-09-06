@@ -29,7 +29,7 @@ type Handlerser interface {
 	GetObjectHandler(w http.ResponseWriter, r *http.Request)
 	GetObjectACLHandler(w http.ResponseWriter, r *http.Request)
 	ListObjectsHandler(w http.ResponseWriter, r *http.Request)
-	//ListObjectsV2Handler(w http.ResponseWriter, r *http.Request)
+	ListObjectsV2Handler(w http.ResponseWriter, r *http.Request)
 
 	//// Multipart
 

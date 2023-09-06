@@ -162,7 +162,8 @@ const (
 	XRequestWith       = "X-Requested-With"
 	Range              = "Range"
 	UserAgent          = "User-Agent"
-	CID                = "CID"
+	Cid                = "Cid"
+	CidList            = "Cid-List"
 )
 
 // Standard HTTP cors headers
