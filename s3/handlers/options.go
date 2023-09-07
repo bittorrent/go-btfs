@@ -39,6 +39,8 @@ var defaultCorsHeaders = []string{
 	consts.XRequestWith,
 	consts.Range,
 	consts.UserAgent,
+	"Amz-Sdk-Request",
+	"Amz-Sdk-Invocation-Id",
 	"X-Amz*",
 	"x-amz*",
 	"*",
