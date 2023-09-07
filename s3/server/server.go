@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/bittorrent/go-btfs/s3/routers"
 	"net/http"
 	"sync"
@@ -54,9 +53,7 @@ func (s *Server) Start() (err error) {
 	}
 
 	go func() {
-		fmt.Printf("Start s3-compatible-api server, endpoint-url: http://%s\n", httpSvr.Addr)
-		lErr := httpSvr.ListenAndServe()
-		fmt.Printf("Stop s3-compatible-api server: %v\n", lErr)
+		_ = httpSvr.ListenAndServe()
 	}()
 
 	return
@@ -66,7 +63,7 @@ func (s *Server) Stop() (err error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if s.shutdown == nil {
-		err = ErrServerStarted
+		err = ErrServerNotStarted
 		return
 	}
 	err = s.shutdown()

@@ -717,21 +717,31 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		functest(cfg.Services.OnlineServerDomain, cfg.Identity.PeerID, hValue)
 	}
 
-	// init s3 providers
+	// Init s3 providers
 	err = s3.InitProviders(statestore)
 	if err != nil {
 		return err
 	}
 
-	// access-key init
+	// Init access-key
 	accesskey.InitService(s3.GetProviders())
 
-	// start s3-compatible-api server
+	// Start s3-compatible-api server
 	s3OptEnable, s3Opt := req.Options[enableS3CompatibleAPIKwd].(bool)
 	if s3OptEnable || (!s3Opt && cfg.S3CompatibleAPI.Enable) {
 		s3Server := s3.NewServer(cfg.S3CompatibleAPI)
-		_ = s3Server.Start()
-		defer s3Server.Stop()
+		err = s3Server.Start()
+		if err != nil {
+			fmt.Printf("S3-Compatible-API server: %v\n", err)
+			return
+		}
+		fmt.Printf("S3-Compatible-API server started, endpoint-url: http://%s\n", cfg.S3CompatibleAPI.Address)
+		defer func() {
+			err = s3Server.Stop()
+			if err != nil {
+				fmt.Printf("S3-Compatible-API server: %v\n", err)
+			}
+		}()
 	}
 
 	if SimpleMode == false {

@@ -26,6 +26,7 @@ type Handlerser interface {
 	HeadObjectHandler(w http.ResponseWriter, r *http.Request)
 	CopyObjectHandler(w http.ResponseWriter, r *http.Request)
 	DeleteObjectHandler(w http.ResponseWriter, r *http.Request)
+	DeleteObjectsHandler(w http.ResponseWriter, r *http.Request)
 	GetObjectHandler(w http.ResponseWriter, r *http.Request)
 	GetObjectACLHandler(w http.ResponseWriter, r *http.Request)
 	ListObjectsHandler(w http.ResponseWriter, r *http.Request)

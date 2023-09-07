@@ -23,7 +23,7 @@ func ParseBucketAndObject(r *http.Request) (bucket string, object string, rerr *
 }
 
 func ParseBucket(r *http.Request) (bucket string, rerr *responses.Error) {
-	bucket = mux.Vars(r)["bucket"]
+	bucket = mux.Vars(r)["Bucket"]
 	err := s3utils.CheckValidBucketNameStrict(bucket)
 	if err != nil {
 		rerr = responses.ErrInvalidBucketName
@@ -32,7 +32,7 @@ func ParseBucket(r *http.Request) (bucket string, rerr *responses.Error) {
 }
 
 func ParseObject(r *http.Request) (object string, rerr *responses.Error) {
-	object, err := unescapePath(mux.Vars(r)["object"])
+	object, err := unescapePath(mux.Vars(r)["Object"])
 	if err != nil {
 		rerr = responses.ErrInvalidRequestParameter
 	}

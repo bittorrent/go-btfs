@@ -9,6 +9,7 @@ import (
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	rscors "github.com/rs/cors"
 	"net/http"
+	"time"
 )
 
 func (h *Handlers) Cors(handler http.Handler) http.Handler {
@@ -34,10 +35,13 @@ func (h *Handlers) Cors(handler http.Handler) http.Handler {
 
 func (h *Handlers) Log(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("[REQ] <%4s> | %s\n", r.Method, r.URL)
+		start := time.Now()
+		fmt.Printf("s3-api: [I] %s | <%-4s> | %s\n", start.Format(time.RFC3339), r.Method, r.URL)
 		handler.ServeHTTP(w, r)
 		hname, herr := cctx.GetHandleInf(r)
-		fmt.Printf("[RSP] <%4s> | %s | %s | %v\n", r.Method, r.URL, hname, herr)
+		end := time.Now()
+		ela := end.Sub(start)
+		fmt.Printf("s3-api: [O] %s | <%-4s> | %s | %s | %v | %s \n", end.Format(time.RFC3339), r.Method, r.URL, hname, herr, ela)
 	})
 }
 

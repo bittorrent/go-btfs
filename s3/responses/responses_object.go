@@ -38,7 +38,6 @@ func WriteCopyObjectResponse(w http.ResponseWriter, r *http.Request, obj *object
 
 func WriteDeleteObjectResponse(w http.ResponseWriter, r *http.Request, obj *object.Object) {
 	output := new(s3.DeleteObjectOutput)
-	output.SetDeleteMarker(true)
 	WriteSuccessResponse(w, output, "")
 }
 

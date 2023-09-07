@@ -1,8 +1,6 @@
 package requests
 
 import (
-	"fmt"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/cctx"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"net/http"
@@ -96,16 +94,5 @@ func ParsePutBucketAclRequest(r *http.Request) (req *PutBucketACLRequest, rerr *
 		return
 	}
 	req.ACL, rerr = ParseBucketACL(r)
-	return
-}
-
-func ParsePutObjectRequest(r *http.Request) (req *s3.PutObjectInput, rerr *responses.Error) {
-	err := responses.ParseRequest(r, &req)
-	if err != nil {
-		rerr = responses.ErrInvalidRequestParameter
-		return
-	}
-
-	fmt.Printf("%+v", *req)
 	return
 }

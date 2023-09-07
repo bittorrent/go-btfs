@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/base64"
 	"errors"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/cctx"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/requests"
@@ -222,63 +223,76 @@ func (h *Handlers) DeleteObjectHandler(w http.ResponseWriter, r *http.Request) {
 
 // DeleteObjectsHandler - delete objects
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjects.html
-//func (h *Handlers) DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
-//	ctx := r.Context()
-//	ack := cctx.GetAccessKey(r)
-//	var err error
-//	defer func() {
-//		cctx.SetHandleInf(r, h.name(), err)
-//	}()
-//
-//	bucname, objname, err := requests.ParseBucketAndObject(r)
-//	if err != nil {
-//		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequestParameter)
-//		return
-//	}
-//	if err := s3utils.CheckDelObjArgs(ctx, bucname, objname); err != nil {
-//		responses.WriteErrorResponse(w, r, err)
-//		return
-//	}
-//
-//	err = h.bucsvc.CheckACL(ack, bucname, action.DeleteObjectAction)
-//	if errors.Is(err, object.ErrBucketNotFound) {
-//		responses.WriteErrorResponse(w, r, responses.ErrNoSuchBucket)
-//		return
-//	}
-//	if err != nil {
-//		responses.WriteErrorResponse(w, r, err)
-//		return
-//	}
-//
-//	// rlock bucket
-//	runlock, err := h.rlock(ctx, bucname, w, r)
-//	if err != nil {
-//		return
-//	}
-//	defer runlock()
-//
-//	// lock object
-//	unlock, err := h.lock(ctx, bucname+"/"+objname, w, r)
-//	if err != nil {
-//		return
-//	}
-//	defer unlock()
-//
-//	//objsvc
-//	obj, err := h.objsvc.GetObjectInfo(ctx, bucname, objname)
-//	if err != nil {
-//		responses.WriteErrorResponse(w, r, err)
-//		return
-//	}
-//	//objsvc
-//	err = h.objsvc.DeleteObject(ctx, bucname, objname)
-//	if err != nil {
-//		responses.WriteErrorResponse(w, r, err)
-//		return
-//	}
-//	setPutObjHeaders(w, obj, true)
-//	responses.WriteSuccessNoContent(w)
-//}
+func (h *Handlers) DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ack := cctx.GetAccessKey(r)
+	var err error
+	defer func() {
+		cctx.SetHandleInf(r, h.name(), err)
+	}()
+
+	var input s3.DeleteObjectsInput
+
+	err = responses.ParseRequest(r, &input)
+	if err != nil {
+		rerr := h.respErr(err)
+		responses.WriteErrorResponse(w, r, rerr)
+		return
+	}
+
+	if input.Delete == nil ||
+		len(input.Delete.Objects) == 0 ||
+		len(input.Delete.Objects) > consts.MaxObjectList {
+		rerr := responses.ErrMalformedXML
+		err = rerr
+		responses.WriteErrorResponse(w, r, rerr)
+		return
+	}
+
+	bucname := *input.Bucket
+
+	_, err = h.objsvc.GetBucket(ctx, ack, bucname)
+	if err != nil {
+		rerr := h.respErr(err)
+		responses.WriteErrorResponse(w, r, rerr)
+		return
+	}
+
+	output := new(s3.DeleteObjectsOutput)
+	delObjs := make([]*s3.DeletedObject, 0)
+	delErrs := make([]*s3.Error, 0)
+	for _, obj := range input.Delete.Objects {
+		objname := *obj.Key
+		er := s3utils.CheckDelObjArgs(ctx, bucname, objname)
+		if er != nil {
+			rerr := h.respErr(er)
+			derr := new(s3.Error)
+			derr.SetCode(rerr.Code())
+			derr.SetMessage(rerr.Description())
+			derr.SetKey(objname)
+			delErrs = append(delErrs, derr)
+			continue
+		}
+		er = h.objsvc.DeleteObject(ctx, ack, bucname, objname)
+		if er != nil {
+			rerr := h.respErr(er)
+			derr := new(s3.Error)
+			derr.SetCode(rerr.Code())
+			derr.SetMessage(rerr.Description())
+			derr.SetKey(objname)
+			delErrs = append(delErrs, derr)
+		} else {
+			dobj := new(s3.DeletedObject)
+			dobj.SetKey(objname)
+			delObjs = append(delObjs, dobj)
+		}
+	}
+
+	output.SetDeleted(delObjs)
+	output.SetErrors(delErrs)
+
+	responses.WriteSuccessResponse(w, output, "DeleteResult")
+}
 
 // GetObjectHandler - GET Object
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html

@@ -3,7 +3,6 @@ package object
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/providers"
@@ -517,8 +516,6 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 				commonPrefix = objname[:(pl + di + dl)]
 			}
 		}
-
-		fmt.Printf("%-18s | %10s\n", objname, commonPrefix)
 
 		// If collect not begin, check the marker, if it is matched
 		// with the common prefix or object name, then begin collection from next iterate
