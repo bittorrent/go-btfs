@@ -24,11 +24,16 @@ func (routers *Routers) Register() http.Handler {
 	hs := routers.handlers
 
 	root := mux.NewRouter()
+
 	root.Use(
 		hs.Cors,
 		hs.Log,
 		hs.Sign,
 	)
+
+	root.Methods(http.MethodOptions).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	bucket := root.PathPrefix("/{bucket}").Subrouter()
 
