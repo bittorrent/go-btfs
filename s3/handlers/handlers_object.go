@@ -243,7 +243,7 @@ func (h *Handlers) DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) 
 
 	if input.Delete == nil ||
 		len(input.Delete.Objects) == 0 ||
-		len(input.Delete.Objects) > consts.MaxObjectList {
+		len(input.Delete.Objects) > consts.MaxDeleteList {
 		rerr := responses.ErrMalformedXML
 		err = rerr
 		responses.WriteErrorResponse(w, r, rerr)

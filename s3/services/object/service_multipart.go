@@ -2,9 +2,7 @@ package object
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
-	"fmt"
 	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/etag"
@@ -404,6 +402,13 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 		}
 	}()
 
+	// Calculate multipart etag
+	multiEtag, err := s.calcMultiETag(parts)
+	if err != nil {
+		return
+	}
+
+	// Current time
 	now := time.Now().UTC()
 
 	// Object
@@ -413,7 +418,7 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 		ModTime:          now,
 		Size:             size,
 		IsDir:            false,
-		ETag:             s.computeMultipartMD5(parts),
+		ETag: multiEtag.String(),
 		CID:              cid,
 		ACL:              "",
 		VersionID:        "",
@@ -500,39 +505,16 @@ func (s *service) canonicalizeETag(etag string) string {
 	return etagRegex.ReplaceAllString(etag, "$1")
 }
 
-func (s *service) computeMultipartMD5(parts []*CompletePart) (md5 string) {
-	var finalMD5Bytes []byte
+func (s *service) calcMultiETag(parts []*CompletePart) (multiEtag etag.ETag, err error) {
+	var completeETags []etag.ETag
 	for _, part := range parts {
-		md5Bytes, err := hex.DecodeString(s.canonicalizeETag(part.ETag))
+		var etg etag.ETag
+		etg, err = etag.Parse(part.ETag)
 		if err != nil {
-			finalMD5Bytes = append(finalMD5Bytes, []byte(part.ETag)...)
-		} else {
-			finalMD5Bytes = append(finalMD5Bytes, md5Bytes...)
+			return
 		}
+		completeETags = append(completeETags, etg)
 	}
-	md5 = fmt.Sprintf("%s-%d", etag.Multipart(finalMD5Bytes), len(parts))
-	return
-}
-
-// deleteUploadsByPrefix try to delete all multipart uploads with the specified common prefix
-func (s *service) deleteUploadsByPrefix(ctx context.Context, uploadsPrefix string) (err error) {
-	err = s.providers.StateStore().Iterate(uploadsPrefix, func(key, _ []byte) (stop bool, er error) {
-		uplkey := string(key)
-		var multipart *Multipart
-		er = s.providers.StateStore().Get(uplkey, multipart)
-		if er != nil {
-			return
-		}
-		er = s.providers.StateStore().Delete(uplkey)
-		if er != nil {
-			return
-		}
-		for i, part := range multipart.Parts {
-			prtkey := s.getUploadPartKey(uplkey, i)
-			_ = s.removeBody(ctx, part.CID, prtkey)
-		}
-		return
-	})
-
+	multiEtag = etag.Multipart(completeETags...)
 	return
 }

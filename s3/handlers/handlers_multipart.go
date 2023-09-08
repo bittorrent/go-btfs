@@ -247,4 +247,3 @@ func (h *Handlers) CompleteMultipartUploadHandler(w http.ResponseWriter, r *http
 
 	responses.WriteSuccessResponse(w, output, "CompleteMultipartUploadResult")
 }
-

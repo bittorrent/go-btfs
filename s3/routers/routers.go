@@ -25,7 +25,6 @@ func (routers *Routers) Register() http.Handler {
 
 	hs := routers.handlers
 
-
 	root.Use(
 		hs.Cors,
 		hs.Log,

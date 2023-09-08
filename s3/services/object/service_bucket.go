@@ -126,23 +126,18 @@ func (s *service) DeleteBucket(ctx context.Context, user, bucname string) (err e
 		return
 	}
 
-	// Delete bucket
-	err = s.providers.StateStore().Delete(buckey)
+	// Check if bucket is empty
+	empty, err := s.isBucketEmpty(bucname)
 	if err != nil {
 		return
 	}
+	if !empty {
+		err = ErrBucketeNotEmpty
+		return
+	}
 
-	// All bucket objects prefix
-	objectsPrefix := s.getAllObjectsKeyPrefix(bucname)
-
-	// Try to delete all bucket objects
-	_ = s.deleteObjectsByPrefix(ctx, objectsPrefix)
-
-	// All bucket uploads prefix
-	uploadsPrefix := s.getAllUploadsKeyPrefix(bucname)
-
-	// Try to delete all bucket uploads
-	_ = s.deleteUploadsByPrefix(ctx, uploadsPrefix)
+	// Delete bucket
+	err = s.providers.StateStore().Delete(buckey)
 
 	return
 }
@@ -278,37 +273,7 @@ func (s *service) GetBucketACL(ctx context.Context, user, bucname string) (acl s
 }
 
 // EmptyBucket check if the user specified bucked is empty
-func (s *service) EmptyBucket(ctx context.Context, user, bucname string) (empty bool, err error) {
-	ctx, cancel := s.opctx(ctx)
-	defer cancel()
-
-	// Bucket key
-	buckey := s.getBucketKey(bucname)
-
-	// RLock bucket
-	err = s.lock.RLock(ctx, buckey)
-	if err != nil {
-		return
-	}
-	defer s.lock.RUnlock(buckey)
-
-	// Get bucket
-	bucket, err := s.getBucket(buckey)
-	if err != nil {
-		return
-	}
-	if bucket == nil {
-		err = ErrBucketNotFound
-		return
-	}
-
-	// Check action ACL
-	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.ListObjectsAction)
-	if !allow {
-		err = ErrNotAllowed
-		return
-	}
-
+func (s *service) isBucketEmpty(bucname string) (empty bool, err error) {
 	// All bucket objects prefix
 	objectsPrefix := s.getAllObjectsKeyPrefix(bucname)
 

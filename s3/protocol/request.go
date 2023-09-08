@@ -159,7 +159,6 @@ func parseLocation(r *http.Request, inv reflect.Value) (err error) {
 			fv = fv.Convert(byteSliceType)
 		}
 
-
 		switch ft.Tag.Get("location") {
 		case "headers":
 			prefix := ft.Tag.Get("locationName")

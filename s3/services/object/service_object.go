@@ -3,7 +3,6 @@ package object
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/providers"
@@ -479,7 +478,14 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 		return
 	}
 
+	// Object list
 	list = &ObjectsList{}
+
+	// MaxKeys is zero
+	if max == 0 {
+		list.IsTruncated = true
+		return
+	}
 
 	// All bucket objects key prefix
 	allObjectsKeyPrefix := s.getAllObjectsKeyPrefix(bucname)
@@ -606,120 +612,5 @@ func (s *service) getObject(objkey string) (object *Object, err error) {
 	if errors.Is(err, providers.ErrStateStoreNotFound) {
 		err = nil
 	}
-	return
-}
-
-// deleteObjectsByPrefix try to delete all objects with the specified common prefix
-func (s *service) deleteObjectsByPrefix(ctx context.Context, objectsPrefix string) (err error) {
-	err = s.providers.StateStore().Iterate(objectsPrefix, func(key, _ []byte) (stop bool, er error) {
-		objkey := string(key)
-		var object *Object
-		er = s.providers.StateStore().Get(objkey, object)
-		if er != nil {
-			return
-		}
-		er = s.providers.StateStore().Delete(objkey)
-		if er != nil {
-			return
-		}
-		_ = s.removeBody(ctx, object.CID, objkey)
-		return
-	})
-
-	return
-}
-
-func (s *service) addBodyRef(ctx context.Context, cid, toKey string) (err error) {
-	// Cid reference key
-	crfKey := s.getCidrefKey(cid, toKey)
-
-	// Add cid reference
-	err = s.providers.StateStore().Put(crfKey, nil)
-
-	return
-}
-
-func (s *service) removeBodyRef(ctx context.Context, cid, toKey string) (err error) {
-	// This object cid reference key
-	crfKey := s.getCidrefKey(cid, toKey)
-
-	// Delete cid ref of this object
-	err = s.providers.StateStore().Delete(crfKey)
-
-	return
-}
-
-func (s *service) storeBody(ctx context.Context, body io.Reader, toKey string) (cid string, err error) {
-	// RLock all cid refs to enable no cid will be deleted
-	err = s.lock.RLock(ctx, s.cidrefSpace)
-	if err != nil {
-		return
-	}
-	defer s.lock.RUnlock(s.cidrefSpace)
-
-	// Store body and get the cid
-	cid, err = s.providers.FileStore().Store(body)
-	if err != nil {
-		return
-	}
-
-	// Cid reference key
-	crfKey := s.getCidrefKey(cid, toKey)
-
-	// Add cid reference
-	err = s.providers.StateStore().Put(crfKey, nil)
-
-	return
-}
-
-func (s *service) removeBody(ctx context.Context, cid, tokey string) (err error) {
-	// Flag to mark cid be referenced by other object
-	otherRef := false
-
-	// Log removing
-	defer func() {
-		fmt.Printf("remove <%s>, ref <%s>, refered - %v, err: %v\n", cid, tokey, otherRef, err)
-	}()
-
-	// Lock all cid refs to enable new cid reference can not be added when
-	// remove is executing
-	err = s.lock.Lock(ctx, s.cidrefSpace)
-	if err != nil {
-		return
-	}
-	defer s.lock.Unlock(s.cidrefSpace)
-
-	// This object cid reference key
-	crfKey := s.getCidrefKey(cid, tokey)
-
-	// Delete cid ref of this object
-	err = s.providers.StateStore().Delete(crfKey)
-	if err != nil {
-		return
-	}
-
-	// All this cid references prefix
-	allRefsPrefix := s.getAllCidrefsKeyPrefix(cid)
-
-
-	// Iterate all this cid refs, if exists other object's ref, set
-	// the otherRef mark to true
-	err = s.providers.StateStore().Iterate(allRefsPrefix, func(key, _ []byte) (stop bool, err error) {
-		otherRef = true
-		stop = true
-		return
-	})
-	if err != nil {
-		return
-	}
-
-	// Exists other refs, cid body can not be removed
-	if otherRef {
-		return
-	}
-
-	// No other refs to this cid, remove it
-	err = s.providers.FileStore().Remove(cid)
-
 	return
 }

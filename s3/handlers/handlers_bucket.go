@@ -16,6 +16,8 @@ func (h *Handlers) respErr(err error) (rerr *responses.Error) {
 	switch err {
 	case object.ErrBucketNotFound:
 		rerr = responses.ErrNoSuchBucket
+	case object.ErrBucketeNotEmpty:
+		rerr = responses.ErrBucketNotEmpty
 	case object.ErrObjectNotFound:
 		rerr = responses.ErrNoSuchKey
 	case object.ErrUploadNotFound:

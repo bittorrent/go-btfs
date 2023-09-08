@@ -9,14 +9,12 @@ import (
 )
 
 var (
-	ErrBucketNotFound        = errors.New("bucket not found")
-	ErrObjectNotFound        = errors.New("object not found")
-	ErrUploadNotFound        = errors.New("upload not found")
-	ErrNotAllowed            = errors.New("not allowed")
-	ErrBucketAlreadyExists   = errors.New("bucket already exists")
-	ErrOperationTimeout      = errors.New("operation timeout")
-	ErrContentSHA256Mismatch = errors.New("sha256 mismatch")
-	ErrBadDigest             = errors.New("bad digest")
+	ErrBucketNotFound      = errors.New("bucket not found")
+	ErrBucketeNotEmpty     = errors.New("bucket not empty")
+	ErrObjectNotFound      = errors.New("object not found")
+	ErrUploadNotFound      = errors.New("upload not found")
+	ErrNotAllowed          = errors.New("not allowed")
+	ErrBucketAlreadyExists = errors.New("bucket already exists")
 )
 
 type Service interface {
@@ -26,7 +24,6 @@ type Service interface {
 	GetAllBuckets(ctx context.Context, user string) (list []*Bucket, err error)
 	PutBucketACL(ctx context.Context, user, bucname, acl string) (err error)
 	GetBucketACL(ctx context.Context, user, bucname string) (acl string, err error)
-	EmptyBucket(ctx context.Context, user, bucname string) (empty bool, err error)
 
 	PutObject(ctx context.Context, user, bucname, objname string, body *hash.Reader, size int64, meta map[string]string) (object *Object, err error)
 	CopyObject(ctx context.Context, user, srcBucname, srcObjname, dstBucname, dstObjname string, meta map[string]string) (dstObject *Object, err error)
