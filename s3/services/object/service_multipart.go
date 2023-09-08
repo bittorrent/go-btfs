@@ -359,6 +359,7 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 		}
 
 		// All parts except the last part has to be at least 5MB.
+		// todo: change to '''!(gotPart.Size >= consts.MinPartSize)'''
 		if (i < len(parts)-1) && !(gotPart.Size >= 0) {
 			err = s3utils.PartTooSmall{
 				PartNumber: part.PartNumber,
