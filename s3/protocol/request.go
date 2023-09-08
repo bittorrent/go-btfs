@@ -1,4 +1,4 @@
-package responses
+package protocol
 
 import (
 	"encoding/base64"
@@ -159,6 +159,7 @@ func parseLocation(r *http.Request, inv reflect.Value) (err error) {
 			fv = fv.Convert(byteSliceType)
 		}
 
+
 		switch ft.Tag.Get("location") {
 		case "headers":
 			prefix := ft.Tag.Get("locationName")
@@ -171,6 +172,17 @@ func parseLocation(r *http.Request, inv reflect.Value) (err error) {
 			err = parseLocationValue(locVal, fv, ft.Tag)
 		case "querystring":
 			err = parseQueryString(query, fv, name, ft.Tag)
+		}
+
+		if err != nil {
+			return
+		}
+
+		required := ft.Tag.Get("required") == "true"
+
+		if required && !reflect.Indirect(fv).IsValid() {
+			err = fmt.Errorf("field %s is required", ft.Name)
+			return
 		}
 	}
 

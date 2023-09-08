@@ -3,6 +3,7 @@ package responses
 import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/consts"
+	"github.com/bittorrent/go-btfs/s3/protocol"
 	"net/http"
 	"path"
 )
@@ -39,11 +40,11 @@ func NewErrOutput(r *http.Request, rerr *Error) *ErrorOutput {
 
 func WriteErrorResponse(w http.ResponseWriter, r *http.Request, rerr *Error) {
 	output := NewErrOutput(r, rerr)
-	_ = WriteResponse(w, rerr.HTTPStatusCode(), output, "Error")
+	_ = protocol.WriteResponse(w, rerr.HTTPStatusCode(), output, "Error")
 }
 
 func WriteSuccessResponse(w http.ResponseWriter, output interface{}, locationName string) {
-	_ = WriteResponse(w, http.StatusOK, output, locationName)
+	_ = protocol.WriteResponse(w, http.StatusOK, output, locationName)
 }
 
 func setPutObjHeaders(w http.ResponseWriter, etag, cid string, delete bool) {

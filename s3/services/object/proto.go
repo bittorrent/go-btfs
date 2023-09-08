@@ -36,8 +36,8 @@ type Service interface {
 	ListObjects(ctx context.Context, user, bucname, prefix, delimiter, marker string, max int64) (list *ObjectsList, err error)
 	ListObjectsV2(ctx context.Context, user string, bucket string, prefix string, token, delimiter string, max int64, owner bool, after string) (list *ObjectsListV2, err error)
 
-	CreateMultipartUpload(ctx context.Context, user, bucname, objname string, meta map[string]string) (multipart *Multipart, err error)
-	UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, reader *hash.Reader, size int64, meta map[string]string) (part *Part, err error)
+	CreateMultipartUpload(ctx context.Context, user, bucname, objname string, meta map[string]*string) (multipart *Multipart, err error)
+	UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, reader *hash.Reader, size int64) (part *Part, err error)
 	AbortMultipartUpload(ctx context.Context, user, bucname, objname, uplid string) (err error)
 	CompleteMultiPartUpload(ctx context.Context, user, bucname, objname, uplid string, parts []*CompletePart) (object *Object, err error)
 }
@@ -75,7 +75,7 @@ type Multipart struct {
 	Object    string
 	UploadID  string
 	Initiated time.Time
-	MetaData  map[string]string
+	MetaData  map[string]*string
 	Parts     []*Part
 }
 
@@ -111,12 +111,12 @@ type CompletePart struct {
 	ChecksumSHA256 string
 }
 
-type CompletedParts []CompletePart
+type CompletedParts []*CompletePart
 
 func (a CompletedParts) Len() int           { return len(a) }
 func (a CompletedParts) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a CompletedParts) Less(i, j int) bool { return a[i].PartNumber < a[j].PartNumber }
 
 type CompleteMultipartUpload struct {
-	Parts []CompletePart `xml:"Part"`
+	Parts []*CompletePart `xml:"Part"`
 }

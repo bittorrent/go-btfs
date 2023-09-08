@@ -20,7 +20,7 @@ import (
 )
 
 // CreateMultipartUpload create user specified multipart upload
-func (s *service) CreateMultipartUpload(ctx context.Context, user, bucname, objname string, meta map[string]string) (multipart *Multipart, err error) {
+func (s *service) CreateMultipartUpload(ctx context.Context, user, bucname, objname string, meta map[string]*string) (multipart *Multipart, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
@@ -81,7 +81,7 @@ func (s *service) CreateMultipartUpload(ctx context.Context, user, bucname, objn
 }
 
 // UploadPart upload user specified multipart part
-func (s *service) UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, body *hash.Reader, size int64, meta map[string]string) (part *Part, err error) {
+func (s *service) UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, body *hash.Reader, size int64) (part *Part, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
@@ -405,27 +405,47 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 		}
 	}()
 
+	now := time.Now().UTC()
+
 	// Object
 	object = &Object{
 		Bucket:           bucname,
 		Name:             objname,
-		ModTime:          time.Now().UTC(),
+		ModTime:          now,
 		Size:             size,
 		IsDir:            false,
 		ETag:             s.computeMultipartMD5(parts),
 		CID:              cid,
+		ACL:              "",
 		VersionID:        "",
 		IsLatest:         true,
 		DeleteMarker:     false,
-		ContentType:      multipart.MetaData[strings.ToLower(consts.ContentType)],
-		ContentEncoding:  multipart.MetaData[strings.ToLower(consts.ContentEncoding)],
-		SuccessorModTime: time.Now().UTC(),
+		ContentType:      "",
+		ContentEncoding:  "",
+		Expires:          time.Time{},
+		AccTime:          time.Time{},
+		SuccessorModTime: now,
+	}
+
+	//  Set object content type
+	ctyp := multipart.MetaData[strings.ToLower(consts.ContentType)]
+	if ctyp != nil {
+		object.ContentType = *ctyp
+	}
+
+	// Set object content encoding
+	cecd := multipart.MetaData[strings.ToLower(consts.ContentEncoding)]
+	if cecd != nil {
+		object.ContentEncoding = *cecd
 	}
 
 	// Set object expires
-	exp, e := time.Parse(http.TimeFormat, multipart.MetaData[strings.ToLower(consts.Expires)])
-	if e == nil {
-		object.Expires = exp.UTC()
+	cexp := multipart.MetaData[strings.ToLower(consts.Expires)]
+	if cexp != nil {
+		exp, e := time.Parse(http.TimeFormat, *cexp)
+		if e != nil {
+			object.Expires = exp.UTC()
+		}
 	}
 
 	// Put object

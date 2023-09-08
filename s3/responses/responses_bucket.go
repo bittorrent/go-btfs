@@ -2,6 +2,7 @@ package responses
 
 import (
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/bittorrent/go-btfs/s3/protocol"
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"net/http"
 )
@@ -20,7 +21,7 @@ func WriteHeadBucketResponse(w http.ResponseWriter, r *http.Request) {
 
 func WriteDeleteBucketResponse(w http.ResponseWriter) {
 	output := new(s3.DeleteBucketOutput)
-	_ = WriteResponse(w, http.StatusOK, output, "")
+	_ = protocol.WriteResponse(w, http.StatusOK, output, "")
 	return
 }
 

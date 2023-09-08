@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/cctx"
 	"github.com/bittorrent/go-btfs/s3/consts"
+	"github.com/bittorrent/go-btfs/s3/protocol"
 	"github.com/bittorrent/go-btfs/s3/requests"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/s3utils"
@@ -233,7 +234,7 @@ func (h *Handlers) DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) 
 
 	var input s3.DeleteObjectsInput
 
-	err = responses.ParseRequest(r, &input)
+	err = protocol.ParseRequest(r, &input)
 	if err != nil {
 		rerr := h.respErr(err)
 		responses.WriteErrorResponse(w, r, rerr)

@@ -1,4 +1,4 @@
-package responses
+package protocol
 
 import (
 	"bytes"
