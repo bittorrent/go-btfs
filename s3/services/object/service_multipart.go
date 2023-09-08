@@ -317,8 +317,7 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 	// All parts body readers
 	var readers []io.Reader
 
-	// Try to close all parts body readers, because some or all of
-	// these body may not be used
+	// Try to close all parts body readers
 	defer func() {
 		for _, rdr := range readers {
 			_ = rdr.(io.ReadCloser).Close()
@@ -362,7 +361,7 @@ func (s *service) CompleteMultiPartUpload(ctx context.Context, user, bucname, ob
 		}
 
 		// All parts except the last part has to be at least 5MB.
-		if (i < len(parts)-1) && !(gotPart.Size >= consts.MinPartSize) {
+		if (i < len(parts)-1) && !(gotPart.Size >= 0) {
 			err = s3utils.PartTooSmall{
 				PartNumber: part.PartNumber,
 				PartSize:   gotPart.Size,

@@ -86,25 +86,33 @@ func (h *Handlers) UploadPartHandler(w http.ResponseWriter, r *http.Request) {
 
 	uploadId, partId := *input.UploadId, int(*input.PartNumber)
 	if partId > consts.MaxPartID {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidMaxParts)
+		rerr := responses.ErrInvalidMaxParts
+		err = rerr
+		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
 
 	size := r.ContentLength
 
-	if size == 0 {
-		responses.WriteErrorResponse(w, r, responses.ErrEntityTooSmall)
+	if size <= 0 {
+		rerr := responses.ErrEntityTooSmall
+		err = rerr
+		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
 
 	if size > consts.MaxPartSize {
-		responses.WriteErrorResponse(w, r, responses.ErrEntityTooLarge)
+		rerr := responses.ErrEntityTooLarge
+		err = rerr
+		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
 
 	hrdr, ok := r.Body.(*hash.Reader)
 	if !ok {
-		responses.WriteErrorResponse(w, r, responses.ErrInternalError)
+		rerr := responses.ErrInternalError
+		err = rerr
+		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
 
@@ -192,9 +200,10 @@ func (h *Handlers) CompleteMultipartUploadHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	// Content-Length is required and should be non-zero
 	if r.ContentLength <= 0 {
-		responses.WriteErrorResponse(w, r, responses.ErrMissingContentLength)
+		rerr := responses.ErrMissingContentLength
+		err = rerr
+		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
 
@@ -212,11 +221,12 @@ func (h *Handlers) CompleteMultipartUploadHandler(w http.ResponseWriter, r *http
 			PartNumber: int(*part.PartNumber),
 			ETag:       *part.ETag,
 		})
-
 	}
 
 	if !sort.IsSorted(object.CompletedParts(complUpload.Parts)) {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidPartOrder)
+		rerr := responses.ErrInvalidPartOrder
+		err = rerr
+		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
 
@@ -235,6 +245,6 @@ func (h *Handlers) CompleteMultipartUploadHandler(w http.ResponseWriter, r *http
 	output.SetETag(`"` + obj.ETag + `"`)
 	w.Header().Set(consts.Cid, obj.CID)
 
-	responses.WriteSuccessResponse(w, output, "")
+	responses.WriteSuccessResponse(w, output, "CompleteMultipartUploadResult")
 }
 

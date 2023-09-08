@@ -3,6 +3,7 @@ package object
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/bittorrent/go-btfs/s3/action"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/providers"
@@ -671,7 +672,15 @@ func (s *service) storeBody(ctx context.Context, body io.Reader, toKey string) (
 	return
 }
 
-func (s *service) removeBody(ctx context.Context, cid, toKey string) (err error) {
+func (s *service) removeBody(ctx context.Context, cid, tokey string) (err error) {
+	// Flag to mark cid be referenced by other object
+	otherRef := false
+
+	// Log removing
+	defer func() {
+		fmt.Printf("remove <%s>, ref <%s>, refered - %v, err: %v\n", cid, tokey, otherRef, err)
+	}()
+
 	// Lock all cid refs to enable new cid reference can not be added when
 	// remove is executing
 	err = s.lock.Lock(ctx, s.cidrefSpace)
@@ -681,7 +690,7 @@ func (s *service) removeBody(ctx context.Context, cid, toKey string) (err error)
 	defer s.lock.Unlock(s.cidrefSpace)
 
 	// This object cid reference key
-	crfKey := s.getCidrefKey(cid, toKey)
+	crfKey := s.getCidrefKey(cid, tokey)
 
 	// Delete cid ref of this object
 	err = s.providers.StateStore().Delete(crfKey)
@@ -692,8 +701,6 @@ func (s *service) removeBody(ctx context.Context, cid, toKey string) (err error)
 	// All this cid references prefix
 	allRefsPrefix := s.getAllCidrefsKeyPrefix(cid)
 
-	// Flag to mark cid be referenced by other object
-	otherRef := false
 
 	// Iterate all this cid refs, if exists other object's ref, set
 	// the otherRef mark to true

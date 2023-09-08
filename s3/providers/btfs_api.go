@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"errors"
 	shell "github.com/bittorrent/go-btfs-api"
 	"github.com/mitchellh/go-homedir"
 	"io"
@@ -60,10 +59,7 @@ func (api *BtfsAPI) Store(r io.Reader) (id string, err error) {
 }
 
 func (api *BtfsAPI) Remove(id string) (err error) {
-	ok := api.shell.Remove(id)
-	if !ok {
-		err = errors.New("not removed")
-	}
+	err = api.shell.Unpin(id)
 	return
 }
 

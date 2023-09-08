@@ -32,7 +32,7 @@ func ParseBucket(r *http.Request) (bucket string, rerr *responses.Error) {
 }
 
 func ParseObject(r *http.Request) (object string, rerr *responses.Error) {
-	object, err := unescapePath(mux.Vars(r)["Object"])
+	object, err := unescapePath(mux.Vars(r)["Key"])
 	if err != nil {
 		rerr = responses.ErrInvalidRequestParameter
 	}

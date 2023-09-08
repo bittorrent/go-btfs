@@ -89,7 +89,7 @@ func (routers *Routers) Register() http.Handler {
 	bucket.Methods(http.MethodDelete).HandlerFunc(hs.DeleteBucketHandler)
 
 	// ListBuckets
-	root.Methods(http.MethodGet).Path("/").HandlerFunc(hs.ListBucketsHandler)
+	root.Methods(http.MethodGet).HandlerFunc(hs.ListBucketsHandler)
 
 	// Options
 	root.Methods(http.MethodOptions).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
