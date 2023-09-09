@@ -39,13 +39,13 @@ var defaultCorsHeaders = []string{
 	consts.XRequestWith,
 	consts.Range,
 	consts.UserAgent,
-	"Amz-Sdk-Request",
-	"Amz-Sdk-Invocation-Id",
+	consts.Cid,
+	consts.CidList,
+	"Amz-*",
+	"amz-*",
 	"X-Amz*",
 	"x-amz*",
 	"*",
-	consts.Cid,
-	consts.CidList,
 }
 
 var defaultHeaders = map[string][]string{

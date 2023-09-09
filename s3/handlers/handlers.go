@@ -1,4 +1,4 @@
-// Package handlers is an implementation of s3.Handlerser
+// Package handlers is an implementation of Handlerser
 package handlers
 
 import (

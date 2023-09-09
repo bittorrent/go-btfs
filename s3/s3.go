@@ -40,7 +40,7 @@ func GetProviders() *providers.Providers {
 }
 
 func NewServer(cfg config.S3CompatibleAPI) *server.Server {
-	// lock global multiple keys read write lock
+	// global multiple keys read write lock
 	lock := ctxmu.NewDefaultMultiCtxRWMutex()
 
 	// services
