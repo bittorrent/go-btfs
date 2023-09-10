@@ -49,11 +49,11 @@ var defaultCorsHeaders = []string{
 }
 
 var defaultHeaders = map[string][]string{
-	consts.AccessControlAllowOrigin:      []string{"*"},
+	consts.AccessControlAllowOrigin:      {"*"},
 	consts.AccessControlAllowMethods:     defaultCorsMethods,
 	consts.AccessControlAllowHeaders:     defaultCorsHeaders,
 	consts.AccessControlExposeHeaders:    defaultCorsHeaders,
-	consts.AccessControlAllowCredentials: []string{"true"},
+	consts.AccessControlAllowCredentials: {"true"},
 }
 
 type Option func(handlers *Handlers)

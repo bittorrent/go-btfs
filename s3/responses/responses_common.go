@@ -47,15 +47,6 @@ func WriteSuccessResponse(w http.ResponseWriter, output interface{}, locationNam
 	_ = protocol.WriteResponse(w, http.StatusOK, output, locationName)
 }
 
-func setPutObjHeaders(w http.ResponseWriter, etag, cid string, delete bool) {
-	if etag != "" && !delete {
-		w.Header()[consts.ETag] = []string{`"` + etag + `"`}
-	}
-	if cid != "" {
-		w.Header()[consts.Cid] = []string{cid}
-	}
-}
-
 func pathClean(p string) string {
 	cp := path.Clean(p)
 	if cp == "." {
