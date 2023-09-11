@@ -20,14 +20,14 @@ func (h *Handlers) CreateBucketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.objsvc.CreateBucket(r.Context(), req.AccessKey, req.Bucket, req.Region, req.ACL)
+	buc, err := h.objsvc.CreateBucket(r.Context(), req.AccessKey, req.Bucket, req.Region, req.ACL)
 	if err != nil {
 		rerr = h.respErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
 
-	responses.WriteCreateBucketResponse(w, r)
+	responses.WriteCreateBucketResponse(w, r, buc)
 
 	return
 }
@@ -45,14 +45,14 @@ func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.objsvc.GetBucket(r.Context(), req.AccessKey, req.Bucket)
+	buc, err := h.objsvc.GetBucket(r.Context(), req.AccessKey, req.Bucket)
 	if err != nil {
 		rerr = h.respErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
 
-	responses.WriteHeadBucketResponse(w, r)
+	responses.WriteHeadBucketResponse(w, r, buc)
 
 	return
 }

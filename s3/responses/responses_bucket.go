@@ -2,19 +2,22 @@ package responses
 
 import (
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/protocol"
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"net/http"
 )
 
-func WriteCreateBucketResponse(w http.ResponseWriter, r *http.Request) {
+func WriteCreateBucketResponse(w http.ResponseWriter, r *http.Request, buc *object.Bucket) {
 	output := new(s3.CreateBucketOutput).SetLocation(pathClean(r.URL.Path))
+	w.Header().Add(consts.AmzACL, buc.ACL)
 	WriteSuccessResponse(w, output, "")
 	return
 }
 
-func WriteHeadBucketResponse(w http.ResponseWriter, r *http.Request) {
+func WriteHeadBucketResponse(w http.ResponseWriter, r *http.Request, buc *object.Bucket) {
 	output := new(s3.HeadBucketOutput)
+	w.Header().Add(consts.AmzACL, buc.ACL)
 	WriteSuccessResponse(w, output, "")
 	return
 }
@@ -32,6 +35,7 @@ func WriteListBucketsResponse(w http.ResponseWriter, r *http.Request, accessKey 
 	for _, buc := range buckets {
 		s3Bucket := new(s3.Bucket).SetName(buc.Name).SetCreationDate(buc.Created)
 		s3Buckets = append(s3Buckets, s3Bucket)
+		w.Header().Add(consts.AmzACL, buc.ACL)
 	}
 	output.SetBuckets(s3Buckets)
 	WriteSuccessResponse(w, output, "ListAllMyBucketsResult")
@@ -59,6 +63,7 @@ func WriteGetBucketACLResponse(w http.ResponseWriter, r *http.Request, accessKey
 		panic("unknown acl")
 	}
 	output.SetGrants(grants)
+	w.Header().Add(consts.AmzACL, acl)
 	WriteSuccessResponse(w, output, "AccessControlPolicy")
 	return
 }
