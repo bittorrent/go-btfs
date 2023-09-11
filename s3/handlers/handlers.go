@@ -9,6 +9,7 @@ import (
 	"github.com/bittorrent/go-btfs/s3/services/object"
 	"github.com/bittorrent/go-btfs/s3/services/sign"
 	"github.com/bittorrent/go-btfs/s3/utils/hash"
+	"net/http"
 	"net/url"
 	"runtime"
 )
@@ -16,7 +17,7 @@ import (
 var _ Handlerser = (*Handlers)(nil)
 
 type Handlers struct {
-	headers map[string][]string
+	headers http.Header
 	acksvc  accesskey.Service
 	sigsvc  sign.Service
 	objsvc  object.Service

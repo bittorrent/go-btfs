@@ -48,12 +48,15 @@ var defaultCorsHeaders = []string{
 	"*",
 }
 
+const defaultCorsMaxAge = "36000"
+
 var defaultHeaders = map[string][]string{
 	consts.AccessControlAllowOrigin:      {"*"},
 	consts.AccessControlAllowMethods:     defaultCorsMethods,
 	consts.AccessControlAllowHeaders:     defaultCorsHeaders,
 	consts.AccessControlExposeHeaders:    defaultCorsHeaders,
 	consts.AccessControlAllowCredentials: {"true"},
+	consts.AccessControlMaxAge:           {defaultCorsMaxAge},
 }
 
 type Option func(handlers *Handlers)

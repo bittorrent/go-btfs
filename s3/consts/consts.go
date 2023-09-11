@@ -173,6 +173,7 @@ const (
 	AccessControlAllowHeaders     = "Access-Control-Allow-Headers"
 	AccessControlExposeHeaders    = "Access-Control-Expose-Headers"
 	AccessControlAllowCredentials = "Access-Control-Allow-Credentials"
+	AccessControlMaxAge           = "Access-Control-Max-Age"
 )
 
 // object const

@@ -9,18 +9,20 @@ import (
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
 	rscors "github.com/rs/cors"
 	"net/http"
+	"strconv"
 	"time"
 )
 
 func (h *Handlers) Cors(handler http.Handler) http.Handler {
 	headers := h.headers
-	cred := len(headers[consts.AccessControlAllowCredentials]) > 0 &&
-		headers[consts.AccessControlAllowCredentials][0] == "true"
+	cred := headers.Get(consts.AccessControlAllowCredentials) == "true"
+	maxAge, _ := strconv.Atoi(headers.Get(consts.AccessControlMaxAge))
 	ch := rscors.New(rscors.Options{
-		AllowedOrigins:   headers[consts.AccessControlAllowOrigin],
-		AllowedMethods:   headers[consts.AccessControlAllowMethods],
-		AllowedHeaders:   headers[consts.AccessControlExposeHeaders],
-		ExposedHeaders:   headers[consts.AccessControlAllowHeaders],
+		AllowedOrigins:   headers.Values(consts.AccessControlAllowOrigin),
+		AllowedMethods:   headers.Values(consts.AccessControlAllowMethods),
+		AllowedHeaders:   headers.Values(consts.AccessControlAllowHeaders),
+		ExposedHeaders:   headers.Values(consts.AccessControlExposeHeaders),
+		MaxAge:           maxAge,
 		AllowCredentials: cred,
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
