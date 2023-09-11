@@ -40,7 +40,6 @@ var defaultCorsHeaders = []string{
 	consts.Range,
 	consts.UserAgent,
 	consts.Cid,
-	consts.CidList,
 	"Amz-*",
 	"amz-*",
 	"X-Amz*",

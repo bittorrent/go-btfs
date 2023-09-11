@@ -93,7 +93,7 @@ func WriteListObjectsResponse(w http.ResponseWriter, r *http.Request, accessKey,
 		s3Obj.SetSize(obj.Size)
 		s3Obj.SetStorageClass("")
 		s3Objs[i] = s3Obj
-		w.Header().Add(consts.CidList, obj.CID)
+		w.Header().Add(consts.Cid, obj.CID)
 	}
 	out.SetContents(s3Objs)
 	s3CommPrefixes := make([]*s3.CommonPrefix, len(list.Prefixes))
@@ -127,7 +127,7 @@ func WriteListObjectsV2Response(w http.ResponseWriter, r *http.Request, accessKe
 		s3Obj.SetSize(obj.Size)
 		s3Obj.SetStorageClass("")
 		s3Objs[i] = s3Obj
-		w.Header().Add(consts.CidList, obj.CID)
+		w.Header().Add(consts.Cid, obj.CID)
 	}
 	out.SetContents(s3Objs)
 	s3CommPrefixes := make([]*s3.CommonPrefix, len(list.Prefixes))

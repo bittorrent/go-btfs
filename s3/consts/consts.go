@@ -163,7 +163,6 @@ const (
 	Range              = "Range"
 	UserAgent          = "User-Agent"
 	Cid                = "Cid"
-	CidList            = "Cid-List"
 )
 
 // Standard HTTP cors headers
