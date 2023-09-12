@@ -138,6 +138,7 @@ func getInputValue(input interface{}) (inv reflect.Value, err error) {
 func parseLocation(r *http.Request, inv reflect.Value) (err error) {
 	query := r.URL.Query()
 
+loop:
 	for i := 0; i < inv.NumField(); i++ {
 		fv := inv.Field(i)
 		ft := inv.Type().Field(i)
@@ -171,15 +172,13 @@ func parseLocation(r *http.Request, inv reflect.Value) (err error) {
 			err = parseLocationValue(locVal, fv, ft.Tag)
 		case "querystring":
 			err = parseQueryString(query, fv, name, ft.Tag)
+		default:
+			continue loop
 		}
-
 		if err != nil {
 			return
 		}
-
-		required := ft.Tag.Get("required") == "true"
-
-		if required && !reflect.Indirect(fv).IsValid() {
+		if ft.Tag.Get("required") == "true" && !reflect.Indirect(fv).IsValid() {
 			err = fmt.Errorf("field %s is required", ft.Name)
 			return
 		}
