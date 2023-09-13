@@ -614,3 +614,61 @@ func (s *service) getObject(objkey string) (object *Object, err error) {
 	}
 	return
 }
+
+// GetObjectACL get user specified object ACL(bucket acl)
+func (s *service) GetObjectACL(ctx context.Context, user, bucname, objname string) (acl string, err error) {
+	// Operation context
+	ctx, cancel := s.opctx(ctx)
+	defer cancel()
+
+	// Bucket key
+	buckey := s.getBucketKey(bucname)
+
+	// RLock bucket
+	err = s.lock.RLock(ctx, buckey)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(buckey)
+
+	// Get bucket
+	bucket, err := s.getBucket(buckey)
+	if err != nil {
+		return
+	}
+	if bucket == nil {
+		err = ErrBucketNotFound
+		return
+	}
+
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.GetBucketAclAction)
+	if !allow {
+		err = ErrNotAllowed
+		return
+	}
+
+	// Object key
+	objkey := s.getObjectKey(bucname, objname)
+
+	// RLock object
+	err = s.lock.RLock(ctx, objkey)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(objkey)
+
+	// Get object
+	object, err := s.getObject(objkey)
+	if err != nil {
+		return
+	}
+	if object == nil {
+		err = ErrObjectNotFound
+	}
+
+	// Get ACL field value
+	acl = bucket.ACL
+
+	return
+}

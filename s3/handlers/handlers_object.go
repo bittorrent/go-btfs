@@ -337,14 +337,14 @@ func (h *Handlers) GetObjectACLHandler(w http.ResponseWriter, r *http.Request) {
 		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
-	bucname, _, rerr := requests.ParseBucketAndObject(r)
+	bucname, objname, rerr := requests.ParseBucketAndObject(r)
 	if rerr != nil {
 		err = rerr
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
 
-	acl, err := h.objsvc.GetBucketACL(ctx, ack, bucname)
+	acl, err := h.objsvc.GetObjectACL(ctx, ack, bucname, objname)
 	if err != nil {
 		rerr = h.respErr(err)
 		responses.WriteErrorResponse(w, r, rerr)

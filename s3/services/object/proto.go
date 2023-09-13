@@ -31,6 +31,7 @@ type Service interface {
 	DeleteObject(ctx context.Context, user, bucname, objname string) (err error)
 	ListObjects(ctx context.Context, user, bucname, prefix, delimiter, marker string, max int64) (list *ObjectsList, err error)
 	ListObjectsV2(ctx context.Context, user string, bucket string, prefix string, token, delimiter string, max int64, owner bool, after string) (list *ObjectsListV2, err error)
+	GetObjectACL(ctx context.Context, user, bucname, objname string) (acl string, err error)
 
 	CreateMultipartUpload(ctx context.Context, user, bucname, objname string, meta map[string]*string) (multipart *Multipart, err error)
 	UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, reader *hash.Reader, size int64) (part *Part, err error)
