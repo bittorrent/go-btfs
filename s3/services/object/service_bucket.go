@@ -11,13 +11,13 @@ import (
 )
 
 // CreateBucket create a new bucket for the specified user
-func (s *service) CreateBucket(ctx context.Context, user, bucname, region, acl string) (bucket *Bucket, err error) {
+func (s *service) CreateBucket(ctx context.Context, args *CreateBucketArgs) (bucket *Bucket, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
 	// Bucket key
-	buckey := s.getBucketKey(bucname)
+	buckey := s.getBucketKey(args.Bucket)
 
 	// Lock bucket
 	err = s.lock.Lock(ctx, buckey)
@@ -37,19 +37,22 @@ func (s *service) CreateBucket(ctx context.Context, user, bucname, region, acl s
 	}
 
 	// Check action ACL
-	allow := s.checkACL(user, policy.Private, user, action.CreateBucketAction)
+	allow := s.checkACL(args.AccessKey, policy.Private, args.AccessKey, action.CreateBucketAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
+	// now
+	now := time.Now().UTC()
+
 	// Bucket
 	bucket = &Bucket{
-		Name:    bucname,
-		Region:  region,
-		Owner:   user,
-		ACL:     acl,
-		Created: time.Now().UTC(),
+		Name:    args.Bucket,
+		Region:  args.Region,
+		Owner:   args.AccessKey,
+		ACL:     args.ACL,
+		Created: now,
 	}
 
 	// Put bucket
@@ -59,13 +62,13 @@ func (s *service) CreateBucket(ctx context.Context, user, bucname, region, acl s
 }
 
 // GetBucket get a user specified bucket
-func (s *service) GetBucket(ctx context.Context, user, bucname string) (bucket *Bucket, err error) {
+func (s *service) GetBucket(ctx context.Context, args *GetBucketArgs) (bucket *Bucket, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
 	// Bucket key
-	buckey := s.getBucketKey(bucname)
+	buckey := s.getBucketKey(args.Bucket)
 
 	// RLock bucket
 	err = s.lock.RLock(ctx, buckey)
@@ -85,7 +88,7 @@ func (s *service) GetBucket(ctx context.Context, user, bucname string) (bucket *
 	}
 
 	// Check action ACL
-	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.HeadBucketAction)
+	allow := s.checkACL(bucket.Owner, bucket.ACL, args.AccessKey, action.HeadBucketAction)
 	if !allow {
 		err = ErrNotAllowed
 	}
@@ -94,13 +97,13 @@ func (s *service) GetBucket(ctx context.Context, user, bucname string) (bucket *
 }
 
 // DeleteBucket delete a user specified bucket and clear all bucket objects and uploads
-func (s *service) DeleteBucket(ctx context.Context, user, bucname string) (err error) {
+func (s *service) DeleteBucket(ctx context.Context, args *DeleteBucketArgs) (err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
 	// Bucket key
-	buckey := s.getBucketKey(bucname)
+	buckey := s.getBucketKey(args.Bucket)
 
 	// Lock bucket
 	err = s.lock.Lock(ctx, buckey)
@@ -120,19 +123,19 @@ func (s *service) DeleteBucket(ctx context.Context, user, bucname string) (err e
 	}
 
 	// Check action ACL
-	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.DeleteBucketAction)
+	allow := s.checkACL(bucket.Owner, bucket.ACL, args.AccessKey, action.DeleteBucketAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
 	// Check if bucket is empty
-	empty, err := s.isBucketEmpty(bucname)
+	empty, err := s.isBucketEmpty(args.Bucket)
 	if err != nil {
 		return
 	}
 	if !empty {
-		err = ErrBucketeNotEmpty
+		err = ErrBucketNotEmpty
 		return
 	}
 
@@ -142,18 +145,19 @@ func (s *service) DeleteBucket(ctx context.Context, user, bucname string) (err e
 	return
 }
 
-// GetAllBuckets get all buckets of the specified user
-func (s *service) GetAllBuckets(ctx context.Context, user string) (list []*Bucket, err error) {
+// ListBuckets list all buckets of the specified user
+func (s *service) ListBuckets(ctx context.Context, args *ListBucketsArgs) (list []*Bucket, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
 	// Check action ACL
-	allow := s.checkACL(user, policy.Private, user, action.ListBucketAction)
+	allow := s.checkACL(args.AccessKey, policy.Private, args.AccessKey, action.ListBucketAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
+
 	// All buckets prefix
 	bucketsPrefix := s.getAllBucketsKeyPrefix()
 
@@ -181,7 +185,7 @@ func (s *service) GetAllBuckets(ctx context.Context, user string) (list []*Bucke
 		}
 
 		// Collect user's bucket
-		if bucket.Owner == user {
+		if bucket.Owner == args.AccessKey {
 			list = append(list, bucket)
 		}
 
@@ -192,13 +196,13 @@ func (s *service) GetAllBuckets(ctx context.Context, user string) (list []*Bucke
 }
 
 // PutBucketACL update user specified bucket's ACL field value
-func (s *service) PutBucketACL(ctx context.Context, user, bucname, acl string) (err error) {
+func (s *service) PutBucketACL(ctx context.Context, args *PutBucketACLArgs) (err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
 	// Bucket key
-	buckey := s.getBucketKey(bucname)
+	buckey := s.getBucketKey(args.Bucket)
 
 	// Lock bucket
 	err = s.lock.Lock(ctx, buckey)
@@ -218,14 +222,14 @@ func (s *service) PutBucketACL(ctx context.Context, user, bucname, acl string) (
 	}
 
 	// Check action ACL
-	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.PutBucketAclAction)
+	allow := s.checkACL(bucket.Owner, bucket.ACL, args.AccessKey, action.PutBucketAclAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
 	// Update bucket ACL
-	bucket.ACL = acl
+	bucket.ACL = args.ACL
 
 	// Put bucket
 	err = s.providers.StateStore().Put(buckey, bucket)
@@ -234,13 +238,13 @@ func (s *service) PutBucketACL(ctx context.Context, user, bucname, acl string) (
 }
 
 // GetBucketACL get user specified bucket ACL field value
-func (s *service) GetBucketACL(ctx context.Context, user, bucname string) (acl string, err error) {
+func (s *service) GetBucketACL(ctx context.Context, args *GetBucketACLArgs) (acl string, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
 	// Bucket key
-	buckey := s.getBucketKey(bucname)
+	buckey := s.getBucketKey(args.Bucket)
 
 	// RLock bucket
 	err = s.lock.RLock(ctx, buckey)
@@ -260,7 +264,7 @@ func (s *service) GetBucketACL(ctx context.Context, user, bucname string) (acl s
 	}
 
 	// Check action ACL
-	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.GetBucketAclAction)
+	allow := s.checkACL(bucket.Owner, bucket.ACL, args.AccessKey, action.GetBucketAclAction)
 	if !allow {
 		err = ErrNotAllowed
 		return

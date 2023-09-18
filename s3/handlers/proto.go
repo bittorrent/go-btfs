@@ -17,20 +17,20 @@ type Handlerser interface {
 	HeadBucketHandler(w http.ResponseWriter, r *http.Request)
 	DeleteBucketHandler(w http.ResponseWriter, r *http.Request)
 	ListBucketsHandler(w http.ResponseWriter, r *http.Request)
-	GetBucketAclHandler(w http.ResponseWriter, r *http.Request)
 	PutBucketAclHandler(w http.ResponseWriter, r *http.Request)
+	GetBucketAclHandler(w http.ResponseWriter, r *http.Request)
 
 	// Object
 
 	PutObjectHandler(w http.ResponseWriter, r *http.Request)
-	HeadObjectHandler(w http.ResponseWriter, r *http.Request)
 	CopyObjectHandler(w http.ResponseWriter, r *http.Request)
+	HeadObjectHandler(w http.ResponseWriter, r *http.Request)
+	GetObjectHandler(w http.ResponseWriter, r *http.Request)
 	DeleteObjectHandler(w http.ResponseWriter, r *http.Request)
 	DeleteObjectsHandler(w http.ResponseWriter, r *http.Request)
-	GetObjectHandler(w http.ResponseWriter, r *http.Request)
-	GetObjectACLHandler(w http.ResponseWriter, r *http.Request)
 	ListObjectsHandler(w http.ResponseWriter, r *http.Request)
 	ListObjectsV2Handler(w http.ResponseWriter, r *http.Request)
+	GetObjectACLHandler(w http.ResponseWriter, r *http.Request)
 
 	// Multipart
 

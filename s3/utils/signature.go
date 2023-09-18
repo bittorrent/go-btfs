@@ -103,7 +103,7 @@ func SignRequestV4(req *http.Request, accessKey, secretKey string, st ServiceTyp
 	//req.Form.Add(b,string(a))
 	//queryStr := req.Form.Encode()
 	queryStr := req.URL.Query().Encode()
-	region := consts.DefaultLocation
+	region := consts.DefaultBucketRegion
 	// Get scope.
 	scope := strings.Join([]string{
 		currTime.Format(yyyymmdd),

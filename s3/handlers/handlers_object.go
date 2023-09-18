@@ -2,15 +2,11 @@ package handlers
 
 import (
 	"encoding/base64"
-	"errors"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/cctx"
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/protocol"
 	"github.com/bittorrent/go-btfs/s3/requests"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/s3utils"
-	"github.com/bittorrent/go-btfs/s3/utils/hash"
 	"net/http"
 	"net/url"
 	"path"
@@ -18,342 +14,150 @@ import (
 	"strings"
 )
 
+// PutObjectHandler .
 func (h *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ack := cctx.GetAccessKey(r)
 	var err error
 	defer func() {
 		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
-	if _, ok := r.Header[consts.AmzCopySource]; ok {
-		err = errors.New("shouldn't be copy")
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidCopySource)
-		return
-	}
-
-	bucname, objname, rerr := requests.ParseBucketAndObject(r)
-	if rerr != nil {
-		err = rerr
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	_, rerr = requests.ParseObjectACL(r)
-	if rerr != nil {
-		err = rerr
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	err = s3utils.CheckPutObjectArgs(ctx, bucname, objname)
+	args, err := requests.ParsePutObjectRequest(r)
 	if err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
 		return
 	}
 
-	meta, err := extractMetadata(ctx, r)
+	obj, err := h.objsvc.PutObject(ctx, args)
 	if err != nil {
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidRequest)
-		return
-	}
-
-	if r.ContentLength == 0 {
-		responses.WriteErrorResponse(w, r, responses.ErrEntityTooSmall)
-		return
-	}
-
-	body, ok := r.Body.(*hash.Reader)
-	if !ok {
-		responses.WriteErrorResponse(w, r, responses.ErrInternalError)
-		return
-	}
-
-	obj, err := h.objsvc.PutObject(ctx, ack, bucname, objname, body, r.ContentLength, meta)
-	if err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
 		return
 	}
 
 	responses.WritePutObjectResponse(w, r, obj)
-
 	return
 }
 
-func (h *Handlers) HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	ack := cctx.GetAccessKey(r)
-	var err error
-	defer func() {
-		cctx.SetHandleInf(r, h.name(), err)
-	}()
-
-	bucname, objname, rerr := requests.ParseBucketAndObject(r)
-	if rerr != nil {
-		err = rerr
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	err = s3utils.CheckGetObjArgs(ctx, bucname, objname)
-	if err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	//objsvc
-	obj, _, err := h.objsvc.GetObject(ctx, ack, bucname, objname, false)
-	if err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	responses.WriteHeadObjectResponse(w, r, obj)
-}
-
+// CopyObjectHandler .
 func (h *Handlers) CopyObjectHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ack := cctx.GetAccessKey(r)
 	var err error
 	defer func() {
 		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
-	dstBucket, dstObject, rerr := requests.ParseBucketAndObject(r)
-	if rerr != nil {
-		err = rerr
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	err = s3utils.CheckPutObjectArgs(ctx, dstBucket, dstObject)
+	args, err := requests.ParseCopyObjectRequest(r)
 	if err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
 		return
 	}
 
-	// Copy source path.
-	cpSrcPath, err := url.QueryUnescape(r.Header.Get(consts.AmzCopySource))
+	obj, err := h.objsvc.CopyObject(ctx, args)
 	if err != nil {
-		// Save unescaped string as is.
-		cpSrcPath = r.Header.Get(consts.AmzCopySource)
-		err = nil
-	}
-
-	srcBucket, srcObject := pathToBucketAndObject(cpSrcPath)
-	// If source object is empty or bucket is empty, reply back invalid copy source.
-	if srcObject == "" || srcBucket == "" {
-		err = responses.ErrInvalidCopySource
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidCopySource)
-		return
-	}
-	if err = s3utils.CheckGetObjArgs(ctx, srcBucket, srcObject); err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-	if srcBucket == dstBucket && srcObject == dstObject {
-		err = responses.ErrInvalidCopyDest
-		responses.WriteErrorResponse(w, r, responses.ErrInvalidCopyDest)
-		return
-	}
-
-	metadata := make(map[string]string)
-	if isReplace(r) {
-		var inputMeta map[string]string
-		inputMeta, err = extractMetadata(ctx, r)
-		if err != nil {
-			rerr = h.respErr(err)
-			responses.WriteErrorResponse(w, r, rerr)
-			return
-		}
-		for key, val := range inputMeta {
-			metadata[key] = val
-		}
-	}
-
-	//objsvc
-	obj, err := h.objsvc.CopyObject(ctx, ack, srcBucket, srcObject, dstBucket, dstObject, metadata)
-	if err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
 		return
 	}
 
 	responses.WriteCopyObjectResponse(w, r, obj)
+	return
 }
 
-// DeleteObjectHandler - delete an object
-// https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
-func (h *Handlers) DeleteObjectHandler(w http.ResponseWriter, r *http.Request) {
+// HeadObjectHandler .
+func (h *Handlers) HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ack := cctx.GetAccessKey(r)
 	var err error
 	defer func() {
 		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
-	bucname, objname, rerr := requests.ParseBucketAndObject(r)
-	if rerr != nil {
-		err = rerr
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	err = s3utils.CheckDelObjArgs(ctx, bucname, objname)
+	args, err := requests.ParseHeadObjectRequest(r)
 	if err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
 		return
 	}
 
-	err = h.objsvc.DeleteObject(ctx, ack, bucname, objname)
+	obj, _, err := h.objsvc.GetObject(ctx, args)
 	if err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
 		return
 	}
 
-	responses.WriteDeleteObjectResponse(w, r, nil)
+	responses.WriteHeadObjectResponse(w, r, obj)
+	return
 }
 
-// DeleteObjectsHandler - delete objects
-// https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjects.html
-func (h *Handlers) DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	ack := cctx.GetAccessKey(r)
-	var err error
-	defer func() {
-		cctx.SetHandleInf(r, h.name(), err)
-	}()
-
-	var input s3.DeleteObjectsInput
-
-	err = protocol.ParseRequest(r, &input)
-	if err != nil {
-		rerr := h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	if input.Delete == nil ||
-		len(input.Delete.Objects) == 0 ||
-		len(input.Delete.Objects) > consts.MaxDeleteList {
-		rerr := responses.ErrMalformedXML
-		err = rerr
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	bucname := *input.Bucket
-
-	_, err = h.objsvc.GetBucket(ctx, ack, bucname)
-	if err != nil {
-		rerr := h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	output := new(s3.DeleteObjectsOutput)
-	delObjs := make([]*s3.DeletedObject, 0)
-	delErrs := make([]*s3.Error, 0)
-	for _, obj := range input.Delete.Objects {
-		objname := *obj.Key
-		er := s3utils.CheckDelObjArgs(ctx, bucname, objname)
-		if er != nil {
-			rerr := h.respErr(er)
-			derr := new(s3.Error)
-			derr.SetCode(rerr.Code())
-			derr.SetMessage(rerr.Description())
-			derr.SetKey(objname)
-			delErrs = append(delErrs, derr)
-			continue
-		}
-		er = h.objsvc.DeleteObject(ctx, ack, bucname, objname)
-		if er != nil {
-			rerr := h.respErr(er)
-			derr := new(s3.Error)
-			derr.SetCode(rerr.Code())
-			derr.SetMessage(rerr.Description())
-			derr.SetKey(objname)
-			delErrs = append(delErrs, derr)
-		} else {
-			dobj := new(s3.DeletedObject)
-			dobj.SetKey(objname)
-			delObjs = append(delObjs, dobj)
-		}
-	}
-
-	output.SetDeleted(delObjs)
-	output.SetErrors(delErrs)
-
-	responses.WriteSuccessResponse(w, output, "DeleteResult")
-}
-
-// GetObjectHandler - GET Object
-// https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
+// GetObjectHandler .
 func (h *Handlers) GetObjectHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ack := cctx.GetAccessKey(r)
 	var err error
 	defer func() {
 		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
-	bucname, objname, rerr := requests.ParseBucketAndObject(r)
-	if rerr != nil {
-		err = rerr
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	if err = s3utils.CheckGetObjArgs(ctx, bucname, objname); err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	obj, body, err := h.objsvc.GetObject(ctx, ack, bucname, objname, true)
+	args, err := requests.ParseGetObjectRequest(r)
 	if err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
+		return
+	}
+
+	obj, body, err := h.objsvc.GetObject(ctx, args)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
 		return
 	}
 
 	responses.WriteGetObjectResponse(w, r, obj, body)
+	return
 }
 
-// GetObjectACLHandler - GET Object ACL
-func (h *Handlers) GetObjectACLHandler(w http.ResponseWriter, r *http.Request) {
+// DeleteObjectHandler .
+func (h *Handlers) DeleteObjectHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ack := cctx.GetAccessKey(r)
 	var err error
 	defer func() {
 		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
-	bucname, objname, rerr := requests.ParseBucketAndObject(r)
-	if rerr != nil {
-		err = rerr
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	acl, err := h.objsvc.GetObjectACL(ctx, ack, bucname, objname)
+	args, err := requests.ParseDeleteObjectRequest(r)
 	if err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
+		return
+	}
+	err = h.objsvc.DeleteObject(ctx, args)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
 		return
 	}
 
-	responses.WriteGetObjectACLResponse(w, r, ack, acl)
+	responses.WriteDeleteObjectResponse(w, r, nil)
+	return
 }
 
+// DeleteObjectsHandler .
+func (h *Handlers) DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var err error
+	defer func() {
+		cctx.SetHandleInf(r, h.name(), err)
+	}()
+
+	args, err := requests.ParseDeleteObjectsRequest(r)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
+		return
+	}
+
+	deletedObjects, err := h.objsvc.DeleteObjects(ctx, args)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
+		return
+	}
+
+	responses.WriteDeleteObjectsResponse(w, r, h.toRespErr, deletedObjects)
+	return
+}
+
+// ListObjectsHandler .
 func (h *Handlers) ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ack := cctx.GetAccessKey(r)
@@ -362,35 +166,20 @@ func (h *Handlers) ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 		cctx.SetHandleInf(r, h.name(), err)
 	}()
 
-	bucname, rerr := requests.ParseBucket(r)
-	if rerr != nil {
-		err = rerr
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	// Extract all the listsObjectsV1 query params to their native values.
-	prefix, marker, delimiter, maxKeys, encodingType, rerr := getListObjectsV1Args(r.Form)
-	if rerr != nil {
-		err = rerr
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-
-	err = s3utils.CheckListObjsArgs(ctx, bucname, prefix, marker)
+	args, err := requests.ParseListObjectsRequest(r)
 	if err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
-		return
-	}
-	list, err := h.objsvc.ListObjects(ctx, ack, bucname, prefix, delimiter, marker, maxKeys)
-	if err != nil {
-		rerr = h.respErr(err)
-		responses.WriteErrorResponse(w, r, rerr)
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
 		return
 	}
 
-	responses.WriteListObjectsResponse(w, r, ack, bucname, prefix, marker, delimiter, encodingType, maxKeys, list)
+	list, err := h.objsvc.ListObjects(ctx, args)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, h.toRespErr(err))
+		return
+	}
+
+	responses.WriteListObjectsResponse(w, r, ack, list)
+	return
 }
 
 func (h *Handlers) ListObjectsV2Handler(w http.ResponseWriter, r *http.Request) {
@@ -423,7 +212,7 @@ func (h *Handlers) ListObjectsV2Handler(w http.ResponseWriter, r *http.Request) 
 	}
 	err = s3utils.CheckListObjsArgs(ctx, bucname, prefix, marker)
 	if err != nil {
-		rerr = h.respErr(err)
+		rerr = h.toRespErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
@@ -440,7 +229,7 @@ func (h *Handlers) ListObjectsV2Handler(w http.ResponseWriter, r *http.Request) 
 	list, err := h.objsvc.ListObjectsV2(ctx, ack, bucname, prefix, token, delimiter,
 		maxKeys, fetchOwner, startAfter)
 	if err != nil {
-		rerr = h.respErr(err)
+		rerr = h.toRespErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
@@ -449,17 +238,31 @@ func (h *Handlers) ListObjectsV2Handler(w http.ResponseWriter, r *http.Request) 
 		delimiter, encodingType, maxKeys, list)
 }
 
-func pathToBucketAndObject(path string) (bucket, object string) {
-	path = strings.TrimPrefix(path, consts.SlashSeparator)
-	idx := strings.Index(path, consts.SlashSeparator)
-	if idx < 0 {
-		return path, ""
-	}
-	return path[:idx], path[idx+len(consts.SlashSeparator):]
-}
+// GetObjectACLHandler - GET Object ACL
+func (h *Handlers) GetObjectACLHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var err error
+	defer func() {
+		cctx.SetHandleInf(r, h.name(), err)
+	}()
 
-func isReplace(r *http.Request) bool {
-	return r.Header.Get("X-Amz-Metadata-Directive") == "REPLACE"
+	args, err := requests.ParseGetBucketACLRequest()
+
+	bucname, objname, rerr := requests.ParseBucketAndObject(r)
+	if rerr != nil {
+		err = rerr
+		responses.WriteErrorResponse(w, r, rerr)
+		return
+	}
+
+	acl, err := h.objsvc.GetObjectACL(ctx, ack, bucname, objname)
+	if err != nil {
+		rerr = h.toRespErr(err)
+		responses.WriteErrorResponse(w, r, rerr)
+		return
+	}
+
+	responses.WriteGetObjectACLResponse(w, r, ack, acl)
 }
 
 // Parse bucket url queries

@@ -4,7 +4,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/cctx"
 	"github.com/bittorrent/go-btfs/s3/consts"
-	"github.com/bittorrent/go-btfs/s3/protocol"
+	"github.com/bittorrent/go-btfs/s3/requests"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/s3utils"
 	"github.com/bittorrent/go-btfs/s3/services/object"
@@ -23,7 +23,7 @@ func (h *Handlers) CreateMultipartUploadHandler(w http.ResponseWriter, r *http.R
 
 	var input s3.CreateMultipartUploadInput
 
-	err = protocol.ParseRequest(r, &input)
+	err = requests.ParseInput(r, &input)
 	if err != nil {
 		rerr := responses.ErrBadRequest
 		responses.WriteErrorResponse(w, r, rerr)
@@ -34,7 +34,7 @@ func (h *Handlers) CreateMultipartUploadHandler(w http.ResponseWriter, r *http.R
 
 	err = s3utils.CheckNewMultipartArgs(ctx, bucname, objname)
 	if err != nil {
-		rerr := h.respErr(err)
+		rerr := h.toRespErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
@@ -43,7 +43,7 @@ func (h *Handlers) CreateMultipartUploadHandler(w http.ResponseWriter, r *http.R
 
 	mtp, err := h.objsvc.CreateMultipartUpload(ctx, ack, bucname, objname, meta)
 	if err != nil {
-		rerr := h.respErr(err)
+		rerr := h.toRespErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
@@ -68,7 +68,7 @@ func (h *Handlers) UploadPartHandler(w http.ResponseWriter, r *http.Request) {
 
 	var input s3.UploadPartInput
 
-	err = protocol.ParseRequest(r, &input)
+	err = requests.ParseInput(r, &input)
 	if err != nil {
 		rerr := responses.ErrBadRequest
 		responses.WriteErrorResponse(w, r, rerr)
@@ -79,7 +79,7 @@ func (h *Handlers) UploadPartHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = s3utils.CheckPutObjectPartArgs(ctx, bucname, objname)
 	if err != nil {
-		rerr := h.respErr(err)
+		rerr := h.toRespErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
@@ -118,7 +118,7 @@ func (h *Handlers) UploadPartHandler(w http.ResponseWriter, r *http.Request) {
 
 	part, err := h.objsvc.UploadPart(ctx, ack, bucname, objname, uploadId, partId, hrdr, size)
 	if err != nil {
-		rerr := h.respErr(err)
+		rerr := h.toRespErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
@@ -142,7 +142,7 @@ func (h *Handlers) AbortMultipartUploadHandler(w http.ResponseWriter, r *http.Re
 
 	var input s3.AbortMultipartUploadInput
 
-	err = protocol.ParseRequest(r, &input)
+	err = requests.ParseInput(r, &input)
 	if err != nil {
 		rerr := responses.ErrBadRequest
 		responses.WriteErrorResponse(w, r, rerr)
@@ -153,7 +153,7 @@ func (h *Handlers) AbortMultipartUploadHandler(w http.ResponseWriter, r *http.Re
 
 	err = s3utils.CheckAbortMultipartArgs(ctx, bucname, objname)
 	if err != nil {
-		rerr := h.respErr(err)
+		rerr := h.toRespErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
@@ -162,7 +162,7 @@ func (h *Handlers) AbortMultipartUploadHandler(w http.ResponseWriter, r *http.Re
 
 	err = h.objsvc.AbortMultipartUpload(ctx, ack, bucname, objname, uploadId)
 	if err != nil {
-		rerr := h.respErr(err)
+		rerr := h.toRespErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
@@ -184,7 +184,7 @@ func (h *Handlers) CompleteMultipartUploadHandler(w http.ResponseWriter, r *http
 
 	var input s3.CompleteMultipartUploadInput
 
-	err = protocol.ParseRequest(r, &input)
+	err = requests.ParseInput(r, &input)
 	if err != nil {
 		rerr := responses.ErrBadRequest
 		responses.WriteErrorResponse(w, r, rerr)
@@ -195,7 +195,7 @@ func (h *Handlers) CompleteMultipartUploadHandler(w http.ResponseWriter, r *http
 
 	err = s3utils.CheckCompleteMultipartArgs(ctx, bucname, objname)
 	if err != nil {
-		rerr := h.respErr(err)
+		rerr := h.toRespErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}
@@ -234,7 +234,7 @@ func (h *Handlers) CompleteMultipartUploadHandler(w http.ResponseWriter, r *http
 
 	obj, err := h.objsvc.CompleteMultiPartUpload(ctx, ack, bucname, objname, uploadId, complUpload.Parts)
 	if err != nil {
-		rerr := h.respErr(err)
+		rerr := h.toRespErr(err)
 		responses.WriteErrorResponse(w, r, rerr)
 		return
 	}

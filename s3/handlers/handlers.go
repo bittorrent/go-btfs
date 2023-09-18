@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"context"
+	"github.com/bittorrent/go-btfs/s3/requests"
 	"github.com/bittorrent/go-btfs/s3/responses"
 	"github.com/bittorrent/go-btfs/s3/s3utils"
 	"github.com/bittorrent/go-btfs/s3/services/accesskey"
@@ -43,11 +44,43 @@ func (h *Handlers) name() string {
 	return f.Name()
 }
 
-func (h *Handlers) respErr(err error) (rerr *responses.Error) {
+func (h *Handlers) toRespErr(err error) (rerr *responses.Error) {
 	switch err {
+
+	// requests errors
+	case requests.ErrBucketNameInvalid:
+		rerr = responses.ErrInvalidBucketName
+	case requests.ErrObjectNameInvalid:
+		rerr = responses.ErrInvalidObjectName
+	case requests.ErrObjectNameTooLong:
+		rerr = responses.ErrKeyTooLongError
+	case requests.ErrObjectNamePrefixSlash:
+		rerr = responses.ErrInvalidObjectNamePrefixSlash
+	case requests.ErrRegionUnsupported:
+		rerr = responses.ErrInvalidRegion
+	case requests.ErrACLUnsupported:
+		rerr = responses.ErrMalformedACLError
+	case requests.ErrInvalidContentMd5:
+		rerr = responses.ErrInvalidDigest
+	case requests.ErrInvalidChecksumSha256:
+		rerr = responses.ErrContentSHA256Mismatch
+	case requests.ErrContentLengthMissing:
+		rerr = responses.ErrMissingContentLength
+	case requests.ErrContentLengthTooLarge:
+		rerr = responses.ErrEntityTooLarge
+	case requests.ErrCopySrcInvalid:
+		rerr = responses.ErrInvalidCopySource
+	case requests.ErrCopyDestInvalid:
+		rerr = responses.ErrInvalidCopyDest
+	case requests.ErrMaxKeysInvalid:
+		rerr = responses.ErrInvalidMaxKeys
+	case requests.ErrMarkerPrefixCombinationInvalid:
+		rerr = responses.ErrInvalidRequest
+
+	// object service errors
 	case object.ErrBucketNotFound:
 		rerr = responses.ErrNoSuchBucket
-	case object.ErrBucketeNotEmpty:
+	case object.ErrBucketNotEmpty:
 		rerr = responses.ErrBucketNotEmpty
 	case object.ErrObjectNotFound:
 		rerr = responses.ErrNoSuchKey
@@ -63,6 +96,15 @@ func (h *Handlers) respErr(err error) (rerr *responses.Error) {
 		rerr = responses.ErrOperationTimedOut
 	default:
 		switch err.(type) {
+		case requests.ErrFailedParseValue:
+			rerr = responses.ErrInvalidRequest
+		case requests.ErrFailedDecodeXML:
+			rerr = responses.ErrMalformedXML
+		case requests.ErrMissingRequiredParam:
+			rerr = responses.ErrInvalidRequest
+		case requests.ErrWithUnsupportedParam:
+			rerr = responses.ErrNotImplemented
+
 		case hash.SHA256Mismatch:
 			rerr = responses.ErrContentSHA256Mismatch
 		case hash.BadDigest:

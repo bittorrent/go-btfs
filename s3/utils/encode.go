@@ -2,8 +2,8 @@ package utils
 
 import "strings"
 
-// S3EncodeName encodes string in response when encodingType is specified in AWS S3 requests.
-func S3EncodeName(name string, encodingType string) (result string) {
+// S3Encode encodes string in response when encodingType is specified in AWS S3 requests.
+func S3Encode(name string, encodingType string) (result string) {
 	// Quick path to exit
 	if encodingType == "" {
 		return name

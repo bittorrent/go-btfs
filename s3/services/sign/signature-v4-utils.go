@@ -126,12 +126,12 @@ func isValidRegion(reqRegion string, confRegion string) bool {
 		return true
 	}
 	if confRegion == "US" {
-		confRegion = consts.DefaultLocation
+		confRegion = consts.DefaultBucketRegion
 	}
 	// Some older s3 clients set region as "US" instead of
 	// globalDefaultRegion, handle it.
 	if reqRegion == "US" {
-		reqRegion = consts.DefaultLocation
+		reqRegion = consts.DefaultBucketRegion
 	}
 	return reqRegion == confRegion
 }

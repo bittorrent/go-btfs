@@ -24,7 +24,7 @@ func (err *Error) HTTPStatusCode() int {
 }
 
 func (err *Error) Error() string {
-	return fmt.Sprintf("[%s]%s", err.code, err.description)
+	return fmt.Sprintf("<%s> %s", err.code, err.description)
 }
 
 // Errors http://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html
@@ -334,7 +334,6 @@ var (
 		description:    "Signature header missing SignedHeaders field.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-
 	ErrAuthHeaderEmpty = &Error{
 		code:           "InvalidArgument",
 		description:    "Authorization header is invalid -- one and only one ' ' (space) required.",
@@ -586,7 +585,7 @@ var (
 	// Generic Invalid-Request error. Should be used for response errors only for unlikely
 	// corner case errors for which introducing new APIorcode is not worth it. LogIf()
 	// should be used to log the error at the source of the error for debugging purposes.
-	ErrErrInvalidRequest = &Error{
+	ErrInvalidRequest = &Error{
 		code:           "InvalidRequest",
 		description:    "Invalid Request",
 		httpStatusCode: http.StatusBadRequest,
@@ -1032,9 +1031,9 @@ var (
 		description:    "The JSON was not well-formed or did not validate against our published format.",
 		httpStatusCode: http.StatusBadRequest,
 	}
-	ErrInvalidRequest = &Error{
-		code:           "InvalidRequest",
-		description:    "InvalidRequest",
+	ErrMalformedACLError = &Error{
+		code:           "MalformedACLError",
+		description:    "The ACL that you provided was not well formed or did not validate against our published schema.",
 		httpStatusCode: http.StatusBadRequest,
 	}
 )

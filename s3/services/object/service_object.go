@@ -4,23 +4,20 @@ import (
 	"context"
 	"errors"
 	"github.com/bittorrent/go-btfs/s3/action"
-	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/providers"
-	"github.com/bittorrent/go-btfs/s3/utils/hash"
 	"io"
-	"net/http"
 	"strings"
 	"time"
 )
 
 // PutObject put a user specified object
-func (s *service) PutObject(ctx context.Context, user, bucname, objname string, body *hash.Reader, size int64, meta map[string]string) (object *Object, err error) {
+func (s *service) PutObject(ctx context.Context, args *PutObjectArgs) (object *Object, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
 	// Bucket key
-	buckey := s.getBucketKey(bucname)
+	buckey := s.getBucketKey(args.Bucket)
 
 	// RLock bucket
 	err = s.lock.RLock(ctx, buckey)
@@ -40,14 +37,14 @@ func (s *service) PutObject(ctx context.Context, user, bucname, objname string, 
 	}
 
 	// Check action ACL
-	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.PutObjectAction)
+	allow := s.checkACL(bucket.Owner, bucket.ACL, args.AccessKey, action.PutObjectAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
 	// Object key
-	objkey := s.getObjectKey(bucname, objname)
+	objkey := s.getObjectKey(args.Bucket, args.Object)
 
 	// Lock object
 	err = s.lock.Lock(ctx, objkey)
@@ -63,7 +60,7 @@ func (s *service) PutObject(ctx context.Context, user, bucname, objname string, 
 	}
 
 	// Store object body
-	cid, err := s.storeBody(ctx, body, objkey)
+	cid, err := s.storeBody(ctx, args.Body, objkey)
 	if err != nil {
 		return
 	}
@@ -80,30 +77,25 @@ func (s *service) PutObject(ctx context.Context, user, bucname, objname string, 
 	}()
 
 	// now
-	now := time.Now()
+	now := time.Now().UTC()
 
 	// new object
 	object = &Object{
-		Bucket:           bucname,
-		Name:             objname,
-		ModTime:          now.UTC(),
-		Size:             size,
+		Bucket:           args.Bucket,
+		Name:             args.Object,
+		ModTime:          now,
+		Size:             args.ContentLength,
 		IsDir:            false,
-		ETag:             body.ETag().String(),
+		ETag:             args.Body.ETag().String(),
 		CID:              cid,
 		VersionID:        "",
 		IsLatest:         true,
 		DeleteMarker:     false,
-		ACL:              meta[consts.AmzACL],
-		ContentType:      meta[strings.ToLower(consts.ContentType)],
-		ContentEncoding:  meta[strings.ToLower(consts.ContentEncoding)],
-		SuccessorModTime: now.UTC(),
-	}
-
-	// set object expires
-	exp, er := time.Parse(http.TimeFormat, meta[strings.ToLower(consts.Expires)])
-	if er == nil {
-		object.Expires = exp.UTC()
+		ACL:              "",
+		ContentType:      args.ContentType,
+		ContentEncoding:  args.ContentEncoding,
+		SuccessorModTime: now,
+		Expires:          args.Expires,
 	}
 
 	// put object
@@ -124,13 +116,13 @@ func (s *service) PutObject(ctx context.Context, user, bucname, objname string, 
 }
 
 // CopyObject copy from a user specified source object to a desert object
-func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, dstBucname, dstObjname string, meta map[string]string) (dstObject *Object, err error) {
+func (s *service) CopyObject(ctx context.Context, args *CopyObjectArgs) (dstObject *Object, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
 	// Source bucket key
-	srcBuckey := s.getBucketKey(srcBucname)
+	srcBuckey := s.getBucketKey(args.SrcBucket)
 
 	// RLock source bucket
 	err = s.lock.RLock(ctx, srcBuckey)
@@ -150,14 +142,14 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 	}
 
 	// Check source action ACL
-	srcAllow := s.checkACL(srcBucket.Owner, srcBucket.ACL, user, action.GetObjectAction)
+	srcAllow := s.checkACL(srcBucket.Owner, srcBucket.ACL, args.AccessKey, action.GetObjectAction)
 	if !srcAllow {
 		err = ErrNotAllowed
 		return
 	}
 
 	// Source object key
-	srcObjkey := s.getObjectKey(srcBucname, srcObjname)
+	srcObjkey := s.getObjectKey(args.SrcBucket, args.SrcObject)
 
 	// RLock source object
 	err = s.lock.RLock(ctx, srcObjkey)
@@ -177,7 +169,7 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 	}
 
 	// Desert bucket key
-	dstBuckey := s.getBucketKey(dstBucname)
+	dstBuckey := s.getBucketKey(args.Bucket)
 
 	// RLock destination bucket
 	err = s.lock.RLock(ctx, dstBuckey)
@@ -197,14 +189,14 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 	}
 
 	// Check destination action ACL
-	dstAllow := s.checkACL(dstBucket.Owner, dstBucket.ACL, user, action.PutObjectAction)
+	dstAllow := s.checkACL(dstBucket.Owner, dstBucket.ACL, args.AccessKey, action.PutObjectAction)
 	if !dstAllow {
 		err = ErrNotAllowed
 		return
 	}
 
 	// Destination object key
-	dstObjkey := s.getObjectKey(dstBucname, dstObjname)
+	dstObjkey := s.getObjectKey(args.Bucket, args.Object)
 
 	// Lock Destination object
 	err = s.lock.Lock(ctx, dstObjkey)
@@ -222,7 +214,7 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 	// Mark if delete the cid ref
 	deleteRef := true
 
-	// If put new object failed, try to delete it's reference
+	// If put new object failed, try to delete its reference
 	defer func() {
 		if deleteRef {
 			_ = s.removeBodyRef(ctx, srcObject.CID, dstObjkey)
@@ -236,13 +228,13 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 	}
 
 	// now
-	now := time.Now()
+	now := time.Now().UTC()
 
 	// Destination object
 	dstObject = &Object{
-		Bucket:           dstBucname,
-		Name:             dstObjname,
-		ModTime:          now.UTC(),
+		Bucket:           args.Bucket,
+		Name:             args.Object,
+		ModTime:          now,
 		Size:             srcObject.Size,
 		IsDir:            false,
 		ETag:             srcObject.ETag,
@@ -252,25 +244,14 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 		DeleteMarker:     false,
 		ContentType:      srcObject.ContentType,
 		ContentEncoding:  srcObject.ContentEncoding,
-		SuccessorModTime: now.UTC(),
-		Expires:          srcObject.Expires,
+		SuccessorModTime: now,
+		Expires:          args.Expires,
 	}
 
-	// Set destination object metadata
-	val, ok := meta[consts.ContentType]
-	if ok {
-		dstObject.ContentType = val
-	}
-	val, ok = meta[consts.ContentEncoding]
-	if ok {
-		dstObject.ContentEncoding = val
-	}
-	val, ok = meta[strings.ToLower(consts.Expires)]
-	if ok {
-		exp, er := time.Parse(http.TimeFormat, val)
-		if er != nil {
-			dstObject.Expires = exp.UTC()
-		}
+	// Replace metadata
+	if args.ReplaceMeta {
+		dstObject.ContentType = args.ContentType
+		dstObject.ContentEncoding = args.ContentEncoding
 	}
 
 	// Put destination object
@@ -291,13 +272,13 @@ func (s *service) CopyObject(ctx context.Context, user, srcBucname, srcObjname, 
 }
 
 // GetObject get a user specified object
-func (s *service) GetObject(ctx context.Context, user, bucname, objname string, withBody bool) (object *Object, body io.ReadCloser, err error) {
+func (s *service) GetObject(ctx context.Context, args *GetObjectArgs) (object *Object, body io.ReadCloser, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
 	// bucket key
-	buckey := s.getBucketKey(bucname)
+	buckey := s.getBucketKey(args.Bucket)
 
 	// RLock bucket
 	err = s.lock.RLock(ctx, buckey)
@@ -322,14 +303,14 @@ func (s *service) GetObject(ctx context.Context, user, bucname, objname string, 
 	}
 
 	// Check action ACL
-	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.GetObjectAction)
+	allow := s.checkACL(bucket.Owner, bucket.ACL, args.AccessKey, action.GetObjectAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
 	// Object key
-	objkey := s.getObjectKey(bucname, objname)
+	objkey := s.getObjectKey(args.Bucket, args.Object)
 
 	// RLock object
 	err = s.lock.RLock(ctx, objkey)
@@ -354,7 +335,7 @@ func (s *service) GetObject(ctx context.Context, user, bucname, objname string, 
 	}
 
 	// no need body
-	if !withBody {
+	if !args.WithBody {
 		return
 	}
 
@@ -381,13 +362,13 @@ func (s *service) GetObject(ctx context.Context, user, bucname, objname string, 
 }
 
 // DeleteObject delete a user specified object
-func (s *service) DeleteObject(ctx context.Context, user, bucname, objname string) (err error) {
+func (s *service) DeleteObject(ctx context.Context, args *DeleteObjectArgs) (err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
 	// Bucket key
-	buckey := s.getBucketKey(bucname)
+	buckey := s.getBucketKey(args.Bucket)
 
 	// RLock bucket
 	err = s.lock.RLock(ctx, buckey)
@@ -407,14 +388,14 @@ func (s *service) DeleteObject(ctx context.Context, user, bucname, objname strin
 	}
 
 	// Check action ACL
-	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.DeleteObjectAction)
+	allow := s.checkACL(bucket.Owner, bucket.ACL, args.AccessKey, action.DeleteObjectAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
 	// Object key
-	objkey := s.getObjectKey(bucname, objname)
+	objkey := s.getObjectKey(args.Bucket, args.Object)
 
 	// Lock object
 	err = s.lock.Lock(ctx, objkey)
@@ -445,14 +426,14 @@ func (s *service) DeleteObject(ctx context.Context, user, bucname, objname strin
 	return
 }
 
-// ListObjects list user specified objects
-func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimiter, marker string, max int64) (list *ObjectsList, err error) {
+// DeleteObjects delete multiple user specified objects
+func (s *service) DeleteObjects(ctx context.Context, args *DeleteObjectsArgs) (deletedObjects []*DeletedObject, err error) {
 	// Operation context
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
 	// Bucket key
-	buckey := s.getBucketKey(bucname)
+	buckey := s.getBucketKey(args.Bucket)
 
 	// RLock bucket
 	err = s.lock.RLock(ctx, buckey)
@@ -472,36 +453,136 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 	}
 
 	// Check action ACL
-	allow := s.checkACL(bucket.Owner, bucket.ACL, user, action.ListObjectsAction)
+	allow := s.checkACL(bucket.Owner, bucket.ACL, args.AccessKey, action.DeleteObjectAction)
 	if !allow {
 		err = ErrNotAllowed
 		return
 	}
 
+	for _, deleteObj := range args.ToDeleteObjects {
+		func(deleteObj *ToDeleteObject) {
+			var er error
+			// Collection delete result
+			defer func() {
+				if er != nil || !args.Quite {
+					deletedObjects = append(deletedObjects, &DeletedObject{
+						Object:    deleteObj.Object,
+						DeleteErr: er,
+					})
+				}
+			}()
+
+			// Validate failed
+			er = deleteObj.ValidateErr
+			if er != nil {
+				return
+			}
+
+			// Object key
+			objkey := s.getObjectKey(args.Bucket, deleteObj.Object)
+
+			// Lock object
+			er = s.lock.Lock(ctx, objkey)
+			if er != nil {
+				return
+			}
+			defer s.lock.Unlock(objkey)
+
+			// Get object
+			object, er := s.getObject(objkey)
+			if er != nil {
+				return
+			}
+			if object == nil {
+				err = ErrObjectNotFound
+				return
+			}
+
+			// Delete object
+			er = s.deleteObject(objkey)
+			if er != nil {
+				return
+			}
+
+			// Try to delete object body
+			_ = s.removeBody(ctx, object.CID, objkey)
+
+		}(deleteObj)
+	}
+
+	return
+}
+
+// ListObjects list user specified objects
+func (s *service) ListObjects(ctx context.Context, args *ListObjectsArgs) (list *ObjectsList, err error) {
+	// Operation context
+	ctx, cancel := s.opctx(ctx)
+	defer cancel()
+
 	// Object list
-	list = &ObjectsList{}
+	list = &ObjectsList{
+		Bucket:       args.Bucket,
+		MaxKeys:      args.MaxKeys,
+		Marker:       args.Marker,
+		Prefix:       args.Prefix,
+		Delimiter:    args.Delimiter,
+		EncodingType: args.EncodingType,
+	}
+
+	// Bucket key
+	buckey := s.getBucketKey(args.Bucket)
+
+	// RLock bucket
+	err = s.lock.RLock(ctx, buckey)
+	if err != nil {
+		return
+	}
+	defer s.lock.RUnlock(buckey)
+
+	// Get bucket
+	bucket, err := s.getBucket(buckey)
+	if err != nil {
+		return
+	}
+	if bucket == nil {
+		err = ErrBucketNotFound
+		return
+	}
+
+	// Check action ACL
+	allow := s.checkACL(bucket.Owner, bucket.ACL, args.AccessKey, action.ListObjectsAction)
+	if !allow {
+		err = ErrNotAllowed
+		return
+	}
 
 	// MaxKeys is zero
-	if max == 0 {
+	if args.MaxKeys == 0 {
 		list.IsTruncated = true
 		return
 	}
 
 	// All bucket objects key prefix
-	allObjectsKeyPrefix := s.getAllObjectsKeyPrefix(bucname)
+	allObjectsKeyPrefix := s.getAllObjectsKeyPrefix(args.Bucket)
 
 	// List objects key prefix
-	listObjectsKeyPrefix := allObjectsKeyPrefix + prefix
+	listObjectsKeyPrefix := allObjectsKeyPrefix + args.Prefix
 
 	// Accumulate count
 	count := int64(0)
 
 	// Flag mark if begin collect, it initialized to true if
 	// marker is ""
-	begin := marker == ""
+	begin := args.Marker == ""
 
 	// Seen keys, used to group common keys
 	seen := make(map[string]bool)
+
+	// Delimiter length
+	dl := len(args.Delimiter)
+
+	// Prefix length
+	pl := len(args.Prefix)
 
 	// Iterate all objects with the specified prefix to collect and group specified range items
 	err = s.providers.StateStore().Iterate(listObjectsKeyPrefix, func(key, _ []byte) (stop bool, er error) {
@@ -515,10 +596,8 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 		// it is the string truncated object name after the delimiter, else
 		// it is empty string
 		commonPrefix := ""
-		if delimiter != "" {
-			dl := len(delimiter)
-			pl := len(prefix)
-			di := strings.Index(objname[pl:], delimiter)
+		if dl > 0 {
+			di := strings.Index(objname[pl:], args.Delimiter)
 			if di >= 0 {
 				commonPrefix = objname[:(pl + di + dl)]
 			}
@@ -528,20 +607,20 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 		// with the common prefix or object name, then begin collection from next iterate
 		// and if common prefix matched, mark this common prefix as seen
 		if !begin {
-			if commonPrefix != "" && marker == commonPrefix {
+			if commonPrefix != "" && args.Marker == commonPrefix {
 				seen[commonPrefix] = true
 				begin = true
-			} else if marker == objname {
+			} else if args.Marker == objname {
 				begin = true
 			}
 			return
 		}
 
-		// Objects with same common prefix will be grouped into one
+		// ToDeleteObjects with same common prefix will be grouped into one
 		// note: the objects without common prefix will present only once, so
 		// it is not necessary to add these objects names in the seen map
 
-		// Objects with common prefix grouped int one
+		// ToDeleteObjects with common prefix grouped int one
 		if commonPrefix != "" {
 			if seen[commonPrefix] {
 				return
@@ -566,7 +645,7 @@ func (s *service) ListObjects(ctx context.Context, user, bucname, prefix, delimi
 		// Check the count, if it matched the max, means
 		// the collect is complete, but the items may remain, so stop the
 		// iteration, and mark the list was truncated
-		if count == max {
+		if count == args.MaxKeys {
 			list.IsTruncated = true
 			stop = true
 		}

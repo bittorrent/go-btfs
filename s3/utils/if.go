@@ -1,17 +1,11 @@
 package utils
 
-func IfEmpty(a, b string) (c string) {
-	c = a
-	if a == "" {
-		c = b
+// CoalesceStr return the first non-empty string in the list
+func CoalesceStr(list ...string) string {
+	for _, str := range list {
+		if str != "" {
+			return str
+		}
 	}
-	return
-}
-
-func IfZero(a, b int) (c int) {
-	c = a
-	if a == 0 {
-		c = b
-	}
-	return
+	return ""
 }

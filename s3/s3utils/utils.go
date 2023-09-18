@@ -12,20 +12,19 @@ import (
 
 // GenericError - generic object layer error.
 type GenericError struct {
-	Bucket    string
-	Object    string
-	VersionID string
-	Err       error
+	Bucket string
+	Object string
+	Err    error
 }
 
 // Bucket related errors.
 
-// BucketNameInvalid - bucketname provided is invalid.
+// BucketNameInvalid - bucket name provided is invalid.
 type BucketNameInvalid GenericError
 
 // Error returns string an error formatted as the given text.
 func (e BucketNameInvalid) Error() string {
-	return "Bucket name invalid: " + e.Bucket
+	return "bucket name invalid: " + e.Bucket
 }
 
 // Object related errors.
@@ -51,7 +50,7 @@ func (e ObjectNameTooLong) Error() string {
 
 // Error returns string an error formatted as the given text.
 func (e ObjectNamePrefixAsSlash) Error() string {
-	return "Object name contains forward slash as pefix: " + e.Bucket + "/" + e.Object
+	return "Object name contains forward slash as prefix: " + e.Bucket + "/" + e.Object
 }
 
 // InvalidUploadIDKeyCombination - invalid upload id and key marker combination.
@@ -133,44 +132,44 @@ var (
 )
 
 // Common checker for both stricter and basic validation.
-func checkBucketNameCommon(bucketName string, strict bool) (err error) {
+func checkBucketName(bucketName string, strict bool) (err error) {
 	if strings.TrimSpace(bucketName) == "" {
-		return errors.New("Bucket name cannot be empty")
+		return errors.New("bucket name cannot be empty")
 	}
 	if len(bucketName) < 3 {
-		return errors.New("Bucket name cannot be shorter than 3 characters")
+		return errors.New("bucket name cannot be shorter than 3 characters")
 	}
 	if len(bucketName) > 63 {
-		return errors.New("Bucket name cannot be longer than 63 characters")
+		return errors.New("bucket name cannot be longer than 63 characters")
 	}
 	if ipAddress.MatchString(bucketName) {
-		return errors.New("Bucket name cannot be an ip address")
+		return errors.New("bucket name cannot be an ip address")
 	}
 	if strings.Contains(bucketName, "..") || strings.Contains(bucketName, ".-") || strings.Contains(bucketName, "-.") {
-		return errors.New("Bucket name contains invalid characters")
+		return errors.New("bucket name contains invalid characters")
 	}
 	if strict {
 		if !validBucketNameStrict.MatchString(bucketName) {
-			err = errors.New("Bucket name contains invalid characters")
+			err = errors.New("bucket name contains invalid characters")
 		}
 		return err
 	}
 	if !validBucketName.MatchString(bucketName) {
-		err = errors.New("Bucket name contains invalid characters")
+		err = errors.New("bucket name contains invalid characters")
 	}
 	return err
 }
 
 // CheckValidBucketName - checks if we have a valid input bucket name.
 func CheckValidBucketName(bucketName string) (err error) {
-	return checkBucketNameCommon(bucketName, false)
+	return checkBucketName(bucketName, false)
 }
 
 // CheckValidBucketNameStrict - checks if we have a valid input bucket name.
 // This is a stricter version.
 // - http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html
 func CheckValidBucketNameStrict(bucketName string) (err error) {
-	return checkBucketNameCommon(bucketName, true)
+	return checkBucketName(bucketName, true)
 }
 
 // Checks on GetObject arguments, bucket and object.

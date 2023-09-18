@@ -10,7 +10,7 @@ import (
 
 var (
 	ErrBucketNotFound      = errors.New("bucket not found")
-	ErrBucketeNotEmpty     = errors.New("bucket not empty")
+	ErrBucketNotEmpty      = errors.New("bucket not empty")
 	ErrObjectNotFound      = errors.New("object not found")
 	ErrUploadNotFound      = errors.New("upload not found")
 	ErrNotAllowed          = errors.New("not allowed")
@@ -18,25 +18,121 @@ var (
 )
 
 type Service interface {
-	CreateBucket(ctx context.Context, user, bucname, region, acl string) (bucket *Bucket, err error)
-	GetBucket(ctx context.Context, user, bucname string) (bucket *Bucket, err error)
-	DeleteBucket(ctx context.Context, user, bucname string) (err error)
-	GetAllBuckets(ctx context.Context, user string) (list []*Bucket, err error)
-	PutBucketACL(ctx context.Context, user, bucname, acl string) (err error)
-	GetBucketACL(ctx context.Context, user, bucname string) (acl string, err error)
+	CreateBucket(ctx context.Context, args *CreateBucketArgs) (bucket *Bucket, err error)
+	GetBucket(ctx context.Context, args *GetBucketArgs) (bucket *Bucket, err error)
+	DeleteBucket(ctx context.Context, args *DeleteBucketArgs) (err error)
+	ListBuckets(ctx context.Context, args *ListBucketsArgs) (list []*Bucket, err error)
+	PutBucketACL(ctx context.Context, args *PutBucketACLArgs) (err error)
+	GetBucketACL(ctx context.Context, args *GetBucketACLArgs) (acl string, err error)
 
-	PutObject(ctx context.Context, user, bucname, objname string, body *hash.Reader, size int64, meta map[string]string) (object *Object, err error)
-	CopyObject(ctx context.Context, user, srcBucname, srcObjname, dstBucname, dstObjname string, meta map[string]string) (dstObject *Object, err error)
-	GetObject(ctx context.Context, user, bucname, objname string, withBody bool) (object *Object, body io.ReadCloser, err error)
-	DeleteObject(ctx context.Context, user, bucname, objname string) (err error)
-	ListObjects(ctx context.Context, user, bucname, prefix, delimiter, marker string, max int64) (list *ObjectsList, err error)
-	ListObjectsV2(ctx context.Context, user string, bucket string, prefix string, token, delimiter string, max int64, owner bool, after string) (list *ObjectsListV2, err error)
+	PutObject(ctx context.Context, args *PutObjectArgs) (object *Object, err error)
+	CopyObject(ctx context.Context, args *CopyObjectArgs) (object *Object, err error)
+	GetObject(ctx context.Context, args *GetObjectArgs) (object *Object, body io.ReadCloser, err error)
+	DeleteObject(ctx context.Context, args *DeleteObjectArgs) (err error)
+	DeleteObjects(ctx context.Context, args *DeleteObjectsArgs) (deletedObjects []*DeletedObject, err error)
+	ListObjects(ctx context.Context, args *ListObjectsArgs) (list *ObjectsList, err error)
+	ListObjectsV2(ctx context.Context, user, bucket, prefix, token, delimiter string, max int64, owner bool, after string) (list *ObjectsListV2, err error)
 	GetObjectACL(ctx context.Context, user, bucname, objname string) (acl string, err error)
 
 	CreateMultipartUpload(ctx context.Context, user, bucname, objname string, meta map[string]*string) (multipart *Multipart, err error)
 	UploadPart(ctx context.Context, user, bucname, objname, uplid string, partId int, reader *hash.Reader, size int64) (part *Part, err error)
 	AbortMultipartUpload(ctx context.Context, user, bucname, objname, uplid string) (err error)
 	CompleteMultiPartUpload(ctx context.Context, user, bucname, objname, uplid string, parts []*CompletePart) (object *Object, err error)
+}
+
+type CreateBucketArgs struct {
+	AccessKey string
+	ACL       string
+	Bucket    string
+	Region    string
+}
+
+type GetBucketArgs struct {
+	AccessKey string
+	Bucket    string
+}
+
+type DeleteBucketArgs struct {
+	AccessKey string
+	Bucket    string
+}
+
+type ListBucketsArgs struct {
+	AccessKey string
+}
+
+type GetBucketACLArgs struct {
+	AccessKey string
+	Bucket    string
+}
+
+type PutBucketACLArgs struct {
+	AccessKey string
+	ACL       string
+	Bucket    string
+}
+
+type PutObjectArgs struct {
+	AccessKey       string
+	Body            *hash.Reader
+	Bucket          string
+	Object          string
+	ContentEncoding string
+	ContentLength   int64
+	ContentType     string
+	Expires         time.Time
+}
+
+type CopyObjectArgs struct {
+	AccessKey       string
+	Bucket          string
+	Object          string
+	SrcBucket       string
+	SrcObject       string
+	ContentEncoding string
+	ContentType     string
+	Expires         time.Time
+	ReplaceMeta     bool
+}
+
+type GetObjectArgs struct {
+	AccessKey string
+	Bucket    string
+	Object    string
+	WithBody  bool
+}
+
+type DeleteObjectArgs struct {
+	AccessKey string
+	Bucket    string
+	Object    string
+}
+
+type DeleteObjectsArgs struct {
+	AccessKey       string
+	Bucket          string
+	ToDeleteObjects []*ToDeleteObject
+	Quite           bool
+}
+
+type ToDeleteObject struct {
+	Object      string
+	ValidateErr error
+}
+
+type ListObjectsArgs struct {
+	AccessKey    string
+	Bucket       string
+	MaxKeys      int64
+	Marker       string
+	Prefix       string
+	Delimiter    string
+	EncodingType string
+}
+
+type DeletedObject struct {
+	Object    string
+	DeleteErr error
 }
 
 // Bucket contains bucket metadata.
@@ -85,10 +181,16 @@ type Part struct {
 }
 
 type ObjectsList struct {
-	IsTruncated bool
-	NextMarker  string
-	Objects     []*Object
-	Prefixes    []string
+	Bucket       string
+	MaxKeys      int64
+	Marker       string
+	Prefix       string
+	Delimiter    string
+	EncodingType string
+	IsTruncated  bool
+	NextMarker   string
+	Objects      []*Object
+	Prefixes     []string
 }
 
 type ObjectsListV2 struct {
