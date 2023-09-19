@@ -8,7 +8,7 @@ import (
 	_ "expvar"
 	"fmt"
 	"github.com/bittorrent/go-btfs/s3"
-	"github.com/bittorrent/go-btfs/s3/services/accesskey"
+	"github.com/bittorrent/go-btfs/s3/api/services/accesskey"
 	"io/ioutil"
 	"math/rand"
 	"net"

@@ -2,14 +2,14 @@ package s3
 
 import (
 	config "github.com/bittorrent/go-btfs-config"
+	"github.com/bittorrent/go-btfs/s3/api/handlers"
+	"github.com/bittorrent/go-btfs/s3/api/providers"
+	"github.com/bittorrent/go-btfs/s3/api/routers"
+	"github.com/bittorrent/go-btfs/s3/api/server"
+	"github.com/bittorrent/go-btfs/s3/api/services/accesskey"
+	"github.com/bittorrent/go-btfs/s3/api/services/object"
+	"github.com/bittorrent/go-btfs/s3/api/services/sign"
 	"github.com/bittorrent/go-btfs/s3/ctxmu"
-	"github.com/bittorrent/go-btfs/s3/handlers"
-	"github.com/bittorrent/go-btfs/s3/providers"
-	"github.com/bittorrent/go-btfs/s3/routers"
-	"github.com/bittorrent/go-btfs/s3/server"
-	"github.com/bittorrent/go-btfs/s3/services/accesskey"
-	"github.com/bittorrent/go-btfs/s3/services/object"
-	"github.com/bittorrent/go-btfs/s3/services/sign"
 	"github.com/bittorrent/go-btfs/transaction/storage"
 	"sync"
 )
