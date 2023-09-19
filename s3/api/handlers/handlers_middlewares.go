@@ -38,12 +38,11 @@ func (h *Handlers) Cors(handler http.Handler) http.Handler {
 func (h *Handlers) Log(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		fmt.Printf("s3-api: [I] %s | <%-4s> | %s\n", start.Format(time.RFC3339), r.Method, r.URL)
 		handler.ServeHTTP(w, r)
-		hname, herr := contexts.GetHandleInf(r)
+		hname, herr, args := contexts.GetHandleInf(r)
 		end := time.Now()
 		ela := end.Sub(start)
-		fmt.Printf("s3-api: [O] %s | <%-4s> | %s | %s | %v | %s \n", end.Format(time.RFC3339), r.Method, r.URL, hname, herr, ela)
+		fmt.Printf("s3-api: | %s | <%-4s> | %s | %s | %v | %+v |  %s \n", end.Format(time.RFC3339), r.Method, r.URL, hname, herr, args, ela)
 	})
 }
 
@@ -69,7 +68,7 @@ func (h *Handlers) Sign(handler http.Handler) http.Handler {
 		var err *responses.Error
 		defer func() {
 			if err != nil {
-				contexts.SetHandleInf(r, h.name(), err)
+				contexts.SetHandleInf(r, h.name(), err, nil)
 			}
 		}()
 

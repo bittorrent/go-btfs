@@ -100,7 +100,7 @@ func ParsePutBucketAclRequest(r *http.Request) (args *object.PutBucketACLArgs, e
 	if err != nil {
 		return
 	}
-	args.Bucket, err = ValidateBucketACL(input.ACL)
+	args.ACL, err = ValidateBucketACL(input.ACL)
 	return
 }
 

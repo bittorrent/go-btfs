@@ -49,7 +49,6 @@ func ValidateBucketACL(acl *string) (val string, err error) {
 	}
 	if !consts.SupportedBucketACLs[val] {
 		err = ErrACLUnsupported
-		return
 	}
 	return
 }

@@ -94,13 +94,11 @@ func parseLocationField(vars map[string]string, query url.Values, headers http.H
 	)
 	switch loca {
 	case "querystring":
-		has = query.Has(name)
-		val = query.Get(name)
+		val, has = query.Get(name), query.Has(name)
 	case "uri":
 		val, has = vars[name]
 	case "header":
-		_, has = headers[name]
-		val = headers.Get(name)
+		val, has = headers.Get(name), len(headers.Values(name)) > 0
 	case "headers":
 		vals, has = getHeaderValues(headers, name)
 		isVals = true
@@ -113,6 +111,9 @@ func parseLocationField(vars map[string]string, query url.Values, headers http.H
 	}
 	if requ && !has {
 		err = ErrMissingRequiredParam{name}
+		return
+	}
+	if !has {
 		return
 	}
 	if isVals {

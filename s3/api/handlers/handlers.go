@@ -10,6 +10,7 @@ import (
 	"github.com/bittorrent/go-btfs/s3/hash"
 	"net/http"
 	"runtime"
+	"strings"
 )
 
 var _ Handlerser = (*Handlers)(nil)
@@ -36,12 +37,16 @@ func NewHandlers(
 	return
 }
 
-// name returns name of the called handler
+// name returns name of the handler function
 func (h *Handlers) name() string {
 	pc := make([]uintptr, 1)
 	runtime.Callers(3, pc)
 	f := runtime.FuncForPC(pc[0])
-	return f.Name()
+	ps := strings.Split(f.Name(), ".")
+	if len(ps) > 0 {
+		return ps[len(ps)-1]
+	}
+	return "UnknownHandler"
 }
 
 // toResponseErr convert internal error to response error

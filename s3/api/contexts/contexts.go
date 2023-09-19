@@ -5,11 +5,12 @@ import (
 	"net/http"
 )
 
-type key *struct{}
+type key string
 
-var (
-	keyOfAccessKey = new(struct{})
-	keyOfHandleInf = new(struct{})
+const (
+	keyOfAccessKey   key = "ctx-access-key"
+	keyOfHandleInf   key = "ctx-handle-inf"
+	keyOfRequestArgs key = "ctx-request-args"
 )
 
 func set(r *http.Request, k key, v any) {

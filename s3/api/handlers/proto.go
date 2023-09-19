@@ -17,8 +17,8 @@ type Handlerser interface {
 	HeadBucketHandler(w http.ResponseWriter, r *http.Request)
 	DeleteBucketHandler(w http.ResponseWriter, r *http.Request)
 	ListBucketsHandler(w http.ResponseWriter, r *http.Request)
-	PutBucketAclHandler(w http.ResponseWriter, r *http.Request)
-	GetBucketAclHandler(w http.ResponseWriter, r *http.Request)
+	PutBucketACLHandler(w http.ResponseWriter, r *http.Request)
+	GetBucketACLHandler(w http.ResponseWriter, r *http.Request)
 
 	// Object
 

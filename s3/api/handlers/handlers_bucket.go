@@ -4,23 +4,24 @@ import (
 	"github.com/bittorrent/go-btfs/s3/api/contexts"
 	"github.com/bittorrent/go-btfs/s3/api/requests"
 	"github.com/bittorrent/go-btfs/s3/api/responses"
+	"github.com/bittorrent/go-btfs/s3/api/services/object"
 	"net/http"
 )
 
 func (h *Handlers) CreateBucketHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 	var err error
+	var args *object.CreateBucketArgs
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err)
+		contexts.SetHandleInf(r, h.name(), err, args)
 	}()
 
-	args, err := requests.ParseCreateBucketRequest(r)
+	args, err = requests.ParseCreateBucketRequest(r)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, h.toResponseErr(err))
 		return
 	}
 
-	buc, err := h.objsvc.CreateBucket(ctx, args)
+	buc, err := h.objsvc.CreateBucket(r.Context(), args)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, h.toResponseErr(err))
 		return
@@ -31,19 +32,19 @@ func (h *Handlers) CreateBucketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 	var err error
+	var args *object.GetBucketArgs
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err)
+		contexts.SetHandleInf(r, h.name(), err, args)
 	}()
 
-	args, err := requests.ParseHeadBucketRequest(r)
+	args, err = requests.ParseHeadBucketRequest(r)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, h.toResponseErr(err))
 		return
 	}
 
-	buc, err := h.objsvc.GetBucket(ctx, args)
+	buc, err := h.objsvc.GetBucket(r.Context(), args)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, h.toResponseErr(err))
 		return
@@ -54,19 +55,19 @@ func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 	var err error
+	var args *object.DeleteBucketArgs
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err)
+		contexts.SetHandleInf(r, h.name(), err, args)
 	}()
 
-	args, err := requests.ParseDeleteBucketRequest(r)
+	args, err = requests.ParseDeleteBucketRequest(r)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, h.toResponseErr(err))
 		return
 	}
 
-	err = h.objsvc.DeleteBucket(ctx, args)
+	err = h.objsvc.DeleteBucket(r.Context(), args)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, h.toResponseErr(err))
 		return
@@ -78,11 +79,12 @@ func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
+	var args *object.ListBucketsArgs
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err)
+		contexts.SetHandleInf(r, h.name(), err, args)
 	}()
 
-	args, err := requests.ParseListBucketsRequest(r)
+	args, err = requests.ParseListBucketsRequest(r)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, h.toResponseErr(err))
 		return
@@ -98,48 +100,48 @@ func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h *Handlers) GetBucketAclHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+func (h *Handlers) PutBucketACLHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
+	var args *object.PutBucketACLArgs
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err)
+		contexts.SetHandleInf(r, h.name(), err, args)
 	}()
 
-	args, err := requests.ParseGetBucketACLRequest(r)
+	args, err = requests.ParsePutBucketAclRequest(r)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, h.toResponseErr(err))
 		return
 	}
 
-	acl, err := h.objsvc.GetBucketACL(ctx, args)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, h.toResponseErr(err))
-		return
-	}
-
-	responses.WriteGetBucketACLResponse(w, r, acl)
-	return
-}
-
-func (h *Handlers) PutBucketAclHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	var err error
-	defer func() {
-		contexts.SetHandleInf(r, h.name(), err)
-	}()
-
-	args, err := requests.ParsePutBucketAclRequest(r)
-	if err != nil {
-		responses.WriteErrorResponse(w, r, h.toResponseErr(err))
-		return
-	}
-
-	err = h.objsvc.PutBucketACL(ctx, args)
+	err = h.objsvc.PutBucketACL(r.Context(), args)
 	if err != nil {
 		responses.WriteErrorResponse(w, r, h.toResponseErr(err))
 		return
 	}
 
 	responses.WritePutBucketAclResponse(w, r)
+	return
+}
+
+func (h *Handlers) GetBucketACLHandler(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var args *object.GetBucketACLArgs
+	defer func() {
+		contexts.SetHandleInf(r, h.name(), err, args)
+	}()
+
+	args, err = requests.ParseGetBucketACLRequest(r)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, h.toResponseErr(err))
+		return
+	}
+
+	acl, err := h.objsvc.GetBucketACL(r.Context(), args)
+	if err != nil {
+		responses.WriteErrorResponse(w, r, h.toResponseErr(err))
+		return
+	}
+
+	responses.WriteGetBucketACLResponse(w, r, acl)
 	return
 }

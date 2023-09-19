@@ -61,7 +61,7 @@ func (routers *Routers) Register() http.Handler {
 	bucket.Methods(http.MethodGet).Path("/{Key:.+}").HandlerFunc(hs.GetObjectHandler)
 
 	// GetBucketACL
-	bucket.Methods(http.MethodGet).HandlerFunc(hs.GetBucketAclHandler).Queries("acl", "")
+	bucket.Methods(http.MethodGet).HandlerFunc(hs.GetBucketACLHandler).Queries("acl", "")
 
 	// ListObjectsV2
 	bucket.Methods(http.MethodGet).HandlerFunc(hs.ListObjectsV2Handler).Queries("list-type", "2")
@@ -70,7 +70,7 @@ func (routers *Routers) Register() http.Handler {
 	bucket.Methods(http.MethodGet).HandlerFunc(hs.ListObjectsHandler)
 
 	// PutBucketACL
-	bucket.Methods(http.MethodPut).HandlerFunc(hs.PutBucketAclHandler).Queries("acl", "")
+	bucket.Methods(http.MethodPut).HandlerFunc(hs.PutBucketACLHandler).Queries("acl", "")
 
 	// CreateBucket
 	bucket.Methods(http.MethodPut).HandlerFunc(hs.CreateBucketHandler)
