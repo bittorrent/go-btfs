@@ -1,6 +1,7 @@
 package responses
 
 import (
+	"fmt"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/api/services/object"
 	"github.com/bittorrent/go-btfs/s3/consts"
@@ -72,7 +73,7 @@ func WriteGetBucketACLResponse(w http.ResponseWriter, r *http.Request, acl *obje
 	case s3.BucketCannedACLPublicReadWrite:
 		grants = append(grants, s3AllUsersReadGrant, s3AllUsersWriteGrant)
 	default:
-		panic("unknown acl")
+		panic(fmt.Sprintf("unknwon acl <%s>", acl.ACL))
 	}
 	output.SetGrants(grants)
 	w.Header().Add(consts.AmzACL, acl.ACL)

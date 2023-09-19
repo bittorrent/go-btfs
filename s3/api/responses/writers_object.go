@@ -2,6 +2,7 @@ package responses
 
 import (
 	"encoding/base64"
+	"fmt"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/api/services/object"
 	"github.com/bittorrent/go-btfs/s3/consts"
@@ -166,14 +167,14 @@ func WriteGetObjectACLResponse(w http.ResponseWriter, r *http.Request, acl *obje
 	output.SetOwner(newS3Owner(acl.Owner))
 	grants := make([]*s3.Grant, 0)
 	grants = append(grants, newS3FullControlGrant(acl.Owner))
-	switch acl.Owner {
+	switch acl.ACL {
 	case s3.BucketCannedACLPrivate:
 	case s3.BucketCannedACLPublicRead:
 		grants = append(grants, s3AllUsersReadGrant)
 	case s3.BucketCannedACLPublicReadWrite:
 		grants = append(grants, s3AllUsersReadGrant, s3AllUsersWriteGrant)
 	default:
-		panic("unknown acl")
+		panic(fmt.Sprintf("unknwo acl <%s>", acl.ACL))
 	}
 	output.SetGrants(grants)
 	WriteSuccessResponse(w, output, "AccessControlPolicy")
