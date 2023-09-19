@@ -498,7 +498,7 @@ func (s *service) DeleteObjects(ctx context.Context, args *DeleteObjectsArgs) (d
 				return
 			}
 			if object == nil {
-				err = ErrObjectNotFound
+				er = ErrObjectNotFound
 				return
 			}
 
