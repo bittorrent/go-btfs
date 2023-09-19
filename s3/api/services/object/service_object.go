@@ -278,6 +278,11 @@ func (s *service) GetObject(ctx context.Context, args *GetObjectArgs) (object *O
 	ctx, cancel := s.opctx(ctx)
 	defer cancel()
 
+	// Unlock-later is a flag mark if the bucket or object will be unlocked later
+	// if the flag is true, the bucket and object should not be unlocked as soon as leave the function call
+	// they will be automatically unlocked after completely written the object body or write object body timeout
+	unlockLater := false
+
 	// bucket key
 	buckey := s.getBucketKey(args.Bucket)
 
@@ -287,8 +292,7 @@ func (s *service) GetObject(ctx context.Context, args *GetObjectArgs) (object *O
 		return
 	}
 	defer func() {
-		// RUnlock bucket just if getting failed
-		if err != nil {
+		if !unlockLater {
 			s.lock.RUnlock(buckey)
 		}
 	}()
@@ -319,8 +323,7 @@ func (s *service) GetObject(ctx context.Context, args *GetObjectArgs) (object *O
 		return
 	}
 	defer func() {
-		// RUnlock object just if getting failed
-		if err != nil {
+		if !unlockLater {
 			s.lock.RUnlock(objkey)
 		}
 	}()
@@ -346,18 +349,18 @@ func (s *service) GetObject(ctx context.Context, args *GetObjectArgs) (object *O
 		return
 	}
 
+	// Set unlock-later flag to true to enable the bucket and object
+	// will not be unlocked before completely written the response body
+	unlockLater = true
+
 	// Wrap the body with timeout and unlock hooks,
 	// this will enable the bucket and object keep rlocked until
 	// read timout or read closed. Normally, these locks will
 	// be released as soon as leave from the call
-	body = WrapCleanReadCloser(
-		body,
-		s.closeBodyTimeout,
-		func() {
-			s.lock.RUnlock(objkey) // Note: Release object first
-			s.lock.RUnlock(buckey)
-		},
-	)
+	body = WrapCleanReadCloser(body, s.closeBodyTimeout, func() {
+		s.lock.RUnlock(objkey) // Note: Release object first
+		s.lock.RUnlock(buckey)
+	})
 
 	return
 }
