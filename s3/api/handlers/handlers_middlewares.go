@@ -68,7 +68,7 @@ func (h *Handlers) Sign(handler http.Handler) http.Handler {
 		var err *responses.Error
 		defer func() {
 			if err != nil {
-				contexts.SetHandleInf(r, h.name(), err, nil)
+				contexts.SetHandleInf(r, "Sign", err, nil)
 			}
 		}()
 
