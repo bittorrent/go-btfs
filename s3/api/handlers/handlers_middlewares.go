@@ -42,7 +42,7 @@ func (h *Handlers) Log(handler http.Handler) http.Handler {
 		hname, herr, args := contexts.GetHandleInf(r)
 		end := time.Now()
 		ela := end.Sub(start)
-		fmt.Printf("s3-api: | %s | <%-4s> | %s | %s | %v | %+v |  %s \n", end.Format(time.RFC3339), r.Method, r.URL, hname, herr, args, ela)
+		fmt.Printf("s3-api: | %s | <%-4s> | %s | %s | %+v | %v |  %s \n", end.Format(time.RFC3339), r.Method, r.URL, hname, args, herr, ela)
 	})
 }
 
