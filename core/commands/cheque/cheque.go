@@ -65,11 +65,12 @@ var ChequeCmd = &cmds.Command{
 Vault services include issue cheque to peer, receive cheque and store operations.`,
 	},
 	Subcommands: map[string]*cmds.Command{
-		"cash":       CashChequeCmd,
-		"cashstatus": ChequeCashStatusCmd,
-		"cashlist":   ChequeCashListCmd,
-		"price":      StorePriceCmd,
-		"price-all":  StorePriceAllCmd,
+		"cash":               CashChequeCmd,
+		"cashstatus":         ChequeCashStatusCmd,
+		"cashlist":           ChequeCashListCmd,
+		"price":              StorePriceCmd,
+		"price-all":          StorePriceAllCmd,
+		"fix_cheque_cashout": FixChequeCashOutCmd,
 
 		"send":                   SendChequeCmd,
 		"sendlist":               ListSendChequesCmd,
