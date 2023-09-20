@@ -10,10 +10,10 @@ import (
 
 // PutObjectHandler .
 func (h *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.PutObjectArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParsePutObjectRequest(r)
@@ -34,10 +34,10 @@ func (h *Handlers) PutObjectHandler(w http.ResponseWriter, r *http.Request) {
 
 // CopyObjectHandler .
 func (h *Handlers) CopyObjectHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.CopyObjectArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseCopyObjectRequest(r)
@@ -58,10 +58,10 @@ func (h *Handlers) CopyObjectHandler(w http.ResponseWriter, r *http.Request) {
 
 // HeadObjectHandler .
 func (h *Handlers) HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.GetObjectArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseHeadObjectRequest(r)
@@ -82,10 +82,10 @@ func (h *Handlers) HeadObjectHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetObjectHandler .
 func (h *Handlers) GetObjectHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.GetObjectArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseGetObjectRequest(r)
@@ -106,10 +106,10 @@ func (h *Handlers) GetObjectHandler(w http.ResponseWriter, r *http.Request) {
 
 // DeleteObjectHandler .
 func (h *Handlers) DeleteObjectHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.DeleteObjectArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseDeleteObjectRequest(r)
@@ -129,10 +129,10 @@ func (h *Handlers) DeleteObjectHandler(w http.ResponseWriter, r *http.Request) {
 
 // DeleteObjectsHandler .
 func (h *Handlers) DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.DeleteObjectsArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseDeleteObjectsRequest(r)
@@ -153,10 +153,10 @@ func (h *Handlers) DeleteObjectsHandler(w http.ResponseWriter, r *http.Request) 
 
 // ListObjectsHandler .
 func (h *Handlers) ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.ListObjectsArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseListObjectsRequest(r)
@@ -177,10 +177,10 @@ func (h *Handlers) ListObjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 // ListObjectsV2Handler .
 func (h *Handlers) ListObjectsV2Handler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.ListObjectsV2Args
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseListObjectsV2Request(r)
@@ -201,10 +201,10 @@ func (h *Handlers) ListObjectsV2Handler(w http.ResponseWriter, r *http.Request) 
 
 // GetObjectACLHandler - GET Object ACL
 func (h *Handlers) GetObjectACLHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.GetObjectACLArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseGetObjectACLRequest(r)

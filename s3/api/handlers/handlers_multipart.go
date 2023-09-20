@@ -9,10 +9,10 @@ import (
 )
 
 func (h *Handlers) CreateMultipartUploadHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.CreateMultipartUploadArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseCreateMultipartUploadRequest(r)
@@ -32,10 +32,10 @@ func (h *Handlers) CreateMultipartUploadHandler(w http.ResponseWriter, r *http.R
 }
 
 func (h *Handlers) UploadPartHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.UploadPartArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseUploadPartRequest(r)
@@ -55,10 +55,10 @@ func (h *Handlers) UploadPartHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) AbortMultipartUploadHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.AbortMultipartUploadArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseAbortMultipartUploadRequest(r)
@@ -78,10 +78,10 @@ func (h *Handlers) AbortMultipartUploadHandler(w http.ResponseWriter, r *http.Re
 }
 
 func (h *Handlers) CompleteMultipartUploadHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.CompleteMultipartUploadArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseCompleteMultipartUploadRequest(r)

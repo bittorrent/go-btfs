@@ -9,10 +9,10 @@ import (
 )
 
 func (h *Handlers) CreateBucketHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.CreateBucketArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseCreateBucketRequest(r)
@@ -32,10 +32,10 @@ func (h *Handlers) CreateBucketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.GetBucketArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseHeadBucketRequest(r)
@@ -55,10 +55,10 @@ func (h *Handlers) HeadBucketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.DeleteBucketArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseDeleteBucketRequest(r)
@@ -78,10 +78,10 @@ func (h *Handlers) DeleteBucketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.ListBucketsArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseListBucketsRequest(r)
@@ -101,10 +101,10 @@ func (h *Handlers) ListBucketsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) PutBucketACLHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.PutBucketACLArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParsePutBucketAclRequest(r)
@@ -124,10 +124,10 @@ func (h *Handlers) PutBucketACLHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) GetBucketACLHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var args *object.GetBucketACLArgs
+	var err error
 	defer func() {
-		contexts.SetHandleInf(r, h.name(), err, args)
+		contexts.SetHandleInf(r, h.name(), args, err)
 	}()
 
 	args, err = requests.ParseGetBucketACLRequest(r)
