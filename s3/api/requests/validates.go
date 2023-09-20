@@ -185,7 +185,7 @@ func ValidateCopySource(copySource *string) (val1, val2 string, err error) {
 	if copySource == nil {
 		return
 	}
-	src, err := url.QueryUnescape(*copySource)
+	src, err := url.PathUnescape(*copySource)
 	if err != nil {
 		src = *copySource
 		err = nil
