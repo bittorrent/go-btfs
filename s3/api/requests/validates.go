@@ -187,10 +187,10 @@ func ValidateCopySource(copySource *string) (val1, val2 string, err error) {
 	}
 	src, err := url.PathUnescape(*copySource)
 	if err != nil {
-		src = *copySource
-		err = nil
+		err = ErrCopySrcInvalid
+		return
 	}
-	src = strings.TrimPrefix(*copySource, consts.SlashSeparator)
+	src = strings.TrimPrefix(src, consts.SlashSeparator)
 	idx := strings.Index(src, consts.SlashSeparator)
 	if idx < 0 {
 		err = ErrCopySrcInvalid
