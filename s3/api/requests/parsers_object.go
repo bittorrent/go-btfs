@@ -11,9 +11,12 @@ import (
 )
 
 var putObjectSupports = fields{
-	"Body":            true,
-	"Bucket":          true,
-	"Key":             true,
+	"Body":   true,
+	"Bucket": true,
+	"Key":    true,
+	// The browser some time automatically add this CacheControl header
+	// just allow, do not handle
+	"CacheControl":    true,
 	"ContentLength":   true,
 	"ContentEncoding": true,
 	"ContentType":     true,
@@ -71,9 +74,12 @@ func ParsePutObjectRequest(r *http.Request) (args *object.PutObjectArgs, err err
 }
 
 var copyObjectSupports = fields{
-	"Bucket":            true,
-	"Key":               true,
-	"CopySource":        true,
+	"Bucket":     true,
+	"Key":        true,
+	"CopySource": true,
+	// The browser some time automatically add this CacheControl header
+	// just allow, do not handle
+	"CacheControl":      true,
 	"ContentEncoding":   true,
 	"ContentType":       true,
 	"Expires":           true,
