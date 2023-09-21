@@ -9,9 +9,7 @@ import (
 
 var AccessKeyCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "",
-		ShortDescription: `
-`,
+		Tagline: "Manage S3-Compatible-API access-keys.",
 	},
 	Subcommands: map[string]*cmds.Command{
 		"generate": accessKeyGenerateCmd,
@@ -38,9 +36,7 @@ func checkDaemon(env cmds.Environment) (err error) {
 
 var accessKeyGenerateCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "",
-		ShortDescription: `
-`,
+		Tagline: "Generate a new access-key record.",
 	},
 	Arguments: []cmds.Argument{},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) (err error) {
@@ -59,9 +55,7 @@ var accessKeyGenerateCmd = &cmds.Command{
 
 var accessKeyEnableCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "",
-		ShortDescription: `
-`,
+		Tagline: "Set status of the specified access-key to enable.",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("key", true, true, "The key").EnableStdin(),
@@ -79,9 +73,7 @@ var accessKeyEnableCmd = &cmds.Command{
 
 var accessKeyDisableCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "",
-		ShortDescription: `
-`,
+		Tagline: "Set status of the specified access-key to enable.",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("key", true, true, "The key").EnableStdin(),
@@ -99,7 +91,7 @@ var accessKeyDisableCmd = &cmds.Command{
 
 var accessKeyResetCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "",
+		Tagline: "Rest secret of the specified access-key.",
 		ShortDescription: `
 `,
 	},
@@ -119,9 +111,7 @@ var accessKeyResetCmd = &cmds.Command{
 
 var accessKeyDeleteCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "",
-		ShortDescription: `
-`,
+		Tagline: "Delete the specified access-key",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("key", true, true, "The key").EnableStdin(),
@@ -139,9 +129,7 @@ var accessKeyDeleteCmd = &cmds.Command{
 
 var accessKeyGetCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "",
-		ShortDescription: `
-`,
+		Tagline: "Get an access-key detail info.",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("key", true, true, "The key").EnableStdin(),
@@ -163,9 +151,7 @@ var accessKeyGetCmd = &cmds.Command{
 
 var accessKeyListCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "",
-		ShortDescription: `
-`,
+		Tagline: "List all access-keys.",
 	},
 	Arguments: []cmds.Argument{},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) (err error) {
