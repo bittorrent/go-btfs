@@ -22,8 +22,8 @@ var FixChequeCashOutCmd = &cmds.Command{
 			return err
 		}
 
-		listRet := ListChequeRet{}
-		listRet.Cheques = make([]cheque, 0, 0)
+		listRet := ListFixChequeRet{}
+		listRet.FixCheques = make([]fixCheque, 0)
 
 		for _, tokenAddr := range tokencfg.MpTokenAddr {
 			fmt.Println("FixChequeCashOutCmd ... 2")
@@ -34,36 +34,48 @@ var FixChequeCashOutCmd = &cmds.Command{
 			}
 
 			for k, v := range cheques {
-				_, err := chain.SettleObject.CashoutService.AdjustCashCheque(
+				fmt.Println("FixChequeCashOutCmd ... 4")
+
+				cashOutAmount, newCashOutAmount, err := chain.SettleObject.CashoutService.AdjustCashCheque(
 					context.Background(), v.Vault, v.Beneficiary, tokenAddr)
 				if err != nil {
 					return err
 				}
 
-				var record cheque
-				record.PeerID = k
-				record.Token = v.Token.String()
-				record.Beneficiary = v.Beneficiary.String()
-				record.Vault = v.Vault.String()
-				record.Payout = v.CumulativePayout
-				listRet.Cheques = append(listRet.Cheques, record)
+				fmt.Println("FixChequeCashOutCmd ... 5", cashOutAmount.String(), newCashOutAmount.String())
+
+				if newCashOutAmount != nil && newCashOutAmount.Uint64() > 0 {
+					var record fixCheque
+					record.PeerID = k
+					record.Token = v.Token.String()
+					record.Beneficiary = v.Beneficiary.String()
+					record.Vault = v.Vault.String()
+					record.CashedAmount = cashOutAmount
+					record.FixCashedAmount = newCashOutAmount
+
+					listRet.FixCheques = append(listRet.FixCheques, record)
+				}
+
+				fmt.Println("FixChequeCashOutCmd ... 6")
 			}
 		}
-		listRet.Len = len(listRet.Cheques)
+		listRet.Len = len(listRet.FixCheques)
+
+		fmt.Println("listRet = ", listRet)
 
 		return cmds.EmitOnce(res, &listRet)
 	},
-	Type: ListChequeRet{},
+	Type: ListFixChequeRet{},
 	Encoders: cmds.EncoderMap{
-		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *ListChequeRet) error {
-			fmt.Fprintf(w, "fix: \n\t%-55s\t%-46s\t%-46s\t%-46s\tamount: \n", "peerID:", "vault:", "beneficiary:", "cashout_amount:")
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *ListFixChequeRet) error {
+			fmt.Fprintf(w, "fix: \n\t%-55s\t%-46s\t%-46s\t%-46s\tfix_cash_amount: \n", "peerID:", "vault:", "beneficiary:", "cash_amount:")
 			for iter := 0; iter < out.Len; iter++ {
 				fmt.Fprintf(w, "\t%-55s\t%-46s\t%-46s\t%d\t%d \n",
-					out.Cheques[iter].PeerID,
-					out.Cheques[iter].Beneficiary,
-					out.Cheques[iter].Vault,
-					out.Cheques[iter].Payout.Uint64(),
-					out.Cheques[iter].CashedAmount.Uint64(),
+					out.FixCheques[iter].PeerID,
+					out.FixCheques[iter].Vault,
+					out.FixCheques[iter].Beneficiary,
+					out.FixCheques[iter].CashedAmount.Uint64(),
+					out.FixCheques[iter].FixCashedAmount.Uint64(),
 				)
 			}
 

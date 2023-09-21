@@ -28,7 +28,7 @@ type CashoutService interface {
 	CashCheque(ctx context.Context, vault, recipient common.Address, token common.Address) (common.Hash, error)
 	// CashoutStatus gets the status of the latest cashout transaction for the vault
 	CashoutStatus(ctx context.Context, vaultAddress common.Address, token common.Address) (*CashoutStatus, error)
-	AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address) (cashResult *CashOutResult, err error)
+	AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address) (totalCashOutAmount, newCashOutAmount *big.Int, err error)
 	HasCashoutAction(ctx context.Context, peer common.Address, token common.Address) (bool, error)
 	CashoutResults() ([]CashOutResult, error)
 }
@@ -310,14 +310,14 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 }
 
 // AdjustCashCheque .
-func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address) (cashResult *CashOutResult, err error) {
+func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address) (totalCashOutAmount, newCashOutAmount *big.Int, err error) {
 	fmt.Println("AdjustCashCheque ... ")
 	// 1.totalReceivedCashed
 	totalReceivedCashed := big.NewInt(0)
 	err = s.store.Get(tokencfg.AddToken(statestore.TotalReceivedCashedKey, token), &totalReceivedCashed)
 	if err != nil && err != storage.ErrNotFound {
 		fmt.Println("AdjustCashCheque ... 1 err = ", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	// 2.alreadyPaidOut in renter contract
@@ -326,7 +326,7 @@ func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, rec
 	alreadyPaidOutOnline, err := contract.PaidOut(ctx, recipient, token)
 	if err != nil {
 		fmt.Println("AdjustCashCheque ... 2 err = ", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	// 3.compare it to fix.
@@ -335,13 +335,14 @@ func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, rec
 	if diff.Cmp(big.NewInt(0)) > 0 {
 		fmt.Println("AdjustCashCheque: diff > 0")
 		//return nil
-		cashResult, err = s.fixStoreCashResult(vaultAddress, diff, token)
+		cashResult, err := s.fixStoreCashResult(vaultAddress, diff, token)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+		newCashOutAmount = cashResult.Amount
 	}
 
-	return
+	return alreadyPaidOutOnline, newCashOutAmount, nil
 }
 
 func (s *cashoutService) fixStoreCashResult(vault common.Address, shouldPaidOut *big.Int, token common.Address) (cashResult *CashOutResult, err error) {

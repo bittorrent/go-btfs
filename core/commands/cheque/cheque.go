@@ -36,6 +36,20 @@ type ListChequeRet struct {
 	Len     int
 }
 
+type fixCheque struct {
+	PeerID          string
+	Token           string
+	Beneficiary     string
+	Vault           string
+	CashedAmount    *big.Int
+	FixCashedAmount *big.Int
+}
+
+type ListFixChequeRet struct {
+	FixCheques []fixCheque
+	Len        int
+}
+
 type ReceiveCheque struct {
 	PeerID           string
 	Token            common.Address
