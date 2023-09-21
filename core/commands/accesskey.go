@@ -9,7 +9,8 @@ import (
 
 var AccessKeyCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Manage S3-Compatible-API access-keys.",
+		Tagline:          "Manage S3-Compatible-API access-keys.",
+		ShortDescription: "Commands for generate, update, get and list access-keys stored in this node.",
 	},
 	Subcommands: map[string]*cmds.Command{
 		"generate": accessKeyGenerateCmd,
@@ -36,7 +37,8 @@ func checkDaemon(env cmds.Environment) (err error) {
 
 var accessKeyGenerateCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Generate a new access-key record.",
+		Tagline:          "Generate a new access-key record.",
+		ShortDescription: "Outputs the new created access-key record.",
 	},
 	Arguments: []cmds.Argument{},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) (err error) {
@@ -55,7 +57,8 @@ var accessKeyGenerateCmd = &cmds.Command{
 
 var accessKeyEnableCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Set status of the specified access-key to enable.",
+		Tagline:          "Set status of the specified access-key to enable.",
+		ShortDescription: "Outputs empty if the access-key has been set to enable or it was already enabled.",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("key", true, true, "The key").EnableStdin(),
@@ -73,7 +76,8 @@ var accessKeyEnableCmd = &cmds.Command{
 
 var accessKeyDisableCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Set status of the specified access-key to enable.",
+		Tagline:          "Set status of the specified access-key to enable.",
+		ShortDescription: "Outputs empty if the access-key has been set to disable or it was already disabled.",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("key", true, true, "The key").EnableStdin(),
@@ -91,9 +95,8 @@ var accessKeyDisableCmd = &cmds.Command{
 
 var accessKeyResetCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Rest secret of the specified access-key.",
-		ShortDescription: `
-`,
+		Tagline:          "Rest secret of the specified access-key.",
+		ShortDescription: "Outputs the updated access-key record if it's secret has been reset.",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("key", true, true, "The key").EnableStdin(),
@@ -111,7 +114,8 @@ var accessKeyResetCmd = &cmds.Command{
 
 var accessKeyDeleteCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Delete the specified access-key",
+		Tagline:          "Delete the specified access-key",
+		ShortDescription: "Outputs empty if access-key record has been deleted.",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("key", true, true, "The key").EnableStdin(),
@@ -129,7 +133,8 @@ var accessKeyDeleteCmd = &cmds.Command{
 
 var accessKeyGetCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Get an access-key detail info.",
+		Tagline:          "Get an access-key detail info.",
+		ShortDescription: "Outputs access-key record for the specified key.",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("key", true, true, "The key").EnableStdin(),
@@ -151,7 +156,8 @@ var accessKeyGetCmd = &cmds.Command{
 
 var accessKeyListCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "List all access-keys.",
+		Tagline:          "List all access-keys.",
+		ShortDescription: "Outputs all non-deleted access-keys stored in current node.",
 	},
 	Arguments: []cmds.Argument{},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) (err error) {
