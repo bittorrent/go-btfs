@@ -119,7 +119,7 @@ var RecoveryCmd = &cmds.Command{
 		if err := UnTar(backupPath, dstPath); err != nil {
 			err = UnZip(backupPath, dstPath)
 			if err != nil {
-				return errors.New("your file format is not tar.gz or zip, please check again")
+				return errors.New("your file is not exists or your file format is not tar.gz or zip, please check again")
 			}
 		}
 		fmt.Println("Recovery successful!")
