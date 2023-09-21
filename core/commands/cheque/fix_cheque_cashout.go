@@ -22,6 +22,9 @@ var FixChequeCashOutCmd = &cmds.Command{
 			return err
 		}
 
+		listRet := ListChequeRet{}
+		listRet.Cheques = make([]cheque, 0, 0)
+
 		for _, tokenAddr := range tokencfg.MpTokenAddr {
 			fmt.Println("FixChequeCashOutCmd ... 2")
 			cheques, err := chain.SettleObject.SwapService.LastReceivedCheques(tokenAddr)
@@ -29,21 +32,31 @@ var FixChequeCashOutCmd = &cmds.Command{
 			if err != nil {
 				return err
 			}
-			for _, v := range cheques {
-				err := chain.SettleObject.CashoutService.AdjustCashCheque(
+
+			for k, v := range cheques {
+				_, err := chain.SettleObject.CashoutService.AdjustCashCheque(
 					context.Background(), v.Vault, v.Beneficiary, tokenAddr)
 				if err != nil {
 					return err
 				}
+
+				var record cheque
+				record.PeerID = k
+				record.Token = v.Token.String()
+				record.Beneficiary = v.Beneficiary.String()
+				record.Vault = v.Vault.String()
+				record.Payout = v.CumulativePayout
+				listRet.Cheques = append(listRet.Cheques, record)
 			}
 		}
+		listRet.Len = len(listRet.Cheques)
 
-		return cmds.EmitOnce(res, nil)
+		return cmds.EmitOnce(res, &listRet)
 	},
 	Type: ListChequeRet{},
 	Encoders: cmds.EncoderMap{
 		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *ListChequeRet) error {
-			fmt.Fprintf(w, "\t%-55s\t%-46s\t%-46s\t%-46s\tamount: \n", "peerID:", "vault:", "beneficiary:", "cashout_amount:")
+			fmt.Fprintf(w, "fix: \n\t%-55s\t%-46s\t%-46s\t%-46s\tamount: \n", "peerID:", "vault:", "beneficiary:", "cashout_amount:")
 			for iter := 0; iter < out.Len; iter++ {
 				fmt.Fprintf(w, "\t%-55s\t%-46s\t%-46s\t%d\t%d \n",
 					out.Cheques[iter].PeerID,
