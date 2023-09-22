@@ -380,7 +380,7 @@ func (s *cashoutService) RestartFixChequeCashOut() {
 		}
 
 		if len(list) > 0 {
-			fmt.Println("wait 30s, for fixing cash out status")
+			log.Infof("wait 30s, for fixing cash out status")
 
 			// wait 30s,  for online cashing out ok.
 			time.Sleep(time.Second * RestartWaitCashOutOnlineTime)
