@@ -342,6 +342,7 @@ func TestCommands(t *testing.T) {
 		"/bittorrent/scrape",
 		"/bittorrent/metainfo",
 		"/bittorrent/bencode",
+		"/accesskey",
 		"/accesskey/generate",
 		"/accesskey/enable",
 		"/accesskey/disable",
