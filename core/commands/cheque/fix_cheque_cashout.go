@@ -6,6 +6,7 @@ import (
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"github.com/bittorrent/go-btfs/utils"
+	"github.com/google/martian/log"
 	"golang.org/x/net/context"
 	"io"
 )
@@ -15,8 +16,6 @@ var FixChequeCashOutCmd = &cmds.Command{
 		Tagline: "List cheque(s) received from peers.",
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		fmt.Println("FixChequeCashOutCmd ... ")
-
 		err := utils.CheckSimpleMode(env)
 		if err != nil {
 			return err
@@ -26,24 +25,17 @@ var FixChequeCashOutCmd = &cmds.Command{
 		listRet.FixCheques = make([]fixCheque, 0)
 
 		for _, tokenAddr := range tokencfg.MpTokenAddr {
-			fmt.Println("FixChequeCashOutCmd ... 2")
 			cheques, err := chain.SettleObject.SwapService.LastReceivedCheques(tokenAddr)
-			fmt.Println("FixChequeCashOutCmd ... 3", cheques)
 			if err != nil {
 				return err
 			}
 
 			for k, v := range cheques {
-				fmt.Println("FixChequeCashOutCmd ... 4")
-
 				totalCashOutAmount, newCashOutAmount, err := chain.SettleObject.CashoutService.AdjustCashCheque(
 					context.Background(), v.Vault, v.Beneficiary, tokenAddr, false)
 				if err != nil {
 					return err
 				}
-
-				fmt.Println("FixChequeCashOutCmd ... 5", totalCashOutAmount.String(), newCashOutAmount.String())
-
 				if newCashOutAmount != nil && newCashOutAmount.Uint64() > 0 {
 					var record fixCheque
 					record.PeerID = k
@@ -55,13 +47,11 @@ var FixChequeCashOutCmd = &cmds.Command{
 
 					listRet.FixCheques = append(listRet.FixCheques, record)
 				}
-
-				fmt.Println("FixChequeCashOutCmd ... 6")
 			}
 		}
 		listRet.Len = len(listRet.FixCheques)
 
-		fmt.Println("listRet = ", listRet)
+		log.Infof("FixChequeCashOutCmd, listRet = %+v", listRet)
 
 		return cmds.EmitOnce(res, &listRet)
 	},

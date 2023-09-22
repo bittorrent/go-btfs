@@ -246,7 +246,7 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 		// 2.delete cash out status
 		err = s.DeleteCashOutStatusStore(cashOutStateInfo)
 		if err != nil {
-			fmt.Printf("delete cashout status, err = %v \n", err)
+			log.Errorf("delete cashout status, err = %v", err)
 			return
 		}
 	}()
@@ -338,12 +338,10 @@ func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, rec
 		}
 	}
 
-	fmt.Println("AdjustCashCheque ... ")
 	// 1.totalReceivedCashed
 	totalReceivedCashed := big.NewInt(0)
 	err = s.store.Get(tokencfg.AddToken(statestore.TotalReceivedCashedKey, token), &totalReceivedCashed)
 	if err != nil && err != storage.ErrNotFound {
-		fmt.Println("AdjustCashCheque ... 1 err = ", err)
 		return nil, nil, err
 	}
 
@@ -352,16 +350,17 @@ func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, rec
 	contract := newVaultContractMuti(vaultAddress, s.transactionService)
 	alreadyPaidOutOnline, err := contract.PaidOut(ctx, recipient, token)
 	if err != nil {
-		fmt.Println("AdjustCashCheque ... 2 err = ", err)
 		return nil, nil, err
 	}
 
 	// 3.compare it to fix.
 	diff := big.NewInt(0).Sub(alreadyPaidOutOnline, totalReceivedCashed)
-	fmt.Println("AdjustCashCheque: ", alreadyPaidOutOnline.String(), totalReceivedCashed.String(), diff.String())
-	if diff.Cmp(big.NewInt(0)) > 0 {
-		fmt.Println("AdjustCashCheque: diff > 0")
+	log.Infof("AdjustCashCheque: diff > 0, vault=%s, recipient=%s, online=%s, local=%s, diff=%s",
+		vaultAddress.String(), recipient.String(),
+		alreadyPaidOutOnline.String(), totalReceivedCashed.String(), diff.String(),
+	)
 
+	if diff.Cmp(big.NewInt(0)) > 0 {
 		cashResult, err := s.fixStoreCashResult(vaultAddress, diff, token)
 		if err != nil {
 			return nil, nil, err
@@ -376,7 +375,7 @@ func (s *cashoutService) RestartFixChequeCashOut() {
 	if RestartFixCashOutStatusLock {
 		list, err := s.GetAllCashOutStatusStore()
 		if err != nil {
-			fmt.Printf("RestartFixChequeCashOut: GetAllCashOutStatusStore err = %v \n", err)
+			log.Infof("RestartFixChequeCashOut: GetAllCashOutStatusStore err = %v", err)
 			return
 		}
 
@@ -389,13 +388,14 @@ func (s *cashoutService) RestartFixChequeCashOut() {
 			for _, v := range list {
 				_, _, err := s.AdjustCashCheque(context.Background(), v.Vault, v.Beneficiary, v.Token, true)
 				if err != nil {
-					fmt.Printf("RestartFixChequeCashOut: AdjustCashCheque err = %v, info = %+v \n", err, v)
+					log.Infof("RestartFixChequeCashOut: AdjustCashCheque err = %v, info = %+v", err, v)
 					continue
 				}
 
 				err = s.DeleteCashOutStatusStore(v)
 				if err != nil {
-					fmt.Printf("RestartFixChequeCashOut: DeleteCashOutStatusStore err = %v, info = %+v \n", err, v)
+					log.Infof("RestartFixChequeCashOut: DeleteCashOutStatusStore err = %v, info = %+v", err, v)
+					continue
 				}
 			}
 		}

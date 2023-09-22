@@ -35,7 +35,6 @@ func (s *cashoutService) AddCashOutStatusStore(info CashOutStatusStoreInfo) (err
 	if err != nil {
 		return err
 	}
-	fmt.Println("... AddCashOutStatusStore ok! info = ", info)
 
 	return nil
 }
@@ -54,8 +53,6 @@ func (s *cashoutService) DeleteCashOutStatusStore(info CashOutStatusStoreInfo) (
 			return err
 		}
 	}
-
-	fmt.Println("... DeleteCashOutStatusStore ok! info = ", info)
 	return
 }
 
@@ -74,8 +71,6 @@ func (s *cashoutService) GetCashOutStatusStore(txHash string) (bl bool, err erro
 			return false, err
 		}
 	}
-
-	fmt.Println("... GetCashOutStatusStore ok! info = ", info)
 
 	return true, nil
 }
@@ -100,6 +95,5 @@ func (s *cashoutService) GetAllCashOutStatusStore() (infoList []CashOutStatusSto
 		return nil, err
 	}
 
-	fmt.Println("... GetAllCashOutStatusStore ok! infoList = ", infoList)
 	return infoList, nil
 }
