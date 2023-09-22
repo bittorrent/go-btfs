@@ -28,9 +28,10 @@ type CashoutService interface {
 	CashCheque(ctx context.Context, vault, recipient common.Address, token common.Address) (common.Hash, error)
 	// CashoutStatus gets the status of the latest cashout transaction for the vault
 	CashoutStatus(ctx context.Context, vaultAddress common.Address, token common.Address) (*CashoutStatus, error)
-	AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address) (totalCashOutAmount, newCashOutAmount *big.Int, err error)
+	AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, passFlag bool) (totalCashOutAmount, newCashOutAmount *big.Int, err error)
 	HasCashoutAction(ctx context.Context, peer common.Address, token common.Address) (bool, error)
 	CashoutResults() ([]CashOutResult, error)
+	RestartFixChequeCashOut()
 }
 
 type cashoutService struct {
@@ -179,6 +180,10 @@ func (s *cashoutService) CashoutResults() ([]CashOutResult, error) {
 
 // CashCheque sends a cashout transaction for the last cheque of the vault
 func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common.Address, token common.Address) (common.Hash, error) {
+	if RestartFixCashOutStatusLock {
+		return common.Hash{}, errors.New("Just started, it can not cash cheque, you will wait for about 40s to do it. ")
+	}
+
 	cheque, err := s.chequeStore.LastReceivedCheque(vault, token)
 	if err != nil {
 		return common.Hash{}, err
@@ -216,6 +221,19 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 		return common.Hash{}, err
 	}
 
+	// 1.add cash out status
+	cashOutStateInfo := CashOutStatusStoreInfo{
+		Token:            token,
+		Vault:            cheque.Vault,
+		Beneficiary:      cheque.Beneficiary,
+		CumulativePayout: cheque.CumulativePayout,
+		TxHash:           txHash.String(),
+	}
+	err = s.AddCashOutStatusStore(cashOutStateInfo)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
 	// WaitForReceipt takes long time
 	go func() {
 		defer func() {
@@ -224,6 +242,13 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 			}
 		}()
 		s.storeCashResult(context.Background(), vault, txHash, cheque, token)
+
+		// 2.delete cash out status
+		err = s.DeleteCashOutStatusStore(cashOutStateInfo)
+		if err != nil {
+			fmt.Printf("delete cashout status, err = %v \n", err)
+			return
+		}
 	}()
 	return txHash, nil
 }
@@ -237,10 +262,6 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 		CashTime: time.Now().Unix(),
 		Status:   "fail",
 	}
-
-	fmt.Println("test exit.")
-	time.Sleep(time.Second * 3)
-	return nil
 
 	_, err := s.transactionService.WaitForReceipt(ctx, txHash)
 	if err != nil {
@@ -310,7 +331,13 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 }
 
 // AdjustCashCheque .
-func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address) (totalCashOutAmount, newCashOutAmount *big.Int, err error) {
+func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, passFlag bool) (totalCashOutAmount, newCashOutAmount *big.Int, err error) {
+	if RestartFixCashOutStatusLock {
+		if !passFlag {
+			return nil, nil, errors.New("Just started, it can not fix cash out status, you will wait for about 40s to do it. ")
+		}
+	}
+
 	fmt.Println("AdjustCashCheque ... ")
 	// 1.totalReceivedCashed
 	totalReceivedCashed := big.NewInt(0)
@@ -334,7 +361,7 @@ func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, rec
 	fmt.Println("AdjustCashCheque: ", alreadyPaidOutOnline.String(), totalReceivedCashed.String(), diff.String())
 	if diff.Cmp(big.NewInt(0)) > 0 {
 		fmt.Println("AdjustCashCheque: diff > 0")
-		//return nil
+
 		cashResult, err := s.fixStoreCashResult(vaultAddress, diff, token)
 		if err != nil {
 			return nil, nil, err
@@ -343,6 +370,38 @@ func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, rec
 	}
 
 	return alreadyPaidOutOnline, newCashOutAmount, nil
+}
+
+func (s *cashoutService) RestartFixChequeCashOut() {
+	if RestartFixCashOutStatusLock {
+		list, err := s.GetAllCashOutStatusStore()
+		if err != nil {
+			fmt.Printf("RestartFixChequeCashOut: GetAllCashOutStatusStore err = %v \n", err)
+			return
+		}
+
+		if len(list) > 0 {
+			fmt.Println("wait 30s, for fixing cash out status")
+
+			// wait 30s,  for online cashing out ok.
+			time.Sleep(time.Second * RestartWaitCashOutOnlineTime)
+
+			for _, v := range list {
+				_, _, err := s.AdjustCashCheque(context.Background(), v.Vault, v.Beneficiary, v.Token, true)
+				if err != nil {
+					fmt.Printf("RestartFixChequeCashOut: AdjustCashCheque err = %v, info = %+v \n", err, v)
+					continue
+				}
+
+				err = s.DeleteCashOutStatusStore(v)
+				if err != nil {
+					fmt.Printf("RestartFixChequeCashOut: DeleteCashOutStatusStore err = %v, info = %+v \n", err, v)
+				}
+			}
+		}
+		RestartFixCashOutStatusLock = false
+	}
+	return
 }
 
 func (s *cashoutService) fixStoreCashResult(vault common.Address, shouldPaidOut *big.Int, token common.Address) (cashResult *CashOutResult, err error) {
