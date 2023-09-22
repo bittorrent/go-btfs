@@ -349,15 +349,6 @@ func TestCommands(t *testing.T) {
 		"/multibase/list",
 		"/backup",
 		"/recovery",
-		"/accesskey/delete",
-		"/cheque/fix_cheque_cashout",
-		"/accesskey/list",
-		"/accesskey/get",
-		"/accesskey/enable",
-		"/accesskey/disable",
-		"/accesskey/reset",
-		"/accesskey",
-		"/accesskey/generate",
 	}
 
 	cmdSet := make(map[string]struct{})
