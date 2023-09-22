@@ -182,6 +182,7 @@ var rootSubcommands = map[string]*cmds.Command{
 	"multibase":      MbaseCmd,
 	"backup":         BackupCmd,
 	"recovery":       RecoveryCmd,
+	"accesskey":      AccessKeyCmd,
 }
 
 // RootRO is the readonly version of Root
