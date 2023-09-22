@@ -28,7 +28,7 @@ type CashoutService interface {
 	CashCheque(ctx context.Context, vault, recipient common.Address, token common.Address) (common.Hash, error)
 	// CashoutStatus gets the status of the latest cashout transaction for the vault
 	CashoutStatus(ctx context.Context, vaultAddress common.Address, token common.Address) (*CashoutStatus, error)
-	AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, passFlag bool) (totalCashOutAmount, newCashOutAmount *big.Int, err error)
+	AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, restartPassFlag bool) (totalCashOutAmount, newCashOutAmount *big.Int, err error)
 	HasCashoutAction(ctx context.Context, peer common.Address, token common.Address) (bool, error)
 	CashoutResults() ([]CashOutResult, error)
 	RestartFixChequeCashOut()
@@ -331,9 +331,9 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 }
 
 // AdjustCashCheque .
-func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, passFlag bool) (totalCashOutAmount, newCashOutAmount *big.Int, err error) {
+func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, restartPassFlag bool) (totalCashOutAmount, newCashOutAmount *big.Int, err error) {
 	if RestartFixCashOutStatusLock {
-		if !passFlag {
+		if !restartPassFlag {
 			return nil, nil, errors.New("Just started, it can not fix cash out status, you will wait for about 40s to do it. ")
 		}
 	}
