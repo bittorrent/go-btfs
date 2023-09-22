@@ -40,13 +40,13 @@ Example:
 	$ echo "hello" | btfs object patch $HASH append-data
 
 NOTE: This does not append data to a file - it modifies the actual raw
-data within an object. Objects have a max size of 1MB and objects larger than
+data within an object. ToDeleteObjects have a max size of 1MB and objects larger than
 the limit will not be respected by the network.
 `,
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("root", true, false, "The hash of the node to modify."),
-		cmds.FileArg("data", true, false, "Data to append.").EnableStdin(),
+		cmds.FileArg("data", true, false, "data to append.").EnableStdin(),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		api, err := cmdenv.GetApi(env, req)
