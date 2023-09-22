@@ -180,6 +180,7 @@ var rootSubcommands = map[string]*cmds.Command{
 	"statuscontract": StatusContractCmd,
 	"bittorrent":     bittorrentCmd,
 	"multibase":      MbaseCmd,
+	"accesskey":      AccessKeyCmd,
 }
 
 // RootRO is the readonly version of Root
