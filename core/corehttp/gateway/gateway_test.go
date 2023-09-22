@@ -418,7 +418,7 @@ func TestIPNSHostnameRedirect(t *testing.T) {
 // 	assert.Contains(t, s, "<a class=\"btfs-hash\" translate=\"no\" href=\"https://cid.btfs.tech/#", "expected links to cid.btfs.tech in CID column when on DNSLink website")
 // 	assert.Contains(t, s, "<a href=\"/foo%3F%20%23%3C%27/..\">", "expected backlink in directory listing")
 // 	assert.Contains(t, s, "<a href=\"/foo%3F%20%23%3C%27/file.txt\">", "expected file in directory listing")
-// 	assert.Contains(t, s, s, k2.Cid().String(), "expected hash in directory listing")
+// 	assert.Contains(t, s, s, k2.CID().String(), "expected hash in directory listing")
 
 // 	// make request to directory listing at root
 // 	req, err = http.NewRequest(http.MethodGet, ts.URL, nil)
@@ -440,7 +440,7 @@ func TestIPNSHostnameRedirect(t *testing.T) {
 // 	assert.Contains(t, s, "<a href=\"/file.txt\">", "expected file in directory listing")
 // 	// https://github.com/btfs/dir-index-html/issues/42
 // 	assert.Contains(t, s, "<a class=\"btfs-hash\" translate=\"no\" href=\"https://cid.btfs.tech/#", "expected links to cid.btfs.tech in CID column when on DNSLink website")
-// 	assert.Contains(t, s, k.Cid().String(), "expected hash in directory listing")
+// 	assert.Contains(t, s, k.CID().String(), "expected hash in directory listing")
 
 // 	// make request to directory listing
 // 	req, err = http.NewRequest(http.MethodGet, ts.URL+"/foo%3F%20%23%3C%27/bar/", nil)
@@ -460,7 +460,7 @@ func TestIPNSHostnameRedirect(t *testing.T) {
 // 	assert.True(t, matchPathOrBreadcrumbs(s, "/btns/<a href=\"//example.net/\">example.net</a>/<a href=\"//example.net/foo%3F%20%23%3C%27\">foo? #&lt;&#39;</a>/<a href=\"//example.net/foo%3F%20%23%3C%27/bar\">bar</a>"), "expected a path in directory listing")
 // 	assert.Contains(t, s, "<a href=\"/foo%3F%20%23%3C%27/bar/..\">", "expected backlink in directory listing")
 // 	assert.Contains(t, s, "<a href=\"/foo%3F%20%23%3C%27/bar/file.txt\">", "expected file in directory listing")
-// 	assert.Contains(t, s, k3.Cid().String(), "expected hash in directory listing")
+// 	assert.Contains(t, s, k3.CID().String(), "expected hash in directory listing")
 // }
 
 func TestPretty404(t *testing.T) {
