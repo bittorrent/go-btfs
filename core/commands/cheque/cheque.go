@@ -37,12 +37,12 @@ type ListChequeRet struct {
 }
 
 type fixCheque struct {
-	PeerID          string
-	Token           string
-	Beneficiary     string
-	Vault           string
-	CashedAmount    *big.Int
-	FixCashedAmount *big.Int
+	PeerID            string
+	Token             string
+	Beneficiary       string
+	Vault             string
+	TotalCashedAmount *big.Int
+	FixCashedAmount   *big.Int
 }
 
 type ListFixChequeRet struct {

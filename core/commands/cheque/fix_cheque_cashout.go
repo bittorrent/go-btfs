@@ -36,13 +36,13 @@ var FixChequeCashOutCmd = &cmds.Command{
 			for k, v := range cheques {
 				fmt.Println("FixChequeCashOutCmd ... 4")
 
-				cashOutAmount, newCashOutAmount, err := chain.SettleObject.CashoutService.AdjustCashCheque(
+				totalCashOutAmount, newCashOutAmount, err := chain.SettleObject.CashoutService.AdjustCashCheque(
 					context.Background(), v.Vault, v.Beneficiary, tokenAddr)
 				if err != nil {
 					return err
 				}
 
-				fmt.Println("FixChequeCashOutCmd ... 5", cashOutAmount.String(), newCashOutAmount.String())
+				fmt.Println("FixChequeCashOutCmd ... 5", totalCashOutAmount.String(), newCashOutAmount.String())
 
 				if newCashOutAmount != nil && newCashOutAmount.Uint64() > 0 {
 					var record fixCheque
@@ -50,7 +50,7 @@ var FixChequeCashOutCmd = &cmds.Command{
 					record.Token = v.Token.String()
 					record.Beneficiary = v.Beneficiary.String()
 					record.Vault = v.Vault.String()
-					record.CashedAmount = cashOutAmount
+					record.TotalCashedAmount = totalCashOutAmount
 					record.FixCashedAmount = newCashOutAmount
 
 					listRet.FixCheques = append(listRet.FixCheques, record)
@@ -68,13 +68,13 @@ var FixChequeCashOutCmd = &cmds.Command{
 	Type: ListFixChequeRet{},
 	Encoders: cmds.EncoderMap{
 		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *ListFixChequeRet) error {
-			fmt.Fprintf(w, "fix: \n\t%-55s\t%-46s\t%-46s\t%-46s\tfix_cash_amount: \n", "peerID:", "vault:", "beneficiary:", "cash_amount:")
+			fmt.Fprintf(w, "fix: \n\t%-55s\t%-46s\t%-46s\t%-46s\tfix_cash_amount: \n", "peerID:", "vault:", "beneficiary:", "total_cash_amount:")
 			for iter := 0; iter < out.Len; iter++ {
 				fmt.Fprintf(w, "\t%-55s\t%-46s\t%-46s\t%d\t%d \n",
 					out.FixCheques[iter].PeerID,
 					out.FixCheques[iter].Vault,
 					out.FixCheques[iter].Beneficiary,
-					out.FixCheques[iter].CashedAmount.Uint64(),
+					out.FixCheques[iter].TotalCashedAmount.Uint64(),
 					out.FixCheques[iter].FixCashedAmount.Uint64(),
 				)
 			}
