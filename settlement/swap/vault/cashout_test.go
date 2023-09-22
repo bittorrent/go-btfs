@@ -23,6 +23,7 @@ var (
 )
 
 func TestCashout(t *testing.T) {
+	vault.RestartFixCashOutStatusLock = false
 	vaultAddress := common.HexToAddress("abcd")
 	recipientAddress := common.HexToAddress("efff")
 	txHash := common.HexToHash("dddd")
@@ -123,6 +124,7 @@ func TestCashout(t *testing.T) {
 }
 
 func TestCashoutBounced(t *testing.T) {
+	vault.RestartFixCashOutStatusLock = false
 	vaultAddress := common.HexToAddress("abcd")
 	recipientAddress := common.HexToAddress("efff")
 	txHash := common.HexToHash("dddd")
@@ -227,6 +229,7 @@ func TestCashoutBounced(t *testing.T) {
 }
 
 func TestCashoutStatusReverted(t *testing.T) {
+	vault.RestartFixCashOutStatusLock = false
 	vaultAddress := common.HexToAddress("abcd")
 	recipientAddress := common.HexToAddress("efff")
 	txHash := common.HexToHash("dddd")
@@ -307,6 +310,7 @@ func TestCashoutStatusReverted(t *testing.T) {
 }
 
 func TestCashoutStatusPending(t *testing.T) {
+	vault.RestartFixCashOutStatusLock = false
 	vaultAddress := common.HexToAddress("abcd")
 	recipientAddress := common.HexToAddress("efff")
 	txHash := common.HexToHash("dddd")

@@ -759,6 +759,7 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		spin.Analytics(api, cctx.ConfigRoot, node, version.CurrentVersionNumber, hValue)
 		spin.Hosts(node, env)
 		spin.Contracts(node, req, env, nodepb.ContractStat_HOST.String())
+		spin.RestartFixChequeCashOut()
 	}
 
 	// Give the user some immediate feedback when they hit C-c
