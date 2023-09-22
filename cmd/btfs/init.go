@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bittorrent/go-btfs/assets"
 	"github.com/bittorrent/go-btfs/chain"
@@ -36,6 +37,7 @@ const (
 	rmOnUnpinOptionName = "rm-on-unpin"
 	seedOptionName      = "seed"
 	simpleMode          = "simple-mode"
+	recoveryOptionName  = "recovery"
 	/*
 		passWordOptionName     = "password"
 		passwordFileoptionName = "password-file"
@@ -72,6 +74,7 @@ environment variable:
 		cmds.BoolOption(rmOnUnpinOptionName, "r", "Remove unpinned files.").WithDefault(false),
 		cmds.StringOption(seedOptionName, "s", "Import seed phrase"),
 		cmds.BoolOption(simpleMode, "sm", "init with simple mode or not."),
+		cmds.StringOption(recoveryOptionName, "Recovery data from a backup"),
 		/*
 			cmds.StringOption(passWordOptionName, "", "password for decrypting keys."),
 			cmds.StringOption(passwordFileoptionName, "", "path to a file that contains password for decrypting keys"),
@@ -140,7 +143,30 @@ environment variable:
 			password, _ := req.Options[passWordOptionName].(string)
 			passwordFile, _ := req.Options[passwordFileoptionName].(string)
 		*/
+		backupPath, ok := req.Options[recoveryOptionName].(string)
+		if ok {
+			btfsPath := env.(*oldcmds.Context).ConfigRoot
+			dstPath := filepath.Dir(btfsPath)
+			if fsrepo.IsInitialized(btfsPath) {
+				newPath := filepath.Join(dstPath, fmt.Sprintf(".btfs_backup_%d", time.Now().Unix()))
+				// newPath := filepath.Join(filepath.Dir(btfsPath), backup)
+				err := os.Rename(btfsPath, newPath)
+				if err != nil {
+					return err
+				}
+				fmt.Println("btfs configuration file already exists!")
+				fmt.Println("We have renamed it to ", newPath)
+			}
 
+			if err := commands.UnTar(backupPath, dstPath); err != nil {
+				err = commands.UnZip(backupPath, dstPath)
+				if err != nil {
+					return errors.New("your file format is not tar.gz or zip, please check again")
+				}
+			}
+			fmt.Println("Recovery successful!")
+			return nil
+		}
 		return doInit(os.Stdout, cctx.ConfigRoot, empty, nBitsForKeypair, profile, conf, keyType, importKey, seedPhrase, rmOnUnpin, simpleModeIn)
 	},
 }
