@@ -28,7 +28,8 @@ type CashoutService interface {
 	CashCheque(ctx context.Context, vault, recipient common.Address, token common.Address) (common.Hash, error)
 	// CashoutStatus gets the status of the latest cashout transaction for the vault
 	CashoutStatus(ctx context.Context, vaultAddress common.Address, token common.Address) (*CashoutStatus, error)
-	AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, restartPassFlag bool) (totalCashOutAmount, newCashOutAmount *big.Int, err error)
+	AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address) (totalCashOutAmount, newCashOutAmount *big.Int, err error)
+	AdjustCashChequeTxHash(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, txHash common.Hash, cumulativePayout *big.Int) (totalCashOutAmount, newCashOutAmount *big.Int, err error)
 	HasCashoutAction(ctx context.Context, peer common.Address, token common.Address) (bool, error)
 	CashoutResults() ([]CashOutResult, error)
 	RestartFixChequeCashOut()
@@ -331,11 +332,9 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 }
 
 // AdjustCashCheque .
-func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, restartPassFlag bool) (totalCashOutAmount, newCashOutAmount *big.Int, err error) {
+func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address) (totalCashOutAmount, newCashOutAmount *big.Int, err error) {
 	if RestartFixCashOutStatusLock {
-		if !restartPassFlag {
-			return nil, nil, errors.New("Just started, it can not fix cash out status, you will wait for about 40s to do it. ")
-		}
+		return nil, nil, errors.New("Just started, it can not fix cash out status, you will wait for about 40s to do it. ")
 	}
 
 	// 1.totalReceivedCashed
@@ -361,7 +360,51 @@ func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, rec
 	)
 
 	if diff.Cmp(big.NewInt(0)) > 0 {
-		cashResult, err := s.fixStoreCashResult(vaultAddress, diff, token)
+		txHash := common.Hash{} //fix txHash: 0x0000...
+		cashResult, err := s.fixStoreCashResult(vaultAddress, diff, token, txHash)
+		if err != nil {
+			return nil, nil, err
+		}
+		newCashOutAmount = cashResult.Amount
+	}
+
+	return alreadyPaidOutOnline, newCashOutAmount, nil
+}
+
+// AdjustCashChequeTxHash . when node starts.
+func (s *cashoutService) AdjustCashChequeTxHash(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, txHash common.Hash, cumulativePayout *big.Int) (totalCashOutAmount, newCashOutAmount *big.Int, err error) {
+	// 1.totalReceivedCashed
+	totalReceivedCashed := big.NewInt(0)
+	err = s.store.Get(tokencfg.AddToken(statestore.TotalReceivedCashedKey, token), &totalReceivedCashed)
+	if err != nil && err != storage.ErrNotFound {
+		return nil, nil, err
+	}
+
+	// 2.alreadyPaidOut in renter contract
+	// blockchain calls below
+	contract := newVaultContractMuti(vaultAddress, s.transactionService)
+	alreadyPaidOutOnline, err := contract.PaidOut(ctx, recipient, token)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// 3.compare it to fix.
+	diffReceived := big.NewInt(0).Sub(alreadyPaidOutOnline, totalReceivedCashed)
+	log.Infof("AdjustCashCheque: diffReceived, vault=%s, recipient=%s, txHash=%s, online=%s, local=%s, diffReceived=%s",
+		vaultAddress.String(), recipient.String(), txHash.String(),
+		alreadyPaidOutOnline.String(), totalReceivedCashed.String(), diffReceived.String(),
+	)
+
+	if diffReceived.Cmp(big.NewInt(0)) > 0 {
+		diffCheque := big.NewInt(0).Sub(alreadyPaidOutOnline, cumulativePayout)
+		log.Infof("AdjustCashCheque: diffCheque, vault=%s, recipient=%s, txHash=%s, online=%s, cumulativePayout=%s, diffCheque=%s",
+			vaultAddress.String(), recipient.String(), txHash.String(),
+			alreadyPaidOutOnline.String(), cumulativePayout.String(), diffCheque.String(),
+		)
+		if diffCheque.Cmp(big.NewInt(0)) > 0 {
+			txHash = common.Hash{} //fix txHash: 0x0000...
+		}
+		cashResult, err := s.fixStoreCashResult(vaultAddress, diffReceived, token, txHash)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -386,7 +429,8 @@ func (s *cashoutService) RestartFixChequeCashOut() {
 			time.Sleep(time.Second * RestartWaitCashOutOnlineTime)
 
 			for _, v := range list {
-				_, _, err := s.AdjustCashCheque(context.Background(), v.Vault, v.Beneficiary, v.Token, true)
+				txHash := common.HexToHash(v.TxHash)
+				_, _, err = s.AdjustCashChequeTxHash(context.Background(), v.Vault, v.Beneficiary, v.Token, txHash, v.CumulativePayout)
 				if err != nil {
 					log.Infof("RestartFixChequeCashOut: AdjustCashCheque err = %v, info = %+v", err, v)
 					continue
@@ -404,8 +448,8 @@ func (s *cashoutService) RestartFixChequeCashOut() {
 	return
 }
 
-func (s *cashoutService) fixStoreCashResult(vault common.Address, shouldPaidOut *big.Int, token common.Address) (cashResult *CashOutResult, err error) {
-	txHash := common.Hash{} //fix txHash: 0x0000...
+func (s *cashoutService) fixStoreCashResult(vault common.Address, shouldPaidOut *big.Int, token common.Address, txHash common.Hash) (cashResult *CashOutResult, err error) {
+	//txHash := common.Hash{} //fix txHash: 0x0000...
 	cashResult = &CashOutResult{
 		TxHash:   txHash,
 		Vault:    vault,
