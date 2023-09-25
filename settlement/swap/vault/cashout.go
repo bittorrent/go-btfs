@@ -182,7 +182,7 @@ func (s *cashoutService) CashoutResults() ([]CashOutResult, error) {
 // CashCheque sends a cashout transaction for the last cheque of the vault
 func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common.Address, token common.Address) (common.Hash, error) {
 	if RestartFixCashOutStatusLock {
-		return common.Hash{}, errors.New("Just started, it can not cash cheque, you will wait for about 40s to do it. ")
+		return common.Hash{}, errors.New("Just started, it can not cash cheque for processing the cash cheque out status last time, you will wait for about 40s to do it. ")
 	}
 
 	cheque, err := s.chequeStore.LastReceivedCheque(vault, token)
@@ -334,7 +334,7 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 // AdjustCashCheque .
 func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address) (totalCashOutAmount, newCashOutAmount *big.Int, err error) {
 	if RestartFixCashOutStatusLock {
-		return nil, nil, errors.New("Just started, it can not fix cash out status, you will wait for about 40s to do it. ")
+		return nil, nil, errors.New("Just started, it can not fix cash out info for processing the cash cheque out status last time, you will wait for about 40s to do it. ")
 	}
 
 	// 1.totalReceivedCashed
