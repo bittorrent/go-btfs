@@ -430,12 +430,26 @@ func (s *cashoutService) RestartFixChequeCashOut() {
 
 			for _, v := range list {
 				txHash := common.HexToHash(v.TxHash)
+
+				// 1.check txHash is ok
+				receipt, err := s.backend.TransactionReceipt(context.Background(), txHash)
+				if err != nil {
+					log.Infof("RestartFixChequeCashOut: TransactionReceipt err = %v, info = %+v", err, v)
+					continue
+				}
+				if receipt.Status == types.ReceiptStatusFailed {
+					log.Infof("RestartFixChequeCashOut: TransactionReceipt err = the txHash is failed, info = %+v", v)
+					continue
+				}
+
+				// 2.adjust cash cheque info
 				_, _, err = s.AdjustCashChequeTxHash(context.Background(), v.Vault, v.Beneficiary, v.Token, txHash, v.CumulativePayout)
 				if err != nil {
 					log.Infof("RestartFixChequeCashOut: AdjustCashCheque err = %v, info = %+v", err, v)
 					continue
 				}
 
+				// 3.delete cash out status
 				err = s.DeleteCashOutStatusStore(v)
 				if err != nil {
 					log.Infof("RestartFixChequeCashOut: DeleteCashOutStatusStore err = %v, info = %+v", err, v)
