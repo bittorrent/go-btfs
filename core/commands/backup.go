@@ -14,6 +14,7 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	commands "github.com/bittorrent/go-btfs/commands"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
 )
 
@@ -40,6 +41,14 @@ This command will create a backup of the data from the current BTFS node.
 		cmds.StringsOption(excludeOption, "exclude backup output file path"),
 	},
 	Run: func(req *cmds.Request, resp cmds.ResponseEmitter, env cmds.Environment) error {
+		nd, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+
+		if nd.IsOnline {
+			return errors.New("this action must be run in offline mode, please stop your 'btfs daemon' first")
+		}
 		r, err := fsrepo.Open(env.(*commands.Context).ConfigRoot)
 		if err != nil {
 			return err
