@@ -32,7 +32,7 @@ var FixChequeCashOutCmd = &cmds.Command{
 
 			for k, v := range cheques {
 				totalCashOutAmount, newCashOutAmount, err := chain.SettleObject.CashoutService.AdjustCashCheque(
-					context.Background(), v.Vault, v.Beneficiary, tokenAddr, false)
+					context.Background(), v.Vault, v.Beneficiary, tokenAddr)
 				if err != nil {
 					return err
 				}
