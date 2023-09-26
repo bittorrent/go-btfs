@@ -2,17 +2,19 @@ package requests
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bittorrent/go-btfs/s3/api/contexts"
 	"github.com/bittorrent/go-btfs/s3/api/services/object"
 	"github.com/bittorrent/go-btfs/s3/consts"
 	"github.com/bittorrent/go-btfs/s3/hash"
-	"net/http"
 )
 
 var createMultipartUploadSupports = fields{
 	"Bucket":          true,
 	"Key":             true,
+	"CacheControl":    true,
 	"ContentLength":   true,
 	"ContentEncoding": true,
 	"ContentType":     true,
