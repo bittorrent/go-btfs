@@ -134,7 +134,7 @@ func cashoutActionKey(vault common.Address, token common.Address) string {
 //
 //	output, err := s.transactionService.Call(ctx, &transaction.TxRequest{
 //		To:   &vault,
-//		data: callData,
+//		Data: callData,
 //	})
 //	if err != nil {
 //		return nil, err
@@ -198,7 +198,7 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 	//}
 	//request := &transaction.TxRequest{
 	//	To:          &vault,
-	//	data:        callData,
+	//	Data:        callData,
 	//	Value:       big.NewInt(0),
 	//	Description: "cheque cashout",
 	//}
