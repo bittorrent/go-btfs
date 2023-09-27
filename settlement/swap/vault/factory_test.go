@@ -207,12 +207,12 @@ func TestFactoryVerifyVault(t *testing.T) {
 // 					Status: 1,
 // 					Logs: []*types.Log{
 // 						{
-// 							data: logData,
+// 							Data: logData,
 // 						},
 // 						{
 // 							Address: factoryAddress,
 // 							Topics:  []common.Hash{simpleSwapDeployedEvent.ID},
-// 							data:    logData,
+// 							Data:    logData,
 // 						},
 // 					},
 // 				}, nil
