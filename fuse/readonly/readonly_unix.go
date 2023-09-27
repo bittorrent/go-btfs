@@ -272,7 +272,7 @@ func (s *Node) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadR
 	if err != nil {
 		return err
 	}
-	// data has a capacity of Size
+	// Data has a capacity of Size
 	buf := resp.Data[:int(req.Size)]
 	n, err := io.ReadFull(r, buf)
 	resp.Data = buf[:n]

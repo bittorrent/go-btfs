@@ -87,8 +87,8 @@ const (
 	filesHashOptionName       = "hash"
 )
 
-var cidVersionOption = cmds.IntOption(filesCidVersionOptionName, "cid-ver", "CID version to use. (experimental)")
-var hashOption = cmds.StringOption(filesHashOptionName, "Hash function to use. Will set CID version to 1 if used. (experimental)")
+var cidVersionOption = cmds.IntOption(filesCidVersionOptionName, "cid-ver", "Cid version to use. (experimental)")
+var hashOption = cmds.StringOption(filesHashOptionName, "Hash function to use. Will set Cid version to 1 if used. (experimental)")
 
 var errFormat = errors.New("format was set by multiple options. Only one format option is allowed")
 
@@ -735,7 +735,7 @@ stat' on the file or any of its ancestors.
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("path", true, false, "Path to write to."),
-		cmds.FileArg("data", true, false, "data to write.").EnableStdin(),
+		cmds.FileArg("data", true, false, "Data to write.").EnableStdin(),
 	},
 	Options: []cmds.Option{
 		cmds.Int64Option(filesOffsetOptionName, "o", "Byte offset to begin writing at."),
