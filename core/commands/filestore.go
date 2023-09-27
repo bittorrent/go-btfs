@@ -45,7 +45,7 @@ The output is:
 `,
 	},
 	Arguments: []cmds.Argument{
-		cmds.StringArg("obj", false, true, "CID of objects to list."),
+		cmds.StringArg("obj", false, true, "Cid of objects to list."),
 	},
 	Options: []cmds.Option{
 		cmds.BoolOption(fileOrderOptionName, "sort the results based on the path of the backing file"),
@@ -122,7 +122,7 @@ For ERROR entries the error will also be printed to stderr.
 `,
 	},
 	Arguments: []cmds.Argument{
-		cmds.StringArg("obj", false, true, "CID of objects to verify."),
+		cmds.StringArg("obj", false, true, "Cid of objects to verify."),
 	},
 	Options: []cmds.Option{
 		cmds.BoolOption(fileOrderOptionName, "verify the objects based on the order of the backing file"),

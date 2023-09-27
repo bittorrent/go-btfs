@@ -58,7 +58,7 @@ func CidBaseDefined(req *cmds.Request) bool {
 }
 
 // CidEncoderFromPath creates a new encoder that is influenced from
-// the encoded CID in a Path.  For CidV0 the multibase from the base
+// the encoded Cid in a Path.  For CidV0 the multibase from the base
 // encoder is used and automatic upgrades are disabled.  For CidV1 the
 // multibase from the CID is used and upgrades are enabled.
 //

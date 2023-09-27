@@ -270,7 +270,7 @@ Supported values are:
 	Type: Node{},
 	Encoders: cmds.EncoderMap{
 		cmds.Protobuf: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *Node) error {
-			// deserialize the data field as text as this was the standard behaviour
+			// deserialize the Data field as text as this was the standard behaviour
 			object, err := deserializeNode(out, "text")
 			if err != nil {
 				return nil
@@ -371,20 +371,20 @@ It reads from stdin, and the output is a base58 encoded multihash.
 'btfs object put' is a plumbing command for storing DAG nodes.
 It reads from stdin, and the output is a base58 encoded multihash.
 
-data should be in the format specified by the --inputenc flag.
+Data should be in the format specified by the --inputenc flag.
 --inputenc may be one of the following:
 	* "protobuf"
 	* "json" (default)
 
 Examples:
 
-	$ echo '{ "data": "abc" }' | btfs object put
+	$ echo '{ "Data": "abc" }' | btfs object put
 
 This creates a node with the data 'abc' and no links. For an object with
 links, create a file named 'node.json' with the contents:
 
     {
-        "data": "another",
+        "Data": "another",
         "Links": [ {
             "Name": "some link",
             "Hash": "QmXg9Pp2ytZ14xgmQjYEiHjVjMFXzCVVEcRTWJBmLgR39V",
@@ -399,7 +399,7 @@ And then run:
 	},
 
 	Arguments: []cmds.Argument{
-		cmds.FileArg("data", true, false, "data to be stored as a DAG object.").EnableStdin(),
+		cmds.FileArg("data", true, false, "Data to be stored as a DAG object.").EnableStdin(),
 	},
 	Options: []cmds.Option{
 		cmds.StringOption(inputencOptionName, "Encoding type of input data. One of: {\"protobuf\", \"json\"}.").WithDefault("json"),

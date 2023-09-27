@@ -296,7 +296,7 @@ func (rw *RefWriter) visit(c cid.Cid, depth int) (bool, bool) {
 	// Unique == true && depth < MaxDepth (or unlimited) from this point
 
 	// Branch pruning cases:
-	// - We saw the CID before and either:
+	// - We saw the Cid before and either:
 	//   - Depth is unlimited (MaxDepth = -1)
 	//   - We saw it higher (smaller depth) in the DAG (means we must have
 	//     explored deep enough before)

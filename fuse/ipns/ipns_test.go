@@ -66,10 +66,10 @@ func verifyFile(t *testing.T, path string, wantData []byte) {
 		t.Fatal(err)
 	}
 	if len(isData) != len(wantData) {
-		t.Fatal("data not equal - length check failed")
+		t.Fatal("Data not equal - length check failed")
 	}
 	if !bytes.Equal(isData, wantData) {
-		t.Fatal("data not equal")
+		t.Fatal("Data not equal")
 	}
 }
 
@@ -328,7 +328,7 @@ func TestAppendFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(rbuf, data) {
-		t.Fatal("data inconsistent!")
+		t.Fatal("Data inconsistent!")
 	}
 }
 
@@ -458,7 +458,7 @@ func TestFSThrash(t *testing.T) {
 		}
 
 		if !bytes.Equal(data, out) {
-			t.Errorf("data didn't match in %s: expected %v, got %v", name, data, out)
+			t.Errorf("Data didn't match in %s: expected %v, got %v", name, data, out)
 		}
 	}
 }
