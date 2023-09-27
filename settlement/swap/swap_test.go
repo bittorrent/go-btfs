@@ -124,10 +124,13 @@ func (m *addressbookMock) PutVault(peer string, vault common.Address) error {
 }
 
 type cashoutMock struct {
-	cashCheque       func(ctx context.Context, vault, recipient common.Address, token common.Address) (common.Hash, error)
-	cashoutStatus    func(ctx context.Context, vaultAddress common.Address, token common.Address) (*vault.CashoutStatus, error)
-	cashoutResults   func() ([]vault.CashOutResult, error)
-	hasCashoutAction func(ctx context.Context, peer common.Address, token common.Address) (bool, error)
+	cashCheque              func(ctx context.Context, vault, recipient common.Address, token common.Address) (common.Hash, error)
+	cashoutStatus           func(ctx context.Context, vaultAddress common.Address, token common.Address) (*vault.CashoutStatus, error)
+	cashoutResults          func() ([]vault.CashOutResult, error)
+	hasCashoutAction        func(ctx context.Context, peer common.Address, token common.Address) (bool, error)
+	adjustCashCheque        func(ctx context.Context, vaultAddress, recipient common.Address, token common.Address) (totalCashOutAmount, newCashOutAmount *big.Int, err error)
+	adjustCashChequeTxHash  func(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, txHash common.Hash, cumulativePayout *big.Int) (totalCashOutAmount, newCashOutAmount *big.Int, err error)
+	restartFixChequeCashOut func()
 }
 
 func (m *cashoutMock) CashCheque(ctx context.Context, vault, recipient common.Address, token common.Address) (common.Hash, error) {
@@ -141,6 +144,16 @@ func (m *cashoutMock) CashoutResults() ([]vault.CashOutResult, error) {
 }
 func (m *cashoutMock) HasCashoutAction(ctx context.Context, peer common.Address, token common.Address) (bool, error) {
 	return m.hasCashoutAction(ctx, peer, token)
+}
+func (m *cashoutMock) AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address) (totalCashOutAmount, newCashOutAmount *big.Int, err error) {
+	return m.adjustCashCheque(ctx, vaultAddress, recipient, token)
+}
+
+func (m *cashoutMock) AdjustCashChequeTxHash(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, txHash common.Hash, cumulativePayout *big.Int) (totalCashOutAmount, newCashOutAmount *big.Int, err error) {
+	return m.adjustCashChequeTxHash(ctx, vaultAddress, recipient, token, txHash, cumulativePayout)
+}
+func (m *cashoutMock) RestartFixChequeCashOut() {
+	m.restartFixChequeCashOut()
 }
 func TestReceiveCheque(t *testing.T) {
 	store := mockstore.NewStateStore()

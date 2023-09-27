@@ -28,8 +28,11 @@ type CashoutService interface {
 	CashCheque(ctx context.Context, vault, recipient common.Address, token common.Address) (common.Hash, error)
 	// CashoutStatus gets the status of the latest cashout transaction for the vault
 	CashoutStatus(ctx context.Context, vaultAddress common.Address, token common.Address) (*CashoutStatus, error)
+	AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address) (totalCashOutAmount, newCashOutAmount *big.Int, err error)
+	AdjustCashChequeTxHash(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, txHash common.Hash, cumulativePayout *big.Int) (totalCashOutAmount, newCashOutAmount *big.Int, err error)
 	HasCashoutAction(ctx context.Context, peer common.Address, token common.Address) (bool, error)
 	CashoutResults() ([]CashOutResult, error)
+	RestartFixChequeCashOut()
 }
 
 type cashoutService struct {
@@ -178,6 +181,10 @@ func (s *cashoutService) CashoutResults() ([]CashOutResult, error) {
 
 // CashCheque sends a cashout transaction for the last cheque of the vault
 func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common.Address, token common.Address) (common.Hash, error) {
+	if RestartFixCashOutStatusLock {
+		return common.Hash{}, errors.New("Just started, it can not cash cheque for processing the cash cheque out status last time, you will wait for about 40s to do it. ")
+	}
+
 	cheque, err := s.chequeStore.LastReceivedCheque(vault, token)
 	if err != nil {
 		return common.Hash{}, err
@@ -215,6 +222,19 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 		return common.Hash{}, err
 	}
 
+	// 1.add cash out status
+	cashOutStateInfo := CashOutStatusStoreInfo{
+		Token:            token,
+		Vault:            cheque.Vault,
+		Beneficiary:      cheque.Beneficiary,
+		CumulativePayout: cheque.CumulativePayout,
+		TxHash:           txHash.String(),
+	}
+	err = s.AddCashOutStatusStore(cashOutStateInfo)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
 	// WaitForReceipt takes long time
 	go func() {
 		defer func() {
@@ -223,6 +243,13 @@ func (s *cashoutService) CashCheque(ctx context.Context, vault, recipient common
 			}
 		}()
 		s.storeCashResult(context.Background(), vault, txHash, cheque, token)
+
+		// 2.delete cash out status
+		err = s.DeleteCashOutStatusStore(cashOutStateInfo)
+		if err != nil {
+			log.Errorf("delete cashout status, err = %v", err)
+			return
+		}
 	}()
 	return txHash, nil
 }
@@ -302,6 +329,194 @@ func (s *cashoutService) storeCashResult(ctx context.Context, vault common.Addre
 		log.Infof("CashOutStats:put cashoutResultKey err:%+v", err)
 	}
 	return nil
+}
+
+// AdjustCashCheque .
+func (s *cashoutService) AdjustCashCheque(ctx context.Context, vaultAddress, recipient common.Address, token common.Address) (totalCashOutAmount, newCashOutAmount *big.Int, err error) {
+	if RestartFixCashOutStatusLock {
+		return nil, nil, errors.New("Just started, it can not fix cash out info for processing the cash cheque out status last time, you will wait for about 40s to do it. ")
+	}
+
+	// 1.totalReceivedCashed
+	totalReceivedCashed := big.NewInt(0)
+	err = s.store.Get(tokencfg.AddToken(statestore.TotalReceivedCashedKey, token), &totalReceivedCashed)
+	if err != nil && err != storage.ErrNotFound {
+		return nil, nil, err
+	}
+
+	// 2.alreadyPaidOut in renter contract
+	// blockchain calls below
+	contract := newVaultContractMuti(vaultAddress, s.transactionService)
+	alreadyPaidOutOnline, err := contract.PaidOut(ctx, recipient, token)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// 3.compare it to fix.
+	diff := big.NewInt(0).Sub(alreadyPaidOutOnline, totalReceivedCashed)
+	log.Infof("AdjustCashCheque: diff > 0, vault=%s, recipient=%s, online=%s, local=%s, diff=%s",
+		vaultAddress.String(), recipient.String(),
+		alreadyPaidOutOnline.String(), totalReceivedCashed.String(), diff.String(),
+	)
+
+	if diff.Cmp(big.NewInt(0)) > 0 {
+		txHash := common.Hash{} //fix txHash: 0x0000...
+		cashResult, err := s.fixStoreCashResult(vaultAddress, diff, token, txHash)
+		if err != nil {
+			return nil, nil, err
+		}
+		newCashOutAmount = cashResult.Amount
+	}
+
+	return alreadyPaidOutOnline, newCashOutAmount, nil
+}
+
+// AdjustCashChequeTxHash . when node starts.
+func (s *cashoutService) AdjustCashChequeTxHash(ctx context.Context, vaultAddress, recipient common.Address, token common.Address, txHash common.Hash, cumulativePayout *big.Int) (totalCashOutAmount, newCashOutAmount *big.Int, err error) {
+	// 1.totalReceivedCashed
+	totalReceivedCashed := big.NewInt(0)
+	err = s.store.Get(tokencfg.AddToken(statestore.TotalReceivedCashedKey, token), &totalReceivedCashed)
+	if err != nil && err != storage.ErrNotFound {
+		return nil, nil, err
+	}
+
+	// 2.alreadyPaidOut in renter contract
+	// blockchain calls below
+	contract := newVaultContractMuti(vaultAddress, s.transactionService)
+	alreadyPaidOutOnline, err := contract.PaidOut(ctx, recipient, token)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// 3.compare it to fix.
+	diffReceived := big.NewInt(0).Sub(alreadyPaidOutOnline, totalReceivedCashed)
+	log.Infof("AdjustCashCheque: diffReceived, vault=%s, recipient=%s, txHash=%s, online=%s, local=%s, diffReceived=%s",
+		vaultAddress.String(), recipient.String(), txHash.String(),
+		alreadyPaidOutOnline.String(), totalReceivedCashed.String(), diffReceived.String(),
+	)
+
+	if diffReceived.Cmp(big.NewInt(0)) > 0 {
+		diffCheque := big.NewInt(0).Sub(alreadyPaidOutOnline, cumulativePayout)
+		log.Infof("AdjustCashCheque: diffCheque, vault=%s, recipient=%s, txHash=%s, online=%s, cumulativePayout=%s, diffCheque=%s",
+			vaultAddress.String(), recipient.String(), txHash.String(),
+			alreadyPaidOutOnline.String(), cumulativePayout.String(), diffCheque.String(),
+		)
+		if diffCheque.Cmp(big.NewInt(0)) > 0 {
+			txHash = common.Hash{} //fix txHash: 0x0000...
+		}
+		cashResult, err := s.fixStoreCashResult(vaultAddress, diffReceived, token, txHash)
+		if err != nil {
+			return nil, nil, err
+		}
+		newCashOutAmount = cashResult.Amount
+	}
+
+	return alreadyPaidOutOnline, newCashOutAmount, nil
+}
+
+func (s *cashoutService) RestartFixChequeCashOut() {
+	if RestartFixCashOutStatusLock {
+		list, err := s.GetAllCashOutStatusStore()
+		if err != nil {
+			log.Infof("RestartFixChequeCashOut: GetAllCashOutStatusStore err = %v", err)
+			return
+		}
+
+		if len(list) > 0 {
+			log.Infof("wait 30s, for fixing cash out status")
+
+			// wait 30s,  for online cashing out ok.
+			time.Sleep(time.Second * RestartWaitCashOutOnlineTime)
+
+			for _, v := range list {
+				txHash := common.HexToHash(v.TxHash)
+
+				// 1.check txHash is ok
+				receipt, err := s.backend.TransactionReceipt(context.Background(), txHash)
+				if err != nil {
+					log.Infof("RestartFixChequeCashOut: TransactionReceipt err = %v, info = %+v", err, v)
+					continue
+				}
+				if receipt.Status == types.ReceiptStatusFailed {
+					log.Infof("RestartFixChequeCashOut: TransactionReceipt err = the txHash is failed, info = %+v", v)
+					continue
+				}
+
+				// 2.adjust cash cheque info
+				_, _, err = s.AdjustCashChequeTxHash(context.Background(), v.Vault, v.Beneficiary, v.Token, txHash, v.CumulativePayout)
+				if err != nil {
+					log.Infof("RestartFixChequeCashOut: AdjustCashCheque err = %v, info = %+v", err, v)
+					continue
+				}
+
+				// 3.delete cash out status
+				err = s.DeleteCashOutStatusStore(v)
+				if err != nil {
+					log.Infof("RestartFixChequeCashOut: DeleteCashOutStatusStore err = %v, info = %+v", err, v)
+					continue
+				}
+			}
+		}
+		RestartFixCashOutStatusLock = false
+	}
+	return
+}
+
+func (s *cashoutService) fixStoreCashResult(vault common.Address, shouldPaidOut *big.Int, token common.Address, txHash common.Hash) (cashResult *CashOutResult, err error) {
+	//txHash := common.Hash{} //fix txHash: 0x0000...
+	cashResult = &CashOutResult{
+		TxHash:   txHash,
+		Vault:    vault,
+		Token:    token,
+		Amount:   shouldPaidOut,
+		CashTime: time.Now().Unix(),
+		Status:   "success",
+	}
+
+	totalReceivedCashed := big.NewInt(0)
+	if err = s.store.Get(tokencfg.AddToken(statestore.TotalReceivedCashedKey, token), &totalReceivedCashed); err == nil || err == storage.ErrNotFound {
+		totalReceivedCashed = totalReceivedCashed.Add(totalReceivedCashed, shouldPaidOut)
+		err := s.store.Put(tokencfg.AddToken(statestore.TotalReceivedCashedKey, token), totalReceivedCashed)
+		if err != nil {
+			log.Infof("fixStoreCashResult:put totalReceivedCashdKey err:%+v", err)
+		}
+	}
+
+	totalDailyReceivedCashed := big.NewInt(0)
+	if err = s.store.Get(statestore.GetTodayTotalDailyReceivedCashedKey(token), &totalDailyReceivedCashed); err == nil || err == storage.ErrNotFound {
+		totalDailyReceivedCashed = totalDailyReceivedCashed.Add(totalDailyReceivedCashed, shouldPaidOut)
+		err := s.store.Put(statestore.GetTodayTotalDailyReceivedCashedKey(token), totalDailyReceivedCashed)
+		if err != nil {
+			log.Infof("fixStoreCashResult:put totalReceivedDailyCashdKey err:%+v", err)
+		}
+	}
+
+	// update TotalReceivedCountCashed
+	uncashed := 0
+	err = s.store.Get(statestore.PeerReceivedUncashRecordsCountKey(vault, token), &uncashed)
+	if err != nil {
+		log.Infof("fixStoreCashResult:put totalReceivedCountCashed err:%+v", err)
+	} else {
+		cashedCount := 0
+		err := s.store.Get(tokencfg.AddToken(statestore.TotalReceivedCashedCountKey, token), &cashedCount)
+		if err == nil || err == storage.ErrNotFound {
+			err := s.store.Put(tokencfg.AddToken(statestore.TotalReceivedCashedCountKey, token), cashedCount+uncashed)
+			if err != nil {
+				log.Infof("fixStoreCashResult:put totalReceivedCashedConuntKey err:%+v", err)
+			} else {
+				err := s.store.Put(statestore.PeerReceivedUncashRecordsCountKey(vault, token), 0)
+				if err != nil {
+					log.Infof("fixStoreCashResult:put totalReceivedCashedConuntKey err:%+v", err)
+				}
+			}
+		}
+	}
+
+	err = s.store.Put(statestore.CashoutResultKey(vault), &cashResult)
+	if err != nil {
+		log.Infof("fixStoreCashResult:put cashoutResultKey err:%+v", err)
+	}
+	return
 }
 
 // CashoutStatus gets the status of the latest cashout transaction for the vault

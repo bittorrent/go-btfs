@@ -7,6 +7,8 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
+	"github.com/bittorrent/go-btfs/s3"
+	"github.com/bittorrent/go-btfs/s3/api/services/accesskey"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -100,6 +102,7 @@ const (
 	chainID                   = "chain-id"
 	// apiAddrKwd    = "address-api"
 	// swarmAddrKwd  = "address-swarm"
+	enableS3CompatibleAPIKwd = "s3-compatible-api"
 )
 
 // BTFS daemon test exit error code
@@ -227,6 +230,7 @@ Headers.
 		// TODO: add way to override addresses. tricky part: updating the config if also --init.
 		// cmds.StringOption(apiAddrKwd, "Address for the daemon rpc API (overrides config)"),
 		// cmds.StringOption(swarmAddrKwd, "Address for the swarm socket (overrides config)"),
+		cmds.BoolOption(enableS3CompatibleAPIKwd, "Enable s3-compatible-api server"),
 	},
 	Subcommands: map[string]*cmds.Command{},
 	NoRemote:    true,
@@ -713,6 +717,33 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		functest(cfg.Services.OnlineServerDomain, cfg.Identity.PeerID, hValue)
 	}
 
+	// Init s3 providers
+	err = s3.InitProviders(statestore)
+	if err != nil {
+		return err
+	}
+
+	// Init access-key
+	accesskey.InitService(s3.GetProviders())
+
+	// Start s3-compatible-api server
+	s3OptEnable, s3Opt := req.Options[enableS3CompatibleAPIKwd].(bool)
+	if s3OptEnable || (!s3Opt && cfg.S3CompatibleAPI.Enable) {
+		s3Server := s3.NewServer(cfg.S3CompatibleAPI)
+		err = s3Server.Start()
+		if err != nil {
+			fmt.Printf("S3-Compatible-API server: %v\n", err)
+			return
+		}
+		fmt.Printf("S3-Compatible-API server started, endpoint-url: http://%s\n", cfg.S3CompatibleAPI.Address)
+		defer func() {
+			err = s3Server.Stop()
+			if err != nil {
+				fmt.Printf("S3-Compatible-API server: %v\n", err)
+			}
+		}()
+	}
+
 	if SimpleMode == false {
 		// set Analytics flag if specified
 		if dc, ok := req.Options[enableDataCollection]; ok == true {
@@ -728,6 +759,7 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		spin.Analytics(api, cctx.ConfigRoot, node, version.CurrentVersionNumber, hValue)
 		spin.Hosts(node, env)
 		spin.Contracts(node, req, env, nodepb.ContractStat_HOST.String())
+		spin.RestartFixChequeCashOut()
 	}
 
 	// Give the user some immediate feedback when they hit C-c
