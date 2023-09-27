@@ -526,7 +526,7 @@ func (s *service) LastCheques(token common.Address) (map[common.Address]*SignedC
 //
 //	request := &transaction.TxRequest{
 //		To:          &s.address,
-//		data:        callData,
+//		Data:        callData,
 //		Value:       big.NewInt(0),
 //		Description: fmt.Sprintf("vault withdrawal of %d WBTT", amount),
 //	}
