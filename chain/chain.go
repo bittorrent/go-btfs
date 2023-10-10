@@ -5,11 +5,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"io"
 	"math/big"
 	"strings"
 	"time"
+
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 
 	"github.com/bittorrent/go-btfs/accounting"
 	"github.com/bittorrent/go-btfs/chain/config"
@@ -348,7 +349,7 @@ func initSwap(
 	priceOracle := priceoracle.New(currentPriceOracleAddress, transactionService)
 	_, err := priceOracle.CheckNewPrice(tokencfg.GetWbttToken()) // CheckNewPrice when node starts
 	if err != nil {
-		return nil, nil, errors.New("CheckNewPrice " + err.Error())
+		return nil, nil, errors.New("CheckNewPrice error, it may happens when contract call failed if bttc chain rpc is down, please try again")
 	}
 
 	swapProtocol := swapprotocol.New(overlayEthAddress, priceOracle)

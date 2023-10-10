@@ -342,6 +342,13 @@ func TestCommands(t *testing.T) {
 		"/bittorrent/scrape",
 		"/bittorrent/metainfo",
 		"/bittorrent/bencode",
+		"/multibase",
+		"/multibase/encode",
+		"/multibase/decode",
+		"/multibase/transcode",
+		"/multibase/list",
+		"/backup",
+		"/recovery",
 		"/accesskey",
 		"/accesskey/generate",
 		"/accesskey/enable",
@@ -350,6 +357,7 @@ func TestCommands(t *testing.T) {
 		"/accesskey/delete",
 		"/accesskey/get",
 		"/accesskey/list",
+		"/cheque/fix_cheque_cashout",
 	}
 
 	cmdSet := make(map[string]struct{})

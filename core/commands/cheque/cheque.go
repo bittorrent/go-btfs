@@ -36,6 +36,20 @@ type ListChequeRet struct {
 	Len     int
 }
 
+type fixCheque struct {
+	PeerID            string
+	Token             string
+	Beneficiary       string
+	Vault             string
+	TotalCashedAmount *big.Int
+	FixCashedAmount   *big.Int
+}
+
+type ListFixChequeRet struct {
+	FixCheques []fixCheque
+	Len        int
+}
+
 type ReceiveCheque struct {
 	PeerID           string
 	Token            common.Address
@@ -65,11 +79,12 @@ var ChequeCmd = &cmds.Command{
 Vault services include issue cheque to peer, receive cheque and store operations.`,
 	},
 	Subcommands: map[string]*cmds.Command{
-		"cash":       CashChequeCmd,
-		"cashstatus": ChequeCashStatusCmd,
-		"cashlist":   ChequeCashListCmd,
-		"price":      StorePriceCmd,
-		"price-all":  StorePriceAllCmd,
+		"cash":               CashChequeCmd,
+		"cashstatus":         ChequeCashStatusCmd,
+		"cashlist":           ChequeCashListCmd,
+		"price":              StorePriceCmd,
+		"price-all":          StorePriceAllCmd,
+		"fix_cheque_cashout": FixChequeCashOutCmd,
 
 		"send":                   SendChequeCmd,
 		"sendlist":               ListSendChequesCmd,
