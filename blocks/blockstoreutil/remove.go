@@ -71,8 +71,8 @@ func RmBlocks(ctx context.Context, blocks bs.GCBlockstore, pins pin.Pinner, cids
 }
 
 // FilterPinned takes a slice of Cids and returns it with the pinned Cids
-// removed. If a Cid is pinned, it will place RemovedBlock objects in the given
-// out channel, with an error which indicates that the Cid is pinned.
+// removed. If a CID is pinned, it will place RemovedBlock objects in the given
+// out channel, with an error which indicates that the CID is pinned.
 // This function is used in RmBlocks to filter out any blocks which are not
 // to be removed (because they are pinned).
 func FilterPinned(ctx context.Context, pins pin.Pinner, out chan<- interface{}, cids []cid.Cid) []cid.Cid {
