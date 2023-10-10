@@ -92,7 +92,7 @@ type IPFSBackend interface {
 	// Get returns a GetResponse with UnixFS file, directory or a block in IPLD
 	// format e.g., (DAG-)CBOR/JSON.
 	//
-	// Returned Directories are preferably a minimum info required for enumeration: Name, Size, and Cid.
+	// Returned Directories are preferably a minimum info required for enumeration: Name, Size, and CID.
 	//
 	// Optional ranges follow [HTTP Byte Ranges] notation and can be used for
 	// pre-fetching specific sections of a file or a block.
