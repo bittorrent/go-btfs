@@ -1,16 +1,16 @@
 package commands
 
 import (
+	"bytes"
 	"crypto/rand"
 	"errors"
 	"io"
+	"os"
 
+	shell "github.com/bittorrent/go-btfs-api"
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	cp "github.com/bittorrent/go-btfs-common/crypto"
-	files "github.com/bittorrent/go-btfs-files"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
-	iface "github.com/bittorrent/interface-go-btfs-core"
-	path "github.com/bittorrent/interface-go-btfs-core/path"
 	"github.com/ethereum/go-ethereum/crypto"
 	eth "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
@@ -35,7 +35,6 @@ var encryptCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
-		api, err := cmdenv.GetApi(e, r)
 		if err != nil {
 			return err
 		}
@@ -60,6 +59,7 @@ var encryptCmd = &cmds.Command{
 		if err != nil {
 			return errors.New("can't unmarshall public key from peerID")
 		}
+
 		eciesPk := ecies.ImportECDSAPublic(ethPk)
 		it := r.Files.Entries()
 		file, err := cmdenv.GetFileArg(it)
@@ -74,12 +74,12 @@ var encryptCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
-		result, err := api.Unixfs().Add(n.Context(), files.NewBytesFile(encryptedBytes))
+		btfsClient := shell.NewLocalShell()
+		cid, err := btfsClient.Add(bytes.NewReader(encryptedBytes), shell.Pin(true))
 		if err != nil {
 			return err
 		}
-		re.Emit(result.Cid().String())
-		return nil
+		return re.Emit(cid)
 	},
 }
 
@@ -91,11 +91,6 @@ var decryptCmd = &cmds.Command{
 		cmds.StringOption(fromOption, "specify the source peerID of CID"),
 	},
 	Run: func(r *cmds.Request, re cmds.ResponseEmitter, e cmds.Environment) error {
-		api, err := cmdenv.GetApi(e, r)
-		if err != nil {
-			return err
-		}
-
 		conf, err := cmdenv.GetConfig(e)
 		if err != nil {
 			return err
@@ -105,26 +100,18 @@ var decryptCmd = &cmds.Command{
 			// TODO: get cid from fromOption(remoteCall)
 		}
 		cid := r.Arguments[0]
-		p := path.New(cid)
-		f, err := api.Unixfs().Get(r.Context, p)
+		btfsClient := shell.NewLocalShell()
+		rc, err := btfsClient.Cat(cid)
 		if err != nil {
 			return err
 		}
-		var file files.File
-		switch f := f.(type) {
-		case files.File:
-			file = f
-		case files.Directory:
-			return iface.ErrIsDir
-		default:
-			return iface.ErrNotSupported
-		}
+		defer rc.Close()
 		ecdsaPrivateKey, err := crypto.HexToECDSA(conf.Identity.HexPrivKey)
 		if err != nil {
 			return err
 		}
 		eciesPrivateKey := ecies.ImportECDSA(ecdsaPrivateKey)
-		endata, err := io.ReadAll(file)
+		endata, err := io.ReadAll(rc)
 		if err != nil {
 			return err
 		}
@@ -132,8 +119,17 @@ var decryptCmd = &cmds.Command{
 		if err != nil {
 			panic(err)
 		}
-		re.Emit(string(dedata))
-		return nil
+		fileName := "./decrypt-file-of-" + cid
+		f, err := os.Create(fileName)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		_, err = f.Write(dedata)
+		if err != nil {
+			return err
+		}
+		return re.Emit("decrypted file name is: " + fileName)
 	},
 }
 
