@@ -11,8 +11,8 @@ import (
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	cp "github.com/bittorrent/go-btfs-common/crypto"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
-	"github.com/ethereum/go-ethereum/crypto"
-	eth "github.com/ethereum/go-ethereum/crypto"
+	"github.com/bittorrent/go-btfs/core/corehttp/remote"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	peer "github.com/libp2p/go-libp2p/core/peer"
 )
@@ -35,9 +35,6 @@ var encryptCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
-		if err != nil {
-			return err
-		}
 		to, ok := r.Options[toOption].(string)
 		if !ok {
 			to = n.Identity.String()
@@ -55,7 +52,7 @@ var encryptCmd = &cmds.Command{
 			return errors.New("can't change from p2p public key to secp256k1 public key from peerID")
 		}
 
-		ethPk, err := eth.UnmarshalPubkey(pkBytes)
+		ethPk, err := ethCrypto.UnmarshalPubkey(pkBytes)
 		if err != nil {
 			return errors.New("can't unmarshall public key from peerID")
 		}
@@ -95,26 +92,44 @@ var decryptCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
-		_, ok := r.Options[fromOption].(string)
-		if ok {
-			// TODO: get cid from fromOption(remoteCall)
-		}
-		cid := r.Arguments[0]
-		btfsClient := shell.NewLocalShell()
-		rc, err := btfsClient.Cat(cid)
+		n, err := cmdenv.GetNode(e)
 		if err != nil {
 			return err
 		}
-		defer rc.Close()
-		ecdsaPrivateKey, err := crypto.HexToECDSA(conf.Identity.HexPrivKey)
+		api, err := cmdenv.GetApi(e, r)
+		if err != nil {
+			return err
+		}
+
+		var readClose io.ReadCloser
+		cid := r.Arguments[0]
+		from, ok := r.Options[fromOption].(string)
+		if ok {
+			peerID, err := peer.Decode(from)
+			if err != nil {
+				return err
+			}
+			b, err := remote.P2PCallStrings(r.Context, n, api, peerID, "/decryption", cid)
+			if err != nil {
+				return err
+			}
+			readClose = io.NopCloser(bytes.NewReader(b))
+		} else {
+			readClose, err = shell.NewLocalShell().Cat(cid)
+			if err != nil {
+				return err
+			}
+		}
+		ecdsaPrivateKey, err := ethCrypto.HexToECDSA(conf.Identity.HexPrivKey)
 		if err != nil {
 			return err
 		}
 		eciesPrivateKey := ecies.ImportECDSA(ecdsaPrivateKey)
-		endata, err := io.ReadAll(rc)
+		endata, err := io.ReadAll(readClose)
 		if err != nil {
 			return err
 		}
+		defer readClose.Close()
 		dedata, err := ECCDecrypt(endata, *eciesPrivateKey)
 		if err != nil {
 			panic(err)
@@ -130,20 +145,6 @@ var decryptCmd = &cmds.Command{
 			return err
 		}
 		return re.Emit("decrypted file name is: " + fileName)
-	},
-}
-
-var getEncryptedCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
-		Tagline: "get encrypted file by cid",
-	},
-	Arguments: []cmds.Argument{
-		cmds.StringArg("cid", true, false, "cid of encrypted file"),
-	},
-
-	Run: func(r *cmds.Request, re cmds.ResponseEmitter, e cmds.Environment) error {
-		re.Emit("hello world!")
-		return nil
 	},
 }
 

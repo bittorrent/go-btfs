@@ -264,7 +264,7 @@ var rootRemoteSubcommands = map[string]*cmds.Command{
 			"handshake": P2phandshakeCmd,
 		},
 	},
-	"encryption": getEncryptedCmd,
+	"decryption": GetCmd,
 }
 
 func init() {
