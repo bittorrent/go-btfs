@@ -86,7 +86,7 @@ func parseLocationField(vars map[string]string, query url.Values, headers http.H
 	loca := ftag.Get("location")
 	name := ftag.Get("locationName")
 	requ := ftag.Get("required") == "true"
-	supp := supports[ft.Name]
+	// supp := supports[ft.Name]
 	var (
 		vals   map[string]*string
 		isVals bool
