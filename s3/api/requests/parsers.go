@@ -4,15 +4,16 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"errors"
-	"github.com/aws/aws-sdk-go/private/protocol"
-	"github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil"
-	"github.com/gorilla/mux"
 	"net/http"
 	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/aws/aws-sdk-go/private/protocol"
+	"github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil"
+	"github.com/gorilla/mux"
 )
 
 type fields map[string]bool
@@ -85,7 +86,7 @@ func parseLocationField(vars map[string]string, query url.Values, headers http.H
 	loca := ftag.Get("location")
 	name := ftag.Get("locationName")
 	requ := ftag.Get("required") == "true"
-	supp := supports[ft.Name]
+	// supp := supports[ft.Name]
 	var (
 		vals   map[string]*string
 		isVals bool
@@ -105,10 +106,10 @@ func parseLocationField(vars map[string]string, query url.Values, headers http.H
 	default:
 		return
 	}
-	if !supp && has {
-		err = ErrWithUnsupportedParam{name}
-		return
-	}
+	// if !supp && has {
+	// 	err = ErrWithUnsupportedParam{name}
+	// 	return
+	// }
 	if requ && !has {
 		err = ErrMissingRequiredParam{name}
 		return
