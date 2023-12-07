@@ -81,6 +81,9 @@ var encryptCmd = &cmds.Command{
 }
 
 var decryptCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "decrypt the content of a CID with the private key of this peer",
+	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("cid", true, false, "the CID of the encrypted file"),
 	},
