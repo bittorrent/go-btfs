@@ -3,6 +3,7 @@ package commands
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"io"
 	"os"
@@ -12,6 +13,7 @@ import (
 	cp "github.com/bittorrent/go-btfs-common/crypto"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
+	cpt "github.com/bittorrent/go-btfs/transaction/crypto"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	peer "github.com/libp2p/go-libp2p/core/peer"
@@ -123,10 +125,13 @@ var decryptCmd = &cmds.Command{
 				return err
 			}
 		}
-		ecdsaPrivateKey, err := ethCrypto.HexToECDSA(conf.Identity.HexPrivKey)
+
+		pkbytesOri, err := base64.StdEncoding.DecodeString(conf.Identity.PrivKey)
 		if err != nil {
 			return err
 		}
+		ecdsaPrivateKey := cpt.Secp256k1PrivateKeyFromBytes(pkbytesOri[4:])
+
 		eciesPrivateKey := ecies.ImportECDSA(ecdsaPrivateKey)
 		endata, err := io.ReadAll(readClose)
 		if err != nil {
@@ -135,7 +140,7 @@ var decryptCmd = &cmds.Command{
 		defer readClose.Close()
 		dedata, err := ECCDecrypt(endata, *eciesPrivateKey)
 		if err != nil {
-			panic(err)
+			return errors.New("decryption is failed, maybe the content of encryption is not encrypted by your public key")
 		}
 		fileName := "./decrypt-file-of-" + cid
 		f, err := os.Create(fileName)
