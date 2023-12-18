@@ -13,7 +13,6 @@ import (
 	cp "github.com/bittorrent/go-btfs-common/crypto"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
-	cpt "github.com/bittorrent/go-btfs/transaction/crypto"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	peer "github.com/libp2p/go-libp2p/core/peer"
@@ -130,8 +129,10 @@ var decryptCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
-		ecdsaPrivateKey := cpt.Secp256k1PrivateKeyFromBytes(pkbytesOri[4:])
-
+		ecdsaPrivateKey, err := ethCrypto.ToECDSA(pkbytesOri[4:])
+		if err != nil {
+			return err
+		}
 		eciesPrivateKey := ecies.ImportECDSA(ecdsaPrivateKey)
 		endata, err := io.ReadAll(readClose)
 		if err != nil {
