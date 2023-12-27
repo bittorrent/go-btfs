@@ -358,6 +358,8 @@ func TestCommands(t *testing.T) {
 		"/accesskey/get",
 		"/accesskey/list",
 		"/cheque/fix_cheque_cashout",
+		"/encrypt",
+		"/decrypt",
 	}
 
 	cmdSet := make(map[string]struct{})
