@@ -4,16 +4,25 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/big"
 	"os"
 	"path"
 	"strings"
 
+	"github.com/bittorrent/go-btfs/chain/abi"
+	chainconfig "github.com/bittorrent/go-btfs/chain/config"
+	oldcmds "github.com/bittorrent/go-btfs/commands"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	files "github.com/bittorrent/go-btfs-files"
 	coreiface "github.com/bittorrent/interface-go-btfs-core"
 	"github.com/bittorrent/interface-go-btfs-core/options"
+	coreifacePath "github.com/bittorrent/interface-go-btfs-core/path"
 	mh "github.com/multiformats/go-multihash"
 	pb "gopkg.in/cheggaaa/pb.v1"
 )
@@ -29,26 +38,27 @@ type AddEvent struct {
 }
 
 const (
-	quietOptionName            = "quiet"
-	quieterOptionName          = "quieter"
-	silentOptionName           = "silent"
-	progressOptionName         = "progress"
-	trickleOptionName          = "trickle"
-	wrapOptionName             = "wrap-with-directory"
-	onlyHashOptionName         = "only-hash"
-	chunkerOptionName          = "chunker"
-	pinOptionName              = "pin"
-	rawLeavesOptionName        = "raw-leaves"
-	noCopyOptionName           = "nocopy"
-	fstoreCacheOptionName      = "fscache"
-	hashOptionName             = "hash"
-	inlineOptionName           = "inline"
-	inlineLimitOptionName      = "inline-limit"
-	tokenMetaOptionName        = "meta"
-	encryptName                = "encrypt"
-	pubkeyName                 = "public-key"
-	peerIdName                 = "peer-id"
-	pinDurationCountOptionName = "pin-duration-count"
+	quietOptionName              = "quiet"
+	quieterOptionName            = "quieter"
+	silentOptionName             = "silent"
+	progressOptionName           = "progress"
+	trickleOptionName            = "trickle"
+	wrapOptionName               = "wrap-with-directory"
+	onlyHashOptionName           = "only-hash"
+	chunkerOptionName            = "chunker"
+	pinOptionName                = "pin"
+	rawLeavesOptionName          = "raw-leaves"
+	noCopyOptionName             = "nocopy"
+	fstoreCacheOptionName        = "fscache"
+	hashOptionName               = "hash"
+	inlineOptionName             = "inline"
+	inlineLimitOptionName        = "inline-limit"
+	tokenMetaOptionName          = "meta"
+	encryptName                  = "encrypt"
+	pubkeyName                   = "public-key"
+	peerIdName                   = "peer-id"
+	pinDurationCountOptionName   = "pin-duration-count"
+	uploadToBlockchainOptionName = "to-blockchain"
 )
 
 const adderOutChanSize = 8
@@ -155,6 +165,7 @@ only-hash, and progress/status related flags) will change the final hash.
 		cmds.StringOption(pubkeyName, "The public key to encrypt the file."),
 		cmds.StringOption(peerIdName, "The peer id to encrypt the file."),
 		cmds.IntOption(pinDurationCountOptionName, "d", "Duration for which the object is pinned in days.").WithDefault(0),
+		cmds.BoolOption(uploadToBlockchainOptionName, "add file meta to blockchain").WithDefault(false),
 	},
 	PreRun: func(req *cmds.Request, env cmds.Environment) error {
 		quiet, _ := req.Options[quietOptionName].(bool)
@@ -200,6 +211,7 @@ only-hash, and progress/status related flags) will change the final hash.
 		pubkey, _ := req.Options[pubkeyName].(string)
 		peerId, _ := req.Options[peerIdName].(string)
 		pinDuration, _ := req.Options[pinDurationCountOptionName].(int)
+		uploadToBlockchain, _ := req.Options[uploadToBlockchainOptionName].(bool)
 
 		hashFunCode, ok := mh.Names[strings.ToLower(hashFunStr)]
 		if !ok {
@@ -265,11 +277,11 @@ only-hash, and progress/status related flags) will change the final hash.
 			errCh := make(chan error, 1)
 			events := make(chan interface{}, adderOutChanSize)
 			opts[len(opts)-1] = options.Unixfs.Events(events)
-
+			var pr coreifacePath.Resolved
 			go func() {
 				var err error
 				defer close(events)
-				_, err = api.Unixfs().Add(req.Context, addit.Node(), opts...)
+				pr, err = api.Unixfs().Add(req.Context, addit.Node(), opts...)
 				errCh <- err
 			}()
 
@@ -304,6 +316,56 @@ only-hash, and progress/status related flags) will change the final hash.
 				return err
 			}
 			added++
+			if uploadToBlockchain {
+				cctx := env.(*oldcmds.Context)
+				cfg, err := cctx.GetConfig()
+				if err != nil {
+					return err
+				}
+				fname := addit.Name()
+				size, _ := addit.Node().Size()
+				cli, err := ethclient.Dial(cfg.ChainInfo.Endpoint)
+				if err != nil {
+					return err
+				}
+				currChainCfg, ok := chainconfig.GetChainConfig(cfg.ChainInfo.ChainId)
+				if !ok {
+					return fmt.Errorf("chain %d is not supported yet", cfg.ChainInfo.ChainId)
+				}
+				contractAddress := currChainCfg.FileMetaAddress
+				contr, err := abi.NewFileMeta(contractAddress, cli)
+				if err != nil {
+					return err
+				}
+				privateKey, err := crypto.HexToECDSA(cfg.Identity.HexPrivKey)
+				if err != nil {
+					return err
+				}
+				fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
+				nonce, err := cli.PendingNonceAt(req.Context, fromAddress)
+				if err != nil {
+					return err
+				}
+				auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(cfg.ChainInfo.ChainId))
+				if err != nil {
+					return err
+				}
+				auth.Nonce = big.NewInt(int64(nonce))
+				auth.Value = big.NewInt(0)
+				data := abi.FileMetaFileMetaData{
+					OwnerPeerId: cfg.Identity.PeerID,
+					From:        common.HexToAddress(cfg.Identity.BttcAddr),
+					FileName:    fname,
+					FileExt:     path.Ext(fname),
+					IsDir:       dir,
+					FileSize:    big.NewInt(size),
+				}
+				tx, err := contr.AddFileMeta(auth, pr.Cid().String(), data)
+				if err != nil {
+					return err
+				}
+				fmt.Println("Write into file meta contract successfully! Transaction hash is: ", tx.Hash().Hex())
+			}
 		}
 
 		if addit.Err() != nil {
