@@ -328,6 +328,7 @@ only-hash, and progress/status related flags) will change the final hash.
 				if err != nil {
 					return err
 				}
+				defer cli.Close()
 				currChainCfg, ok := chainconfig.GetChainConfig(cfg.ChainInfo.ChainId)
 				if !ok {
 					return fmt.Errorf("chain %d is not supported yet", cfg.ChainInfo.ChainId)
