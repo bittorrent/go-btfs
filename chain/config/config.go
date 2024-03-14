@@ -61,11 +61,17 @@ var (
 	testDeploymentGas = ""
 
 	//endpoint
-	ethEndpoint      = ""
-	tronEndpoint     = ""
-	bttcEndpoint     = "https://rpc.bittorrentchain.io/"
-	bttcTestEndpoint = "https://pre-rpc.bt.io/"
-	testEndpoint     = "http://18.144.29.246:8110"
+	ethEndpoint       = ""
+	tronEndpoint      = ""
+	bttcEndpoint      = "https://rpc.bittorrentchain.io/"
+	bttcTestEndpoint  = "https://pre-rpc.bt.io/"
+	testEndpoint      = "http://18.144.29.246:8110"
+	bttcMultiEndpoint = []string{
+		"https://rpc.bittorrentchain.io/",
+		"https://rpc.bt.io/",
+		"https://bttc.trongrid.io/",
+	}
+	bttcTestMultiEndpoint = []string{"https://pre-rpc.bt.io/"}
 
 	DefaultChain = bttcChainID
 )
@@ -88,6 +94,7 @@ type ChainConfig struct {
 	Endpoint           string
 	StatusAddress      common.Address
 	FileMetaAddress    common.Address
+	MultiEndpoint      []string
 }
 
 func GetChainConfig(chainID int64) (*ChainConfig, bool) {
@@ -119,6 +126,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.BatchAddress = bttcBatchAddress
 		cfg.StatusAddress = bttcStatusAddress
 		cfg.FileMetaAddress = bttcFileMetaAddress
+		cfg.MultiEndpoint = bttcMultiEndpoint
 		return &cfg, true
 	case bttcTestChainID:
 		cfg.StartBlock = bttcStartBlock
@@ -130,6 +138,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.VaultLogicAddress = bttcTestMutiVaultLogicAddress
 		cfg.StatusAddress = bttcTestStatusAddress
 		cfg.FileMetaAddress = bttcTestFileMetaAddress
+		cfg.MultiEndpoint = bttcTestMultiEndpoint
 		return &cfg, true
 	case testChainID:
 		cfg.StartBlock = ethStartBlock

@@ -76,14 +76,26 @@ func InitChain(
 	peerid string,
 	chainconfig *config.ChainConfig,
 ) (*ChainInfo, error) {
-
 	StateStore = stateStore
-
-	backend, err := ethclient.Dial(chainconfig.Endpoint)
-	if err != nil {
-		return nil, fmt.Errorf("dial eth client: %w", err)
+	var backend *ethclient.Client
+	var err error
+	if len(chainconfig.MultiEndpoint) > 0 {
+		var backendChan chan *ethclient.Client = make(chan *ethclient.Client, len(chainconfig.MultiEndpoint))
+		for _, endpoint := range chainconfig.MultiEndpoint {
+			go func(e string) {
+				b, err := ethclient.Dial(e)
+				if err == nil {
+					backendChan <- b
+				}
+			}(endpoint)
+		}
+		backend = <-backendChan
+	} else {
+		backend, err = ethclient.Dial(chainconfig.Endpoint)
+		if err != nil {
+			return nil, fmt.Errorf("dial eth client: %w", err)
+		}
 	}
-
 	_, err = backend.BlockNumber(context.Background())
 	if err != nil {
 		errMsg := "Could not connect to blockchain rpc, please check your network connection"
