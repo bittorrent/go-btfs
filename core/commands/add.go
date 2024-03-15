@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -16,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -338,7 +340,11 @@ only-hash, and progress/status related flags) will change the final hash.
 				if err != nil {
 					return err
 				}
-				privateKey, err := crypto.HexToECDSA(cfg.Identity.HexPrivKey)
+				pkbytesOri, err := base64.StdEncoding.DecodeString(cfg.Identity.PrivKey)
+				if err != nil {
+					return err
+				}
+				privateKey, err := ethCrypto.ToECDSA(pkbytesOri[4:])
 				if err != nil {
 					return err
 				}
