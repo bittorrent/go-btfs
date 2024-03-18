@@ -48,7 +48,7 @@ var (
 	//bttcVaultLogicAddress   = common.HexToAddress("0x11a91B7270ea000768F7A2C543547e832b5cb031") // https://bttcscan.com/address/0x11a91B7270ea000768F7A2C543547e832b5cb031
 	bttcMutiVaultLogicAddress = common.HexToAddress("0x5c67bED46336A59252b73a0fA22B9de1cffb172e")
 	bttcStatusAddress         = common.HexToAddress("0x6DBAd4Bd16C15AE6dDEaA640626e5A3E151F02fC")
-	bttcFileMetaAddress       = common.HexToAddress("")
+	bttcFileMetaAddress       = common.HexToAddress("0xa8d39B27Ebae53c4391B973Afa2f8e704f6e374C")
 
 	// deploy gas
 	ethDeploymentGas  = "10"
