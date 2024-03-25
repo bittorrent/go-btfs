@@ -87,7 +87,7 @@ func InitChain(
 				if err != nil {
 					return
 				}
-				_, err = backend.BlockNumber(context.Background())
+				_, err = b.BlockNumber(context.Background())
 				if err != nil {
 					return
 				}
