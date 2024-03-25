@@ -84,26 +84,35 @@ func InitChain(
 		for _, endpoint := range chainconfig.MultiEndpoint {
 			go func(e string) {
 				b, err := ethclient.Dial(e)
-				if err == nil {
-					backendChan <- b
+				if err != nil {
+					return
 				}
+				_, err = b.BlockNumber(context.Background())
+				if err != nil {
+					return
+				}
+				backendChan <- b
 			}(endpoint)
 		}
-		backend = <-backendChan
+		select {
+		case backend = <-backendChan:
+		case <-time.After(time.Second * 60):
+			return nil, errors.New("could not connect all rpc configuration after 1 min, please try again or check your network")
+		}
 	} else {
 		backend, err = ethclient.Dial(chainconfig.Endpoint)
 		if err != nil {
 			return nil, fmt.Errorf("dial eth client: %w", err)
 		}
-	}
-	_, err = backend.BlockNumber(context.Background())
-	if err != nil {
-		errMsg := "Could not connect to blockchain rpc, please check your network connection"
-		if err == io.EOF {
-			return nil, errors.New(errMsg)
+		_, err = backend.BlockNumber(context.Background())
+		if err != nil {
+			errMsg := "Could not connect to blockchain rpc, please check your network connection"
+			if err == io.EOF {
+				return nil, errors.New(errMsg)
 
+			}
+			return nil, fmt.Errorf("%s.%w", errMsg, err)
 		}
-		return nil, fmt.Errorf("%s.%w", errMsg, err)
 	}
 
 	overlayEthAddress, err := signer.EthereumAddress()
