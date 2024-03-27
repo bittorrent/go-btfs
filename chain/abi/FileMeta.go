@@ -41,7 +41,7 @@ type FileMetaFileMetaData struct {
 
 // FileMetaMetaData contains all meta data concerning the FileMeta contract.
 var FileMetaMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"previousAdmin\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"newAdmin\",\"type\":\"address\"}],\"name\":\"AdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"beacon\",\"type\":\"address\"}],\"name\":\"BeaconUpgraded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"ownerPeerId\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"fileExt\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isDir\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"fileSize\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structFileMeta.FileMetaData\",\"name\":\"metaData\",\"type\":\"tuple\"}],\"name\":\"eventAddFileMeta\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"}],\"name\":\"eventDeleteFileMeta\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"ownerPeerId\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"fileExt\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isDir\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"fileSize\",\"type\":\"uint256\"}],\"internalType\":\"structFileMeta.FileMetaData\",\"name\":\"metaData\",\"type\":\"tuple\"}],\"name\":\"AddFileMeta\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"}],\"name\":\"DeleteFileMeta\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"}],\"name\":\"GetFileMeta\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"ownerPeerId\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"fileExt\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isDir\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"fileSize\",\"type\":\"uint256\"}],\"internalType\":\"structFileMeta.FileMetaData\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getImplementation\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"proxiableUUID\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"}],\"name\":\"upgradeTo\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"upgradeToAndCall\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"ownerPeerId\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"fileExt\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isDir\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"fileSize\",\"type\":\"uint256\"}],\"internalType\":\"structFileMeta.FileMetaData\",\"name\":\"metaData\",\"type\":\"tuple\"}],\"name\":\"AddFileMeta\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"previousAdmin\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"newAdmin\",\"type\":\"address\"}],\"name\":\"AdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"beacon\",\"type\":\"address\"}],\"name\":\"BeaconUpgraded\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"}],\"name\":\"DeleteFileMeta\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"ownerPeerId\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"fileExt\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isDir\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"fileSize\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structFileMeta.FileMetaData\",\"name\":\"metaData\",\"type\":\"tuple\"}],\"name\":\"eventAddFileMeta\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"}],\"name\":\"eventDeleteFileMeta\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"}],\"name\":\"upgradeTo\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"upgradeToAndCall\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"}],\"name\":\"GetFileMeta\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"ownerPeerId\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"fileExt\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isDir\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"fileSize\",\"type\":\"uint256\"}],\"internalType\":\"structFileMeta.FileMetaData\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getImplementation\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"proxiableUUID\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 }
 
 // FileMetaABI is the input ABI used to generate the binding from.
@@ -1240,22 +1240,17 @@ func (it *FileMetaEventAddFileMetaIterator) Close() error {
 
 // FileMetaEventAddFileMeta represents a EventAddFileMeta event raised by the FileMeta contract.
 type FileMetaEventAddFileMeta struct {
-	Cid      common.Hash
+	Cid      string
 	MetaData FileMetaFileMetaData
 	Raw      types.Log // Blockchain specific contextual infos
 }
 
 // FilterEventAddFileMeta is a free log retrieval operation binding the contract event 0x5858f0194a72c3a15e5d5f94dbbb35a90af87476e958f990a6fc31db87a16b95.
 //
-// Solidity: event eventAddFileMeta(string indexed cid, (string,address,string,string,bool,uint256) metaData)
-func (_FileMeta *FileMetaFilterer) FilterEventAddFileMeta(opts *bind.FilterOpts, cid []string) (*FileMetaEventAddFileMetaIterator, error) {
+// Solidity: event eventAddFileMeta(string cid, (string,address,string,string,bool,uint256) metaData)
+func (_FileMeta *FileMetaFilterer) FilterEventAddFileMeta(opts *bind.FilterOpts) (*FileMetaEventAddFileMetaIterator, error) {
 
-	var cidRule []interface{}
-	for _, cidItem := range cid {
-		cidRule = append(cidRule, cidItem)
-	}
-
-	logs, sub, err := _FileMeta.contract.FilterLogs(opts, "eventAddFileMeta", cidRule)
+	logs, sub, err := _FileMeta.contract.FilterLogs(opts, "eventAddFileMeta")
 	if err != nil {
 		return nil, err
 	}
@@ -1264,15 +1259,10 @@ func (_FileMeta *FileMetaFilterer) FilterEventAddFileMeta(opts *bind.FilterOpts,
 
 // WatchEventAddFileMeta is a free log subscription operation binding the contract event 0x5858f0194a72c3a15e5d5f94dbbb35a90af87476e958f990a6fc31db87a16b95.
 //
-// Solidity: event eventAddFileMeta(string indexed cid, (string,address,string,string,bool,uint256) metaData)
-func (_FileMeta *FileMetaFilterer) WatchEventAddFileMeta(opts *bind.WatchOpts, sink chan<- *FileMetaEventAddFileMeta, cid []string) (event.Subscription, error) {
+// Solidity: event eventAddFileMeta(string cid, (string,address,string,string,bool,uint256) metaData)
+func (_FileMeta *FileMetaFilterer) WatchEventAddFileMeta(opts *bind.WatchOpts, sink chan<- *FileMetaEventAddFileMeta) (event.Subscription, error) {
 
-	var cidRule []interface{}
-	for _, cidItem := range cid {
-		cidRule = append(cidRule, cidItem)
-	}
-
-	logs, sub, err := _FileMeta.contract.WatchLogs(opts, "eventAddFileMeta", cidRule)
+	logs, sub, err := _FileMeta.contract.WatchLogs(opts, "eventAddFileMeta")
 	if err != nil {
 		return nil, err
 	}
@@ -1306,7 +1296,7 @@ func (_FileMeta *FileMetaFilterer) WatchEventAddFileMeta(opts *bind.WatchOpts, s
 
 // ParseEventAddFileMeta is a log parse operation binding the contract event 0x5858f0194a72c3a15e5d5f94dbbb35a90af87476e958f990a6fc31db87a16b95.
 //
-// Solidity: event eventAddFileMeta(string indexed cid, (string,address,string,string,bool,uint256) metaData)
+// Solidity: event eventAddFileMeta(string cid, (string,address,string,string,bool,uint256) metaData)
 func (_FileMeta *FileMetaFilterer) ParseEventAddFileMeta(log types.Log) (*FileMetaEventAddFileMeta, error) {
 	event := new(FileMetaEventAddFileMeta)
 	if err := _FileMeta.contract.UnpackLog(event, "eventAddFileMeta", log); err != nil {
@@ -1385,21 +1375,16 @@ func (it *FileMetaEventDeleteFileMetaIterator) Close() error {
 
 // FileMetaEventDeleteFileMeta represents a EventDeleteFileMeta event raised by the FileMeta contract.
 type FileMetaEventDeleteFileMeta struct {
-	Cid common.Hash
+	Cid string
 	Raw types.Log // Blockchain specific contextual infos
 }
 
 // FilterEventDeleteFileMeta is a free log retrieval operation binding the contract event 0x75ab1296ebe483fe9506fccbfe8a4743edf9ef6cf8802c2c28c652dfa948e412.
 //
-// Solidity: event eventDeleteFileMeta(string indexed cid)
-func (_FileMeta *FileMetaFilterer) FilterEventDeleteFileMeta(opts *bind.FilterOpts, cid []string) (*FileMetaEventDeleteFileMetaIterator, error) {
+// Solidity: event eventDeleteFileMeta(string cid)
+func (_FileMeta *FileMetaFilterer) FilterEventDeleteFileMeta(opts *bind.FilterOpts) (*FileMetaEventDeleteFileMetaIterator, error) {
 
-	var cidRule []interface{}
-	for _, cidItem := range cid {
-		cidRule = append(cidRule, cidItem)
-	}
-
-	logs, sub, err := _FileMeta.contract.FilterLogs(opts, "eventDeleteFileMeta", cidRule)
+	logs, sub, err := _FileMeta.contract.FilterLogs(opts, "eventDeleteFileMeta")
 	if err != nil {
 		return nil, err
 	}
@@ -1408,15 +1393,10 @@ func (_FileMeta *FileMetaFilterer) FilterEventDeleteFileMeta(opts *bind.FilterOp
 
 // WatchEventDeleteFileMeta is a free log subscription operation binding the contract event 0x75ab1296ebe483fe9506fccbfe8a4743edf9ef6cf8802c2c28c652dfa948e412.
 //
-// Solidity: event eventDeleteFileMeta(string indexed cid)
-func (_FileMeta *FileMetaFilterer) WatchEventDeleteFileMeta(opts *bind.WatchOpts, sink chan<- *FileMetaEventDeleteFileMeta, cid []string) (event.Subscription, error) {
+// Solidity: event eventDeleteFileMeta(string cid)
+func (_FileMeta *FileMetaFilterer) WatchEventDeleteFileMeta(opts *bind.WatchOpts, sink chan<- *FileMetaEventDeleteFileMeta) (event.Subscription, error) {
 
-	var cidRule []interface{}
-	for _, cidItem := range cid {
-		cidRule = append(cidRule, cidItem)
-	}
-
-	logs, sub, err := _FileMeta.contract.WatchLogs(opts, "eventDeleteFileMeta", cidRule)
+	logs, sub, err := _FileMeta.contract.WatchLogs(opts, "eventDeleteFileMeta")
 	if err != nil {
 		return nil, err
 	}
@@ -1450,7 +1430,7 @@ func (_FileMeta *FileMetaFilterer) WatchEventDeleteFileMeta(opts *bind.WatchOpts
 
 // ParseEventDeleteFileMeta is a log parse operation binding the contract event 0x75ab1296ebe483fe9506fccbfe8a4743edf9ef6cf8802c2c28c652dfa948e412.
 //
-// Solidity: event eventDeleteFileMeta(string indexed cid)
+// Solidity: event eventDeleteFileMeta(string cid)
 func (_FileMeta *FileMetaFilterer) ParseEventDeleteFileMeta(log types.Log) (*FileMetaEventDeleteFileMeta, error) {
 	event := new(FileMetaEventDeleteFileMeta)
 	if err := _FileMeta.contract.UnpackLog(event, "eventDeleteFileMeta", log); err != nil {
