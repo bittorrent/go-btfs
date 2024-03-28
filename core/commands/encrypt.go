@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-	"os"
 
 	shell "github.com/bittorrent/go-btfs-api"
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -143,17 +142,7 @@ var decryptCmd = &cmds.Command{
 		if err != nil {
 			return errors.New("decryption is failed, maybe the content of encryption is not encrypted by your public key")
 		}
-		fileName := "./decrypt-file-of-" + cid
-		f, err := os.Create(fileName)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		_, err = f.Write(dedata)
-		if err != nil {
-			return err
-		}
-		return re.Emit("decrypted file name is: " + fileName)
+		return re.Emit(bytes.NewReader(dedata))
 	},
 }
 

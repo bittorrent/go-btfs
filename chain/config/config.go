@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+
 	cfg "github.com/bittorrent/go-btfs-config"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -36,6 +37,7 @@ var (
 	//bttcTestVaultLogicAddress   = common.HexToAddress("0x73bcbE03999913dB7229FD5dC485cf23247c58B5") // https://testnet.bttcscan.com/address/0x67F0366c4c0c83F55D4759D301BEe051EF01E350
 	bttcTestMutiVaultLogicAddress = common.HexToAddress("0x67F0366c4c0c83F55D4759D301BEe051EF01E350") // https://testnet.bttcscan.com/address/0x67F0366c4c0c83F55D4759D301BEe051EF01E350
 	bttcTestStatusAddress         = common.HexToAddress("0x38d1fF2C2e9744273E4531FA4608eB6432c1F26A")
+	bttcTestFileMetaAddress       = common.HexToAddress("0xB192bb91c143C196EF3c659923Ef34026B170997")
 
 	bttcFactoryAddressV1 = common.HexToAddress("0x9AF4bEc1A30BeC47756Ecef4cf43B91592121bC9")
 	bttcFactoryAddress   = common.HexToAddress("0x763d7858287B9a33F4bE5bb3df0241dACc59BCc7") // https://bttcscan.com/address/0x763d7858287B9a33F4bE5bb3df0241dACc59BCc7
@@ -46,6 +48,7 @@ var (
 	//bttcVaultLogicAddress   = common.HexToAddress("0x11a91B7270ea000768F7A2C543547e832b5cb031") // https://bttcscan.com/address/0x11a91B7270ea000768F7A2C543547e832b5cb031
 	bttcMutiVaultLogicAddress = common.HexToAddress("0x5c67bED46336A59252b73a0fA22B9de1cffb172e")
 	bttcStatusAddress         = common.HexToAddress("0x6DBAd4Bd16C15AE6dDEaA640626e5A3E151F02fC")
+	bttcFileMetaAddress       = common.HexToAddress("0xe74117DC4A3457Eb32436F8F3De10701a3C4F6d7")
 
 	// deploy gas
 	ethDeploymentGas  = "10"
@@ -58,11 +61,17 @@ var (
 	testDeploymentGas = ""
 
 	//endpoint
-	ethEndpoint      = ""
-	tronEndpoint     = ""
-	bttcEndpoint     = "https://rpc.bittorrentchain.io/"
-	bttcTestEndpoint = "https://pre-rpc.bt.io/"
-	testEndpoint     = "http://18.144.29.246:8110"
+	ethEndpoint       = ""
+	tronEndpoint      = ""
+	bttcEndpoint      = "https://rpc.bittorrentchain.io/"
+	bttcTestEndpoint  = "https://pre-rpc.bt.io/"
+	testEndpoint      = "http://18.144.29.246:8110"
+	bttcMultiEndpoint = []string{
+		"https://rpc.bittorrentchain.io/",
+		"https://rpc.bt.io/",
+		"https://bttc.trongrid.io/",
+	}
+	bttcTestMultiEndpoint = []string{"https://pre-rpc.bt.io/"}
 
 	DefaultChain = bttcChainID
 )
@@ -84,6 +93,8 @@ type ChainConfig struct {
 	DeploymentGas      string
 	Endpoint           string
 	StatusAddress      common.Address
+	FileMetaAddress    common.Address
+	MultiEndpoint      []string
 }
 
 func GetChainConfig(chainID int64) (*ChainConfig, bool) {
@@ -114,6 +125,8 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.Endpoint = bttcEndpoint
 		cfg.BatchAddress = bttcBatchAddress
 		cfg.StatusAddress = bttcStatusAddress
+		cfg.FileMetaAddress = bttcFileMetaAddress
+		cfg.MultiEndpoint = bttcMultiEndpoint
 		return &cfg, true
 	case bttcTestChainID:
 		cfg.StartBlock = bttcStartBlock
@@ -124,6 +137,8 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.BatchAddress = bttcTestBatchAddress
 		cfg.VaultLogicAddress = bttcTestMutiVaultLogicAddress
 		cfg.StatusAddress = bttcTestStatusAddress
+		cfg.FileMetaAddress = bttcTestFileMetaAddress
+		cfg.MultiEndpoint = bttcTestMultiEndpoint
 		return &cfg, true
 	case testChainID:
 		cfg.StartBlock = ethStartBlock

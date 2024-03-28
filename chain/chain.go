@@ -76,22 +76,43 @@ func InitChain(
 	peerid string,
 	chainconfig *config.ChainConfig,
 ) (*ChainInfo, error) {
-
 	StateStore = stateStore
-
-	backend, err := ethclient.Dial(chainconfig.Endpoint)
-	if err != nil {
-		return nil, fmt.Errorf("dial eth client: %w", err)
-	}
-
-	_, err = backend.BlockNumber(context.Background())
-	if err != nil {
-		errMsg := "Could not connect to blockchain rpc, please check your network connection"
-		if err == io.EOF {
-			return nil, errors.New(errMsg)
-
+	var backend *ethclient.Client
+	var err error
+	if len(chainconfig.MultiEndpoint) > 0 {
+		var backendChan chan *ethclient.Client = make(chan *ethclient.Client, len(chainconfig.MultiEndpoint))
+		for _, endpoint := range chainconfig.MultiEndpoint {
+			go func(e string) {
+				b, err := ethclient.Dial(e)
+				if err != nil {
+					return
+				}
+				_, err = b.BlockNumber(context.Background())
+				if err != nil {
+					return
+				}
+				backendChan <- b
+			}(endpoint)
 		}
-		return nil, fmt.Errorf("%s.%w", errMsg, err)
+		select {
+		case backend = <-backendChan:
+		case <-time.After(time.Second * 60):
+			return nil, errors.New("could not connect all rpc configuration after 1 min, please try again or check your network")
+		}
+	} else {
+		backend, err = ethclient.Dial(chainconfig.Endpoint)
+		if err != nil {
+			return nil, fmt.Errorf("dial eth client: %w", err)
+		}
+		_, err = backend.BlockNumber(context.Background())
+		if err != nil {
+			errMsg := "Could not connect to blockchain rpc, please check your network connection"
+			if err == io.EOF {
+				return nil, errors.New(errMsg)
+
+			}
+			return nil, fmt.Errorf("%s.%w", errMsg, err)
+		}
 	}
 
 	overlayEthAddress, err := signer.EthereumAddress()
