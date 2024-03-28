@@ -7,7 +7,7 @@ BitTorrent File System (BTFS) is a next-generation file sharing protocol in the 
 These are exactly what BTFS aims to clear up. Besides, underpinned by BTTC, BTFS enables cross-chain connectivity and multi-channel payments, making itself a more convenient choice. The intgration of BTFS, BitTorrent, and the BTTC network will boost DApp developers' efficiency in serving a wider market.
 
 * The [documentation](https://docs.btfs.io/v2.0) walks developers through BTFS 2.0 setup, usage, and API references.
-* Please join the BTFS community at [discord](https://discord.gg/PQWfzWS).
+* Please join the BTFS community at [discord](https://discord.com/invite/tJ4fz6C6rw).
 
 ## BTFS 2.0 Architecture Diagram
 
