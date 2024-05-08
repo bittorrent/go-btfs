@@ -3,11 +3,12 @@ package cheque
 import (
 	"errors"
 	"fmt"
-	"github.com/bittorrent/go-btfs/chain/tokencfg"
-	"github.com/bittorrent/go-btfs/utils"
 	"io"
 	"math/big"
 	"time"
+
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/utils"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
@@ -80,6 +81,7 @@ Vault services include issue cheque to peer, receive cheque and store operations
 	},
 	Subcommands: map[string]*cmds.Command{
 		"cash":               CashChequeCmd,
+		"batch-cash":         BatchCashChequeCmd,
 		"cashstatus":         ChequeCashStatusCmd,
 		"cashlist":           ChequeCashListCmd,
 		"price":              StorePriceCmd,
@@ -248,6 +250,53 @@ var CashChequeCmd = &cmds.Command{
 		return cmds.EmitOnce(res, &CashChequeRet{
 			TxHash: tx_hash.String(),
 		})
+	},
+	Type: CashChequeRet{},
+	Encoders: cmds.EncoderMap{
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *CashChequeRet) error {
+			_, err := fmt.Fprintf(w, "the hash of transaction: %s", out.TxHash)
+			return err
+		}),
+	},
+}
+
+var BatchCashChequeCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "Batch cash the cheques by peerIDs.",
+	},
+	Arguments: []cmds.Argument{
+		cmds.StringArg("peer-ids", true, true, "Peer id tobe cashed."),
+	},
+	Options: []cmds.Option{
+		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+	},
+	RunTimeout: 5 * time.Minute,
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		err := utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
+		peerIDs := req.Arguments
+		tokenStr := req.Options[tokencfg.TokenTypeName].(string)
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
+
+		for _, peerID := range peerIDs {
+			tx_hash, err := chain.SettleObject.SwapService.CashCheque(req.Context, peerID, token)
+			if err != nil {
+				return err
+			}
+			err = res.Emit(&CashChequeRet{
+				TxHash: tx_hash.String(),
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	},
 	Type: CashChequeRet{},
 	Encoders: cmds.EncoderMap{
