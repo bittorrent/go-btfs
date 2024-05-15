@@ -87,5 +87,7 @@ func NewNode(ctx context.Context, cfg *BuildCfg) (*IpfsNode, error) {
 		return n, nil
 	}
 
+	n.PeerWithLastConn()
+
 	return n, n.Bootstrap(bootstrap.DefaultBootstrapConfig)
 }

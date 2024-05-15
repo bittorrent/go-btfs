@@ -11,7 +11,9 @@ package core
 
 import (
 	"context"
+	"github.com/libp2p/go-libp2p/core/network"
 	"io"
+	"sync"
 
 	"github.com/bittorrent/go-btfs/peering"
 	irouting "github.com/bittorrent/go-btfs/routing"
@@ -177,4 +179,29 @@ type ConstructPeerHostOpts struct {
 	DisableRelay      bool
 	EnableRelayHop    bool
 	ConnectionManager connmgr.ConnManager
+}
+
+// PeerWithLastConn try to connect to last peers
+func (n *IpfsNode) PeerWithLastConn() {
+	peerIds := n.Peerstore.Peers()
+	peers, _ := n.loadBootstrapPeers()
+	filter := make(map[peer.ID]bool, len(peers))
+	for _, id := range peers {
+		filter[id.ID] = true
+	}
+
+	wg := sync.WaitGroup{}
+	for _, ai := range peerIds {
+		if ai == n.Identity || filter[ai] || n.PeerHost.Network().Connectedness(ai) == network.Connected {
+			continue
+		}
+		log.Debugf("peer with last conn %s", ai)
+		go func(id peer.ID) {
+			wg.Add(1)
+			err := n.PeerHost.Connect(context.Background(), n.Peerstore.PeerInfo(id))
+			log.Errorf("connect local error %v", err)
+			wg.Done()
+		}(ai)
+	}
+	wg.Wait()
 }
