@@ -298,6 +298,7 @@ func Online(bcfg *BuildCfg, cfg *config.Config) fx.Option {
 		fx.Provide(Namesys(ipnsCacheSize)),
 		fx.Provide(Peering),
 		PeerWith(cfg.Peering.Peers...),
+		PeerWithLastConn(),
 
 		fx.Invoke(IpnsRepublisher(repubPeriod, recordLifetime)),
 
