@@ -284,6 +284,7 @@ func TestCommands(t *testing.T) {
 		"/cheque/token_balance",
 		"/cheque/all_token_balance",
 		"/cheque/cash",
+		"/cheque/batch-cash",
 		"/cheque/cashstatus",
 		"/cheque/chaininfo",
 		"/cheque/price",
