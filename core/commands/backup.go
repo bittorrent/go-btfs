@@ -170,7 +170,6 @@ func Tar(src, dst string, excludePath []string) (err error) {
 		}
 		hdr.Name = rel
 
-		// 写入文件信息
 		if err = tw.WriteHeader(hdr); err != nil {
 			return err
 		}
@@ -185,7 +184,6 @@ func Tar(src, dst string, excludePath []string) (err error) {
 		}
 		defer fr.Close()
 
-		// copy 文件数据到 tw
 		_, err = io.Copy(tw, fr)
 		if err != nil {
 			return err
@@ -232,7 +230,6 @@ func UnTar(src, dst string) (err error) {
 			return err
 		}
 		defer fw.Close()
-		// 写文件
 		_, err = io.Copy(fw, tr)
 		if err != nil {
 			return err
