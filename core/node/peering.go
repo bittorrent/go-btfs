@@ -8,8 +8,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"go.uber.org/fx"
+	"golang.org/x/sync/errgroup"
 	"math/rand"
-	"sync"
 	"sync/atomic"
 )
 
@@ -37,7 +37,10 @@ func PeerWith(peers ...peer.AddrInfo) fx.Option {
 	})
 }
 
-const maxNLastConn = 10
+const (
+	maxNLastConn = 10
+	maxTryLimit  = 1000
+)
 
 // PeerWithLastConn try to connect to last peers
 func PeerWithLastConn() fx.Option {
@@ -61,29 +64,45 @@ func PeerWithLastConn() fx.Option {
 			}
 		}
 
-		wg := sync.WaitGroup{}
+		g := errgroup.Group{}
+		g.SetLimit(maxNLastConn)
 		needConnect := int32(maxNLastConn)
+		tryCount := 0
+
 		for {
+			if tryCount >= maxTryLimit {
+				logger.Infof("max try count limited.")
+				break
+			}
+
 			if needConnect <= 0 {
 				break
 			}
+
 			randomSubSet := randomSubsetOfPeers(connection, int(needConnect))
+			tryCount += len(randomSubSet)
+
 			if len(randomSubSet) == 0 {
 				break
 			}
+
 			for id, _ := range randomSubSet {
 				connection[id] = false
-				wg.Add(1)
-				go func(peerId peer.ID) {
-					defer wg.Done()
+				peerId := id
+				g.Go(func() error {
 					if err = host.Connect(context.Background(), host.Peerstore().PeerInfo(peerId)); err != nil {
 						logger.Debugf("connect to last connection peer %s, error %v", peerId, err)
-						return
+						return nil
 					}
 					atomic.AddInt32(&needConnect, -1)
-				}(id)
+					return nil
+				})
 			}
-			wg.Wait()
+			err = g.Wait()
+			if err != nil {
+				logger.Debugf("connect to last connection error %v", err)
+				return
+			}
 		}
 	})
 }

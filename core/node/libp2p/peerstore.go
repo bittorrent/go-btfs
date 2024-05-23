@@ -25,11 +25,16 @@ func Peerstore(lc fx.Lifecycle) peerstore.Peerstore {
 	return pstore
 }
 
-func PeerstoreDs(repo repo.Repo) peerstore.Peerstore {
+func PeerstoreDs(lc fx.Lifecycle, repo repo.Repo) peerstore.Peerstore {
 	pstore, err := pstoreds.NewPeerstore(context.Background(), repo.Datastore(), pstoreds.DefaultOpts())
 	if err != nil {
 		log.Errorln(err)
 		return nil
 	}
+	lc.Append(fx.Hook{
+		OnStop: func(ctx context.Context) error {
+			return pstore.Close()
+		},
+	})
 	return pstore
 }
