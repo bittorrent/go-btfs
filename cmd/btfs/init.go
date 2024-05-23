@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,6 +22,8 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands"
 	"github.com/bittorrent/go-btfs/namesys"
 	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	config "github.com/bittorrent/go-btfs-config"
@@ -33,6 +36,8 @@ const (
 	profileOptionName   = "profile"
 	keyTypeDefault      = "BIP39"
 	keyTypeOptionName   = "key"
+	keyPathOptionName   = "keypath"
+	passOptionName      = "pass"
 	importKeyOptionName = "import"
 	rmOnUnpinOptionName = "rm-on-unpin"
 	seedOptionName      = "seed"
@@ -70,6 +75,8 @@ environment variable:
 		cmds.BoolOption(emptyRepoOptionName, "e", "Don't add and pin help files to the local storage."),
 		cmds.StringOption(profileOptionName, "p", "Apply profile settings to config. Multiple profiles can be separated by ','"),
 		cmds.StringOption(keyTypeOptionName, "k", "Key generation algorithm, e.g. RSA, Ed25519, Secp256k1, ECDSA, BIP39. By default is BIP39"),
+		cmds.StringOption(keyPathOptionName, "kp", "Keystore file path when key type is keystore"),
+		cmds.StringOption(passOptionName, "Keystore file password when key type is keystore"),
 		cmds.StringOption(importKeyOptionName, "i", "Import TRON private key to generate btfs PeerID."),
 		cmds.BoolOption(rmOnUnpinOptionName, "r", "Remove unpinned files.").WithDefault(false),
 		cmds.StringOption(seedOptionName, "s", "Import seed phrase"),
@@ -139,10 +146,31 @@ environment variable:
 		keyType, _ := req.Options[keyTypeOptionName].(string)
 		seedPhrase, _ := req.Options[seedOptionName].(string)
 		simpleModeIn, _ := req.Options[simpleMode].(bool)
+		keyPath, _ := req.Options[keyPathOptionName].(string)
+		keyPass, _ := req.Options[passOptionName].(string)
 		/*
 			password, _ := req.Options[passWordOptionName].(string)
 			passwordFile, _ := req.Options[passwordFileoptionName].(string)
 		*/
+		if keyType == "keystore" {
+			if keyPath == "" || keyPass == "" {
+				return fmt.Errorf("keypath or pass option should not be empty when key type is keystore")
+			}
+			file, err := os.Open(keyPath)
+			if err != nil {
+				return err
+			}
+			jsonBytes, err := io.ReadAll(file)
+			if err != nil {
+				return err
+			}
+			key, err := keystore.DecryptKey(jsonBytes, keyPass)
+			if err != nil {
+				return err
+			}
+			importKey = hex.EncodeToString(ethCrypto.FromECDSA(key.PrivateKey))
+			keyType = "Secp256k1"
+		}
 		backupPath, ok := req.Options[recoveryOptionName].(string)
 		if ok {
 			btfsPath := env.(*oldcmds.Context).ConfigRoot
