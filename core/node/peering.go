@@ -59,9 +59,10 @@ func PeerWithLastConn() fx.Option {
 
 		connection := make(map[peer.ID]bool)
 		for _, id := range peerIds {
-			if host.Network().Connectedness(id) != network.Connected || id != host.ID() || !filter[id] {
-				connection[id] = true
+			if host.Network().Connectedness(id) == network.Connected || id == host.ID() || filter[id] {
+				continue
 			}
+			connection[id] = true
 		}
 
 		g := errgroup.Group{}
