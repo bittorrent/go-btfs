@@ -208,8 +208,8 @@ github.com/bittorrent/go-btfs-cmds v0.3.0 h1:xpCBgk3zIm84Ne6EjeJgi8WLB5YJJUIFMjK
 github.com/bittorrent/go-btfs-cmds v0.3.0/go.mod h1:Fbac/Rou32G0jpoa6wLrNNDxcGOZbGfk+GiG0r3uEIU=
 github.com/bittorrent/go-btfs-common v0.9.0 h1:jHcFvYQmvmA4IdvVtkI5d/S/HW65Qz21C6oxeyK812w=
 github.com/bittorrent/go-btfs-common v0.9.0/go.mod h1:OG1n3DfcTxQYfLd5zco54LfL3IiDDaw3s7Igahu0Rj0=
-github.com/bittorrent/go-btfs-config v0.13.0-pre2 h1:sneJ4a5bA15ST9WRUR4G+1FuGUVmszSEuihCeKzeyNk=
-github.com/bittorrent/go-btfs-config v0.13.0-pre2/go.mod h1:DNaHVC9wU84KLKoC4HkvdoFJKVZ7TF530qzfYu30fCI=
+github.com/bittorrent/go-btfs-config v0.13.2 h1:wTS5kz3w4xRLfggubPq+uvveKA9WFBYFj8mCIba0oHQ=
+github.com/bittorrent/go-btfs-config v0.13.2/go.mod h1:DNaHVC9wU84KLKoC4HkvdoFJKVZ7TF530qzfYu30fCI=
 github.com/bittorrent/go-btfs-files v0.3.0/go.mod h1:ylMf73m6oK94hL7VPblY1ZZpePsr6XbPV4BaNUwGZR0=
 github.com/bittorrent/go-btfs-files v0.3.1 h1:esq3j+6FtZ+SlaxKjVtiYgvXk/SWUiTcv0Q1MeJoPnQ=
 github.com/bittorrent/go-btfs-files v0.3.1/go.mod h1:ylMf73m6oK94hL7VPblY1ZZpePsr6XbPV4BaNUwGZR0=
