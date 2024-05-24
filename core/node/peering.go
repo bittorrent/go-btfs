@@ -45,7 +45,7 @@ const (
 // PeerWithLastConn try to connect to last peers
 func PeerWithLastConn() fx.Option {
 	return fx.Invoke(func(host host.Host, cfg *config.Config) {
-		peerIds := host.Peerstore().Peers()
+		peerIds := host.Peerstore().PeersWithAddrs()
 
 		bootstrap, err := cfg.BootstrapPeers()
 		if err != nil {
