@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
+	"strings"
 
 	shell "github.com/bittorrent/go-btfs-api"
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -128,18 +129,24 @@ var decryptCmd = &cmds.Command{
 		var readClose io.ReadCloser
 		cid := r.Arguments[0]
 		from, ok := r.Options[fromOption].(string)
-		if ok {
+		if ok && strings.TrimSpace(from) != "" {
 			peerID, err := peer.Decode(from)
 			if err != nil {
 				return err
 			}
 			b, err := remote.P2PCallStrings(r.Context, n, api, peerID, "/decryption", cid)
+			if err != nil && strings.Contains(err.Error(), "unsupported path namespace") {
+				return errors.New("cid not found")
+			}
 			if err != nil {
 				return err
 			}
 			readClose = io.NopCloser(bytes.NewReader(b))
 		} else {
 			readClose, err = shell.NewLocalShell().Cat(cid)
+			if err != nil && strings.Contains(err.Error(), "unsupported path namespace") {
+				return errors.New("cid not found")
+			}
 			if err != nil {
 				return err
 			}
