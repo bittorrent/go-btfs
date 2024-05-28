@@ -109,7 +109,7 @@ func doConcurrentConn(ctx context.Context, host host.Host, peers map[peer.ID]boo
 	}
 
 	g := errgroup.Group{}
-	g.SetLimit(maxNLastConn)
+	g.SetLimit(len(peers))
 
 	connected := int32(0)
 
