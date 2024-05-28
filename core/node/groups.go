@@ -214,7 +214,8 @@ func Identity(cfg *config.Config) fx.Option {
 	if cfg.Identity.PrivKey == "" {
 		return fx.Options( // No PK (usually in tests)
 			fx.Provide(PeerID(id)),
-			fx.Provide(libp2p.Peerstore),
+			// fx.Provide(libp2p.Peerstore),
+			fx.Provide(libp2p.PeerstoreDs),
 		)
 	}
 
@@ -236,7 +237,8 @@ func Identity(cfg *config.Config) fx.Option {
 	return fx.Options( // Full identity
 		fx.Provide(PeerID(id)),
 		fx.Provide(PrivateKey(sk)),
-		fx.Provide(libp2p.Peerstore),
+		// fx.Provide(libp2p.Peerstore),
+		fx.Provide(libp2p.PeerstoreDs),
 
 		fx.Invoke(libp2p.PstoreAddSelfKeys),
 	)
@@ -296,6 +298,7 @@ func Online(bcfg *BuildCfg, cfg *config.Config) fx.Option {
 		fx.Provide(Namesys(ipnsCacheSize)),
 		fx.Provide(Peering),
 		PeerWith(cfg.Peering.Peers...),
+		PeerWithLastConn(),
 
 		fx.Invoke(IpnsRepublisher(repubPeriod, recordLifetime)),
 
