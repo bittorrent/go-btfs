@@ -166,7 +166,8 @@ var decryptCmd = &cmds.Command{
 			secretBytes := hasher.Sum(nil)
 			decryptedData, err = AesDecrypt(encryptedData, secretBytes)
 			if err != nil {
-				return err
+				log.Error(err)
+				return errors.New("error happens during decryption by AES, may be you have a wrong password or it is not encrypted by AES")
 			}
 		} else {
 			// That means it's asymmetric encryption
@@ -182,6 +183,7 @@ var decryptCmd = &cmds.Command{
 
 			decryptedData, err = ECCDecrypt(encryptedData, *eciesPrivateKey)
 			if err != nil {
+				log.Error(err)
 				return errors.New("decryption is failed, maybe the content of encryption is not encrypted by your public key")
 			}
 		}
