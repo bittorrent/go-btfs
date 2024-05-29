@@ -159,7 +159,7 @@ var decryptCmd = &cmds.Command{
 
 		var decryptedData []byte
 		pass, ok := r.Options[passOption].(string)
-		if ok {
+		if ok && strings.TrimSpace(pass) != "" {
 			// That means it's symmetrical encryption
 			hasher := md5.New()
 			hasher.Write([]byte(pass))
