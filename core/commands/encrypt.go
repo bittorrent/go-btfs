@@ -129,7 +129,7 @@ var decryptCmd = &cmds.Command{
 		var readClose io.ReadCloser
 		cid := r.Arguments[0]
 		from, ok := r.Options[fromOption].(string)
-		if ok && strings.TrimSpace(from) != "" {
+		if ok && strings.TrimSpace(from) != "" && strings.TrimSpace(from) != n.Identity.String() {
 			peerID, err := peer.Decode(from)
 			if err != nil {
 				return err
