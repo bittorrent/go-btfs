@@ -8,8 +8,13 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
+	"net/http"
+	"os"
+	"path"
 	"strings"
+	"time"
 
 	shell "github.com/bittorrent/go-btfs-api"
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -19,6 +24,7 @@ import (
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	peer "github.com/libp2p/go-libp2p/core/peer"
+	"github.com/mitchellh/go-homedir"
 )
 
 const toOption = "to"
@@ -143,12 +149,37 @@ var decryptCmd = &cmds.Command{
 			}
 			readClose = io.NopCloser(bytes.NewReader(b))
 		} else {
-			readClose, err = shell.NewLocalShell().Cat(cid)
+			c := &http.Client{
+				Transport: &http.Transport{
+					Proxy:             http.ProxyFromEnvironment,
+					DisableKeepAlives: true,
+				},
+				Timeout: 1 * time.Minute,
+			}
+			baseDir := os.Getenv("BTFS_PATH")
+			if baseDir == "" {
+				baseDir = "~/.btfs"
+			}
+
+			baseDir, err := homedir.Expand(baseDir)
+			if err != nil {
+				return nil
+			}
+
+			apiFile := path.Join(baseDir, "api")
+			if _, err := os.Stat(apiFile); err != nil {
+				return nil
+			}
+			api, err := os.ReadFile(apiFile)
+			if err != nil {
+				return nil
+			}
+			readClose, err = shell.NewShellWithClient(strings.TrimSpace(string(api)), c).Cat(cid)
 			if err != nil && strings.Contains(err.Error(), "unsupported path namespace") {
 				return errors.New("cid not found")
 			}
-			if err != nil {
-				return err
+			if err != nil && strings.Contains(err.Error(), "Timeout") {
+				return fmt.Errorf("timeout when try to get cid: %s", cid)
 			}
 		}
 		encryptedData, err := io.ReadAll(readClose)
