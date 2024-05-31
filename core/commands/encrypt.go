@@ -2,6 +2,7 @@ package commands
 
 import (
 	"bytes"
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/md5"
@@ -135,12 +136,15 @@ var decryptCmd = &cmds.Command{
 		var readClose io.ReadCloser
 		cid := r.Arguments[0]
 		from, ok := r.Options[fromOption].(string)
+		timeout := 1 * time.Minute
 		if ok && strings.TrimSpace(from) != "" && strings.TrimSpace(from) != n.Identity.String() {
 			peerID, err := peer.Decode(from)
 			if err != nil {
 				return err
 			}
-			b, err := remote.P2PCallStrings(r.Context, n, api, peerID, "/decryption", cid)
+			ctx, cancel := context.WithTimeout(r.Context, timeout)
+			defer cancel()
+			b, err := remote.P2PCallStrings(ctx, n, api, peerID, "/decryption", cid)
 			if err != nil && strings.Contains(err.Error(), "unsupported path namespace") {
 				return errors.New("cid not found")
 			}
@@ -154,7 +158,7 @@ var decryptCmd = &cmds.Command{
 					Proxy:             http.ProxyFromEnvironment,
 					DisableKeepAlives: true,
 				},
-				Timeout: 1 * time.Minute,
+				Timeout: timeout,
 			}
 			baseDir := os.Getenv("BTFS_PATH")
 			if baseDir == "" {

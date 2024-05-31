@@ -3,15 +3,16 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"strconv"
+	"time"
+
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	onlinePb "github.com/bittorrent/go-btfs-common/protos/online"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/spin"
 	"github.com/bittorrent/go-btfs/utils"
-	"io"
-	"strconv"
-	"time"
 )
 
 // ReportOnlineDailyCmd (report online daily)
@@ -100,7 +101,12 @@ var ReportListDailyCmd = &cmds.Command{
 			return err
 		}
 		if list == nil {
-			return nil
+			return cmds.EmitOnce(res, &RetReportOnlineListDaily{
+				Records:  nil,
+				Total:    0,
+				PeerId:   peerId,
+				BttcAddr: bttcAddr,
+			})
 		}
 		total := len(list)
 		// order by time desc
