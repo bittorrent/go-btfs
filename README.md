@@ -9,6 +9,25 @@ These are exactly what BTFS aims to clear up. Besides, underpinned by BTTC, BTFS
 * The [documentation](https://docs.btfs.io/) walks developers through BTFS 3.0 setup, usage, and API references.
 * Please join the BTFS community at [discord](https://discord.com/invite/tJ4fz6C6rw).
 
+Decentralized Physical Infrastructure Networks (DePINs), catalyzed by advancements in blockchain technology, aim to revolutionize network architecture by moving away from centralized infrastructure. This shift is made possible by the evolution of blockchain infrastructure and advancements in cryptography, enabling a global collaborative effort to establish open and permissionless infrastructure. This approach disrupts traditional infrastructure models, which are typically dominated by major corporations.
+The BitTorrent File System (BTFS), an open and distributed file storage system, aligns perfectly with the goals of DePIN.
+
+BTFS represents the next generation of decentralized file storage systems powered by blockchain technology and peer-to-peer transmission. It allows users to store files across multiple global nodes, enhancing file security and reliability while facilitating faster access and transfer. This setup provides an effortless file management and sharing experience. Additionally, it incorporates key features from the BitTorrent Chain (BTTC) network, such as cross-chain connectivity and multichannel payment options.
+
+As a stellar player in the DePIN space, BTFS v3.0 boasts the following advantages:
+
+* Decentralized Storage: BTFS has achieved global decentralized file storage through its distributed network. Unlike centralized storage on single servers, this method significantly increases data redundancy and reduces the risk of data loss. The BTFS v3.0 update includes enhancements such as symmetric encryption for secure data transmission and new features like Keystore files for managing BTFS nodes.
+* Enhanced Security: The decentralized nature of data storage makes it difficult for attackers to target all nodes simultaneously, greatly improving the system's overall security.
+* Censorship-Proof: The inherent nature of a decentralized storage system makes it extremely difficult for any single organization to censor or block content, ensuring the free flow of data.
+* Seamless Integration Into the BitTorrent Ecosystem: The seamless integration of BTFS with the BitTorrent ecosystem allows users to freely access and share files and facilitates cross-chain transactions and payments via BTTC.
+* User-friendly API and Visual Interface: A newly updated BTFS website offers a user-friendly API and visual interface, featuring detailed road maps on Storage Reward halving and various other modules.
+* Transparent Market Mechanism: The market mechanism within BTFS ensures complete transparency in storage and payment processes, providing users with maximum visibility into their data.
+* Encryption Technology: By leveraging advanced encryption technologies, BTFS enhances data privacy and security, ensuring data integrity and preventing unauthorized access during transmission and storage.
+
+In addition to these features, the upgraded BTFS v3.0 introduces a crucial model update—the Reward Halving. As the BTFS network and its user base grow, the reward halving is likely to contribute to the reliable and sustainable growth of the entire ecosystem.
+
+BTFS, a leading project in the space of DePIN, is committed to advancing and enhancing the decentralized physical infrastructure network. The improved token economics of BTFS not only align with the vision of DePIN but also lay a solid foundation for the growth of decentralized networks. As technology and community evolve, BTFS is poised to play an increasingly significant role in the decentralized world.
+
 ## BTFS 3.0 Architecture Diagram
 
 ![Architecture Diagram](https://files.readme.io/a21e9fb--min.png)
