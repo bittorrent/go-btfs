@@ -2,7 +2,7 @@
 
 ## What is BTFS 3.0?
 
-BitTorrent File System (BTFS) is a next-generation file sharing protocol in the BitTorrent ecosystem. Current mainstream public blockchains mostly focus on computational tasks but lack cost-effective, scalable, and high-performing file storage and sharing solutions.
+BTFS, as an innovative force in the BitTorrent ecosystem, has not only accelerated the development of distributed file sharing technology, but also taken a leading position in the field of DePIN. DePIN - which stands for Decentralized Physical Infrastructure Network - encourages network participants to jointly invest resources to deploy and maintain a more stable and efficient network infrastructure through a token reward mechanism. Current mainstream public blockchains mostly focus on computational tasks but lack cost-effective, scalable, and high-performing file storage and sharing solutions.
 
 These are exactly what BTFS aims to clear up. Besides, underpinned by BTTC, BTFS enables cross-chain connectivity and multi-channel payments, making itself a more convenient choice. The intgration of BTFS, BitTorrent, and the BTTC network will boost DApp developers' efficiency in serving a wider market.
 
