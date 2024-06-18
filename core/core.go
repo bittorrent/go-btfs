@@ -82,7 +82,7 @@ type IpfsNode struct {
 	Discovery            discovery.Service         `optional:"true"`
 	FilesRoot            *mfs.Root
 	RecordValidator      record.Validator
-	//Statestore      storage.StateStorer
+	// Statestore      storage.StateStorer
 
 	// Online
 	PeerHost      p2phost.Host               `optional:"true"` // the network host (server+client)
