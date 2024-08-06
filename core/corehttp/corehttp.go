@@ -57,6 +57,8 @@ func makeHandler(n *core.IpfsNode, l net.Listener, options ...ServeOption) (http
 
 		// err := interceptorBeforeReq(r, n)
 		// if err != nil {
+		// 	w.WriteHeader(http.StatusOK)
+		// 	w.Write([]byte(err.Error()))
 		// 	return
 		// }
 
@@ -150,8 +152,12 @@ func Serve(node *core.IpfsNode, lis net.Listener, options ...ServeOption) error 
 }
 
 func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
-	if r.URL.Path == APIPath+"/passwd/login" {
+	if filterUrl()[r.URL.Path] {
 		return nil
+	}
+
+	if !commands.IsLogin {
+		return fmt.Errorf("please login")
 	}
 	args := r.URL.Query()
 	token := args.Get("token")
@@ -170,6 +176,12 @@ func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
 	return nil
 }
 
-func filterUrl() {
-
+func filterUrl() map[string]bool {
+	return map[string]bool{
+		"/dashboard":                 true,
+		"/hostui":                    true,
+		APIPath + "/dashboard/check": true,
+		APIPath + "/dashboard/login": true,
+		APIPath + "/dashboard/reset": true,
+	}
 }
