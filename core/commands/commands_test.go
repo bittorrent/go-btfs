@@ -93,8 +93,8 @@ func TestCommands(t *testing.T) {
 		"/config/replace",
 		"/config/reset",
 		"/config/show",
-		//"/config/profile",
-		//"/config/profile/apply",
+		// "/config/profile",
+		// "/config/profile/apply",
 		"/config/storage-host-enable",
 		"/config/sync-chain-info",
 		"/config/sync-simple-mode",
@@ -332,7 +332,7 @@ func TestCommands(t *testing.T) {
 		"/statuscontract/lastinfo",
 		"/statuscontract/config",
 		"/statuscontract/report_online_server",
-		//"/statuscontract/report_status_contract",
+		// "/statuscontract/report_status_contract",
 		"/statuscontract/daily_report_online_server",
 		"/statuscontract/daily_report_list",
 		"/statuscontract/daily_total",
@@ -361,6 +361,12 @@ func TestCommands(t *testing.T) {
 		"/cheque/fix_cheque_cashout",
 		"/encrypt",
 		"/decrypt",
+		"/dashboard/check",
+		"/dashboard/set",
+		"/dashboard/reset",
+		"/dashboard/login",
+		"/dashboard/logout",
+		"/dashboard/change",
 	}
 
 	cmdSet := make(map[string]struct{})
