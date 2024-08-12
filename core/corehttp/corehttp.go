@@ -67,6 +67,12 @@ func makeHandler(n *core.IpfsNode, l net.Listener, options ...ServeOption) (http
 		}
 
 		topMux.ServeHTTP(w, r)
+
+		err = interceptorAfterResp(r, w, n)
+		if err != nil {
+			return
+		}
+
 	})
 	return handler, nil
 }

@@ -25,12 +25,13 @@ var dashboardCmd = &cmds.Command{
 	},
 
 	Subcommands: map[string]*cmds.Command{
-		"check":  checkCmd,
-		"set":    setCmd,
-		"reset":  resetCmd,
-		"change": changeCmd,
-		"login":  loginCmd,
-		"logout": logoutCmd,
+		"check":    checkCmd,
+		"set":      setCmd,
+		"reset":    resetCmd,
+		"change":   changeCmd,
+		"login":    loginCmd,
+		"logout":   logoutCmd,
+		"validate": validateCmd,
 	},
 }
 
@@ -218,5 +219,17 @@ var logoutCmd = &cmds.Command{
 		// set token expire to 0
 		IsLogin = false
 		return re.Emit(&DashboardResponse{Success: true, Text: "logout success!"})
+	},
+}
+
+var validateCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "check passwd",
+	},
+	Arguments: []cmds.Argument{
+		cmds.StringArg("password", true, false, "check passwd"),
+	},
+	Run: func(r *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) error {
+		return nil
 	},
 }

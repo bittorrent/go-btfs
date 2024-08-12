@@ -1,13 +1,20 @@
 package corehttp
 
 import (
+	"errors"
 	"fmt"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands"
 	"github.com/bittorrent/go-btfs/utils"
 	ds "github.com/ipfs/go-datastore"
 	"net/http"
+	"strings"
+	"time"
 )
+
+const defaultTwoStepDuration = 30 * time.Minute
+
+const firstStepUrl = "/api/v1/dashboard/validate"
 
 func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
 	config, err := n.Repo.Config()
@@ -22,6 +29,30 @@ func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
 		}
 	}
 
+	err = twoStepCheckInterceptor(r)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func twoStepCheckInterceptor(r *http.Request) error {
+	if !need2StepCheckUrl(r.URL.Path) {
+		return nil
+	}
+	if currentStep == secondStep {
+		return nil
+	}
+
+	return errors.New("please validate your password first")
+}
+
+func interceptorAfterResp(r *http.Request, w http.ResponseWriter, n *core.IpfsNode) error {
+	err := passwordCheckInterceptor(r)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -50,7 +81,14 @@ func tokenCheckInterceptor(r *http.Request, n *core.IpfsNode) error {
 }
 
 func filterNoNeedTokenCheckReq(r *http.Request) bool {
-	if filterUrl(r) || filterP2pSchema(r) || filterLocalShellApi(r) {
+	if filterUrl(r) || filterP2pSchema(r) || filterLocalShellApi(r) || filterGatewayUrl(r) {
+		return true
+	}
+	return false
+}
+
+func filterGatewayUrl(r *http.Request) bool {
+	if strings.HasPrefix(r.URL.Path, "/btfs/") || strings.HasPrefix(r.URL.Path, "/btns/") {
 		return true
 	}
 	return false
@@ -85,6 +123,39 @@ func filterLocalShellApi(r *http.Request) bool {
 
 func filterP2pSchema(r *http.Request) bool {
 	if r.URL.Scheme == "libp2p" {
+		return true
+	}
+	return false
+}
+
+const (
+	_ int = iota
+	firstStep
+	secondStep
+)
+
+var currentStep = firstStep
+
+func passwordCheckInterceptor(r *http.Request) error {
+	if r.URL.Path == firstStepUrl && currentStep == firstStep {
+		currentStep = secondStep
+		// if next step was done after the default duration
+		go func() {
+			<-time.After(defaultTwoStepDuration)
+			currentStep = firstStep
+		}()
+		return nil
+	}
+
+	if need2StepCheckUrl(r.URL.Path) && currentStep == secondStep {
+		currentStep = firstStep
+	}
+
+	return nil
+}
+
+func need2StepCheckUrl(path string) bool {
+	if path == "/api/v1/xxx" {
 		return true
 	}
 	return false
