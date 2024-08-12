@@ -1,10 +1,8 @@
 package commands
 
 import (
-	"bytes"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/utils"
@@ -15,6 +13,11 @@ const DashboardPasswordPrefix = "/dashboard_password"
 const TokenExpire = 60 * 60 * 24 * 1
 
 var IsLogin = false
+
+type DashboardResponse struct {
+	Success bool
+	Text    string
+}
 
 var dashboardCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
@@ -44,14 +47,14 @@ var checkCmd = &cmds.Command{
 		_, err = node.Repo.Datastore().Get(req.Context, ds.NewKey(DashboardPasswordPrefix))
 
 		if err != nil && errors.Is(err, ds.ErrNotFound) {
-			return re.Emit(bytes.NewReader([]byte("passwd is not set")))
+			return re.Emit(&DashboardResponse{Success: false, Text: "passwd is not set"})
 		}
 
 		if err != nil {
 			log.Info("check password error", err)
-			return fmt.Errorf("check passwd error: %v\n", err)
+			return err
 		}
-		return re.Emit(bytes.NewReader([]byte("password was set")))
+		return re.Emit(DashboardResponse{Success: true, Text: "password was set"})
 	},
 }
 
@@ -70,11 +73,15 @@ var setCmd = &cmds.Command{
 		// check if password has set
 		_, err = node.Repo.Datastore().Get(req.Context, ds.NewKey(DashboardPasswordPrefix))
 		if err != nil && !errors.Is(err, ds.ErrNotFound) {
-			return fmt.Errorf("set password error: %v\n", err)
+			log.Info("set password error", err)
+			return err
 		}
 
 		if err == nil {
-			return fmt.Errorf("password has set, if you want to reset your password, please use reset command instead")
+			return re.Emit(&DashboardResponse{
+				Success: false,
+				Text:    "password has set, if you want to reset your password, please use reset command instead",
+			})
 		}
 
 		datastore := node.Repo.Datastore()
@@ -83,7 +90,7 @@ var setCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
-		return re.Emit(bytes.NewReader([]byte("password set success!")))
+		return re.Emit(&DashboardResponse{Success: true, Text: "password set success!"})
 	},
 }
 
@@ -101,14 +108,14 @@ var loginCmd = &cmds.Command{
 		}
 		value, err := node.Repo.Datastore().Get(req.Context, ds.NewKey(DashboardPasswordPrefix))
 		if errors.Is(err, ds.ErrNotFound) {
-			return errors.New("password has not set, please set passwd first")
+			return re.Emit(&DashboardResponse{Success: false, Text: "password has not set, please set passwd first"})
 		}
 		if err != nil {
 			return err
 		}
 		if string(value) != req.Arguments[0] {
 			log.Info("login password is correct")
-			return errors.New("password is not correct")
+			return re.Emit(&DashboardResponse{Success: false, Text: "password is not correct"})
 		}
 
 		config, err := node.Repo.Config()
@@ -122,7 +129,10 @@ var loginCmd = &cmds.Command{
 
 		IsLogin = true
 
-		return re.Emit(bytes.NewReader([]byte(token)))
+		return re.Emit(&DashboardResponse{
+			Success: true,
+			Text:    token,
+		})
 	},
 }
 
@@ -131,9 +141,9 @@ var resetCmd = &cmds.Command{
 		Tagline: "reset password",
 	},
 	Arguments: []cmds.Argument{
-		cmds.StringArg("privateKey", true, false, "reset password"),
-		cmds.StringArg("oldPassword", true, false, "reset password"),
-		cmds.StringArg("newPassword", true, false, "reset password"),
+		cmds.StringArg("privateKey", true, false, "private key"),
+		cmds.StringArg("oldPassword", true, false, "old password"),
+		cmds.StringArg("newPassword", true, false, "new password"),
 	},
 
 	Run: func(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) error {
@@ -148,7 +158,7 @@ var resetCmd = &cmds.Command{
 		}
 
 		if hex.EncodeToString(raw) != req.Arguments[0] {
-			return errors.New("private key is not correct")
+			return re.Emit(&DashboardResponse{Success: false, Text: "private key is not correct"})
 		}
 		datastore := node.Repo.Datastore()
 
@@ -157,13 +167,13 @@ var resetCmd = &cmds.Command{
 			return err
 		}
 		if string(value) != req.Arguments[1] {
-			return errors.New("password is not correct")
+			return re.Emit(&DashboardResponse{Success: false, Text: "the old password is not correct"})
 		}
 		err = datastore.Put(req.Context, ds.NewKey(DashboardPasswordPrefix), []byte(req.Arguments[2]))
 		if err != nil {
 			return err
 		}
-		return re.Emit(bytes.NewReader([]byte("reset")))
+		return re.Emit(&DashboardResponse{Success: true, Text: "password reset success!"})
 	},
 }
 
@@ -187,13 +197,13 @@ var changeCmd = &cmds.Command{
 			return err
 		}
 		if string(value) != req.Arguments[0] {
-			return errors.New("password is not correct")
+			return re.Emit(&DashboardResponse{Success: false, Text: "the old password is not correct"})
 		}
 		err = datastore.Put(req.Context, ds.NewKey(DashboardPasswordPrefix), []byte(req.Arguments[1]))
 		if err != nil {
 			return err
 		}
-		return re.Emit(bytes.NewReader([]byte("change password ok")))
+		return re.Emit(&DashboardResponse{Success: true, Text: "password change success!"})
 	},
 }
 
@@ -207,6 +217,6 @@ var logoutCmd = &cmds.Command{
 	Run: func(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) error {
 		// set token expire to 0
 		IsLogin = false
-		return re.Emit(bytes.NewReader([]byte("logout success")))
+		return re.Emit(&DashboardResponse{Success: true, Text: "logout success!"})
 	},
 }

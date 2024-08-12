@@ -361,6 +361,7 @@ func TestCommands(t *testing.T) {
 		"/cheque/fix_cheque_cashout",
 		"/encrypt",
 		"/decrypt",
+		"dashboard",
 		"/dashboard/check",
 		"/dashboard/set",
 		"/dashboard/reset",
