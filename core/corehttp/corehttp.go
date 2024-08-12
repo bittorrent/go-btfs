@@ -7,9 +7,6 @@ package corehttp
 import (
 	"context"
 	"fmt"
-	"github.com/bittorrent/go-btfs/core/commands"
-	"github.com/bittorrent/go-btfs/utils"
-	ds "github.com/ipfs/go-datastore"
 	"net"
 	"net/http"
 	"time"
@@ -55,12 +52,19 @@ func makeHandler(n *core.IpfsNode, l net.Listener, options ...ServeOption) (http
 			return
 		}
 
-		// err := interceptorBeforeReq(r, n)
-		// if err != nil {
-		// 	w.WriteHeader(http.StatusOK)
-		// 	w.Write([]byte(err.Error()))
-		// 	return
-		// }
+		err := interceptorBeforeReq(r, n)
+		if err != nil {
+			// set allow origin
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			if r.Method == http.MethodOptions {
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+				w.Header().Set("Access-Control-Allow-Headers", "X-Stream-Output, X-Chunked-Output, X-Content-Length")
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
 
 		topMux.ServeHTTP(w, r)
 	})
@@ -149,39 +153,4 @@ func Serve(node *core.IpfsNode, lis net.Listener, options ...ServeOption) error 
 
 	log.Infof("server at %s terminated", addr)
 	return serverError
-}
-
-func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
-	if filterUrl()[r.URL.Path] {
-		return nil
-	}
-
-	if !commands.IsLogin {
-		return fmt.Errorf("please login")
-	}
-	args := r.URL.Query()
-	token := args.Get("token")
-	password, err := n.Repo.Datastore().Get(r.Context(), ds.NewKey(commands.DashboardPasswordPrefix))
-	if err != nil {
-		return err
-	}
-	claims, err := utils.VerifyToken(token, string(password))
-	if err != nil {
-		return err
-	}
-	if claims.PeerId != n.Identity.String() {
-		return fmt.Errorf("token is invalid")
-	}
-
-	return nil
-}
-
-func filterUrl() map[string]bool {
-	return map[string]bool{
-		"/dashboard":                 true,
-		"/hostui":                    true,
-		APIPath + "/dashboard/check": true,
-		APIPath + "/dashboard/login": true,
-		APIPath + "/dashboard/reset": true,
-	}
 }
