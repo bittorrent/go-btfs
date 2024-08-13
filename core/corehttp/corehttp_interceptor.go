@@ -38,7 +38,7 @@ func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
 }
 
 func twoStepCheckInterceptor(r *http.Request) error {
-	if !need2StepCheckUrl(r.URL.Path) {
+	if !needTwoStepCheckUrl(r.URL.Path) {
 		return nil
 	}
 	if currentStep == secondStep {
@@ -150,15 +150,20 @@ func passwordCheckInterceptor(r *http.Request) error {
 		return nil
 	}
 
-	if need2StepCheckUrl(r.URL.Path) && currentStep == secondStep {
+	if needTwoStepCheckUrl(r.URL.Path) && currentStep == secondStep {
 		currentStep = firstStep
 	}
 
 	return nil
 }
 
-func need2StepCheckUrl(path string) bool {
-	if path == "/api/v1/xxx" {
+func needTwoStepCheckUrl(path string) bool {
+	urls := map[string]bool{
+		APIPath + "/bttc/send-btt-to":   true,
+		APIPath + "/bttc/send-wbtt-to":  true,
+		APIPath + "/bttc/send-token-to": true,
+	}
+	if urls[path] {
 		return true
 	}
 	return false
