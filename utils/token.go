@@ -15,7 +15,7 @@ type Claims struct {
 }
 
 func GenerateToken(peerId, secret string, expiryDuration time.Duration) (string, error) {
-	expiryTime := time.Now().Add(expiryDuration).Unix()
+	expiryTime := time.Now().Add(expiryDuration * time.Second).Unix()
 	claims := Claims{
 		PeerId: peerId,
 		Expiry: expiryTime,

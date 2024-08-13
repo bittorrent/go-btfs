@@ -12,7 +12,7 @@ import (
 const DashboardPasswordPrefix = "/dashboard_password"
 const TokenExpire = 60 * 60 * 24 * 1
 
-var IsLogin = false
+var IsLogin bool
 
 type DashboardResponse struct {
 	Success bool
@@ -123,7 +123,7 @@ var loginCmd = &cmds.Command{
 
 		publicKey := config.Identity.PeerID
 
-		token, err := utils.GenerateToken(publicKey, req.Arguments[0], TokenExpire)
+		token, err := utils.GenerateToken(publicKey, string(value), TokenExpire)
 		if err != nil {
 			return err
 		}
@@ -143,7 +143,6 @@ var resetCmd = &cmds.Command{
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("privateKey", true, false, "private key"),
-		cmds.StringArg("oldPassword", true, false, "old password"),
 		cmds.StringArg("newPassword", true, false, "new password"),
 	},
 
@@ -162,15 +161,7 @@ var resetCmd = &cmds.Command{
 			return re.Emit(&DashboardResponse{Success: false, Text: "private key is not correct"})
 		}
 		datastore := node.Repo.Datastore()
-
-		value, err := datastore.Get(req.Context, ds.NewKey(DashboardPasswordPrefix))
-		if err != nil {
-			return err
-		}
-		if string(value) != req.Arguments[1] {
-			return re.Emit(&DashboardResponse{Success: false, Text: "the old password is not correct"})
-		}
-		err = datastore.Put(req.Context, ds.NewKey(DashboardPasswordPrefix), []byte(req.Arguments[2]))
+		err = datastore.Put(req.Context, ds.NewKey(DashboardPasswordPrefix), []byte(req.Arguments[1]))
 		if err != nil {
 			return err
 		}
@@ -187,7 +178,6 @@ var changeCmd = &cmds.Command{
 		cmds.StringArg("newPassword", true, false, "change password"),
 	},
 	Run: func(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) error {
-		// change password
 		node, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
@@ -212,11 +202,7 @@ var logoutCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "logout",
 	},
-	Arguments: []cmds.Argument{
-		cmds.StringArg("token", true, false, "logout"),
-	},
 	Run: func(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) error {
-		// set token expire to 0
 		IsLogin = false
 		return re.Emit(&DashboardResponse{Success: true, Text: "logout success!"})
 	},
@@ -224,12 +210,25 @@ var logoutCmd = &cmds.Command{
 
 var validateCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "check passwd",
+		Tagline: "validate passwd",
 	},
 	Arguments: []cmds.Argument{
-		cmds.StringArg("password", true, false, "check passwd"),
+		cmds.StringArg("password", true, false, "validate passwd"),
 	},
 	Run: func(r *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment) error {
-		return nil
+		node, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+		datastore := node.Repo.Datastore()
+		value, err := datastore.Get(r.Context, ds.NewKey(DashboardPasswordPrefix))
+		if err != nil {
+			return err
+		}
+
+		if string(value) != r.Arguments[0] {
+			return re.Emit(&DashboardResponse{Success: false, Text: "password is not correct"})
+		}
+		return re.Emit(&DashboardResponse{Success: true, Text: "password is correct"})
 	},
 }

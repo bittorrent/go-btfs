@@ -95,13 +95,16 @@ func filterGatewayUrl(r *http.Request) bool {
 }
 
 func filterUrl(r *http.Request) bool {
+	if strings.HasPrefix(r.URL.Path, "/dashboard") {
+		return true
+	}
+	if strings.HasPrefix(r.URL.Path, "/hostui") {
+		return true
+	}
 	urls := map[string]bool{
-		// local
-		"/dashboard": true,
-		"/hostui":    true,
-		// no need url
 		APIPath + "/id":              true,
 		APIPath + "/dashboard/check": true,
+		APIPath + "/dashboard/set":   true,
 		APIPath + "/dashboard/login": true,
 		APIPath + "/dashboard/reset": true,
 	}

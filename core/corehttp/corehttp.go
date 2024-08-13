@@ -58,8 +58,7 @@ func makeHandler(n *core.IpfsNode, l net.Listener, options ...ServeOption) (http
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			if r.Method == http.MethodOptions {
 				w.Header().Set("Access-Control-Allow-Origin", "*")
-				w.Header().Set("Access-Control-Allow-Headers", "X-Stream-Output, X-Chunked-Output, X-Content-Length")
-				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Stream-Output, X-Chunked-Output, X-Content-Length")
 				return
 			}
 			http.Error(w, err.Error(), http.StatusUnauthorized)
