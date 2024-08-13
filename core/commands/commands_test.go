@@ -361,13 +361,14 @@ func TestCommands(t *testing.T) {
 		"/cheque/fix_cheque_cashout",
 		"/encrypt",
 		"/decrypt",
-		"dashboard",
+		"/dashboard",
 		"/dashboard/check",
 		"/dashboard/set",
 		"/dashboard/reset",
 		"/dashboard/login",
 		"/dashboard/logout",
 		"/dashboard/change",
+		"/dashboard/validate",
 	}
 
 	cmdSet := make(map[string]struct{})
