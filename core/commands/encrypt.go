@@ -42,8 +42,8 @@ var encryptCmd = &cmds.Command{
 		Tagline: "encrypt file with the public key of the peer",
 	},
 	Arguments: []cmds.Argument{
+		cmds.StringArg("folder", true, false, "The folder the file to be uploaded."),
 		cmds.FileArg("path", true, true, "The path to a file to be added to btfs.").EnableRecursive().EnableStdin(),
-		cmds.StringArg("folder", true, true, "The folder the file to be uploaded."),
 	},
 	Options: []cmds.Option{
 		cmds.StringOption(toOption, "the peerID of the node which you want to share with"),
