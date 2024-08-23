@@ -19,12 +19,12 @@ import (
 	ke "github.com/bittorrent/go-btfs/core/commands/keyencode"
 
 	"github.com/bittorrent/go-btfs-common/crypto"
-	"github.com/libp2p/go-libp2p/core/protocol"
 	kb "github.com/libp2p/go-libp2p-kbucket"
 	ic "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	pstore "github.com/libp2p/go-libp2p/core/peerstore"
+	"github.com/libp2p/go-libp2p/core/protocol"
 )
 
 const offlineIdErrorMessage = `'btfs id' currently cannot query information on remote
