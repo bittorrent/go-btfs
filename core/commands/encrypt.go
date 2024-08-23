@@ -10,13 +10,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"path"
-	"strings"
-	"time"
-
 	shell "github.com/bittorrent/go-btfs-api"
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	cp "github.com/bittorrent/go-btfs-common/crypto"
@@ -26,17 +19,30 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	peer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/mitchellh/go-homedir"
+	"io"
+	"net/http"
+	"os"
+	"path"
+	"strings"
+	"time"
 )
 
 const toOption = "to"
 const passOption = "pass"
 const fromOption = "from"
+const decryptTimeoutOption = "time"
+
+const (
+	defaultTimeout      = 30 * time.Second
+	encryptedFileSuffix = ".bte"
+)
 
 var encryptCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "encrypt file with the public key of the peer",
 	},
 	Arguments: []cmds.Argument{
+		cmds.StringArg("folder", true, false, "The folder the file to be uploaded."),
 		cmds.FileArg("path", true, true, "The path to a file to be added to btfs.").EnableRecursive().EnableStdin(),
 	},
 	Options: []cmds.Option{
@@ -104,6 +110,16 @@ var encryptCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
+		if len(r.Arguments) > 0 {
+			dst := r.Arguments[0]
+			if dst == "" {
+				dst = "/"
+			}
+			err = btfsClient.FilesCp(r.Context, "/btfs/"+cid, dst+it.Name()+encryptedFileSuffix)
+			if err != nil {
+				return err
+			}
+		}
 		return re.Emit(cid)
 	},
 }
@@ -118,6 +134,7 @@ var decryptCmd = &cmds.Command{
 	Options: []cmds.Option{
 		cmds.StringOption(fromOption, "specify the source peerID of CID"),
 		cmds.StringOption(passOption, "p", "the password that you want to decrypt the file by AES"),
+		cmds.Int64Option(decryptTimeoutOption, "t", "the timeout of the request, default is 30 seconds"),
 	},
 	Run: func(r *cmds.Request, re cmds.ResponseEmitter, e cmds.Environment) error {
 		conf, err := cmdenv.GetConfig(e)
@@ -135,14 +152,19 @@ var decryptCmd = &cmds.Command{
 
 		var readClose io.ReadCloser
 		cid := r.Arguments[0]
+
+		timeout, ok := r.Options[decryptTimeoutOption].(time.Duration)
+		if !ok {
+			timeout = defaultTimeout
+		}
+
 		from, ok := r.Options[fromOption].(string)
-		timeout := 1 * time.Minute
 		if ok && strings.TrimSpace(from) != "" && strings.TrimSpace(from) != n.Identity.String() {
 			peerID, err := peer.Decode(from)
 			if err != nil {
 				return err
 			}
-			ctx, cancel := context.WithTimeout(r.Context, timeout)
+			ctx, cancel := context.WithTimeout(r.Context, timeout*time.Second)
 			defer cancel()
 			b, err := remote.P2PCallStrings(ctx, n, api, peerID, "/decryption", cid)
 			if err != nil && strings.Contains(err.Error(), "unsupported path namespace") {
