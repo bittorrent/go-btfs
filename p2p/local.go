@@ -76,7 +76,7 @@ func (l *localListener) setupStream(local manet.Conn) {
 	remote, err := l.dial(l.ctx)
 	if err != nil {
 		local.Close()
-		log.Warnf("failed to dial to remote %s/%s", l.peer.Pretty(), l.proto)
+		log.Warnf("failed to dial to remote %s/%s", l.peer.String(), l.proto)
 		return
 	}
 
@@ -109,13 +109,13 @@ func (l *localListener) ListenAddress() ma.Multiaddr {
 }
 
 func (l *localListener) TargetAddress() ma.Multiaddr {
-	addr, err := ma.NewMultiaddr(maPrefix + l.peer.Pretty())
+	addr, err := ma.NewMultiaddr(maPrefix + l.peer.String())
 	if err != nil {
 		panic(err)
 	}
 	return addr
 }
 
-func (l *localListener) key() string {
-	return l.ListenAddress().String()
+func (l *localListener) key() protocol.ID {
+	return protocol.ID(l.ListenAddress().String())
 }

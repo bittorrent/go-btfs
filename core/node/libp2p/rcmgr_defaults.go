@@ -46,12 +46,12 @@ var noLimitIncrease = rcmgr.BaseLimitIncrease{
 // createDefaultLimitConfig creates LimitConfig to pass to libp2p's resource manager.
 // The defaults follow the documentation in docs/config.md.
 // Any changes in the logic here should be reflected there.
-func createDefaultLimitConfig(cfg config.SwarmConfig) (rcmgr.LimitConfig, error) {
+func createDefaultLimitConfig(cfg config.SwarmConfig) (rcmgr.ConcreteLimitConfig, error) {
 	maxMemoryDefaultString := humanize.Bytes(uint64(memory.TotalMemory()) / 2)
 	maxMemoryString := cfg.ResourceMgr.MaxMemory.WithDefault(maxMemoryDefaultString)
 	maxMemory, err := humanize.ParseBytes(maxMemoryString)
 	if err != nil {
-		return rcmgr.LimitConfig{}, err
+		return rcmgr.ConcreteLimitConfig{}, err
 	}
 
 	numFD := cfg.ResourceMgr.MaxFileDescriptors.WithDefault(int64(fd.GetNumFDs()) / 2)

@@ -19,6 +19,7 @@ import (
 	ke "github.com/bittorrent/go-btfs/core/commands/keyencode"
 
 	"github.com/bittorrent/go-btfs-common/crypto"
+	"github.com/libp2p/go-libp2p/core/protocol"
 	kb "github.com/libp2p/go-libp2p-kbucket"
 	ic "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -254,7 +255,7 @@ func printSelf(keyEnc ke.KeyEncoder, node *core.IpfsNode, env cmds.Environment) 
 			info.Addresses = append(info.Addresses, a.String())
 		}
 		sort.Strings(info.Addresses)
-		info.Protocols = node.PeerHost.Mux().Protocols()
+		info.Protocols = protocol.ConvertToStrings(node.PeerHost.Mux().Protocols())
 		sort.Strings(info.Protocols)
 	}
 	info.ProtocolVersion = "btfs/0.1.0" //identify.LibP2PVersion

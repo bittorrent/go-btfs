@@ -96,7 +96,7 @@ var swarmPeersCmd = &cmds.Command{
 		for _, c := range conns {
 			ci := connInfo{
 				Addr: c.Address().String(),
-				Peer: c.ID().Pretty(),
+				Peer: c.ID().String(),
 			}
 
 			s := strings.Split(c.Address().String(), "/")
@@ -254,7 +254,7 @@ var swarmAddrsCmd = &cmds.Command{
 
 		out := make(map[string][]string)
 		for p, paddrs := range addrs {
-			s := p.Pretty()
+			s := p.String()
 			for _, a := range paddrs {
 				out[s] = append(out[s], a.String())
 			}
@@ -317,7 +317,7 @@ var swarmAddrsLocalCmd = &cmds.Command{
 		for _, addr := range maddrs {
 			saddr := addr.String()
 			if showid {
-				saddr = path.Join(saddr, p2pProtocolName, self.ID().Pretty())
+				saddr = path.Join(saddr, p2pProtocolName, self.ID().String())
 			}
 			addrs = append(addrs, saddr)
 		}
@@ -391,7 +391,7 @@ btfs swarm connect /ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N
 
 		output := make([]string, len(pis))
 		for i, pi := range pis {
-			output[i] = "connect " + pi.ID.Pretty()
+			output[i] = "connect " + pi.ID.String()
 
 			err := api.Swarm().Connect(req.Context, pi)
 			if err != nil {
@@ -451,7 +451,7 @@ it will reconnect.
 			// a good backwards compat solution. Right now, I'm just
 			// preserving the current behavior.
 			for _, addr := range maddrs {
-				msg := "disconnect " + ainfo.ID.Pretty()
+				msg := "disconnect " + ainfo.ID.String()
 				if err := api.Swarm().Disconnect(req.Context, addr); err != nil {
 					msg += " failure: " + err.Error()
 				} else {

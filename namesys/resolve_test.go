@@ -31,7 +31,7 @@ func TestRoutingResolve(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res, err := resolver.Resolve(context.Background(), identity.ID().Pretty())
+	res, err := resolver.Resolve(context.Background(), identity.ID().String())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func TestPrexistingExpiredRecord(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = verifyCanResolve(resolver, identity.ID().Pretty(), h)
+	err = verifyCanResolve(resolver, identity.ID().String(), h)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func TestPrexistingRecord(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = verifyCanResolve(resolver, identity.ID().Pretty(), h)
+	err = verifyCanResolve(resolver, identity.ID().String(), h)
 	if err != nil {
 		t.Fatal(err)
 	}

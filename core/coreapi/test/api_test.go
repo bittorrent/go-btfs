@@ -55,7 +55,7 @@ func (NodeProvider) MakeAPISwarm(ctx context.Context, fullIdentity bool, n int) 
 			}
 
 			ident = config.Identity{
-				PeerID:  id.Pretty(),
+				PeerID:  id.String(),
 				PrivKey: base64.StdEncoding.EncodeToString(kbytes),
 			}
 		} else {
