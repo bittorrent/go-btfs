@@ -66,7 +66,7 @@ func TestRepublish(t *testing.T) {
 	publisher := nodes[3]
 	p := path.FromString("/btfs/QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn") // does not need to be valid
 	rp := namesys.NewIpnsPublisher(publisher.Routing, publisher.Repo.Datastore())
-	name := "/btns/" + publisher.Identity.Pretty()
+	name := "/btns/" + publisher.Identity.String()
 
 	// Retry in case the record expires before we can fetch it. This can
 	// happen when running the test on a slow machine.
@@ -164,7 +164,7 @@ func TestLongEOLRepublish(t *testing.T) {
 	publisher := nodes[3]
 	p := path.FromString("/btfs/QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn") // does not need to be valid
 	rp := namesys.NewIpnsPublisher(publisher.Routing, publisher.Repo.Datastore())
-	name := "/btns/" + publisher.Identity.Pretty()
+	name := "/btns/" + publisher.Identity.String()
 
 	expiration := time.Now().Add(time.Hour)
 	err := rp.PublishWithEOL(ctx, publisher.PrivateKey, p, expiration)

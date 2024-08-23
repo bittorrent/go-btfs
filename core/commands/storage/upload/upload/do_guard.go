@@ -140,8 +140,8 @@ func NewFileStatus(contracts []*guardpb.Contract, configuration *config.Config,
 		ShardCount:       int32(len(contracts)),
 		MinimumShards:    0,
 		RecoverThreshold: 0,
-		EscrowPid:        escrowPid.Pretty(),
-		GuardPid:         guardPid.Pretty(),
+		EscrowPid:        escrowPid.String(),
+		GuardPid:         guardPid.String(),
 	}
 
 	return &guardpb.FileStoreStatus{

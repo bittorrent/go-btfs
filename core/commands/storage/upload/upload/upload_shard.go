@@ -99,7 +99,7 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 					tmp := func() error {
 						guardContractBytes, err = RenterSignGuardContract(rss, &ContractParams{
 							ContractId:    contractId,
-							RenterPid:     renterId.Pretty(),
+							RenterPid:     renterId.String(),
 							HostPid:       host,
 							ShardIndex:    int32(i),
 							ShardHash:     h,

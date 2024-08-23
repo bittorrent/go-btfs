@@ -3,11 +3,12 @@ package stats
 import (
 	"context"
 	"errors"
-	"github.com/bittorrent/go-btfs/utils"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
@@ -99,7 +100,7 @@ func SyncStats(ctx context.Context, cfg *config.Config, node *core.IpfsNode, env
 		StorageDiskAvailable: int64(du.Free),
 	}
 	hs.StorageStat_HostStats = sr.StorageStat_HostStats
-	return SaveHostStatsIntoDatastore(ctx, node, node.Identity.Pretty(), hs)
+	return SaveHostStatsIntoDatastore(ctx, node, node.Identity.String(), hs)
 }
 
 func GetNowStats(ctx context.Context, cfg *config.Config, node *core.IpfsNode, env cmds.Environment, V2 bool) (hs *nodepb.StorageStat_Host, err error) {

@@ -90,7 +90,7 @@ func GetHostStorageConfig(ctx context.Context, node *core.IpfsNode) (*nodepb.Nod
 // If syncHub is on, force a sync from Hub to retrieve latest information.
 func GetHostStorageConfigHelper(ctx context.Context, node *core.IpfsNode,
 	syncHub bool) (*nodepb.Node_Settings, error) {
-	ns, err := GetHostStorageConfigForPeer(ctx, node, node.Identity.Pretty())
+	ns, err := GetHostStorageConfigForPeer(ctx, node, node.Identity.String())
 	if err != nil && err != ds.ErrNotFound {
 		return nil, fmt.Errorf("cannot get current host storage settings: %s", err.Error())
 	}
@@ -102,7 +102,7 @@ func GetHostStorageConfigHelper(ctx context.Context, node *core.IpfsNode,
 	if err != nil {
 		return nil, err
 	}
-	hns, err := hub.GetHostSettings(ctx, cfg.Services.HubDomain, node.Identity.Pretty())
+	hns, err := hub.GetHostSettings(ctx, cfg.Services.HubDomain, node.Identity.String())
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func PutHostStorageConfig(ctx context.Context, node *core.IpfsNode, ns *nodepb.N
 	if err != nil {
 		return fmt.Errorf("cannot put current host storage settings: %s", err.Error())
 	}
-	return rds.Put(ctx, GetHostStorageKey(node.Identity.Pretty()), b)
+	return rds.Put(ctx, GetHostStorageKey(node.Identity.String()), b)
 }
 
 func GetHostStorageKey(pid string) ds.Key {

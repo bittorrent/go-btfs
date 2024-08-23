@@ -187,7 +187,7 @@ func (api *UnixfsAPI) Add(ctx context.Context, filesNode files.Node, opts ...opt
 		if pubKey == "" {
 			peerId := settings.PeerId
 			if peerId == "" {
-				peerId = api.identity.Pretty()
+				peerId = api.identity.String()
 			}
 			pubKey, err = peerId2pubkey(peerId)
 			if err != nil {

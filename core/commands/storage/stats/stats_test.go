@@ -22,7 +22,7 @@ func TestHostStatsSaveGet(t *testing.T) {
 		StorageUsed: 100000,
 		StorageCap:  10000000,
 	}
-	nodeId := node.Identity.Pretty()
+	nodeId := node.Identity.String()
 	err := SaveHostStatsIntoDatastore(context.Background(), node, nodeId, hs)
 	if err != nil {
 		t.Fatal(err)
