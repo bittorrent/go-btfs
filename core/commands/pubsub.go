@@ -249,7 +249,7 @@ To use, the daemon must be run with '--enable-pubsub-experiment'.
 		list := &stringList{make([]string, 0, len(peers))}
 
 		for _, peer := range peers {
-			list.Strings = append(list.Strings, peer.Pretty())
+			list.Strings = append(list.Strings, peer.String())
 		}
 		sort.Strings(list.Strings)
 		return cmds.EmitOnce(res, list)

@@ -9,8 +9,8 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	humanize "github.com/dustin/go-humanize"
-	bitswap "github.com/ipfs/go-bitswap"
-	decision "github.com/ipfs/go-bitswap/decision"
+	bitswap "github.com/ipfs/boxo/bitswap"
+	decision "github.com/ipfs/boxo/bitswap/decision"
 	cidutil "github.com/ipfs/go-cidutil"
 	peer "github.com/libp2p/go-libp2p/core/peer"
 )

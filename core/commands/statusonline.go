@@ -73,7 +73,7 @@ var ReportListDailyCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
-		peerId := n.Identity.Pretty()
+		peerId := n.Identity.String()
 
 		cfg, err := cmdenv.GetConfig(env)
 		if err != nil {
@@ -181,7 +181,7 @@ var TotalDailyCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
-		peerId := n.Identity.Pretty()
+		peerId := n.Identity.String()
 
 		list, err := chain.GetReportOnlineListDailyOK()
 		if err != nil {

@@ -15,7 +15,7 @@ import (
 	config "github.com/bittorrent/go-btfs-config"
 	iface "github.com/bittorrent/interface-go-btfs-core"
 	"github.com/gogo/protobuf/proto"
-	"github.com/ipfs/go-bitswap"
+	"github.com/ipfs/boxo/bitswap"
 	logging "github.com/ipfs/go-log"
 	ic "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -99,7 +99,7 @@ func Analytics(api iface.CoreAPI, cfgRoot string, node *core.IpfsNode, BTFSVersi
 		if node.Identity == "" {
 			return
 		}
-		dc.pn.NodeId = node.Identity.Pretty()
+		dc.pn.NodeId = node.Identity.String()
 		dc.pn.HVal = hValue
 		dc.pn.BtfsVersion = BTFSVersion
 		dc.pn.OsType = runtime.GOOS
@@ -300,7 +300,7 @@ func (dc *dcWrap) getPayload(btfsNode *core.IpfsNode) ([]byte, error) {
 		log.Debug(err)
 	}
 	pn := &nodepb.PayLoadInfo{
-		NodeId:         btfsNode.Identity.Pretty(),
+		NodeId:         btfsNode.Identity.String(),
 		Node:           dc.pn,
 		DiscoveryNodes: dn,
 		LastTime:       time.Now(),
@@ -322,7 +322,7 @@ func (dc *dcWrap) getDiscoveryNodes() ([]*nodepb.DiscoveryNode, error) {
 	}
 	for _, p := range peers {
 		n := &nodepb.DiscoveryNode{}
-		n.ToNodeId = p.ID().Pretty()
+		n.ToNodeId = p.ID().String()
 		if latency, err := p.Latency(); err != nil {
 			n.ErrCode = nodepb.DiscoveryErrorCode_OTHER_REASON
 		} else {
