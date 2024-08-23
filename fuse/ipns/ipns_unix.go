@@ -218,7 +218,7 @@ func (r *Root) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 	var listing []fuse.Dirent
 	for alias, k := range r.Keys {
 		ent := fuse.Dirent{
-			Name: k.ID().Pretty(),
+			Name: k.ID().String(),
 			Type: fuse.DT_Dir,
 		}
 		link := fuse.Dirent{

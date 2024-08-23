@@ -2,8 +2,9 @@ package upload
 
 import (
 	"errors"
-	"github.com/bittorrent/go-btfs/utils"
 	"strconv"
+
+	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
@@ -79,7 +80,7 @@ func doRecv(req *cmds.Request, env cmds.Environment) (contractId string, err err
 	if err != nil {
 		return
 	}
-	if !valid || guardContract.ContractMeta.GetHostPid() != requestPid.Pretty() {
+	if !valid || guardContract.ContractMeta.GetHostPid() != requestPid.String() {
 		err = errors.New("invalid guard contract bytes")
 		return
 	}

@@ -79,7 +79,7 @@ func (r *P2PRemoteCall) CallGet(ctx context.Context, api string, args []interfac
 		}
 	}
 	// setup url
-	reqUrl := fmt.Sprintf("libp2p://%s%s%s%s", r.ID.Pretty(), apiPrefix, api, sb.String())
+	reqUrl := fmt.Sprintf("libp2p://%s%s%s%s", r.ID.String(), apiPrefix, api, sb.String())
 	// perform context setup
 	req, err := http.NewRequestWithContext(ctx, "POST", reqUrl, nil)
 	if err != nil {

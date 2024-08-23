@@ -52,8 +52,8 @@ func RenterSignGuardContract(rss *sessions.RenterSession, params *ContractParams
 		FileHash:      params.FileHash,
 		RentStart:     params.StartTime,
 		RentEnd:       params.StartTime.Add(time.Duration(params.StorageLength*24) * time.Hour),
-		GuardPid:      guardPid.Pretty(),
-		EscrowPid:     escrowPid.Pretty(),
+		GuardPid:      guardPid.String(),
+		EscrowPid:     escrowPid.String(),
 		Price:         params.Price,
 		Amount:        params.TotalPay,
 	}
