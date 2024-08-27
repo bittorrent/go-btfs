@@ -51,7 +51,27 @@ func makeHandler(n *core.IpfsNode, l net.Listener, options ...ServeOption) (http
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+
+		err := interceptorBeforeReq(r, n)
+		if err != nil {
+			// set allow origin
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			if r.Method == http.MethodOptions {
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Stream-Output, X-Chunked-Output, X-Content-Length")
+				return
+			}
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
 		topMux.ServeHTTP(w, r)
+
+		err = interceptorAfterResp(r, w, n)
+		if err != nil {
+			return
+		}
+
 	})
 	return handler, nil
 }

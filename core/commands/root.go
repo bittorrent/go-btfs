@@ -175,7 +175,7 @@ var rootSubcommands = map[string]*cmds.Command{
 	"vault":      vault.VaultCmd,
 	"bttc":       bttc.BttcCmd,
 	"settlement": settlement.SettlementCmd,
-	//"update":    ExternalBinary(),
+	// "update":    ExternalBinary(),
 	"network":        NetworkCmd,
 	"statuscontract": StatusContractCmd,
 	"bittorrent":     bittorrentCmd,
@@ -185,6 +185,7 @@ var rootSubcommands = map[string]*cmds.Command{
 	"accesskey":      AccessKeyCmd,
 	"encrypt":        encryptCmd,
 	"decrypt":        decryptCmd,
+	"dashboard":      dashboardCmd,
 }
 
 // RootRO is the readonly version of Root
