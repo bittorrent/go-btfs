@@ -10,6 +10,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path"
+	"strings"
+	"time"
+
 	shell "github.com/bittorrent/go-btfs-api"
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	cp "github.com/bittorrent/go-btfs-common/crypto"
@@ -19,18 +26,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	peer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/mitchellh/go-homedir"
-	"io"
-	"net/http"
-	"os"
-	"path"
-	"strings"
-	"time"
 )
 
 const toOption = "to"
 const passOption = "pass"
 const fromOption = "from"
 const decryptTimeoutOption = "time"
+const dirOption = "dir"
 
 const (
 	defaultTimeout      = 30 * time.Second
@@ -42,12 +44,12 @@ var encryptCmd = &cmds.Command{
 		Tagline: "encrypt file with the public key of the peer",
 	},
 	Arguments: []cmds.Argument{
-		cmds.StringArg("folder", true, false, "The folder the file to be uploaded."),
 		cmds.FileArg("path", true, true, "The path to a file to be added to btfs.").EnableRecursive().EnableStdin(),
 	},
 	Options: []cmds.Option{
 		cmds.StringOption(toOption, "the peerID of the node which you want to share with"),
 		cmds.StringOption(passOption, "p", "the password that you want to encrypt the file by AES"),
+		cmds.StringOption(dirOption, "d", "the dir to upload"),
 	},
 	Run: func(r *cmds.Request, re cmds.ResponseEmitter, e cmds.Environment) error {
 		n, err := cmdenv.GetNode(e)
@@ -110,15 +112,14 @@ var encryptCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
-		if len(r.Arguments) > 0 {
-			dst := r.Arguments[0]
-			if dst == "" {
-				dst = "/"
-			}
-			err = btfsClient.FilesCp(r.Context, "/btfs/"+cid, dst+it.Name()+encryptedFileSuffix)
-			if err != nil {
-				return err
-			}
+
+		dir, ok := r.Options[dirOption].(string)
+		if !ok {
+			dir = "/"
+		}
+		err = btfsClient.FilesCp(r.Context, "/btfs/"+cid, dir+it.Name()+encryptedFileSuffix)
+		if err != nil {
+			return err
 		}
 		return re.Emit(cid)
 	},
@@ -153,9 +154,12 @@ var decryptCmd = &cmds.Command{
 		var readClose io.ReadCloser
 		cid := r.Arguments[0]
 
-		timeout, ok := r.Options[decryptTimeoutOption].(time.Duration)
+		var timeout time.Duration
+		t, ok := r.Options[decryptTimeoutOption].(int64)
 		if !ok {
 			timeout = defaultTimeout
+		} else {
+			timeout = time.Duration(t) * time.Second
 		}
 
 		from, ok := r.Options[fromOption].(string)
