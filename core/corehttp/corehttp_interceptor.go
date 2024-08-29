@@ -3,13 +3,14 @@ package corehttp
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands"
 	"github.com/bittorrent/go-btfs/utils"
 	ds "github.com/ipfs/go-datastore"
-	"net/http"
-	"strings"
-	"time"
 )
 
 const defaultTwoStepDuration = 30 * time.Minute
@@ -112,13 +113,16 @@ func filterUrl(r *http.Request) bool {
 	return urls[r.URL.Path]
 }
 
-const defaultUserAgent = "Go-http-client/1.1"
+const (
+	defaultUserAgent = "Go-http-client/1.1"
+	cmdUserAget      = "go-btfs-cmds/http"
+)
 
 func filterLocalShellApi(r *http.Request) bool {
 	host := r.Host
 	ua := r.Header.Get("User-Agent")
 	// ua is not Go-http-client
-	if host == "127.0.0.1:5001" && ua == defaultUserAgent {
+	if host == "127.0.0.1:5001" && (ua == defaultUserAgent || ua == cmdUserAget) {
 		return true
 	}
 	return false
