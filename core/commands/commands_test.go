@@ -120,8 +120,6 @@ func TestCommands(t *testing.T) {
 		"/diag/cmds/set-time",
 		"/diag/sys",
 		"/dns",
-		"/file",
-		"/file/ls",
 		"/files",
 		"/files/chcid",
 		"/files/cp",
