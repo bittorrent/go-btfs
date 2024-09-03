@@ -159,7 +159,6 @@ var rootSubcommands = map[string]*cmds.Command{
 	"refs":       RefsCmd,
 	"resolve":    ResolveCmd,
 	"swarm":      SwarmCmd,
-	"tar":        TarCmd,
 	"urlstore":   urlStoreCmd,
 	"version":    VersionCmd,
 	"shutdown":   daemonShutdownCmd,
