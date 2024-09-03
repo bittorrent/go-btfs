@@ -58,7 +58,12 @@ func interceptorAfterResp(r *http.Request, w http.ResponseWriter, n *core.IpfsNo
 }
 
 func tokenCheckInterceptor(r *http.Request, n *core.IpfsNode) error {
-	if filterNoNeedTokenCheckReq(r) {
+	conf, err := n.Repo.Config()
+	if err != nil {
+		return err
+	}
+	apiHost := fmt.Sprint(strings.Split(conf.Addresses.API[0], "/")[2], ":", strings.Split(conf.Addresses.API[0], "/")[4])
+	if filterNoNeedTokenCheckReq(r, apiHost) {
 		return nil
 	}
 	if !commands.IsLogin {
@@ -81,8 +86,8 @@ func tokenCheckInterceptor(r *http.Request, n *core.IpfsNode) error {
 	return nil
 }
 
-func filterNoNeedTokenCheckReq(r *http.Request) bool {
-	if filterUrl(r) || filterP2pSchema(r) || filterLocalShellApi(r) || filterGatewayUrl(r) {
+func filterNoNeedTokenCheckReq(r *http.Request, apiHost string) bool {
+	if filterUrl(r) || filterP2pSchema(r) || filterLocalShellApi(r, apiHost) || filterGatewayUrl(r) {
 		return true
 	}
 	return false
@@ -115,14 +120,14 @@ func filterUrl(r *http.Request) bool {
 
 const (
 	defaultUserAgent = "Go-http-client/1.1"
-	cmdUserAget      = "go-btfs-cmds/http"
+	cmdUserAgent     = "go-btfs-cmds/http"
 )
 
-func filterLocalShellApi(r *http.Request) bool {
+func filterLocalShellApi(r *http.Request, apiHost string) bool {
 	host := r.Host
 	ua := r.Header.Get("User-Agent")
 	// ua is not Go-http-client
-	if host == "127.0.0.1:5001" && (ua == defaultUserAgent || ua == cmdUserAget) {
+	if host == apiHost && (ua == defaultUserAgent || ua == cmdUserAgent) {
 		return true
 	}
 	return false
