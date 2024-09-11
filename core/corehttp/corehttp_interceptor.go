@@ -109,6 +109,7 @@ func filterUrl(r *http.Request) bool {
 	}
 	urls := map[string]bool{
 		APIPath + "/id":              true,
+		APIPath + "/config/show":     true,
 		APIPath + "/dashboard/check": true,
 		APIPath + "/dashboard/set":   true,
 		APIPath + "/dashboard/login": true,
