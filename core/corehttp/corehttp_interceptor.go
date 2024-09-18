@@ -15,7 +15,7 @@ import (
 
 const defaultTwoStepDuration = 30 * time.Minute
 
-const firstStepUrl = "/api/v1/dashboard/validate"
+const firstStepUrl = "dashboard/validate"
 
 func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
 	config, err := n.Repo.Config()
@@ -39,7 +39,7 @@ func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
 }
 
 func twoStepCheckInterceptor(r *http.Request) error {
-	if !needTwoStepCheckUrl(r.URL.Path) {
+	if !needTwoStepCheckUrl(r.Method, r.URL.Path) {
 		return nil
 	}
 	if currentStep == secondStep {
@@ -160,14 +160,17 @@ func passwordCheckInterceptor(r *http.Request) error {
 		return nil
 	}
 
-	if needTwoStepCheckUrl(r.URL.Path) && currentStep == secondStep {
+	if needTwoStepCheckUrl(r.Method, r.URL.Path) && currentStep == secondStep {
 		currentStep = firstStep
 	}
 
 	return nil
 }
 
-func needTwoStepCheckUrl(path string) bool {
+func needTwoStepCheckUrl(method string, path string) bool {
+	if method == http.MethodOptions {
+		return false
+	}
 	urls := map[string]bool{
 		APIPath + "/bttc/send-btt-to":   true,
 		APIPath + "/bttc/send-wbtt-to":  true,
