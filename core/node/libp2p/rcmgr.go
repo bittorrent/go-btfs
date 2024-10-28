@@ -2,12 +2,14 @@ package libp2p
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/benbjohnson/clock"
+	serialize "github.com/bittorrent/go-btfs-config/serialize"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -55,6 +57,18 @@ func ResourceManager(cfg config.SwarmConfig) interface{} {
 			if err != nil {
 				return nil, opts, err
 			}
+
+			partialLimitConfig := rcmgr.PartialLimitConfig{}
+			err = serialize.ReadConfigFile(filepath.Join(repoPath, "libp2p-resource-limit-overrides.json"), &partialLimitConfig)
+			if errors.Is(err, serialize.ErrNotInitialized) {
+				err = nil
+			} else {
+				if err != nil {
+					return nil, opts, err
+				}
+			}
+
+			limitConfig = partialLimitConfig.Build(limitConfig)
 
 			// The logic for defaults and overriding with specified SwarmConfig.ResourceMgr.Limits
 			// is documented in docs/config.md.
