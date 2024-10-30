@@ -1,7 +1,7 @@
 SHELL := /bin/bash # Use bash syntax
 
 # golang utilities
-GO_MIN_VERSION = 1.18
+GO_MIN_VERSION = 1.22
 export GO111MODULE=on
 
 # pre-definitions
