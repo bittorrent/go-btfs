@@ -58,14 +58,14 @@ type HostShard struct {
 }
 
 func GetHostShard(ctxParams *uh.ContextParams, contractId string, inputPrice int64, amount int64, rate *big.Int) (*HostShard, error) {
-	k := fmt.Sprintf(hostShardsInMemKey, ctxParams.N.Identity.Pretty(), contractId)
+	k := fmt.Sprintf(hostShardsInMemKey, ctxParams.N.Identity.String(), contractId)
 	var hs *HostShard
 	if tmp, ok := hostShardsInMem.Get(k); ok {
 		hs = tmp.(*HostShard)
 	} else {
 		ctx, _ := helper.NewGoContext(ctxParams.Ctx)
 		hs = &HostShard{
-			peerId:     ctxParams.N.Identity.Pretty(),
+			peerId:     ctxParams.N.Identity.String(),
 			contractId: contractId,
 			ctx:        ctx,
 			ds:         ctxParams.N.Repo.Datastore(),

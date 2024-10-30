@@ -126,7 +126,7 @@ to the guard service.`,
 			return err
 		}
 		questions, err := guard.PrepCustomFileChallengeQuestions(rss, rootHash, shardHashes, hostIDs, qCount, false,
-			n.Identity.Pretty())
+			n.Identity.String())
 		if err != nil {
 			return err
 		}

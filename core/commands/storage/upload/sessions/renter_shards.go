@@ -57,14 +57,14 @@ type RenterShard struct {
 
 func GetRenterShard(ctxParams *uh.ContextParams, ssId string, hash string, index int) (*RenterShard, error) {
 	shardId := GetShardId(ssId, hash, index)
-	k := fmt.Sprintf(renterShardsInMemKey, ctxParams.N.Identity.Pretty(), shardId)
+	k := fmt.Sprintf(renterShardsInMemKey, ctxParams.N.Identity.String(), shardId)
 	var rs *RenterShard
 	if tmp, ok := renterShardsInMem.Get(k); ok {
 		rs = tmp.(*RenterShard)
 	} else {
 		ctx, _ := helper.NewGoContext(ctxParams.Ctx)
 		rs = &RenterShard{
-			peerId: ctxParams.N.Identity.Pretty(),
+			peerId: ctxParams.N.Identity.String(),
 			ssId:   ssId,
 			hash:   hash,
 			index:  index,

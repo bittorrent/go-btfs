@@ -147,7 +147,7 @@ func (dc *dcWrap) getPayloadOnline(btfsNode *core.IpfsNode) ([]byte, error) {
 	}
 
 	pn := &onlinePb.PayLoadInfo{
-		NodeId:         btfsNode.Identity.Pretty(),
+		NodeId:         btfsNode.Identity.String(),
 		Node:           dc.pn,
 		LastSignedInfo: lastSignedInfo,
 		LastSignature:  lastSignature,

@@ -31,6 +31,13 @@ import (
 const toOption = "to"
 const passOption = "pass"
 const fromOption = "from"
+const decryptTimeoutOption = "time"
+const dirOption = "dir"
+
+const (
+	defaultTimeout      = 30 * time.Second
+	encryptedFileSuffix = ".bte"
+)
 
 var encryptCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
@@ -42,6 +49,7 @@ var encryptCmd = &cmds.Command{
 	Options: []cmds.Option{
 		cmds.StringOption(toOption, "the peerID of the node which you want to share with"),
 		cmds.StringOption(passOption, "p", "the password that you want to encrypt the file by AES"),
+		cmds.StringOption(dirOption, "d", "the dir to upload"),
 	},
 	Run: func(r *cmds.Request, re cmds.ResponseEmitter, e cmds.Environment) error {
 		n, err := cmdenv.GetNode(e)
@@ -104,6 +112,15 @@ var encryptCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
+
+		dir, ok := r.Options[dirOption].(string)
+		if !ok {
+			dir = "/"
+		}
+		err = btfsClient.FilesCp(r.Context, "/btfs/"+cid, dir+it.Name()+encryptedFileSuffix)
+		if err != nil {
+			return err
+		}
 		return re.Emit(cid)
 	},
 }
@@ -118,6 +135,7 @@ var decryptCmd = &cmds.Command{
 	Options: []cmds.Option{
 		cmds.StringOption(fromOption, "specify the source peerID of CID"),
 		cmds.StringOption(passOption, "p", "the password that you want to decrypt the file by AES"),
+		cmds.Int64Option(decryptTimeoutOption, "t", "the timeout of the request, default is 30 seconds"),
 	},
 	Run: func(r *cmds.Request, re cmds.ResponseEmitter, e cmds.Environment) error {
 		conf, err := cmdenv.GetConfig(e)
@@ -135,14 +153,22 @@ var decryptCmd = &cmds.Command{
 
 		var readClose io.ReadCloser
 		cid := r.Arguments[0]
+
+		var timeout time.Duration
+		t, ok := r.Options[decryptTimeoutOption].(int64)
+		if !ok {
+			timeout = defaultTimeout
+		} else {
+			timeout = time.Duration(t) * time.Second
+		}
+
 		from, ok := r.Options[fromOption].(string)
-		timeout := 1 * time.Minute
 		if ok && strings.TrimSpace(from) != "" && strings.TrimSpace(from) != n.Identity.String() {
 			peerID, err := peer.Decode(from)
 			if err != nil {
 				return err
 			}
-			ctx, cancel := context.WithTimeout(r.Context, timeout)
+			ctx, cancel := context.WithTimeout(r.Context, timeout*time.Second)
 			defer cancel()
 			b, err := remote.P2PCallStrings(ctx, n, api, peerID, "/decryption", cid)
 			if err != nil && strings.Contains(err.Error(), "unsupported path namespace") {

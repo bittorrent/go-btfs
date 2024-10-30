@@ -13,7 +13,6 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage"
 	"github.com/bittorrent/go-btfs/core/commands/storage/challenge"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/upload"
-	unixfs "github.com/bittorrent/go-btfs/core/commands/unixfs"
 	"github.com/bittorrent/go-btfs/core/commands/vault"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -160,8 +159,6 @@ var rootSubcommands = map[string]*cmds.Command{
 	"refs":       RefsCmd,
 	"resolve":    ResolveCmd,
 	"swarm":      SwarmCmd,
-	"tar":        TarCmd,
-	"file":       unixfs.UnixFSCmd,
 	"urlstore":   urlStoreCmd,
 	"version":    VersionCmd,
 	"shutdown":   daemonShutdownCmd,
@@ -175,7 +172,7 @@ var rootSubcommands = map[string]*cmds.Command{
 	"vault":      vault.VaultCmd,
 	"bttc":       bttc.BttcCmd,
 	"settlement": settlement.SettlementCmd,
-	//"update":    ExternalBinary(),
+	// "update":    ExternalBinary(),
 	"network":        NetworkCmd,
 	"statuscontract": StatusContractCmd,
 	"bittorrent":     bittorrentCmd,
@@ -185,6 +182,7 @@ var rootSubcommands = map[string]*cmds.Command{
 	"accesskey":      AccessKeyCmd,
 	"encrypt":        encryptCmd,
 	"decrypt":        decryptCmd,
+	"dashboard":      dashboardCmd,
 }
 
 // RootRO is the readonly version of Root

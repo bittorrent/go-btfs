@@ -39,6 +39,7 @@ func (c *reframeRoutingWrapper) FindPeer(ctx context.Context, id peer.ID) (peer.
 type ProvideManyRouter interface {
 	routinghelpers.ProvideManyRouter
 	routing.Routing
+	Ready() bool
 }
 
 var _ routing.Routing = &httpRoutingWrapper{}

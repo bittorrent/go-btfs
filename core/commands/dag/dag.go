@@ -18,6 +18,7 @@ import (
 	files "github.com/bittorrent/go-btfs-files"
 	"github.com/bittorrent/interface-go-btfs-core/options"
 	path "github.com/bittorrent/interface-go-btfs-core/path"
+	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	cidenc "github.com/ipfs/go-cidutil/cidenc"
 	ipld "github.com/ipfs/go-ipld-format"
@@ -386,7 +387,7 @@ Maximum supported CAR version: 1
 
 				if block, err := node.Blockstore.Get(ctx, c); err != nil {
 					ret.PinErrorMsg = err.Error()
-				} else if nd, err := ipld.Decode(block); err != nil {
+				} else if nd, err := ipld.Decode(block, func(block blocks.Block) (ipld.Node, error) { return nil, nil }); err != nil {
 					ret.PinErrorMsg = err.Error()
 				} else if err := node.Pinning.Pin(req.Context, nd, true); err != nil {
 					ret.PinErrorMsg = err.Error()
@@ -494,7 +495,7 @@ func importWorker(req *cmds.Request, re cmds.ResponseEmitter, api iface.CoreAPI,
 				}
 
 				// the double-decode is suboptimal, but we need it for batching
-				nd, err := ipld.Decode(block)
+				nd, err := ipld.Decode(block, func(block blocks.Block) (ipld.Node, error) { return nil, nil })
 				if err != nil {
 					return err
 				}

@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/bittorrent/go-btfs/utils"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
@@ -113,7 +114,7 @@ This command contracts stats based on role from network(hub) to local node data 
 		}
 		purgeOpt, _ := req.Options[contractsSyncPurgeOptionName].(bool)
 		if purgeOpt {
-			err = sessions.DeleteShardsContracts(n.Repo.Datastore(), n.Identity.Pretty(), role.String())
+			err = sessions.DeleteShardsContracts(n.Repo.Datastore(), n.Identity.String(), role.String())
 			if err != nil {
 				return err
 			}
@@ -152,7 +153,7 @@ This command get contracts stats based on role from the local node data store.`,
 		if err != nil {
 			return err
 		}
-		contracts, err := ListContracts(n.Repo.Datastore(), n.Identity.Pretty(), cr.String())
+		contracts, err := ListContracts(n.Repo.Datastore(), n.Identity.String(), cr.String())
 		if err != nil {
 			return err
 		}
@@ -257,7 +258,7 @@ This command get contracts list based on role from the local node data store.`,
 			return fmt.Errorf("invalid filter option: %s", filterOpt)
 		}
 		size, _ := req.Options[contractsListSizeOptionName].(int)
-		contracts, err := ListContracts(n.Repo.Datastore(), n.Identity.Pretty(), cr.String())
+		contracts, err := ListContracts(n.Repo.Datastore(), n.Identity.String(), cr.String())
 		if err != nil {
 			return err
 		}
@@ -338,7 +339,7 @@ func ListContracts(d datastore.Datastore, peerId, role string) ([]*nodepb.Contra
 // 2) Obtain latest payout status updates and saves into cache
 func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env cmds.Environment,
 	role string) error {
-	cs, err := sessions.ListShardsContracts(n.Repo.Datastore(), n.Identity.Pretty(), role)
+	cs, err := sessions.ListShardsContracts(n.Repo.Datastore(), n.Identity.String(), role)
 	if err != nil {
 		return err
 	}
@@ -366,7 +367,7 @@ func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env
 	if len(updated) > 0 {
 		// save and retrieve updated signed contracts
 		var stale []string
-		cs, stale, err = sessions.SaveShardsContracts(n.Repo.Datastore(), cs, updated, n.Identity.Pretty(), role)
+		cs, stale, err = sessions.SaveShardsContracts(n.Repo.Datastore(), cs, updated, n.Identity.String(), role)
 		if err != nil {
 			return err
 		}
@@ -382,7 +383,7 @@ func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env
 		}
 	}
 	if len(cs) > 0 {
-		cts, err := ListContracts(n.Repo.Datastore(), n.Identity.Pretty(), role)
+		cts, err := ListContracts(n.Repo.Datastore(), n.Identity.String(), role)
 		if err != nil {
 			return err
 		}
@@ -432,8 +433,8 @@ func GetUpdatedGuardContractsForHost(ctx context.Context, n *core.IpfsNode,
 	for i := 0; ; i++ {
 		now := time.Now()
 		req := &guardpb.ListHostContractsRequest{
-			HostPid:             n.Identity.Pretty(),
-			RequesterPid:        n.Identity.Pretty(),
+			HostPid:             n.Identity.String(),
+			RequesterPid:        n.Identity.String(),
 			RequestPageSize:     guardContractPageSize,
 			RequestPageIndex:    int32(i),
 			LastModifyTimeSince: lastUpdatedTime,
@@ -472,8 +473,8 @@ func GetUpdatedGuardContractsForRenter(ctx context.Context, n *core.IpfsNode,
 	for i := 0; ; i++ {
 		now := time.Now()
 		req := &guardpb.ListRenterFileInfoRequest{
-			RenterPid:        n.Identity.Pretty(),
-			RequesterPid:     n.Identity.Pretty(),
+			RenterPid:        n.Identity.String(),
+			RequesterPid:     n.Identity.String(),
 			RequestPageSize:  guardContractPageSize,
 			RequestPageIndex: int32(i),
 			LastModifyTime:   lastUpdatedTime,
@@ -500,7 +501,7 @@ func GetUpdatedGuardContractsForRenter(ctx context.Context, n *core.IpfsNode,
 				req := &guardpb.CheckFileStoreMetaRequest{
 					FileHash:     mt.FileHash,
 					RenterPid:    mt.RenterPid,
-					RequesterPid: n.Identity.Pretty(),
+					RequesterPid: n.Identity.String(),
 					RequestTime:  now,
 				}
 				signedReq, err := crypto.Sign(n.PrivateKey, req)

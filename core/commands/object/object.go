@@ -61,10 +61,10 @@ const (
 
 var ObjectCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Interact with BTFS objects.",
+		Tagline: "Deprecated commands to interact with dag-pb objects. Use 'dag' or 'files' instead.",
 		ShortDescription: `
-'btfs object' is a plumbing command used to manipulate DAG objects
-directly.`,
+'btfs object' is a legacy plumbing command used to manipulate dag-pb objects
+directly. Deprecated, use more modern 'btfs dag' and 'btfs files' instead.`,
 	},
 
 	Subcommands: map[string]*cmds.Command{

@@ -19,11 +19,11 @@ func TestPeersTotal(t *testing.T) {
 	ctx := context.Background()
 
 	hosts := make([]*bhost.BasicHost, 4)
-	var err error
 	for i := 0; i < 4; i++ {
+		var err error
 		hosts[i], err = bhost.NewHost(swarmt.GenSwarm(t), nil)
 		if err != nil {
-			t.Fatalf("Failed to dial: %s", err)
+			t.Fatal(err)
 		}
 	}
 
@@ -49,7 +49,7 @@ func TestPeersTotal(t *testing.T) {
 		t.Fatalf("expected at most 2 peers transport (tcp and upd/quic), got %d, transport map %v",
 			len(peersTransport), peersTransport)
 	}
-	totalPeers := peersTransport["/ip4/tcp"] + peersTransport["/ip4/udp/quic"]
+	totalPeers := peersTransport["/ip4/tcp"] + peersTransport["/ip4/udp/quic-v1"]
 	if totalPeers != 3 {
 		t.Fatalf("expected 3 peers in either tcp or upd/quic transport, got %f", totalPeers)
 	}
