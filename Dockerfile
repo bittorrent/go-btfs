@@ -53,7 +53,7 @@ RUN set -eux; \
   && chmod +x tini
 
 # Now comes the actual target image, which aims to be as small as possible.
-FROM busybox:1.31.1-glibc
+FROM busybox:stable-glibc
 MAINTAINER TRON-US <support@tron.network>
 
 # Get the btfs binary, entrypoint script, and TLS CAs from the build container.
