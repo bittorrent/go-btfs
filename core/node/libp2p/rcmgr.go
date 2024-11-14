@@ -510,3 +510,226 @@ func NetLimit(mgr network.ResourceManager, scope string) (rcmgr.BaseLimit, error
 
 // 	return nil
 // }
+
+func LimitConfig(cfg config.SwarmConfig, userResourceOverrides rcmgr.PartialLimitConfig) (limitConfig rcmgr.ConcreteLimitConfig, err error) {
+	limitConfig, err = createDefaultLimitConfig(cfg)
+	if err != nil {
+		return rcmgr.ConcreteLimitConfig{}, err
+	}
+
+	// The logic for defaults and overriding with specified userResourceOverrides
+	// is documented in docs/libp2p-resource-management.md.
+	// Any changes here should be reflected there.
+
+	// This effectively overrides the computed default LimitConfig with any non-"useDefault" values from the userResourceOverrides file.
+	// Because of how how Build works, any rcmgr.Default value in userResourceOverrides
+	// will be overridden with a computed default value.
+	limitConfig = userResourceOverrides.Build(limitConfig)
+
+	return limitConfig, nil
+}
+
+type ResourceLimitsAndUsage struct {
+	// This is duplicated from rcmgr.ResourceResourceLimits but adding *Usage fields.
+	Memory               rcmgr.LimitVal64
+	MemoryUsage          int64
+	FD                   rcmgr.LimitVal
+	FDUsage              int
+	Conns                rcmgr.LimitVal
+	ConnsUsage           int
+	ConnsInbound         rcmgr.LimitVal
+	ConnsInboundUsage    int
+	ConnsOutbound        rcmgr.LimitVal
+	ConnsOutboundUsage   int
+	Streams              rcmgr.LimitVal
+	StreamsUsage         int
+	StreamsInbound       rcmgr.LimitVal
+	StreamsInboundUsage  int
+	StreamsOutbound      rcmgr.LimitVal
+	StreamsOutboundUsage int
+}
+
+type LimitsConfigAndUsage struct {
+	// This is duplicated from rcmgr.ResourceManagerStat but using ResourceLimitsAndUsage
+	// instead of network.ScopeStat.
+	System    ResourceLimitsAndUsage                 `json:",omitempty"`
+	Transient ResourceLimitsAndUsage                 `json:",omitempty"`
+	Services  map[string]ResourceLimitsAndUsage      `json:",omitempty"`
+	Protocols map[protocol.ID]ResourceLimitsAndUsage `json:",omitempty"`
+	Peers     map[peer.ID]ResourceLimitsAndUsage     `json:",omitempty"`
+}
+
+func MergeLimitsAndStatsIntoLimitsConfigAndUsage(l rcmgr.ConcreteLimitConfig, stats rcmgr.ResourceManagerStat) LimitsConfigAndUsage {
+	limits := l.ToPartialLimitConfig()
+
+	return LimitsConfigAndUsage{
+		System:    mergeResourceLimitsAndScopeStatToResourceLimitsAndUsage(limits.System, stats.System),
+		Transient: mergeResourceLimitsAndScopeStatToResourceLimitsAndUsage(limits.Transient, stats.Transient),
+		Services:  mergeLimitsAndStatsMapIntoLimitsConfigAndUsageMap(limits.Service, stats.Services),
+		Protocols: mergeLimitsAndStatsMapIntoLimitsConfigAndUsageMap(limits.Protocol, stats.Protocols),
+		Peers:     mergeLimitsAndStatsMapIntoLimitsConfigAndUsageMap(limits.Peer, stats.Peers),
+	}
+}
+
+func mergeResourceLimitsAndScopeStatToResourceLimitsAndUsage(rl rcmgr.ResourceLimits, ss network.ScopeStat) ResourceLimitsAndUsage {
+	return ResourceLimitsAndUsage{
+		Memory:               rl.Memory,
+		MemoryUsage:          ss.Memory,
+		FD:                   rl.FD,
+		FDUsage:              ss.NumFD,
+		Conns:                rl.Conns,
+		ConnsUsage:           ss.NumConnsOutbound + ss.NumConnsInbound,
+		ConnsOutbound:        rl.ConnsOutbound,
+		ConnsOutboundUsage:   ss.NumConnsOutbound,
+		ConnsInbound:         rl.ConnsInbound,
+		ConnsInboundUsage:    ss.NumConnsInbound,
+		Streams:              rl.Streams,
+		StreamsUsage:         ss.NumStreamsOutbound + ss.NumStreamsInbound,
+		StreamsOutbound:      rl.StreamsOutbound,
+		StreamsOutboundUsage: ss.NumStreamsOutbound,
+		StreamsInbound:       rl.StreamsInbound,
+		StreamsInboundUsage:  ss.NumStreamsInbound,
+	}
+}
+
+func mergeLimitsAndStatsMapIntoLimitsConfigAndUsageMap[K comparable](limits map[K]rcmgr.ResourceLimits, stats map[K]network.ScopeStat) map[K]ResourceLimitsAndUsage {
+	r := make(map[K]ResourceLimitsAndUsage, maxInt(len(limits), len(stats)))
+	for p, s := range stats {
+		var l rcmgr.ResourceLimits
+		if limits != nil {
+			if rl, ok := limits[p]; ok {
+				l = rl
+			}
+		}
+		r[p] = mergeResourceLimitsAndScopeStatToResourceLimitsAndUsage(l, s)
+	}
+	for p, s := range limits {
+		if _, ok := stats[p]; ok {
+			continue // we already processed this element in the loop above
+		}
+
+		r[p] = mergeResourceLimitsAndScopeStatToResourceLimitsAndUsage(s, network.ScopeStat{})
+	}
+	return r
+}
+
+func maxInt(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
+// LimitConfigsToInfo gets limits and stats and generates a list of scopes and limits to be printed.
+func LimitConfigsToInfo(stats LimitsConfigAndUsage) ResourceInfos {
+	result := ResourceInfos{}
+
+	result = append(result, resourceLimitsAndUsageToResourceInfo(config.ResourceMgrSystemScope, stats.System)...)
+	result = append(result, resourceLimitsAndUsageToResourceInfo(config.ResourceMgrTransientScope, stats.Transient)...)
+
+	for i, s := range stats.Services {
+		result = append(result, resourceLimitsAndUsageToResourceInfo(
+			config.ResourceMgrServiceScopePrefix+i,
+			s,
+		)...)
+	}
+
+	for i, p := range stats.Protocols {
+		result = append(result, resourceLimitsAndUsageToResourceInfo(
+			config.ResourceMgrProtocolScopePrefix+string(i),
+			p,
+		)...)
+	}
+
+	for i, p := range stats.Peers {
+		result = append(result, resourceLimitsAndUsageToResourceInfo(
+			config.ResourceMgrPeerScopePrefix+i.String(),
+			p,
+		)...)
+	}
+
+	return result
+}
+
+type ResourceInfo struct {
+	ScopeName    string
+	LimitName    string
+	LimitValue   rcmgr.LimitVal64
+	CurrentUsage int64
+}
+
+type ResourceInfos []ResourceInfo
+
+const (
+	limitNameMemory          = "Memory"
+	limitNameFD              = "FD"
+	limitNameConns           = "Conns"
+	limitNameConnsInbound    = "ConnsInbound"
+	limitNameConnsOutbound   = "ConnsOutbound"
+	limitNameStreams         = "Streams"
+	limitNameStreamsInbound  = "StreamsInbound"
+	limitNameStreamsOutbound = "StreamsOutbound"
+)
+
+var limits = []string{
+	limitNameMemory,
+	limitNameFD,
+	limitNameConns,
+	limitNameConnsInbound,
+	limitNameConnsOutbound,
+	limitNameStreams,
+	limitNameStreamsInbound,
+	limitNameStreamsOutbound,
+}
+
+func resourceLimitsAndUsageToResourceInfo(scopeName string, stats ResourceLimitsAndUsage) ResourceInfos {
+	result := ResourceInfos{}
+	for _, l := range limits {
+		ri := ResourceInfo{
+			ScopeName: scopeName,
+		}
+		switch l {
+		case limitNameMemory:
+			ri.LimitName = limitNameMemory
+			ri.LimitValue = stats.Memory
+			ri.CurrentUsage = stats.MemoryUsage
+		case limitNameFD:
+			ri.LimitName = limitNameFD
+			ri.LimitValue = rcmgr.LimitVal64(stats.FD)
+			ri.CurrentUsage = int64(stats.FDUsage)
+		case limitNameConns:
+			ri.LimitName = limitNameConns
+			ri.LimitValue = rcmgr.LimitVal64(stats.Conns)
+			ri.CurrentUsage = int64(stats.ConnsUsage)
+		case limitNameConnsInbound:
+			ri.LimitName = limitNameConnsInbound
+			ri.LimitValue = rcmgr.LimitVal64(stats.ConnsInbound)
+			ri.CurrentUsage = int64(stats.ConnsInboundUsage)
+		case limitNameConnsOutbound:
+			ri.LimitName = limitNameConnsOutbound
+			ri.LimitValue = rcmgr.LimitVal64(stats.ConnsOutbound)
+			ri.CurrentUsage = int64(stats.ConnsOutboundUsage)
+		case limitNameStreams:
+			ri.LimitName = limitNameStreams
+			ri.LimitValue = rcmgr.LimitVal64(stats.Streams)
+			ri.CurrentUsage = int64(stats.StreamsUsage)
+		case limitNameStreamsInbound:
+			ri.LimitName = limitNameStreamsInbound
+			ri.LimitValue = rcmgr.LimitVal64(stats.StreamsInbound)
+			ri.CurrentUsage = int64(stats.StreamsInboundUsage)
+		case limitNameStreamsOutbound:
+			ri.LimitName = limitNameStreamsOutbound
+			ri.LimitValue = rcmgr.LimitVal64(stats.StreamsOutbound)
+			ri.CurrentUsage = int64(stats.StreamsOutboundUsage)
+		}
+
+		if ri.LimitValue == rcmgr.Unlimited64 || ri.LimitValue == rcmgr.DefaultLimit64 {
+			// ignore unlimited and unset limits to remove noise from output.
+			continue
+		}
+
+		result = append(result, ri)
+	}
+
+	return result
+}

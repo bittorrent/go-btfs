@@ -2,20 +2,25 @@ package commands
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"path"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
+	"text/tabwriter"
 	"time"
 
 	"github.com/bittorrent/go-btfs/bindata"
 	commands "github.com/bittorrent/go-btfs/commands"
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/bittorrent/go-btfs/core/node/libp2p"
 	repo "github.com/bittorrent/go-btfs/repo"
 	fsrepo "github.com/bittorrent/go-btfs/repo/fsrepo"
+	rcmgr "github.com/libp2p/go-libp2p/p2p/host/resource-manager"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	config "github.com/bittorrent/go-btfs-config"
@@ -53,6 +58,7 @@ btfs peers in the internet.
 		"disconnect": swarmDisconnectCmd,
 		"filters":    swarmFiltersCmd,
 		"peers":      swarmPeersCmd,
+		"resources":  swarmResourceCmd,
 	},
 }
 
@@ -466,6 +472,95 @@ it will reconnect.
 		cmds.Text: cmds.MakeTypedEncoder(stringListEncoder),
 	},
 	Type: stringList{},
+}
+
+var swarmResourceCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "Get a summary of all resources accounted for by the libp2p Resource Manager.",
+		LongDescription: `
+Get a summary of all resources accounted for by the libp2p Resource Manager.
+This includes the limits and the usage against those limits.
+This can output a human readable table and JSON encoding.
+`,
+	},
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		node, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+
+		cfg, err := node.Repo.Config()
+
+		if err != nil {
+			return err
+		}
+
+		if node.ResourceManager == nil {
+			return libp2p.ErrNoResourceMgr
+		}
+
+		userResourceOverrides, err := node.Repo.UserResourceOverrides()
+		if err != nil {
+			return err
+		}
+
+		// FIXME: we shouldn't recompute limits, either save them or load them from libp2p (https://github.com/libp2p/go-libp2p/issues/2166)
+		limitConfig, err := libp2p.LimitConfig(cfg.Swarm, userResourceOverrides)
+		if err != nil {
+			return err
+		}
+
+		rapi, ok := node.ResourceManager.(rcmgr.ResourceManagerState)
+		if !ok { // NullResourceManager
+			return libp2p.ErrNoResourceMgr
+		}
+
+		fmt.Println(rapi.Stat())
+
+		x := libp2p.MergeLimitsAndStatsIntoLimitsConfigAndUsage(limitConfig, rapi.Stat())
+		fmt.Println(x.Peers)
+
+		return cmds.EmitOnce(res, x)
+	},
+	Encoders: cmds.EncoderMap{
+		cmds.JSON: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, limitsAndUsage libp2p.LimitsConfigAndUsage) error {
+			return json.NewEncoder(w).Encode(limitsAndUsage)
+		}),
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, limitsAndUsage libp2p.LimitsConfigAndUsage) error {
+			tw := tabwriter.NewWriter(w, 20, 8, 0, '\t', 0)
+			defer tw.Flush()
+
+			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t\n", "Scope", "Limit Name", "Limit Value", "Limit Usage Amount", "Limit Usage Percent")
+			for _, ri := range libp2p.LimitConfigsToInfo(limitsAndUsage) {
+				var limit, percentage string
+				switch ri.LimitValue {
+				case rcmgr.Unlimited64:
+					limit = "unlimited"
+					percentage = "n/a"
+				case rcmgr.BlockAllLimit64:
+					limit = "blockAll"
+					percentage = "n/a"
+				default:
+					limit = strconv.FormatInt(int64(ri.LimitValue), 10)
+					if ri.CurrentUsage == 0 {
+						percentage = "0%"
+					} else {
+						percentage = strconv.FormatFloat(float64(ri.CurrentUsage)/float64(ri.LimitValue)*100, 'f', 1, 64) + "%"
+					}
+				}
+				fmt.Fprintf(tw, "%s\t%s\t%s\t%d\t%s\t\n",
+					ri.ScopeName,
+					ri.LimitName,
+					limit,
+					ri.CurrentUsage,
+					percentage,
+				)
+			}
+
+			return nil
+		}),
+	},
+	Type: libp2p.LimitsConfigAndUsage{},
 }
 
 // parseAddresses is a function that takes in a slice of string peer addresses

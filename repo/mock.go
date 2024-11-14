@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	keystore "github.com/bittorrent/go-btfs/keystore"
+	rcmgr "github.com/libp2p/go-libp2p/p2p/host/resource-manager"
 
 	config "github.com/bittorrent/go-btfs-config"
 	filestore "github.com/ipfs/go-filestore"
@@ -62,3 +63,7 @@ func (m *Mock) SwarmKey() ([]byte, error) {
 }
 
 func (m *Mock) FileManager() *filestore.FileManager { return m.F }
+
+func (m *Mock) UserResourceOverrides() (rcmgr.PartialLimitConfig, error) {
+	return rcmgr.PartialLimitConfig{}, nil
+}
