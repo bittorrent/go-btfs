@@ -61,6 +61,8 @@ const (
 	peerIdName                   = "peer-id"
 	pinDurationCountOptionName   = "pin-duration-count"
 	uploadToBlockchainOptionName = "to-blockchain"
+	modeOptionName               = "mode"
+	mtimeOptionName              = "mtime"
 )
 
 const adderOutChanSize = 8
@@ -214,6 +216,9 @@ only-hash, and progress/status related flags) will change the final hash.
 		peerId, _ := req.Options[peerIdName].(string)
 		pinDuration, _ := req.Options[pinDurationCountOptionName].(int)
 		uploadToBlockchain, _ := req.Options[uploadToBlockchainOptionName].(bool)
+		// TODO mode mtime
+		mode, _ := req.Options[modeOptionName].(uint)
+		mtime, _ := req.Options[mtimeOptionName].(int64)
 
 		hashFunCode, ok := mh.Names[strings.ToLower(hashFunStr)]
 		if !ok {
@@ -269,6 +274,14 @@ only-hash, and progress/status related flags) will change the final hash.
 			opts = append(opts, options.Unixfs.Pubkey(pubkey))
 			opts = append(opts, options.Unixfs.PeerId(peerId))
 		}
+
+		// TODO mode mtime
+		// if mode != 0 {
+		// opts = append(opts, options.Unixfs.Mode(os.FileMode(mode)))
+		// }
+		// if mtime != 0 {
+		// opts = append(opts, options.Unixfs.Mtime(mtime, uint32(mtimeNsecs)))
+		// }
 
 		opts = append(opts, nil) // events option placeholder
 

@@ -53,7 +53,7 @@ func getOrCreateNilNode() (*core.IpfsNode, error) {
 			return
 		}
 		node, err := core.NewNode(context.Background(), &core.BuildCfg{
-			//TODO: need this to be true or all files
+			// TODO: need this to be true or all files
 			// hashed will be stored in memory!
 			NilRepo: true,
 		})
@@ -82,10 +82,10 @@ func (api *UnixfsAPI) Add(ctx context.Context, filesNode files.Node, opts ...opt
 	// check if repo will exceed storage limit if added
 	// TODO: this doesn't handle the case if the hashed file is already in blocks (deduplicated)
 	// TODO: conditional GC is disabled due to it is somehow not possible to pass the size to the daemon
-	//if err := corerepo.ConditionalGC(req.Context(), n, uint64(size)); err != nil {
+	// if err := corerepo.ConditionalGC(req.Context(), n, uint64(size)); err != nil {
 	//	res.SetError(err, cmds.ErrNormal)
 	//	return
-	//}
+	// }
 
 	if settings.NoCopy && !(cfg.Experimental.FilestoreEnabled || cfg.Experimental.UrlstoreEnabled) {
 		return nil, fmt.Errorf(`either the filestore or the urlstore must be enabled to use nocopy
@@ -152,6 +152,10 @@ func (api *UnixfsAPI) Add(ctx context.Context, filesNode files.Node, opts ...opt
 	fileAdder.RawLeaves = settings.RawLeaves
 	fileAdder.NoCopy = settings.NoCopy
 	fileAdder.CidBuilder = prefix
+
+	// TODO mode mtime
+	// fileAdder.FileMode = settings.FileMode
+	// fileAdder.FileMtime = settings.Mtime
 
 	switch settings.Layout {
 	case options.BalancedLayout:
@@ -684,7 +688,7 @@ func (api *UnixfsAPI) lsFromLinksAsync(ctx context.Context, dir uio.Directory, s
 		defer close(out)
 		for l := range dir.EnumLinksAsync(ctx) {
 			select {
-			case out <- api.processLink(ctx, l, settings): //TODO: perf: processing can be done in background and in parallel
+			case out <- api.processLink(ctx, l, settings): // TODO: perf: processing can be done in background and in parallel
 			case <-ctx.Done():
 				return
 			}
@@ -699,7 +703,7 @@ func (api *UnixfsAPI) lsFromLinks(ctx context.Context, ndlinks []*ipld.Link, set
 	for _, l := range ndlinks {
 		lr := ft.LinkResult{Link: &ipld.Link{Name: l.Name, Size: l.Size, Cid: l.Cid}}
 
-		links <- api.processLink(ctx, lr, settings) //TODO: can be parallel if settings.Async
+		links <- api.processLink(ctx, lr, settings) // TODO: can be parallel if settings.Async
 	}
 	close(links)
 	return links, nil
