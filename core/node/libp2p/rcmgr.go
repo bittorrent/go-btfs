@@ -2,6 +2,7 @@ package libp2p
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -549,6 +550,19 @@ type ResourceLimitsAndUsage struct {
 	StreamsOutboundUsage int
 }
 
+func (u ResourceLimitsAndUsage) ToResourceLimits() rcmgr.ResourceLimits {
+	return rcmgr.ResourceLimits{
+		Memory:          u.Memory,
+		FD:              u.FD,
+		Conns:           u.Conns,
+		ConnsInbound:    u.ConnsInbound,
+		ConnsOutbound:   u.ConnsOutbound,
+		Streams:         u.Streams,
+		StreamsInbound:  u.StreamsInbound,
+		StreamsOutbound: u.StreamsOutbound,
+	}
+}
+
 type LimitsConfigAndUsage struct {
 	// This is duplicated from rcmgr.ResourceManagerStat but using ResourceLimitsAndUsage
 	// instead of network.ScopeStat.
@@ -557,6 +571,43 @@ type LimitsConfigAndUsage struct {
 	Services  map[string]ResourceLimitsAndUsage      `json:",omitempty"`
 	Protocols map[protocol.ID]ResourceLimitsAndUsage `json:",omitempty"`
 	Peers     map[peer.ID]ResourceLimitsAndUsage     `json:",omitempty"`
+}
+
+func (u LimitsConfigAndUsage) MarshalJSON() ([]byte, error) {
+	// we want to marshal the encoded peer id
+	encodedPeerMap := make(map[string]ResourceLimitsAndUsage, len(u.Peers))
+	for p, v := range u.Peers {
+		encodedPeerMap[p.String()] = v
+	}
+
+	type Alias LimitsConfigAndUsage
+	return json.Marshal(&struct {
+		*Alias
+		Peers map[string]ResourceLimitsAndUsage `json:",omitempty"`
+	}{
+		Alias: (*Alias)(&u),
+		Peers: encodedPeerMap,
+	})
+}
+
+func (u LimitsConfigAndUsage) ToPartialLimitConfig() (result rcmgr.PartialLimitConfig) {
+	result.System = u.System.ToResourceLimits()
+	result.Transient = u.Transient.ToResourceLimits()
+
+	result.Service = make(map[string]rcmgr.ResourceLimits, len(u.Services))
+	for s, l := range u.Services {
+		result.Service[s] = l.ToResourceLimits()
+	}
+	result.Protocol = make(map[protocol.ID]rcmgr.ResourceLimits, len(u.Protocols))
+	for p, l := range u.Protocols {
+		result.Protocol[p] = l.ToResourceLimits()
+	}
+	result.Peer = make(map[peer.ID]rcmgr.ResourceLimits, len(u.Peers))
+	for p, l := range u.Peers {
+		result.Peer[p] = l.ToResourceLimits()
+	}
+
+	return
 }
 
 func MergeLimitsAndStatsIntoLimitsConfigAndUsage(l rcmgr.ConcreteLimitConfig, stats rcmgr.ResourceManagerStat) LimitsConfigAndUsage {

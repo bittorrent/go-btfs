@@ -515,12 +515,7 @@ This can output a human readable table and JSON encoding.
 			return libp2p.ErrNoResourceMgr
 		}
 
-		fmt.Println(rapi.Stat())
-
-		x := libp2p.MergeLimitsAndStatsIntoLimitsConfigAndUsage(limitConfig, rapi.Stat())
-		fmt.Println(x.Peers)
-
-		return cmds.EmitOnce(res, x)
+		return cmds.EmitOnce(res, libp2p.MergeLimitsAndStatsIntoLimitsConfigAndUsage(limitConfig, rapi.Stat()))
 	},
 	Encoders: cmds.EncoderMap{
 		cmds.JSON: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, limitsAndUsage libp2p.LimitsConfigAndUsage) error {
