@@ -6,6 +6,7 @@ package corehttp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -53,6 +54,10 @@ func makeHandler(n *core.IpfsNode, l net.Listener, options ...ServeOption) (http
 		}
 
 		err := interceptorBeforeReq(r, n)
+		if errors.Is(err, ErrorGatewayCidExits) {
+			http.Error(w, "", http.StatusNotFound)
+			return
+		}
 		if err != nil {
 			// set allow origin
 			w.Header().Set("Access-Control-Allow-Origin", "*")

@@ -17,6 +17,10 @@ const defaultTwoStepDuration = 30 * time.Minute
 
 const firstStepUrl = "dashboard/validate"
 
+var (
+	ErrorGatewayCidExits = errors.New("cid exits")
+)
+
 func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
 	config, err := n.Repo.Config()
 	if err != nil {
@@ -24,10 +28,19 @@ func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
 	}
 
 	if config.API.EnableTokenAuth {
-		err := tokenCheckInterceptor(r, n)
+		err = tokenCheckInterceptor(r, n)
 		if err != nil {
 			return err
 		}
+	}
+
+	exits, err := gatewayCidInterceptor(r, n)
+	if err != nil || !exits {
+		return nil
+	}
+
+	if exits {
+		return ErrorGatewayCidExits
 	}
 
 	err = twoStepCheckInterceptor(r)
@@ -84,6 +97,19 @@ func tokenCheckInterceptor(r *http.Request, n *core.IpfsNode) error {
 	}
 
 	return nil
+}
+
+func gatewayCidInterceptor(r *http.Request, n *core.IpfsNode) (bool, error) {
+	if filterGatewayUrl(r) {
+		sPath := strings.Split(r.URL.Path, "/")
+		if len(sPath) < 3 {
+			return false, nil
+		}
+		key := strings.Split(r.URL.Path, "/")[2]
+		exits, err := n.Repo.Datastore().Has(r.Context(), ds.NewKey(commands.NewGatewayFilterKey(key)))
+		return exits, err
+	}
+	return false, nil
 }
 
 func filterNoNeedTokenCheckReq(r *http.Request, apiHost string) bool {
