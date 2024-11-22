@@ -15,6 +15,7 @@ import (
 
 	"github.com/bittorrent/go-btfs/peering"
 	irouting "github.com/bittorrent/go-btfs/routing"
+	"github.com/libp2p/go-libp2p/core/network"
 
 	"github.com/bittorrent/go-btfs/core/bootstrap"
 	"github.com/bittorrent/go-btfs/core/node"
@@ -96,6 +97,8 @@ type IpfsNode struct {
 	Provider      provider.System            // the value provider system
 	IpnsRepub     *ipnsrp.Republisher        `optional:"true"`
 	GraphExchange graphsync.GraphExchange    `optional:"true"`
+
+	ResourceManager network.ResourceManager `optional:"true"`
 
 	PubSub   *pubsub.PubSub             `optional:"true"`
 	PSRouter *psrouter.PubsubValueStore `optional:"true"`
