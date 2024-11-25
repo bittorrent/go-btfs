@@ -11,12 +11,13 @@ import (
 )
 
 const (
-	FilterKeyPrefix = "/gateway/filter/cid"
+	SizeOptionName = "size"
 )
 
-type cidList struct {
-	Strings []string
-}
+const (
+	FilterKeyPrefix = "/gateway/filter/cid"
+	DefaultSize     = 50
+)
 
 var CidStoreCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
@@ -36,10 +37,6 @@ var CidStoreCmd = &cmds.Command{
 var addCidCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Add cid to store.",
-	},
-	Options: []cmds.Option{
-		cmds.BoolOption(trickleOptionName, "t", "Use trickle-dag format for dag generation."),
-		cmds.BoolOption(pinOptionName, "Pin this object when adding.").WithDefault(true),
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("cid", true, false, "cid to add to store"),
@@ -62,10 +59,6 @@ var getCidCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Get cid from store.",
 	},
-	Options: []cmds.Option{
-		cmds.BoolOption(trickleOptionName, "t", "Use trickle-dag format for dag generation."),
-		cmds.BoolOption(pinOptionName, "Pin this object when adding.").WithDefault(true),
-	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("cid", true, false, "cid to add to store"),
 	},
@@ -86,10 +79,6 @@ var delCidCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Delete cid from store.",
 	},
-	Options: []cmds.Option{
-		cmds.BoolOption(trickleOptionName, "t", "Use trickle-dag format for dag generation."),
-		cmds.BoolOption(pinOptionName, "Pin this object when adding.").WithDefault(true),
-	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("cid", true, false, "cid to add to store"),
 	},
@@ -109,10 +98,6 @@ var delCidCmd = &cmds.Command{
 var hasCidCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Check cid exits in store",
-	},
-	Options: []cmds.Option{
-		cmds.BoolOption(trickleOptionName, "t", "Use trickle-dag format for dag generation."),
-		cmds.BoolOption(pinOptionName, "Pin this object when adding.").WithDefault(true),
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("cid", true, false, "cid to add to store"),
@@ -137,13 +122,18 @@ var listCidCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "List all cids in store",
 	},
+	Options: []cmds.Option{
+		cmds.IntOption(SizeOptionName, "s", "Number of cids to return.").WithDefault(DefaultSize),
+	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		nd, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
 		}
+		size := req.Options[SizeOptionName].(int)
 		results, err := nd.Repo.Datastore().Query(req.Context, query.Query{
 			Prefix: FilterKeyPrefix,
+			Limit:  size,
 		})
 		if err != nil {
 			return err
