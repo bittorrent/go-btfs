@@ -181,9 +181,9 @@ func (adder *Adder) add(reader io.Reader, dirTreeBytes []byte) (ipld.Node, error
 		CidBuilder:    adder.CidBuilder,
 		TokenMetadata: metaBytes,
 		ChunkSize:     chunkSize,
-		// TODO fileMode，fileMtime
-		// FileMode:    adder.FileMode,
-		// FileModTime: adder.FileMtime,
+
+		FileMode:    adder.FileMode,
+		FileModTime: adder.FileMtime,
 	}
 
 	db, err := params.New(chnk)

@@ -153,9 +153,8 @@ func (api *UnixfsAPI) Add(ctx context.Context, filesNode files.Node, opts ...opt
 	fileAdder.NoCopy = settings.NoCopy
 	fileAdder.CidBuilder = prefix
 
-	// TODO mode mtime
-	// fileAdder.FileMode = settings.FileMode
-	// fileAdder.FileMtime = settings.Mtime
+	fileAdder.FileMode = settings.Mode
+	fileAdder.FileMtime = settings.Mtime
 
 	switch settings.Layout {
 	case options.BalancedLayout:

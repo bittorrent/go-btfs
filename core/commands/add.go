@@ -8,7 +8,9 @@ import (
 	"math/big"
 	"os"
 	"path"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bittorrent/go-btfs/chain/abi"
 	chainconfig "github.com/bittorrent/go-btfs/chain/config"
@@ -32,11 +34,30 @@ import (
 // ErrDepthLimitExceeded indicates that the max depth has been exceeded.
 var ErrDepthLimitExceeded = fmt.Errorf("depth limit exceeded")
 
+type TimeParts struct {
+	t *time.Time
+}
+
+func (t TimeParts) MarshalJSON() ([]byte, error) {
+	return t.t.MarshalJSON()
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+// The time is expected to be a quoted string in RFC 3339 format.
+func (t *TimeParts) UnmarshalJSON(data []byte) (err error) {
+	// Fractional seconds are handled implicitly by Parse.
+	tt, err := time.Parse("\"2006-01-02T15:04:05Z\"", string(data))
+	*t = TimeParts{&tt}
+	return
+}
+
 type AddEvent struct {
 	Name  string
 	Hash  string `json:",omitempty"`
 	Bytes int64  `json:",omitempty"`
 	Size  string `json:",omitempty"`
+	Mode  string `json:",omitempty"`
+	Mtime int64  `json:",omitempty"`
 }
 
 const (
@@ -170,6 +191,8 @@ only-hash, and progress/status related flags) will change the final hash.
 		cmds.StringOption(peerIdName, "The peer id to encrypt the file."),
 		cmds.IntOption(pinDurationCountOptionName, "d", "Duration for which the object is pinned in days.").WithDefault(0),
 		cmds.BoolOption(uploadToBlockchainOptionName, "add file meta to blockchain").WithDefault(false),
+		cmds.UintOption(modeOptionName, "Custom POSIX file mode to store in created UnixFS entries. Disables raw-leaves. (experimental)"),
+		cmds.Int64Option(mtimeOptionName, "Custom POSIX modification time to store in created UnixFS entries (seconds before or after the Unix Epoch). Disables raw-leaves. (experimental)"),
 	},
 	PreRun: func(req *cmds.Request, env cmds.Environment) error {
 		quiet, _ := req.Options[quietOptionName].(bool)
@@ -216,7 +239,6 @@ only-hash, and progress/status related flags) will change the final hash.
 		peerId, _ := req.Options[peerIdName].(string)
 		pinDuration, _ := req.Options[pinDurationCountOptionName].(int)
 		uploadToBlockchain, _ := req.Options[uploadToBlockchainOptionName].(bool)
-		// TODO mode mtime
 		mode, _ := req.Options[modeOptionName].(uint)
 		mtime, _ := req.Options[mtimeOptionName].(int64)
 
@@ -275,13 +297,12 @@ only-hash, and progress/status related flags) will change the final hash.
 			opts = append(opts, options.Unixfs.PeerId(peerId))
 		}
 
-		// TODO mode mtime
-		// if mode != 0 {
-		// opts = append(opts, options.Unixfs.Mode(os.FileMode(mode)))
-		// }
-		// if mtime != 0 {
-		// opts = append(opts, options.Unixfs.Mtime(mtime, uint32(mtimeNsecs)))
-		// }
+		if mode != 0 {
+			opts = append(opts, options.Unixfs.Mode(os.FileMode(mode)))
+		}
+		if mtime != 0 {
+			opts = append(opts, options.Unixfs.Mtime(mtime))
+		}
 
 		opts = append(opts, nil) // events option placeholder
 
@@ -317,12 +338,19 @@ only-hash, and progress/status related flags) will change the final hash.
 					output.Name = path.Join(addit.Name(), output.Name)
 				}
 
-				if err := res.Emit(&AddEvent{
+				addEvent := AddEvent{
 					Name:  output.Name,
 					Hash:  h,
 					Bytes: output.Bytes,
 					Size:  output.Size,
-				}); err != nil {
+					Mtime: output.Mtime,
+				}
+
+				if output.Mode != 0 {
+					addEvent.Mode = "0" + strconv.FormatUint(uint64(output.Mode), 8)
+				}
+
+				if err := res.Emit(&addEvent); err != nil {
 					return err
 				}
 			}

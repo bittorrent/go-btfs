@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 	"text/tabwriter"
+	"time"
 
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
@@ -23,6 +24,8 @@ type LsLink struct {
 	Size       uint64
 	Type       unixfs_pb.Data_DataType
 	Target     string
+	Mode       os.FileMode
+	Mtime      time.Time
 }
 
 // LsObject is an element of LsOutput
@@ -158,6 +161,8 @@ The JSON output contains type information.
 					Size:   link.Size,
 					Type:   ftype,
 					Target: link.Target,
+					Mode:   link.Mode,
+					Mtime:  link.ModTime,
 				}
 				if err := processLink(paths[i], lsLink); err != nil {
 					return err
