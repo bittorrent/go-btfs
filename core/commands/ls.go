@@ -46,6 +46,7 @@ const (
 	lsResolveTypeOptionName = "resolve-type"
 	lsSizeOptionName        = "size"
 	lsStreamOptionName      = "stream"
+	lsMTimeOptionName       = "mtime"
 )
 
 var LsCmd = &cmds.Command{
@@ -69,6 +70,7 @@ The JSON output contains type information.
 		cmds.BoolOption(lsResolveTypeOptionName, "Resolve linked objects to find out their types.").WithDefault(true),
 		cmds.BoolOption(lsSizeOptionName, "Resolve linked objects to find out their file size.").WithDefault(true),
 		cmds.BoolOption(lsStreamOptionName, "s", "Enable experimental streaming of directory entries as they are traversed."),
+		cmds.BoolOption(lsMTimeOptionName, "t", "").WithDefault(true),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		api, err := cmdenv.GetApi(env, req)
@@ -207,6 +209,7 @@ func tabularOutput(req *cmds.Request, w io.Writer, out *LsOutput, lastObjectHash
 	headers, _ := req.Options[lsHeadersOptionNameTime].(bool)
 	stream, _ := req.Options[lsStreamOptionName].(bool)
 	size, _ := req.Options[lsSizeOptionName].(bool)
+	mtime, _ := req.Options[lsMTimeOptionName].(bool)
 	// in streaming mode we can't automatically align the tabs
 	// so we take a best guess
 	var minTabWidth int
@@ -234,6 +237,9 @@ func tabularOutput(req *cmds.Request, w io.Writer, out *LsOutput, lastObjectHash
 				if size {
 					s = "Hash\tSize\tName"
 				}
+				if mtime {
+					s = "Hash\tSize\tName\tTime"
+				}
 				fmt.Fprintln(tw, s)
 			}
 			lastObjectHash = object.Hash
@@ -256,7 +262,7 @@ func tabularOutput(req *cmds.Request, w io.Writer, out *LsOutput, lastObjectHash
 				}
 			}
 
-			fmt.Fprintf(tw, s, link.Hash, link.Size, link.Name)
+			fmt.Fprintf(tw, s, link.Hash, link.Size, link.Name, link.Mode.String(), link.Mtime.String())
 		}
 	}
 	tw.Flush()

@@ -115,12 +115,16 @@ possible, please use 'btfs ls' instead.
 				return merkledag.ErrNotProtobuf
 			}
 
+			// TODO mtime and mode
 			unixFSNode, err := unixfs.FSNodeFromBytes(ndpb.Data())
 			if err != nil {
 				return err
 			}
 
 			t := unixFSNode.Type()
+
+			fmt.Println(unixFSNode.Mode().String(), "---------")
+			fmt.Println(unixFSNode.ModTime().Unix(), "-----------")
 
 			output.Objects[hash] = &LsObject{
 				Hash: c.String(),

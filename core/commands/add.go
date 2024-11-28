@@ -82,6 +82,8 @@ const (
 	peerIdName                   = "peer-id"
 	pinDurationCountOptionName   = "pin-duration-count"
 	uploadToBlockchainOptionName = "to-blockchain"
+	preserveModeOptionName       = "preserve-mode"
+	preserveMtimeOptionName      = "preserve-mtime"
 	modeOptionName               = "mode"
 	mtimeOptionName              = "mtime"
 )
@@ -191,6 +193,8 @@ only-hash, and progress/status related flags) will change the final hash.
 		cmds.StringOption(peerIdName, "The peer id to encrypt the file."),
 		cmds.IntOption(pinDurationCountOptionName, "d", "Duration for which the object is pinned in days.").WithDefault(0),
 		cmds.BoolOption(uploadToBlockchainOptionName, "add file meta to blockchain").WithDefault(false),
+		cmds.BoolOption(preserveModeOptionName, "Apply existing POSIX permissions to created UnixFS entries. Disables raw-leaves. (experimental)"),
+		cmds.BoolOption(preserveMtimeOptionName, "Apply existing POSIX modification time to created UnixFS entries. Disables raw-leaves. (experimental)"),
 		cmds.UintOption(modeOptionName, "Custom POSIX file mode to store in created UnixFS entries. Disables raw-leaves. (experimental)"),
 		cmds.Int64Option(mtimeOptionName, "Custom POSIX modification time to store in created UnixFS entries (seconds before or after the Unix Epoch). Disables raw-leaves. (experimental)"),
 	},
@@ -239,6 +243,8 @@ only-hash, and progress/status related flags) will change the final hash.
 		peerId, _ := req.Options[peerIdName].(string)
 		pinDuration, _ := req.Options[pinDurationCountOptionName].(int)
 		uploadToBlockchain, _ := req.Options[uploadToBlockchainOptionName].(bool)
+		preserveMode, _ := req.Options[preserveModeOptionName].(bool)
+		preserveMtime, _ := req.Options[preserveMtimeOptionName].(bool)
 		mode, _ := req.Options[modeOptionName].(uint)
 		mtime, _ := req.Options[mtimeOptionName].(int64)
 
@@ -277,6 +283,9 @@ only-hash, and progress/status related flags) will change the final hash.
 
 			options.Unixfs.TokenMetadata(tokenMetadata),
 			options.Unixfs.PinDuration(int64(pinDuration)),
+
+			options.Unixfs.PreserveMode(preserveMode),
+			options.Unixfs.PreserveMtime(preserveMtime),
 		}
 
 		if cidVerSet {

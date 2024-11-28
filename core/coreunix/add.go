@@ -97,8 +97,10 @@ type Adder struct {
 	TokenMetadata    string
 	PinDuration      int64
 
-	FileMode  os.FileMode
-	FileMtime time.Time
+	PreserveMtime bool
+	PreserveMode  bool
+	FileMode      os.FileMode
+	FileMtime     time.Time
 }
 
 func (adder *Adder) GcLocker() bstore.GCLocker {
@@ -470,6 +472,14 @@ func (adder *Adder) addFileNode(ctx context.Context, path string, file files.Nod
 	err := adder.maybePauseForGC(ctx)
 	if err != nil {
 		return err
+	}
+
+	if adder.PreserveMtime {
+		adder.FileMtime = file.ModTime()
+	}
+
+	if adder.PreserveMode {
+		adder.FileMode = file.Mode()
 	}
 
 	if adder.liveNodes >= liveCacheSize {

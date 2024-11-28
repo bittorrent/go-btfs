@@ -153,6 +153,8 @@ func (api *UnixfsAPI) Add(ctx context.Context, filesNode files.Node, opts ...opt
 	fileAdder.NoCopy = settings.NoCopy
 	fileAdder.CidBuilder = prefix
 
+	fileAdder.PreserveMode = settings.PreserveMode
+	fileAdder.PreserveMtime = settings.PreserveMtime
 	fileAdder.FileMode = settings.Mode
 	fileAdder.FileMtime = settings.Mtime
 
@@ -674,6 +676,8 @@ func (api *UnixfsAPI) processLink(ctx context.Context, linkres ft.LinkResult, se
 				lnk.Target = string(d.Data())
 			}
 			lnk.Size = d.FileSize()
+			lnk.Mode = d.Mode()
+			lnk.ModTime = d.ModTime()
 		}
 	}
 
