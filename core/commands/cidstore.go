@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
@@ -11,12 +12,16 @@ import (
 )
 
 const (
-	SizeOptionName = "size"
+	SizeOptionName  = "size"
+	batchOptionName = "batch"
 )
 
 const (
 	FilterKeyPrefix = "/gateway/filter/cid"
-	DefaultSize     = 50
+)
+
+const (
+	cidSeparator = ","
 )
 
 var CidStoreCmd = &cmds.Command{
@@ -38,6 +43,9 @@ var addCidCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Add cid to store.",
 	},
+	Options: []cmds.Option{
+		cmds.BoolOption(batchOptionName, "b", "batch add cids, cids split by , and all exits will be deleted").WithDefault(false),
+	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("cid", true, false, "cid to add to store"),
 	},
@@ -46,6 +54,42 @@ var addCidCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
+
+		batch, _ := req.Options[batchOptionName].(bool)
+		if batch {
+			cids := strings.Split(req.Arguments[0], cidSeparator)
+			batch, err := nd.Repo.Datastore().Batch(req.Context)
+			if err != nil {
+				return cmds.EmitOnce(res, err.Error())
+			}
+
+			// delete all exits
+			results, err := nd.Repo.Datastore().Query(req.Context, query.Query{
+				Prefix: FilterKeyPrefix,
+			})
+			if err != nil {
+				return cmds.EmitOnce(res, err.Error())
+			}
+			for v := range results.Next() {
+				err = batch.Delete(req.Context, datastore.NewKey(NewGatewayFilterKey(string(v.Value))))
+				if err != nil {
+					return cmds.EmitOnce(res, err.Error())
+				}
+			}
+
+			for _, v := range cids {
+				err = batch.Put(req.Context, datastore.NewKey(NewGatewayFilterKey(v)), []byte(v))
+				if err != nil {
+					return cmds.EmitOnce(res, err.Error())
+				}
+			}
+			err = batch.Commit(req.Context)
+			if err != nil {
+				return cmds.EmitOnce(res, err.Error())
+			}
+			return cmds.EmitOnce(res, "Add batch ok.")
+		}
+
 		err = nd.Repo.Datastore().Put(req.Context, datastore.NewKey(NewGatewayFilterKey(req.Arguments[0])),
 			[]byte(req.Arguments[0]))
 		if err != nil {
@@ -123,14 +167,14 @@ var listCidCmd = &cmds.Command{
 		Tagline: "List all cids in store",
 	},
 	Options: []cmds.Option{
-		cmds.IntOption(SizeOptionName, "s", "Number of cids to return.").WithDefault(DefaultSize),
+		cmds.IntOption(SizeOptionName, "s", "Number of cids to return."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		nd, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
 		}
-		size := req.Options[SizeOptionName].(int)
+		size, _ := req.Options[SizeOptionName].(int)
 		results, err := nd.Repo.Datastore().Query(req.Context, query.Query{
 			Prefix: FilterKeyPrefix,
 			Limit:  size,
