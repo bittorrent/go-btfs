@@ -1,10 +1,12 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"sort"
+	"strconv"
 	"text/tabwriter"
 	"time"
 
@@ -41,12 +43,59 @@ type LsOutput struct {
 	Objects []LsObject
 }
 
+func (s *LsLink) MarshalJSON() ([]byte, error) {
+	type so LsLink
+	out := &struct {
+		*so
+		Mode  string `json:",omitempty"`
+		Mtime string `json:",omitempty"`
+	}{so: (*so)(s)}
+
+	if s.Mode != 0 {
+		out.Mode = fmt.Sprintf("%04o", s.Mode)
+	}
+	if s.Mtime.Unix() > 0 {
+		out.Mtime = s.Mtime.UTC().Format("2 Jan 2006, 15:04:05 MST")
+	}
+	return json.Marshal(out)
+}
+
+func (s *LsLink) UnmarshalJSON(data []byte) error {
+	var err error
+	type so LsLink
+	tmp := &struct {
+		*so
+		Mode  string `json:",omitempty"`
+		Mtime string `json:",omitempty"`
+	}{so: (*so)(s)}
+
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	if tmp.Mode != "" {
+		mode, err := strconv.ParseUint(tmp.Mode, 8, 32)
+		if err == nil {
+			s.Mode = os.FileMode(mode)
+		}
+	}
+
+	if tmp.Mtime != "" {
+		t, err := time.Parse("2 Jan 2006, 15:04:05 MST", tmp.Mtime)
+		if err == nil {
+			s.Mtime = t
+		}
+	}
+	return err
+}
+
 const (
 	lsHeadersOptionNameTime = "headers"
 	lsResolveTypeOptionName = "resolve-type"
 	lsSizeOptionName        = "size"
 	lsStreamOptionName      = "stream"
 	lsMTimeOptionName       = "mtime"
+	lsModeOptionName        = "mode"
 )
 
 var LsCmd = &cmds.Command{
@@ -70,7 +119,8 @@ The JSON output contains type information.
 		cmds.BoolOption(lsResolveTypeOptionName, "Resolve linked objects to find out their types.").WithDefault(true),
 		cmds.BoolOption(lsSizeOptionName, "Resolve linked objects to find out their file size.").WithDefault(true),
 		cmds.BoolOption(lsStreamOptionName, "s", "Enable experimental streaming of directory entries as they are traversed."),
-		cmds.BoolOption(lsMTimeOptionName, "t", "").WithDefault(true),
+		cmds.BoolOption(lsMTimeOptionName, "t", "Print modification time."),
+		cmds.BoolOption(lsModeOptionName, "m", "Print mode."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		api, err := cmdenv.GetApi(env, req)
@@ -210,6 +260,7 @@ func tabularOutput(req *cmds.Request, w io.Writer, out *LsOutput, lastObjectHash
 	stream, _ := req.Options[lsStreamOptionName].(bool)
 	size, _ := req.Options[lsSizeOptionName].(bool)
 	mtime, _ := req.Options[lsMTimeOptionName].(bool)
+	mode, _ := req.Options[lsModeOptionName].(bool)
 	// in streaming mode we can't automatically align the tabs
 	// so we take a best guess
 	var minTabWidth int
@@ -237,9 +288,10 @@ func tabularOutput(req *cmds.Request, w io.Writer, out *LsOutput, lastObjectHash
 				if size {
 					s = "Hash\tSize\tName"
 				}
-				if mtime {
-					s = "Hash\tSize\tName\tTime"
-				}
+
+				s = buildHeader(mode, "Mode", s)
+				s = buildHeader(mtime, "Mtime", s)
+
 				fmt.Fprintln(tw, s)
 			}
 			lastObjectHash = object.Hash
@@ -250,21 +302,41 @@ func tabularOutput(req *cmds.Request, w io.Writer, out *LsOutput, lastObjectHash
 			switch link.Type {
 			case unixfs.TDirectory, unixfs.THAMTShard, unixfs.TMetadata:
 				if size {
-					s = "%[1]s\t-\t%[3]s/\n"
+					s = "%[1]s\t-\t%[3]s/"
 				} else {
-					s = "%[1]s\t%[3]s/\n"
+					s = "%[1]s\t%[3]s/"
 				}
+				s = buildString(mode, s, 4)
+				s = buildString(mtime, s, 5)
+				s = s + "\n"
 			default:
 				if size {
-					s = "%s\t%v\t%s\n"
+					s = "%[1]s\t%[2]v\t%[3]s"
 				} else {
-					s = "%[1]s\t%[3]s\n"
+					s = "%[1]s\t%[3]s"
 				}
+				s = buildString(mode, s, 4)
+				s = buildString(mtime, s, 5)
+				s = s + "\n"
 			}
 
-			fmt.Fprintf(tw, s, link.Hash, link.Size, link.Name, link.Mode.String(), link.Mtime.String())
+			fmt.Fprintf(tw, s, link.Hash, link.Size, link.Name, link.Mode, link.Mtime)
 		}
 	}
 	tw.Flush()
 	return lastObjectHash
+}
+
+func buildString(set bool, s string, index int) string {
+	if set {
+		return fmt.Sprintf("%s\t%%[%d]s", s, index)
+	}
+	return s
+}
+
+func buildHeader(set bool, name, s string) string {
+	if set {
+		return s + "\t" + name
+	}
+	return s
 }
