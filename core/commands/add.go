@@ -296,6 +296,19 @@ only-hash, and progress/status related flags) will change the final hash.
 			opts = append(opts, options.Unixfs.RawLeaves(rawblks))
 		}
 
+		// Storing optional mode or mtime (UnixFS 1.5) requires root block
+		// to always be 'dag-pb' and not 'raw'. Below adjusts raw-leaves setting, if possible.
+		if preserveMode || preserveMtime || mode != 0 || mtime != 0 {
+			// Error if --raw-leaves flag was explicitly passed by the user.
+			// (let user make a decision to manually disable it and retry)
+			if rbset && rawblks {
+				return fmt.Errorf("%s can't be used with UnixFS metadata like mode or modification time", rawLeavesOptionName)
+			}
+			// No explicit preference from user, disable raw-leaves and continue
+			rbset = true
+			rawblks = false
+		}
+
 		if trickle {
 			opts = append(opts, options.Unixfs.Layout(options.TrickleLayout))
 		}
