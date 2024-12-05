@@ -365,6 +365,12 @@ func TestCommands(t *testing.T) {
 		"/dashboard/logout",
 		"/dashboard/change",
 		"/dashboard/validate",
+		"/cidstore",
+		"/cidstore/add",
+		"/cidstore/get",
+		"/cidstore/has",
+		"/cidstore/del",
+		"/cidstore/list",
 	}
 
 	cmdSet := make(map[string]struct{})
