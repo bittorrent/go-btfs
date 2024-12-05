@@ -63,7 +63,7 @@ func tokenCheckInterceptor(r *http.Request, n *core.IpfsNode) error {
 		return err
 	}
 	apiHost := fmt.Sprint(strings.Split(conf.Addresses.API[0], "/")[2], ":", strings.Split(conf.Addresses.API[0], "/")[4])
-	if filterNoNeedTokenCheckReq(r, apiHost) {
+	if filterNoNeedTokenCheckReq(r, apiHost, conf.Identity.PeerID) {
 		return nil
 	}
 	if !commands.IsLogin {
@@ -86,8 +86,8 @@ func tokenCheckInterceptor(r *http.Request, n *core.IpfsNode) error {
 	return nil
 }
 
-func filterNoNeedTokenCheckReq(r *http.Request, apiHost string) bool {
-	if filterUrl(r) || filterP2pSchema(r) || filterLocalShellApi(r, apiHost) || filterGatewayUrl(r) {
+func filterNoNeedTokenCheckReq(r *http.Request, apiHost string, peerId string) bool {
+	if filterUrl(r) || filterP2pSchema(r, peerId) || filterLocalShellApi(r, apiHost) || filterGatewayUrl(r) {
 		return true
 	}
 	return false
@@ -134,8 +134,11 @@ func filterLocalShellApi(r *http.Request, apiHost string) bool {
 	return false
 }
 
-func filterP2pSchema(r *http.Request) bool {
+func filterP2pSchema(r *http.Request, peerId string) bool {
 	if r.URL.Scheme == "libp2p" {
+		return true
+	}
+	if r.Host == peerId {
 		return true
 	}
 	return false
