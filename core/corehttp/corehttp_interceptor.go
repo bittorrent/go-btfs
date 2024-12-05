@@ -18,7 +18,10 @@ const defaultTwoStepDuration = 30 * time.Minute
 const firstStepUrl = "dashboard/validate"
 
 var (
-	ErrorGatewayCidExits = errors.New("cid exits")
+	ErrNotLogin        = errors.New("please login")
+	ErrInvalidToken    = errors.New("invalid token")
+	ErrTwoStepCheckErr = errors.New("please validate your password first")
+	ErrGatewayCidExits = errors.New("cid exits")
 )
 
 func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
@@ -45,7 +48,7 @@ func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
 	}
 
 	if exits {
-		return ErrorGatewayCidExits
+		return ErrGatewayCidExits
 	}
 
 	return nil
@@ -59,7 +62,7 @@ func twoStepCheckInterceptor(r *http.Request) error {
 		return nil
 	}
 
-	return errors.New("please validate your password first")
+	return ErrTwoStepCheckErr
 }
 
 func interceptorAfterResp(r *http.Request, w http.ResponseWriter, n *core.IpfsNode) error {
@@ -80,7 +83,7 @@ func tokenCheckInterceptor(r *http.Request, n *core.IpfsNode) error {
 		return nil
 	}
 	if !commands.IsLogin {
-		return fmt.Errorf("please login")
+		return ErrNotLogin
 	}
 	args := r.URL.Query()
 	token := args.Get("token")
@@ -93,7 +96,7 @@ func tokenCheckInterceptor(r *http.Request, n *core.IpfsNode) error {
 		return err
 	}
 	if claims.PeerId != n.Identity.String() {
-		return fmt.Errorf("token is invalid")
+		return ErrInvalidToken
 	}
 
 	return nil
