@@ -5,6 +5,7 @@ import (
 	"io"
 
 	keystore "github.com/bittorrent/go-btfs/keystore"
+	rcmgr "github.com/libp2p/go-libp2p/p2p/host/resource-manager"
 
 	config "github.com/bittorrent/go-btfs-config"
 	ds "github.com/ipfs/go-datastore"
@@ -21,6 +22,8 @@ type Repo interface {
 	// Config returns the btfs configuration file from the repo. Changes made
 	// to the returned config are not automatically persisted.
 	Config() (*config.Config, error)
+
+	UserResourceOverrides() (rcmgr.PartialLimitConfig, error)
 
 	// BackupConfig creates a backup of the current configuration file using
 	// the given prefix for naming.
