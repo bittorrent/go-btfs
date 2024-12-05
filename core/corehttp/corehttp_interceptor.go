@@ -32,6 +32,11 @@ func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
 		if err != nil {
 			return err
 		}
+
+		err = twoStepCheckInterceptor(r)
+		if err != nil {
+			return err
+		}
 	}
 
 	exits, err := gatewayCidInterceptor(r, n)
@@ -41,11 +46,6 @@ func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
 
 	if exits {
 		return ErrorGatewayCidExits
-	}
-
-	err = twoStepCheckInterceptor(r)
-	if err != nil {
-		return err
 	}
 
 	return nil
