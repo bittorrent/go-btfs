@@ -1,12 +1,10 @@
 package commands
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"sort"
-	"strconv"
 	"text/tabwriter"
 	"time"
 
@@ -41,52 +39,6 @@ type LsObject struct {
 // it can be complete or partial
 type LsOutput struct {
 	Objects []LsObject
-}
-
-func (s *LsLink) MarshalJSON() ([]byte, error) {
-	type so LsLink
-	out := &struct {
-		*so
-		Mode  string `json:",omitempty"`
-		Mtime string `json:",omitempty"`
-	}{so: (*so)(s)}
-
-	if s.Mode != 0 {
-		out.Mode = fmt.Sprintf("%04o", s.Mode)
-	}
-	if s.Mtime.Unix() > 0 {
-		out.Mtime = s.Mtime.UTC().Format("2 Jan 2006, 15:04:05 MST")
-	}
-	return json.Marshal(out)
-}
-
-func (s *LsLink) UnmarshalJSON(data []byte) error {
-	var err error
-	type so LsLink
-	tmp := &struct {
-		*so
-		Mode  string `json:",omitempty"`
-		Mtime string `json:",omitempty"`
-	}{so: (*so)(s)}
-
-	if err := json.Unmarshal(data, &tmp); err != nil {
-		return err
-	}
-
-	if tmp.Mode != "" {
-		mode, err := strconv.ParseUint(tmp.Mode, 8, 32)
-		if err == nil {
-			s.Mode = os.FileMode(mode)
-		}
-	}
-
-	if tmp.Mtime != "" {
-		t, err := time.Parse("2 Jan 2006, 15:04:05 MST", tmp.Mtime)
-		if err == nil {
-			s.Mtime = t
-		}
-	}
-	return err
 }
 
 const (
@@ -320,7 +272,16 @@ func tabularOutput(req *cmds.Request, w io.Writer, out *LsOutput, lastObjectHash
 				s = s + "\n"
 			}
 
-			fmt.Fprintf(tw, s, link.Hash, link.Size, link.Name, link.Mode, link.Mtime)
+			modeS := "-"
+			mtimeS := "-"
+
+			if link.Mode != 0 {
+				modeS = link.Mode.String()
+			}
+			if link.Mtime.Unix() != 0 {
+				mtimeS = link.Mtime.Format("2 Jan 2006, 15:04:05 MST")
+			}
+			fmt.Fprintf(tw, s, link.Hash, link.Size, link.Name, modeS, mtimeS)
 		}
 	}
 	tw.Flush()
