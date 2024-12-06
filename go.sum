@@ -215,8 +215,8 @@ github.com/bittorrent/go-btfs-common v0.9.1-0.20240823025041-824b78e1c643/go.mod
 github.com/bittorrent/go-btfs-config v0.13.3-0.20240822075319-c9a0e978f0b2 h1:zbmWBI69iBg6uRriAJ496NQfeEWlAwOrhSgsNK1/lLg=
 github.com/bittorrent/go-btfs-config v0.13.3-0.20240822075319-c9a0e978f0b2/go.mod h1:ahh4rLSA+sl3FsHJ/ma6OOl6yu4ogCmeumzgBxKSIjg=
 github.com/bittorrent/go-btfs-files v0.3.0/go.mod h1:ylMf73m6oK94hL7VPblY1ZZpePsr6XbPV4BaNUwGZR0=
-github.com/bittorrent/go-btfs-files v0.3.1 h1:esq3j+6FtZ+SlaxKjVtiYgvXk/SWUiTcv0Q1MeJoPnQ=
-github.com/bittorrent/go-btfs-files v0.3.1/go.mod h1:ylMf73m6oK94hL7VPblY1ZZpePsr6XbPV4BaNUwGZR0=
+github.com/bittorrent/go-btfs-files v0.3.2-0.20241206024949-1343cef68952 h1:UPb87q3LxRtDqKyoCxXAHKOkMFe4UGvzuMQcTTROnD0=
+github.com/bittorrent/go-btfs-files v0.3.2-0.20241206024949-1343cef68952/go.mod h1:ylMf73m6oK94hL7VPblY1ZZpePsr6XbPV4BaNUwGZR0=
 github.com/bittorrent/go-btns v0.2.0 h1:OMpxUiRbtb/PRTK/z/flxcwOfTvNKMsTLOubYFhKy1s=
 github.com/bittorrent/go-btns v0.2.0/go.mod h1:+Cinr/1Jl7V/Pqgz+vbOdHXkLVFbMqjypmbAv8QiQPs=
 github.com/bittorrent/go-common/v2 v2.4.0 h1:u0jldKnQteTPQDNKj5GUBOUj2Tswn0+GfWN7yq2QAaY=
@@ -227,10 +227,11 @@ github.com/bittorrent/go-mfs v0.4.0 h1:xb7Bxp65LQP8yhflx47ZMuXzIMSSo9ZrasVhroCvR
 github.com/bittorrent/go-mfs v0.4.0/go.mod h1:w7XQuaSCDsL0MhcMP02ViFJQHYg2tLf+/v0w/m7wMfM=
 github.com/bittorrent/go-path v0.4.1 h1:9qJe6V2/O3n8Z3tqgN3wgbYcXrcwAv1U3de5xiyYodg=
 github.com/bittorrent/go-path v0.4.1/go.mod h1:eNLsxJEEMxn/CDzUJ6wuNl+6No6tEUhOZcPKsZsYX0E=
-github.com/bittorrent/go-unixfs v0.7.0 h1:2SPuQcAmubJUl+zuKoGWdculoZRn7D0zkDnTZ9pupqo=
 github.com/bittorrent/go-unixfs v0.7.0/go.mod h1:0UNGV0k5MFsMGOeNjOJFtURcXDFz8bjtyfhcom+vW7A=
-github.com/bittorrent/interface-go-btfs-core v0.8.2 h1:iTStlXLoandcKyFruq4U0uVSR3CQU7ey9Lwf8Mu3jw0=
-github.com/bittorrent/interface-go-btfs-core v0.8.2/go.mod h1:tQ3d3uI2gH+AO7ikbBwlulRgff0/dzobz9H3SL00yYo=
+github.com/bittorrent/go-unixfs v0.7.1-0.20241206024825-93b8c4b57d53 h1:on4IJttnb729mMxjsKVNLGvUH8ZbWyvEMoDQsBkYsTk=
+github.com/bittorrent/go-unixfs v0.7.1-0.20241206024825-93b8c4b57d53/go.mod h1:0UNGV0k5MFsMGOeNjOJFtURcXDFz8bjtyfhcom+vW7A=
+github.com/bittorrent/interface-go-btfs-core v0.8.3-0.20241206024747-09777076f753 h1:ZI+v7O3LXkH+DWXJiifPVeA9ChYoFl0U5gTbvuI5DgE=
+github.com/bittorrent/interface-go-btfs-core v0.8.3-0.20241206024747-09777076f753/go.mod h1:tQ3d3uI2gH+AO7ikbBwlulRgff0/dzobz9H3SL00yYo=
 github.com/bittorrent/protobuf v1.4.0 h1:3AW4SZUud3/8/orb8O/957CdspwxWjX/qprvF49aQ70=
 github.com/bittorrent/protobuf v1.4.0/go.mod h1:k2fZczatqZOyvWUezE02Xt5uFcVqdUd1tNeZwXjELCk=
 github.com/blang/semver v3.5.1+incompatible h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdnnjpJbkM4JQ=
