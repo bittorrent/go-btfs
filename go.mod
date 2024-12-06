@@ -11,7 +11,7 @@ require (
 	github.com/bittorrent/go-btfs-cmds v0.3.0
 	github.com/bittorrent/go-btfs-common v0.9.1-0.20240823025041-824b78e1c643
 	github.com/bittorrent/go-btfs-config v0.13.3-0.20240822075319-c9a0e978f0b2
-	github.com/bittorrent/go-btfs-files v0.3.2-0.20241206024949-1343cef68952
+	github.com/bittorrent/go-btfs-files v0.3.2-0.20241206082252-f4c1a3b2c90d
 	github.com/bittorrent/go-btns v0.2.0
 	github.com/bittorrent/go-common/v2 v2.4.0
 	github.com/bittorrent/go-eccrypto v0.1.0
