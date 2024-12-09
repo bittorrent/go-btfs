@@ -2,13 +2,16 @@ package commands
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	gopath "path"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
@@ -101,6 +104,42 @@ type statOutput struct {
 	WithLocality   bool   `json:",omitempty"`
 	Local          bool   `json:",omitempty"`
 	SizeLocal      uint64 `json:",omitempty"`
+	Mode           uint32 `json:",omitempty"`
+	Mtime          int64  `json:",omitempty"`
+}
+
+func (s *statOutput) MarshalJSON() ([]byte, error) {
+	type so statOutput
+	out := &struct {
+		*so
+		Mode string `json:",omitempty"`
+	}{so: (*so)(s)}
+
+	if s.Mode != 0 {
+		out.Mode = fmt.Sprintf("%04o", s.Mode)
+	}
+	return json.Marshal(out)
+}
+
+func (s *statOutput) UnmarshalJSON(data []byte) error {
+	var err error
+	type so statOutput
+	tmp := &struct {
+		*so
+		Mode string `json:",omitempty"`
+	}{so: (*so)(s)}
+
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	if tmp.Mode != "" {
+		mode, err := strconv.ParseUint(tmp.Mode, 8, 32)
+		if err == nil {
+			s.Mode = uint32(mode)
+		}
+	}
+	return err
 }
 
 const (
@@ -108,10 +147,13 @@ const (
 Size: <size>
 CumulativeSize: <cumulsize>
 ChildBlocks: <childs>
-Type: <type>`
+Type: <type>
+Mode: <mode> (<mode-octal>)
+Mtime: <mtime>`
 	filesFormatOptionName    = "format"
 	filesSizeOptionName      = "size"
 	filesWithLocalOptionName = "with-local"
+	filesStatUnspecified     = "not set"
 )
 
 var filesStatCmd = &cmds.Command{
@@ -196,12 +238,24 @@ var filesStatCmd = &cmds.Command{
 	},
 	Encoders: cmds.EncoderMap{
 		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *statOutput) error {
+			mode, modeo := filesStatUnspecified, filesStatUnspecified
+			if out.Mode != 0 {
+				mode = strings.ToLower(os.FileMode(out.Mode).String())
+				modeo = "0" + strconv.FormatInt(int64(out.Mode&0x1FF), 8)
+			}
+			mtime := filesStatUnspecified
+			if out.Mtime > 0 {
+				mtime = time.Unix(out.Mtime, 0).UTC().Format("2 Jan 2006, 15:04:05 MST")
+			}
 			s, _ := statGetFormatOptions(req)
 			s = strings.Replace(s, "<hash>", out.Hash, -1)
 			s = strings.Replace(s, "<size>", fmt.Sprintf("%d", out.Size), -1)
 			s = strings.Replace(s, "<cumulsize>", fmt.Sprintf("%d", out.CumulativeSize), -1)
 			s = strings.Replace(s, "<childs>", fmt.Sprintf("%d", out.Blocks), -1)
 			s = strings.Replace(s, "<type>", out.Type, -1)
+			s = strings.Replace(s, "<mode>", mode, -1)
+			s = strings.Replace(s, "<mode-octal>", modeo, -1)
+			s = strings.Replace(s, "<mtime>", mtime, -1)
 
 			fmt.Fprintln(w, s)
 
@@ -267,12 +321,21 @@ func statNode(nd ipld.Node, enc cidenc.Encoder) (*statOutput, error) {
 			return nil, fmt.Errorf("unrecognized node type: %s", d.Type())
 		}
 
+		var mode uint32
+		if m := d.Mode(); m != 0 {
+			mode = uint32(m)
+		} else if d.Type() == ft.TSymlink {
+			mode = uint32(os.ModeSymlink | 0x1FF)
+		}
+
 		return &statOutput{
 			Hash:           enc.Encode(c),
 			Blocks:         len(nd.Links()),
 			Size:           d.FileSize(),
 			CumulativeSize: cumulsize,
 			Type:           ndtype,
+			Mode:           mode,
+			Mtime:          d.ModTime().Unix(),
 		}, nil
 	case *dag.RawNode:
 		return &statOutput{
