@@ -93,8 +93,9 @@ func tokenCheckInterceptor(r *http.Request, n *core.IpfsNode) error {
 	}
 	claims, err := utils.VerifyToken(token, string(password))
 	if err != nil {
-		return err
+		return ErrInvalidToken
 	}
+
 	if claims.PeerId != n.Identity.String() {
 		return ErrInvalidToken
 	}
