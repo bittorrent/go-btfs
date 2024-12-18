@@ -7,6 +7,7 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
+	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 )
@@ -59,6 +60,12 @@ var addCidCmd = &cmds.Command{
 		if batch {
 			cids := strings.Split(req.Arguments[0], cidSeparator)
 			batch, err := nd.Repo.Datastore().Batch(req.Context)
+			if err != nil {
+				return cmds.EmitOnce(res, err.Error())
+			}
+
+			// check if all cid is valid if not return
+			err = validateCIDs(cids)
 			if err != nil {
 				return cmds.EmitOnce(res, err.Error())
 			}
@@ -204,4 +211,14 @@ var listCidCmd = &cmds.Command{
 
 func NewGatewayFilterKey(key string) string {
 	return fmt.Sprintf("%s/%s", FilterKeyPrefix, key)
+}
+
+func validateCIDs(cids []string) error {
+	for _, c := range cids {
+		_, err := cid.Decode(c)
+		if err != nil {
+			return fmt.Errorf("Invalid CID: %s", c)
+		}
+	}
+	return nil
 }
