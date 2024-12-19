@@ -97,7 +97,12 @@ var addCidCmd = &cmds.Command{
 			return cmds.EmitOnce(res, "Add batch ok.")
 		}
 
-		err = nd.Repo.Datastore().Put(req.Context, datastore.NewKey(NewGatewayFilterKey(req.Arguments[0])),
+		cid := req.Arguments[0]
+		err = validateCIDs([]string{cid})
+		if err != nil {
+			return cmds.EmitOnce(res, err.Error())
+		}
+		err = nd.Repo.Datastore().Put(req.Context, datastore.NewKey(NewGatewayFilterKey(cid)),
 			[]byte(req.Arguments[0]))
 		if err != nil {
 			return cmds.EmitOnce(res, err.Error())
