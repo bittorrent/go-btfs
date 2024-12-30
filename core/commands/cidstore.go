@@ -85,6 +85,9 @@ var addCidCmd = &cmds.Command{
 			}
 
 			for _, v := range cids {
+				if v == "" {
+					continue
+				}
 				err = batch.Put(req.Context, datastore.NewKey(NewGatewayFilterKey(v)), []byte(v))
 				if err != nil {
 					return cmds.EmitOnce(res, err.Error())
@@ -220,6 +223,9 @@ func NewGatewayFilterKey(key string) string {
 
 func validateCIDs(cids []string) error {
 	for _, c := range cids {
+		if c == "" {
+			continue
+		}
 		_, err := cid.Decode(c)
 		if err != nil {
 			return fmt.Errorf("Invalid CID: %s", c)
