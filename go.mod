@@ -10,14 +10,14 @@ require (
 	github.com/bittorrent/go-btfs-chunker v0.4.0
 	github.com/bittorrent/go-btfs-cmds v0.3.0
 	github.com/bittorrent/go-btfs-common v0.9.1-0.20240823025041-824b78e1c643
-	github.com/bittorrent/go-btfs-config v0.13.3-0.20240822075319-c9a0e978f0b2
-	github.com/bittorrent/go-btfs-files v0.3.1
+	github.com/bittorrent/go-btfs-config v0.13.3
+	github.com/bittorrent/go-btfs-files v0.3.2
 	github.com/bittorrent/go-btns v0.2.0
 	github.com/bittorrent/go-common/v2 v2.4.0
 	github.com/bittorrent/go-eccrypto v0.1.0
 	github.com/bittorrent/go-mfs v0.4.0
-	github.com/bittorrent/go-unixfs v0.7.0
-	github.com/bittorrent/interface-go-btfs-core v0.8.2
+	github.com/bittorrent/go-unixfs v0.8.0
+	github.com/bittorrent/interface-go-btfs-core v0.9.0
 	github.com/bittorrent/protobuf v1.4.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8

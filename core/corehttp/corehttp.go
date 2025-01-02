@@ -6,6 +6,7 @@ package corehttp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -53,16 +54,17 @@ func makeHandler(n *core.IpfsNode, l net.Listener, options ...ServeOption) (http
 		}
 
 		err := interceptorBeforeReq(r, n)
-		if err != nil {
-			// set allow origin
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			if r.Method == http.MethodOptions {
-				w.Header().Set("Access-Control-Allow-Origin", "*")
-				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Stream-Output, X-Chunked-Output, X-Content-Length")
+
+		if errors.Is(err, ErrGatewayCidExits) {
+			http.Error(w, "", http.StatusNotFound)
+			return
+		}
+
+		if errors.Is(err, ErrNotLogin) || errors.Is(err, ErrInvalidToken) || errors.Is(err, ErrTwoStepCheckErr) {
+			if r.Method != http.MethodOptions {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
 			}
-			http.Error(w, err.Error(), http.StatusUnauthorized)
-			return
 		}
 
 		topMux.ServeHTTP(w, r)

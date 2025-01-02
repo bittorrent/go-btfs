@@ -16,6 +16,7 @@ import (
 	"github.com/bittorrent/go-btfs/repo/common"
 	mfsr "github.com/bittorrent/go-btfs/repo/fsrepo/migrations"
 	dir "github.com/bittorrent/go-btfs/thirdparty/dir"
+	rcmgr "github.com/libp2p/go-libp2p/p2p/host/resource-manager"
 
 	config "github.com/bittorrent/go-btfs-config"
 	serialize "github.com/bittorrent/go-btfs-config/serialize"
@@ -98,11 +99,12 @@ type FSRepo struct {
 	path string
 	// lockfile is the file system lock to prevent others from opening
 	// the same fsrepo path concurrently
-	lockfile io.Closer
-	config   *config.Config
-	ds       repo.Datastore
-	keystore keystore.Keystore
-	filemgr  *filestore.FileManager
+	lockfile              io.Closer
+	config                *config.Config
+	userResourceOverrides rcmgr.PartialLimitConfig
+	ds                    repo.Datastore
+	keystore              keystore.Keystore
+	filemgr               *filestore.FileManager
 }
 
 var _ repo.Repo = (*FSRepo)(nil)
@@ -143,21 +145,21 @@ func open(repoPath string) (repo.Repo, error) {
 	}()
 
 	// Check version, and error out if not matching
-	//ver, err := mfsr.RepoPath(r.path).Version()
-	//fmt.Println("...3 checkInitialized ", ver, err)
-	//if err != nil {
+	// ver, err := mfsr.RepoPath(r.path).Version()
+	// fmt.Println("...3 checkInitialized ", ver, err)
+	// if err != nil {
 	//	if os.IsNotExist(err) {
 	//		return nil, ErrNoVersion
 	//	}
 	//	return nil, err
-	//}
+	// }
 	//
-	//if RepoVersion > ver {
+	// if RepoVersion > ver {
 	//	return nil, ErrNeedMigration
-	//} else if ver > RepoVersion {
+	// } else if ver > RepoVersion {
 	//	// program version too low for existing repo
 	//	return nil, fmt.Errorf(programTooLowMessage, RepoVersion, ver)
-	//}
+	// }
 
 	// check repo path, then check all constituent parts.
 	if err := dir.Writable(r.path); err != nil {
@@ -165,6 +167,10 @@ func open(repoPath string) (repo.Repo, error) {
 	}
 
 	if err := r.openConfig(); err != nil {
+		return nil, err
+	}
+
+	if err := r.openUserResourceOverrides(); err != nil {
 		return nil, err
 	}
 
@@ -700,6 +706,32 @@ func (r *FSRepo) SwarmKey() ([]byte, error) {
 	defer f.Close()
 
 	return ioutil.ReadAll(f)
+}
+
+// openUserResourceOverrides will remove all overrides if the file is not present.
+// It will error if the decoding fails.
+func (r *FSRepo) openUserResourceOverrides() error {
+	// This filepath is documented in docs/libp2p-resource-management.md and be kept in sync.
+	err := serialize.ReadConfigFile(filepath.Join(r.path, "libp2p-resource-limit-overrides.json"), &r.userResourceOverrides)
+	if errors.Is(err, serialize.ErrNotInitialized) {
+		err = nil
+	}
+	return err
+}
+
+func (r *FSRepo) UserResourceOverrides() (rcmgr.PartialLimitConfig, error) {
+	// It is not necessary to hold the package lock since the repo is in an
+	// opened state. The package lock is _not_ meant to ensure that the repo is
+	// thread-safe. The package lock is only meant to guard against removal and
+	// coordinate the lockfile. However, we provide thread-safety to keep
+	// things simple.
+	packageLock.Lock()
+	defer packageLock.Unlock()
+
+	if r.closed {
+		return rcmgr.PartialLimitConfig{}, errors.New("cannot access config, repo not open")
+	}
+	return r.userResourceOverrides, nil
 }
 
 var _ io.Closer = &FSRepo{}

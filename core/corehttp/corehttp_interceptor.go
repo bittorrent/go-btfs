@@ -17,6 +17,13 @@ const defaultTwoStepDuration = 30 * time.Minute
 
 const firstStepUrl = "dashboard/validate"
 
+var (
+	ErrNotLogin        = errors.New("please login")
+	ErrInvalidToken    = errors.New("invalid token")
+	ErrTwoStepCheckErr = errors.New("please validate your password first")
+	ErrGatewayCidExits = errors.New("cid exits")
+)
+
 func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
 	config, err := n.Repo.Config()
 	if err != nil {
@@ -24,15 +31,24 @@ func interceptorBeforeReq(r *http.Request, n *core.IpfsNode) error {
 	}
 
 	if config.API.EnableTokenAuth {
-		err := tokenCheckInterceptor(r, n)
+		err = tokenCheckInterceptor(r, n)
+		if err != nil {
+			return err
+		}
+
+		err = twoStepCheckInterceptor(r)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = twoStepCheckInterceptor(r)
-	if err != nil {
-		return err
+	exits, err := gatewayCidInterceptor(r, n)
+	if err != nil || !exits {
+		return nil
+	}
+
+	if exits {
+		return ErrGatewayCidExits
 	}
 
 	return nil
@@ -46,7 +62,7 @@ func twoStepCheckInterceptor(r *http.Request) error {
 		return nil
 	}
 
-	return errors.New("please validate your password first")
+	return ErrTwoStepCheckErr
 }
 
 func interceptorAfterResp(r *http.Request, w http.ResponseWriter, n *core.IpfsNode) error {
@@ -63,11 +79,11 @@ func tokenCheckInterceptor(r *http.Request, n *core.IpfsNode) error {
 		return err
 	}
 	apiHost := fmt.Sprint(strings.Split(conf.Addresses.API[0], "/")[2], ":", strings.Split(conf.Addresses.API[0], "/")[4])
-	if filterNoNeedTokenCheckReq(r, apiHost) {
+	if filterNoNeedTokenCheckReq(r, apiHost, conf.Identity.PeerID) {
 		return nil
 	}
 	if !commands.IsLogin {
-		return fmt.Errorf("please login")
+		return ErrNotLogin
 	}
 	args := r.URL.Query()
 	token := args.Get("token")
@@ -77,17 +93,31 @@ func tokenCheckInterceptor(r *http.Request, n *core.IpfsNode) error {
 	}
 	claims, err := utils.VerifyToken(token, string(password))
 	if err != nil {
-		return err
+		return ErrInvalidToken
 	}
+
 	if claims.PeerId != n.Identity.String() {
-		return fmt.Errorf("token is invalid")
+		return ErrInvalidToken
 	}
 
 	return nil
 }
 
-func filterNoNeedTokenCheckReq(r *http.Request, apiHost string) bool {
-	if filterUrl(r) || filterP2pSchema(r) || filterLocalShellApi(r, apiHost) || filterGatewayUrl(r) {
+func gatewayCidInterceptor(r *http.Request, n *core.IpfsNode) (bool, error) {
+	if filterGatewayUrl(r) {
+		sPath := strings.Split(r.URL.Path, "/")
+		if len(sPath) < 3 {
+			return false, nil
+		}
+		key := strings.Split(r.URL.Path, "/")[2]
+		exits, err := n.Repo.Datastore().Has(r.Context(), ds.NewKey(commands.NewGatewayFilterKey(key)))
+		return exits, err
+	}
+	return false, nil
+}
+
+func filterNoNeedTokenCheckReq(r *http.Request, apiHost string, peerId string) bool {
+	if filterUrl(r) || filterP2pSchema(r, peerId) || filterLocalShellApi(r, apiHost) || filterGatewayUrl(r) {
 		return true
 	}
 	return false
@@ -134,8 +164,11 @@ func filterLocalShellApi(r *http.Request, apiHost string) bool {
 	return false
 }
 
-func filterP2pSchema(r *http.Request) bool {
+func filterP2pSchema(r *http.Request, peerId string) bool {
 	if r.URL.Scheme == "libp2p" {
+		return true
+	}
+	if r.Host == peerId {
 		return true
 	}
 	return false

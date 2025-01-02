@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 	"text/tabwriter"
+	"time"
 
 	cmdenv "github.com/bittorrent/go-btfs/core/commands/cmdenv"
 
@@ -23,6 +24,8 @@ type LsLink struct {
 	Size       uint64
 	Type       unixfs_pb.Data_DataType
 	Target     string
+	Mode       os.FileMode
+	Mtime      time.Time
 }
 
 // LsObject is an element of LsOutput
@@ -43,6 +46,8 @@ const (
 	lsResolveTypeOptionName = "resolve-type"
 	lsSizeOptionName        = "size"
 	lsStreamOptionName      = "stream"
+	lsMTimeOptionName       = "mtime"
+	lsModeOptionName        = "mode"
 )
 
 var LsCmd = &cmds.Command{
@@ -66,6 +71,8 @@ The JSON output contains type information.
 		cmds.BoolOption(lsResolveTypeOptionName, "Resolve linked objects to find out their types.").WithDefault(true),
 		cmds.BoolOption(lsSizeOptionName, "Resolve linked objects to find out their file size.").WithDefault(true),
 		cmds.BoolOption(lsStreamOptionName, "s", "Enable experimental streaming of directory entries as they are traversed."),
+		cmds.BoolOption(lsMTimeOptionName, "t", "Print modification time."),
+		cmds.BoolOption(lsModeOptionName, "m", "Print mode."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		api, err := cmdenv.GetApi(env, req)
@@ -158,6 +165,8 @@ The JSON output contains type information.
 					Size:   link.Size,
 					Type:   ftype,
 					Target: link.Target,
+					Mode:   link.Mode,
+					Mtime:  link.ModTime,
 				}
 				if err := processLink(paths[i], lsLink); err != nil {
 					return err
@@ -202,6 +211,8 @@ func tabularOutput(req *cmds.Request, w io.Writer, out *LsOutput, lastObjectHash
 	headers, _ := req.Options[lsHeadersOptionNameTime].(bool)
 	stream, _ := req.Options[lsStreamOptionName].(bool)
 	size, _ := req.Options[lsSizeOptionName].(bool)
+	mtime, _ := req.Options[lsMTimeOptionName].(bool)
+	mode, _ := req.Options[lsModeOptionName].(bool)
 	// in streaming mode we can't automatically align the tabs
 	// so we take a best guess
 	var minTabWidth int
@@ -229,6 +240,10 @@ func tabularOutput(req *cmds.Request, w io.Writer, out *LsOutput, lastObjectHash
 				if size {
 					s = "Hash\tSize\tName"
 				}
+
+				s = buildHeader(mode, "Mode", s)
+				s = buildHeader(mtime, "Mtime", s)
+
 				fmt.Fprintln(tw, s)
 			}
 			lastObjectHash = object.Hash
@@ -239,21 +254,50 @@ func tabularOutput(req *cmds.Request, w io.Writer, out *LsOutput, lastObjectHash
 			switch link.Type {
 			case unixfs.TDirectory, unixfs.THAMTShard, unixfs.TMetadata:
 				if size {
-					s = "%[1]s\t-\t%[3]s/\n"
+					s = "%[1]s\t-\t%[3]s/"
 				} else {
-					s = "%[1]s\t%[3]s/\n"
+					s = "%[1]s\t%[3]s/"
 				}
+				s = buildString(mode, s, 4)
+				s = buildString(mtime, s, 5)
+				s = s + "\n"
 			default:
 				if size {
-					s = "%s\t%v\t%s\n"
+					s = "%[1]s\t%[2]v\t%[3]s"
 				} else {
-					s = "%[1]s\t%[3]s\n"
+					s = "%[1]s\t%[3]s"
 				}
+				s = buildString(mode, s, 4)
+				s = buildString(mtime, s, 5)
+				s = s + "\n"
 			}
 
-			fmt.Fprintf(tw, s, link.Hash, link.Size, link.Name)
+			modeS := "-"
+			mtimeS := "-"
+
+			if link.Mode != 0 {
+				modeS = link.Mode.String()
+			}
+			if link.Mtime.Unix() != 0 {
+				mtimeS = link.Mtime.Format("2 Jan 2006, 15:04:05 MST")
+			}
+			fmt.Fprintf(tw, s, link.Hash, link.Size, link.Name, modeS, mtimeS)
 		}
 	}
 	tw.Flush()
 	return lastObjectHash
+}
+
+func buildString(set bool, s string, index int) string {
+	if set {
+		return fmt.Sprintf("%s\t%%[%d]s", s, index)
+	}
+	return s
+}
+
+func buildHeader(set bool, name, s string) string {
+	if set {
+		return s + "\t" + name
+	}
+	return s
 }

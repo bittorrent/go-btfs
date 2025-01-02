@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	gopath "path"
 	"strconv"
+	"time"
 
 	chunker "github.com/bittorrent/go-btfs-chunker"
 	files "github.com/bittorrent/go-btfs-files"
@@ -94,6 +96,11 @@ type Adder struct {
 	liveNodes        uint64
 	TokenMetadata    string
 	PinDuration      int64
+
+	PreserveMtime bool
+	PreserveMode  bool
+	FileMode      os.FileMode
+	FileMtime     time.Time
 }
 
 func (adder *Adder) GcLocker() bstore.GCLocker {
@@ -176,6 +183,9 @@ func (adder *Adder) add(reader io.Reader, dirTreeBytes []byte) (ipld.Node, error
 		CidBuilder:    adder.CidBuilder,
 		TokenMetadata: metaBytes,
 		ChunkSize:     chunkSize,
+
+		FileMode:    adder.FileMode,
+		FileModTime: adder.FileMtime,
 	}
 
 	db, err := params.New(chnk)
@@ -462,6 +472,14 @@ func (adder *Adder) addFileNode(ctx context.Context, path string, file files.Nod
 	err := adder.maybePauseForGC(ctx)
 	if err != nil {
 		return err
+	}
+
+	if adder.PreserveMtime {
+		adder.FileMtime = file.ModTime()
+	}
+
+	if adder.PreserveMode {
+		adder.FileMode = file.Mode()
 	}
 
 	if adder.liveNodes >= liveCacheSize {

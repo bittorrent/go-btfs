@@ -6,7 +6,9 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"os"
 	gopath "path"
+	"time"
 
 	"container/list"
 	"encoding/json"
@@ -134,6 +136,14 @@ func (rsadder *ReedSolomonAdder) addFileNode(ctx context.Context, path string, f
 		return nil, err
 	}
 
+	if rsadder.FileMtime.Unix() != 0 {
+		rsadder.FileMtime = time.Now()
+	}
+
+	if rsadder.FileMode != os.FileMode(0) {
+		rsadder.FileMode = file.Mode()
+	}
+
 	if rsadder.liveNodes >= liveCacheSize {
 		// TODO: flush free memory rsadder.mfsRoot()'s FlushMemFree() to flush free memory
 		log.Info("rsadder liveNodes >= liveCacheSize, needs flushing")
@@ -162,7 +172,7 @@ func (rsadder *ReedSolomonAdder) addDir(ctx context.Context, path string, dir fi
 			NodePath: path,
 			NodeName: dstName},
 		// Kept the following line for possible use cases than `btfs get`
-		//Directory: dir,
+		// Directory: dir,
 	}
 
 	it := dir.Entries()
@@ -195,7 +205,7 @@ func (rsadder *ReedSolomonAdder) addSymlink(path string, l *files.Symlink) (uio.
 			NodeName: dstName},
 		Data: l.Target,
 		// Kept the following line for the same reason as DirNode.
-		//Symlink:   *l,
+		// Symlink:   *l,
 	}, nil
 }
 
@@ -251,7 +261,7 @@ func (rsadder *ReedSolomonAdder) addFile(path string, file files.File) (uio.Node
 			StartOffset: currentOffset,
 		},
 		// Kept the following line for the same reason as DirNode.
-		//File: file,
+		// File: file,
 	}
 	return node, nil
 }
