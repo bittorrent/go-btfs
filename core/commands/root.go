@@ -184,6 +184,7 @@ var rootSubcommands = map[string]*cmds.Command{
 	"decrypt":        decryptCmd,
 	"dashboard":      dashboardCmd,
 	"cidstore":       CidStoreCmd,
+	"stake":          StakeCmd,
 }
 
 // RootRO is the readonly version of Root
