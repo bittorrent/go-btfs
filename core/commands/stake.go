@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/big"
+	"time"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
@@ -13,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 var StakeCmd = &cmds.Command{
@@ -50,7 +52,15 @@ var StakeCmd = &cmds.Command{
 		}
 		contractAddress := currChainCfg.StakeAddress
 
-		sc, err := abi.NewStakeContract(contractAddress, chain.ChainObject.Backend)
+		cli := chain.ChainObject.Backend
+		if cli == nil {
+			cli, err = ethclient.Dial(cfg.ChainInfo.Endpoint)
+			if err != nil {
+				return err
+			}
+		}
+
+		sc, err := abi.NewStakeContract(contractAddress, cli)
 		if err != nil {
 			return err
 		}
@@ -78,8 +88,6 @@ var StakeCmd = &cmds.Command{
 			"status": "success",
 		})
 	},
-
-	NoLocal: true,
 }
 
 var unStakeCmd = &cmds.Command{
@@ -109,8 +117,16 @@ Example: btfs stake unlock <amount>
 		if !ok {
 			return fmt.Errorf("chain %d is not supported yet", cfg.ChainInfo.ChainId)
 		}
-		contractAddress := currChainCfg.StakeAddress
-		sc, err := abi.NewStakeContract(contractAddress, chain.ChainObject.Backend)
+
+		cli := chain.ChainObject.Backend
+		if cli == nil {
+			cli, err = ethclient.Dial(cfg.ChainInfo.Endpoint)
+			if err != nil {
+				return err
+			}
+		}
+
+		sc, err := abi.NewStakeContract(currChainCfg.StakeAddress, cli)
 		if err != nil {
 			return err
 		}
@@ -131,10 +147,9 @@ Example: btfs stake unlock <amount>
 			return err
 		}
 
-		fmt.Println("UnStake success! Transaction hash is: ", tx.Hash().Hex())
-
 		return res.Emit(map[string]string{
 			"status": "success",
+			"txHash": tx.Hash().Hex(),
 		})
 	},
 	Type: map[string]string{},
@@ -159,9 +174,15 @@ Example: btfs stake withdraw
 		if !ok {
 			return fmt.Errorf("chain %d is not supported yet", cfg.ChainInfo.ChainId)
 		}
-		contractAddress := currChainCfg.StakeAddress
 
-		sc, err := abi.NewStakeContract(contractAddress, chain.ChainObject.Backend)
+		cli := chain.ChainObject.Backend
+		if cli == nil {
+			cli, err = ethclient.Dial(cfg.ChainInfo.Endpoint)
+			if err != nil {
+				return err
+			}
+		}
+		sc, err := abi.NewStakeContract(currChainCfg.StakeAddress, cli)
 		if err != nil {
 			return err
 		}
@@ -219,8 +240,14 @@ Example: btfs stake query <address>
 		if !ok {
 			return fmt.Errorf("chain %d is not supported yet", cfg.ChainInfo.ChainId)
 		}
-		contractAddress := currChainCfg.StakeAddress
-		sc, err := abi.NewStakeContract(contractAddress, chain.ChainObject.Backend)
+		cli := chain.ChainObject.Backend
+		if cli == nil {
+			cli, err = ethclient.Dial(cfg.ChainInfo.Endpoint)
+			if err != nil {
+				return err
+			}
+		}
+		sc, err := abi.NewStakeContract(currChainCfg.StakeAddress, cli)
 		if err != nil {
 			return err
 		}
@@ -237,7 +264,7 @@ Example: btfs stake query <address>
 		return res.Emit(&StakeInfo{
 			Amount:       tx.StakedAmount.String(),
 			UnlockAmount: tx.UnlockedAmount.String(),
-			UnlockTime:   tx.UnlockTime.String(),
+			UnlockTime:   time.Unix(tx.UnlockTime.Int64(), 0).Format(time.RFC3339),
 		})
 
 	},
