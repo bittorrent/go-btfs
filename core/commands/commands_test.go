@@ -372,11 +372,9 @@ func TestCommands(t *testing.T) {
 		"/cidstore/del",
 		"/cidstore/list",
 		"/stake",
-		"/stake/create",
-		"/stake/list",
-		"/stake/verify",
+		"/stake/unlock",
+		"/stake/withdraw",
 		"/stake/query",
-		"/stake/remove",
 	}
 
 	cmdSet := make(map[string]struct{})

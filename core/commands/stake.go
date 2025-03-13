@@ -1,15 +1,18 @@
 package commands
 
 import (
-	"context"
+	"encoding/base64"
 	"fmt"
 	"math/big"
-	"time"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/chain/abi"
 	chainconfig "github.com/bittorrent/go-btfs/chain/config"
 	oldcmds "github.com/bittorrent/go-btfs/commands"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 )
 
 var StakeCmd = &cmds.Command{
@@ -17,39 +20,19 @@ var StakeCmd = &cmds.Command{
 		Tagline:          "Manage BTFS node staking",
 		ShortDescription: "Staking commands for managing BTFS node staking operations, including create, remove, and query stakes.",
 	},
+
 	Subcommands: map[string]*cmds.Command{
-		"create": stakeCreateCmd, // Create stake
-		"remove": stakeRemoveCmd, // Remove stake
-		"query":  stakeQueryCmd,  // Query stake info
-		"verify": stakeVerifyCmd, // Verify stake status
-		"list":   stakeListCmd,   // List all stakes
+		"unlock":   unStakeCmd,  // Unlock part of stake
+		"withdraw": withdrawCmd, // Withdraw all stake
+		"query":    queryCmd,    // Query user stakes
 	},
-	NoLocal: true,
-}
 
-type StakeInfo struct {
-	Amount    uint64 `json:"amount"`     // Stake amount
-	StartTime int64  `json:"start_time"` // Stake start time
-	Duration  uint64 `json:"duration"`   // Stake duration (seconds)
-	Status    string `json:"status"`     // Stake status
-}
+	Arguments: []cmds.Argument{
+		cmds.StringArg("amount", true, false, "the amount you want to stake (unit: BTT)"),
+	},
 
-var stakeCreateCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
-		Tagline: "Create new stake",
-		ShortDescription: `
-Create a new stake. Requires specifying stake amount and duration.
-Example: btfs stake create --amount 1000 --duration 2592000
-`,
-	},
-	Arguments: []cmds.Argument{},
-	Options: []cmds.Option{
-		cmds.Uint64Option("amount", "Stake amount (unit: BTT)"),
-		cmds.Uint64Option("duration", "Stake duration (unit: seconds)").WithDefault(24 * 60 * 60),
-	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		amount, _ := req.Options["amount"].(uint64)
-		duration, _ := req.Options["duration"].(uint64)
+		amount := req.Arguments[0]
 
 		cctx := env.(*oldcmds.Context)
 		cfg, err := cctx.GetConfig()
@@ -63,55 +46,41 @@ Example: btfs stake create --amount 1000 --duration 2592000
 		}
 		contractAddress := currChainCfg.StakeAddress
 
-		chain.SettleObject.BttcService.SendBttTo(context.Background(), contractAddress, new(big.Int).SetUint64(amount))
+		sc, err := abi.NewStakeContract(contractAddress, chain.ChainObject.Backend)
+		if err != nil {
+			return err
+		}
 
-		// contr, err := abi.NewFileMeta(contractAddress, chain.ChainObject.Backend)
-		// contr.AddFileMeta()
+		pkOri, err := base64.StdEncoding.DecodeString(cfg.Identity.PrivKey)
+		if err != nil {
+			return err
+		}
 
-		return res.Emit(&StakeInfo{
-			Amount:    amount,
-			StartTime: time.Now().Unix(),
-			Duration:  duration,
-			Status:    "active",
+		pk, err := ethCrypto.ToECDSA(pkOri[4:])
+		opts, err := bind.NewKeyedTransactorWithChainID(pk, big.NewInt(cfg.ChainInfo.ChainId))
+		if err != nil {
+			return err
+		}
+		if opts.Value, ok = new(big.Int).SetString(amount, 10); !ok {
+			return fmt.Errorf("invalid amount: %s", amount)
+		}
+
+		tx, err := sc.Stake(opts)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Stake success! Transaction hash is: ", tx.Hash().Hex())
+
+		return res.Emit(map[string]string{
+			"status": "success",
 		})
 	},
-	Type: StakeInfo{},
+
+	NoLocal: true,
 }
 
-var stakeQueryCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
-		Tagline: "Query stake information",
-		ShortDescription: `
-Query stake information for a specific address.
-Example: btfs stake query <address>
-`,
-	},
-	Arguments: []cmds.Argument{
-		cmds.StringArg("address", true, false, "Address to query"),
-	},
-	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		addr := req.Arguments[0]
-		fmt.Println(addr)
-		return res.Emit(&StakeInfo{})
-	},
-	Type: StakeInfo{},
-}
-
-var stakeListCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
-		Tagline: "List all stakes",
-		ShortDescription: `
-List all stake information for the current node.
-Example: btfs stake list
-`,
-	},
-	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		return res.Emit([]StakeInfo{})
-	},
-	Type: []StakeInfo{},
-}
-
-var stakeRemoveCmd = &cmds.Command{
+var unStakeCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Remove stake",
 		ShortDescription: `
@@ -119,36 +88,157 @@ Remove specified stake. Note: Can only remove expired stakes.
 Example: btfs stake remove <stake_id>
 `,
 	},
+
 	Arguments: []cmds.Argument{
-		cmds.StringArg("stake_id", true, false, "Stake ID to remove"),
+		cmds.StringArg("amount", true, false, "amount you want to unStake"),
 	},
+
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		stakeID := req.Arguments[0]
+		amount, _ := req.Options["amount"].(uint64)
+
+		cctx := env.(*oldcmds.Context)
+		cfg, err := cctx.GetConfig()
+
+		currChainCfg, ok := chainconfig.GetChainConfig(cfg.ChainInfo.ChainId)
+		if !ok {
+			return fmt.Errorf("chain %d is not supported yet", cfg.ChainInfo.ChainId)
+		}
+		contractAddress := currChainCfg.StakeAddress
+		sc, err := abi.NewStakeContract(contractAddress, chain.ChainObject.Backend)
+		if err != nil {
+			return err
+		}
+
+		pkOri, err := base64.StdEncoding.DecodeString(cfg.Identity.PrivKey)
+		if err != nil {
+			return err
+		}
+
+		pk, err := ethCrypto.ToECDSA(pkOri[4:])
+		opts, err := bind.NewKeyedTransactorWithChainID(pk, big.NewInt(cfg.ChainInfo.ChainId))
+		if err != nil {
+			return err
+		}
+
+		tx, err := sc.Unstake(opts, new(big.Int).SetUint64(amount))
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("UnStake success! Transaction hash is: ", tx.Hash().Hex())
+
 		return res.Emit(map[string]string{
-			"status":  "success",
-			"message": fmt.Sprintf("Stake %s has been successfully removed", stakeID),
+			"status": "success",
 		})
 	},
 	Type: map[string]string{},
 }
 
-var stakeVerifyCmd = &cmds.Command{
+var withdrawCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Verify stake status",
+		Tagline: "Withdraw all stake",
 		ShortDescription: `
-Verify if a specific address has active stakes.
-Example: btfs stake verify <address>
+Withdraw all stake.
+Example: btfs stake withdraw
 `,
 	},
-	Arguments: []cmds.Argument{
-		cmds.StringArg("address", true, false, "Address to verify"),
-	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		addr := req.Arguments[0]
-		fmt.Println(addr)
-		return res.Emit(map[string]bool{
-			"is_staked": true,
+		cctx := env.(*oldcmds.Context)
+		cfg, err := cctx.GetConfig()
+		if err != nil {
+			return err
+		}
+
+		currChainCfg, ok := chainconfig.GetChainConfig(cfg.ChainInfo.ChainId)
+		if !ok {
+			return fmt.Errorf("chain %d is not supported yet", cfg.ChainInfo.ChainId)
+		}
+		contractAddress := currChainCfg.StakeAddress
+
+		sc, err := abi.NewStakeContract(contractAddress, chain.ChainObject.Backend)
+		if err != nil {
+			return err
+		}
+
+		pkOri, err := base64.StdEncoding.DecodeString(cfg.Identity.PrivKey)
+		if err != nil {
+			return err
+		}
+
+		pk, err := ethCrypto.ToECDSA(pkOri[4:])
+		opts, err := bind.NewKeyedTransactorWithChainID(pk, big.NewInt(cfg.ChainInfo.ChainId))
+		if err != nil {
+			return err
+		}
+
+		tx, err := sc.Withdraw(opts)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Withdraw success! Transaction hash is: ", tx.Hash().Hex())
+
+		return res.Emit(map[string]string{
+			"status": "success",
 		})
 	},
-	Type: map[string]bool{},
+}
+
+type StakeInfo struct {
+	Amount       string `json:"amount"`        // Stake amount
+	UnlockAmount string `json:"unlock_amount"` // Stake start time
+	UnlockTime   string `json:"unlock_time"`
+}
+
+var queryCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "Remove stake",
+		ShortDescription: `
+Remove specified stake. Note: Can only remove expired stakes.
+Example: btfs stake remove <stake_id>
+`,
+	},
+
+	Arguments: []cmds.Argument{
+		cmds.StringArg("address", true, false, "address you want to query"),
+	},
+
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		address := req.Arguments[0]
+
+		cctx := env.(*oldcmds.Context)
+		cfg, err := cctx.GetConfig()
+
+		currChainCfg, ok := chainconfig.GetChainConfig(cfg.ChainInfo.ChainId)
+		if !ok {
+			return fmt.Errorf("chain %d is not supported yet", cfg.ChainInfo.ChainId)
+		}
+		contractAddress := currChainCfg.StakeAddress
+		sc, err := abi.NewStakeContract(contractAddress, chain.ChainObject.Backend)
+		if err != nil {
+			return err
+		}
+
+		if err != nil {
+			return err
+		}
+
+		opts := &bind.CallOpts{}
+		if err != nil {
+			return err
+		}
+
+		tx, err := sc.GetUserStake(opts, common.HexToAddress(address))
+		if err != nil {
+			return err
+		}
+
+		return res.Emit(&StakeInfo{
+			Amount:       tx.StakedAmount.String(),
+			UnlockAmount: tx.UnlockedAmount.String(),
+			UnlockTime:   tx.UnlockTime.String(),
+		})
+
+	},
+	Type: StakeInfo{},
 }
