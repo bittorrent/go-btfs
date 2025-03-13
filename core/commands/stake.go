@@ -18,7 +18,7 @@ import (
 var StakeCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline:          "Manage BTFS node staking",
-		ShortDescription: "Staking commands for managing BTFS node staking operations, including create, remove, and query stakes.",
+		ShortDescription: "Staking commands for managing BTFS node staking operations, including stake, unlock, withdraw and query stakes.",
 	},
 
 	Subcommands: map[string]*cmds.Command{
@@ -33,6 +33,10 @@ var StakeCmd = &cmds.Command{
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		amount := req.Arguments[0]
+		lockAmount, ok := new(big.Int).SetString(amount, 10)
+		if !ok {
+			return fmt.Errorf("invalid amount: %s", amount)
+		}
 
 		cctx := env.(*oldcmds.Context)
 		cfg, err := cctx.GetConfig()
@@ -61,9 +65,7 @@ var StakeCmd = &cmds.Command{
 		if err != nil {
 			return err
 		}
-		if opts.Value, ok = new(big.Int).SetString(amount, 10); !ok {
-			return fmt.Errorf("invalid amount: %s", amount)
-		}
+		opts.Value = lockAmount
 
 		tx, err := sc.Stake(opts)
 		if err != nil {
@@ -82,10 +84,10 @@ var StakeCmd = &cmds.Command{
 
 var unStakeCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Remove stake",
+		Tagline: "Unlock part of stake (unit: wei)",
 		ShortDescription: `
-Remove specified stake. Note: Can only remove expired stakes.
-Example: btfs stake remove <stake_id>
+Unlock part of stake.
+Example: btfs stake unlock <amount>
 `,
 	},
 
@@ -94,7 +96,11 @@ Example: btfs stake remove <stake_id>
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		amount, _ := req.Options["amount"].(uint64)
+		amount := req.Arguments[0]
+		unlockAmount, ok := new(big.Int).SetString(amount, 10)
+		if !ok {
+			return fmt.Errorf("invalid amount: %s", amount)
+		}
 
 		cctx := env.(*oldcmds.Context)
 		cfg, err := cctx.GetConfig()
@@ -120,7 +126,7 @@ Example: btfs stake remove <stake_id>
 			return err
 		}
 
-		tx, err := sc.Unstake(opts, new(big.Int).SetUint64(amount))
+		tx, err := sc.Unstake(opts, unlockAmount)
 		if err != nil {
 			return err
 		}
@@ -192,10 +198,10 @@ type StakeInfo struct {
 
 var queryCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Remove stake",
+		Tagline: "Query stake info by address",
 		ShortDescription: `
-Remove specified stake. Note: Can only remove expired stakes.
-Example: btfs stake remove <stake_id>
+Query stake info by address.
+Example: btfs stake query <address>
 `,
 	},
 
@@ -223,12 +229,7 @@ Example: btfs stake remove <stake_id>
 			return err
 		}
 
-		opts := &bind.CallOpts{}
-		if err != nil {
-			return err
-		}
-
-		tx, err := sc.GetUserStake(opts, common.HexToAddress(address))
+		tx, err := sc.GetUserStake(nil, common.HexToAddress(address))
 		if err != nil {
 			return err
 		}
