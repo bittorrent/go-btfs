@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -15,6 +16,20 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+)
+
+const (
+	UnitWei    = "Wei"
+	UnitKwei   = "KWei"
+	UnitMwei   = "MWei"
+	UnitGwei   = "GWei"
+	UnitSzabo  = "Szabo"
+	UnitFinney = "Finney"
+	UnitBTT    = "BTT"
+	UnitKBTT   = "KBTT"
+	UnitMBTT   = "MBTT"
+	UnitGBTT   = "GBTT"
+	UnitTBTT   = "TBTT"
 )
 
 var StakeCmd = &cmds.Command{
@@ -30,12 +45,21 @@ var StakeCmd = &cmds.Command{
 	},
 
 	Arguments: []cmds.Argument{
-		cmds.StringArg("amount", true, false, "the amount you want to stake (unit: BTT)"),
+		cmds.StringArg("amount", true, false, "the amount you want to stake (unit: wei)"),
+	},
+
+	Options: []cmds.Option{
+		cmds.StringOption("unit", "u", "the unit of amount, default is BTT").WithDefault(UnitBTT),
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		amount := req.Arguments[0]
-		lockAmount, ok := new(big.Int).SetString(amount, 10)
+		unit := req.Options["unit"].(string)
+		amount, err := unitConvert(amount, unit)
+		if err != nil {
+			return err
+		}
+		lockAmount, ok := new(big.Int).SetString(strings.Replace(amount, ",", "", -1), 10)
 		if !ok {
 			return fmt.Errorf("invalid amount: %s", amount)
 		}
@@ -82,9 +106,8 @@ var StakeCmd = &cmds.Command{
 			return err
 		}
 
-		fmt.Println("Stake success! Transaction hash is: ", tx.Hash().Hex())
-
 		return res.Emit(map[string]string{
+			"txHash": tx.Hash().Hex(),
 			"status": "success",
 		})
 	},
@@ -217,6 +240,12 @@ type StakeInfo struct {
 	UnlockTime   string `json:"unlock_time"`
 }
 
+type StakeGlobalInfo struct {
+	Balance       string `json:"balance"`
+	TotalStaked   string `json:"total_staked"`
+	TotalUnlocked string `json:"total_unlocked"`
+}
+
 var queryCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Query stake info by address",
@@ -225,13 +254,12 @@ Query stake info by address.
 Example: btfs stake query <address>
 `,
 	},
-
-	Arguments: []cmds.Argument{
-		cmds.StringArg("address", true, false, "address you want to query"),
+	Options: []cmds.Option{
+		cmds.StringOption("address", "a", "address you want to query").WithDefault("ALL"),
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		address := req.Arguments[0]
+		address := req.Options["address"].(string)
 
 		cctx := env.(*oldcmds.Context)
 		cfg, err := cctx.GetConfig()
@@ -256,6 +284,18 @@ Example: btfs stake query <address>
 			return err
 		}
 
+		if address == "ALL" {
+			tx, err := sc.GetGlobalStats(nil)
+			if err != nil {
+				return err
+			}
+			return res.Emit(&StakeGlobalInfo{
+				TotalStaked:   tx.TotalStaked.String(),
+				TotalUnlocked: tx.TotalUnlocked.String(),
+				Balance:       tx.ContractBalance.String(),
+			})
+		}
+
 		tx, err := sc.GetUserStake(nil, common.HexToAddress(address))
 		if err != nil {
 			return err
@@ -269,4 +309,41 @@ Example: btfs stake query <address>
 
 	},
 	Type: StakeInfo{},
+}
+
+func unitConvert(amount string, unit string) (string, error) {
+	if unit == UnitWei {
+		return amount, nil
+	}
+	if unit == UnitKwei {
+		return fmt.Sprintf("%s%s", amount, "000"), nil
+	}
+	if unit == UnitMwei {
+		return fmt.Sprintf("%s%s", amount, "000000"), nil
+	}
+	if unit == UnitGwei {
+		return fmt.Sprintf("%s%s", amount, "000000000"), nil
+	}
+	if unit == UnitSzabo {
+		return fmt.Sprintf("%s%s", amount, "000000000000000"), nil
+	}
+	if unit == UnitFinney {
+		return fmt.Sprintf("%s%s", amount, "000000000000000000"), nil
+	}
+	if unit == UnitBTT {
+		return fmt.Sprintf("%s%s", amount, "0000000000000000000"), nil
+	}
+	if unit == UnitKBTT {
+		return fmt.Sprintf("%s%s", amount, "000000000000000000000"), nil
+	}
+	if unit == UnitMBTT {
+		return fmt.Sprintf("%s%s", amount, "0000000000000000000000000"), nil
+	}
+	if unit == UnitGBTT {
+		return fmt.Sprintf("%s%s", amount, "00000000000000000000000000000"), nil
+	}
+	if unit == UnitTBTT {
+		return fmt.Sprintf("%s%s", amount, "000000000000000000000000000000000"), nil
+	}
+	return "", fmt.Errorf("invalid unit")
 }
