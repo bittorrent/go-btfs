@@ -325,25 +325,25 @@ func unitConvert(amount string, unit string) (string, error) {
 		return fmt.Sprintf("%s%s", amount, "000000000"), nil
 	}
 	if unit == UnitSzabo {
-		return fmt.Sprintf("%s%s", amount, "000000000000000"), nil
+		return fmt.Sprintf("%s%s", amount, "000000000000"), nil
 	}
 	if unit == UnitFinney {
-		return fmt.Sprintf("%s%s", amount, "000000000000000000"), nil
+		return fmt.Sprintf("%s%s", amount, "000000000000000"), nil
 	}
 	if unit == UnitBTT {
-		return fmt.Sprintf("%s%s", amount, "0000000000000000000"), nil
+		return fmt.Sprintf("%s%s", amount, "000000000000000000"), nil
 	}
 	if unit == UnitKBTT {
 		return fmt.Sprintf("%s%s", amount, "000000000000000000000"), nil
 	}
 	if unit == UnitMBTT {
-		return fmt.Sprintf("%s%s", amount, "0000000000000000000000000"), nil
+		return fmt.Sprintf("%s%s", amount, "000000000000000000000000"), nil
 	}
 	if unit == UnitGBTT {
-		return fmt.Sprintf("%s%s", amount, "00000000000000000000000000000"), nil
+		return fmt.Sprintf("%s%s", amount, "000000000000000000000000000"), nil
 	}
 	if unit == UnitTBTT {
-		return fmt.Sprintf("%s%s", amount, "000000000000000000000000000000000"), nil
+		return fmt.Sprintf("%s%s", amount, "000000000000000000000000000000"), nil
 	}
 	return "", fmt.Errorf("invalid unit")
 }
