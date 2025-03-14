@@ -39,9 +39,9 @@ var StakeCmd = &cmds.Command{
 	},
 
 	Subcommands: map[string]*cmds.Command{
-		"unlock":   unStakeCmd,  // Unlock part of stake
-		"withdraw": withdrawCmd, // Withdraw all stake
-		"query":    queryCmd,    // Query user stakes
+		"unlock":   unStakeCmd,
+		"withdraw": withdrawCmd,
+		"query":    queryCmd,
 	},
 
 	Arguments: []cmds.Argument{
@@ -55,10 +55,11 @@ var StakeCmd = &cmds.Command{
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		amount := req.Arguments[0]
 		unit := req.Options["unit"].(string)
-		amount, err := unitConvert(amount, unit)
+		amount, err := convertToWei(amount, unit)
 		if err != nil {
 			return err
 		}
+
 		lockAmount, ok := new(big.Int).SetString(strings.Replace(amount, ",", "", -1), 10)
 		if !ok {
 			return fmt.Errorf("invalid amount: %s", amount)
@@ -226,10 +227,9 @@ Example: btfs stake withdraw
 			return err
 		}
 
-		fmt.Println("Withdraw success! Transaction hash is: ", tx.Hash().Hex())
-
 		return res.Emit(map[string]string{
 			"status": "success",
+			"txHash": tx.Hash().Hex(),
 		})
 	},
 }
@@ -311,39 +311,25 @@ Example: btfs stake query <address>
 	Type: StakeInfo{},
 }
 
-func unitConvert(amount string, unit string) (string, error) {
-	if unit == UnitWei {
-		return amount, nil
+func convertToWei(amount string, unit string) (string, error) {
+	units := map[string]string{
+		UnitWei:    "",
+		UnitKwei:   "000",
+		UnitMwei:   "000000",
+		UnitGwei:   "000000000",
+		UnitSzabo:  "000000000000",
+		UnitFinney: "000000000000000",
+		UnitBTT:    "000000000000000000",
+		UnitKBTT:   "000000000000000000000",
+		UnitMBTT:   "000000000000000000000000",
+		UnitGBTT:   "000000000000000000000000000",
+		UnitTBTT:   "000000000000000000000000000000",
 	}
-	if unit == UnitKwei {
-		return fmt.Sprintf("%s%s", amount, "000"), nil
+
+	suffix, ok := units[unit]
+	if !ok {
+		return "", fmt.Errorf("invalid unit")
 	}
-	if unit == UnitMwei {
-		return fmt.Sprintf("%s%s", amount, "000000"), nil
-	}
-	if unit == UnitGwei {
-		return fmt.Sprintf("%s%s", amount, "000000000"), nil
-	}
-	if unit == UnitSzabo {
-		return fmt.Sprintf("%s%s", amount, "000000000000"), nil
-	}
-	if unit == UnitFinney {
-		return fmt.Sprintf("%s%s", amount, "000000000000000"), nil
-	}
-	if unit == UnitBTT {
-		return fmt.Sprintf("%s%s", amount, "000000000000000000"), nil
-	}
-	if unit == UnitKBTT {
-		return fmt.Sprintf("%s%s", amount, "000000000000000000000"), nil
-	}
-	if unit == UnitMBTT {
-		return fmt.Sprintf("%s%s", amount, "000000000000000000000000"), nil
-	}
-	if unit == UnitGBTT {
-		return fmt.Sprintf("%s%s", amount, "000000000000000000000000000"), nil
-	}
-	if unit == UnitTBTT {
-		return fmt.Sprintf("%s%s", amount, "000000000000000000000000000000"), nil
-	}
-	return "", fmt.Errorf("invalid unit")
+
+	return fmt.Sprintf("%s%s", amount, suffix), nil
 }
