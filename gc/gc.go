@@ -161,7 +161,11 @@ func Descendants(ctx context.Context, getLinks dag.GetLinks,
 	for _, c := range roots {
 		// Walk recursively walks the dag and adds the keys to the given set
 		err := dag.Walk(ctx, verifyGetLinks, c, func(k cid.Cid) bool {
-			return set.Visit(toCidV1(k))
+			cids := toCidV1(k)
+			for _, cid := range cids {
+				set.Add(cid)
+			}
+			return true
 		}, dag.Concurrent())
 
 		if err != nil {
@@ -174,11 +178,11 @@ func Descendants(ctx context.Context, getLinks dag.GetLinks,
 }
 
 // toCidV1 converts any CIDv0s to CIDv1s.
-func toCidV1(c cid.Cid) cid.Cid {
+func toCidV1(c cid.Cid) []cid.Cid {
 	if c.Version() == 0 {
-		return cid.NewCidV1(c.Type(), c.Hash())
+		return []cid.Cid{cid.NewCidV1(c.Type(), c.Hash()), cid.NewCidV1(cid.Raw, c.Hash())}
 	}
-	return c
+	return []cid.Cid{c}
 }
 
 // ColoredSet computes the set of nodes in the graph that are pinned by the
@@ -249,7 +253,9 @@ func ColoredSet(ctx context.Context, pn pin.Pinner, ng ipld.NodeGetter, bestEffo
 		return nil, err
 	}
 	for _, k := range dkeys {
-		gcs.Add(toCidV1(k))
+		for _, c := range toCidV1(k) {
+			gcs.Add(c)
+		}
 	}
 
 	ikeys, err := pn.InternalPins(ctx)
