@@ -51,7 +51,7 @@ var (
 	bttcStatusAddress         = common.HexToAddress("0x6DBAd4Bd16C15AE6dDEaA640626e5A3E151F02fC")
 	bttcFileMetaAddress       = common.HexToAddress("0xe74117DC4A3457Eb32436F8F3De10701a3C4F6d7")
 	// stake address
-	bttcStakeAddress = common.HexToAddress("")
+	bttcStakeAddress = common.HexToAddress("0xE128a86176C39141370c2C4DAAF91063b315fee9")
 
 	// deploy gas
 	ethDeploymentGas  = "10"
