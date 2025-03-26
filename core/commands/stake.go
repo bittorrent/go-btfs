@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/mr-tron/base58"
 )
 
 const (
@@ -32,6 +33,12 @@ const (
 	UnitTBTT   = "TBTT"
 )
 
+const (
+	unitOptionName    = "unit"
+	addressOptionName = "address"
+	modOptionName     = "mode"
+)
+
 var StakeCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline:          "Manage BTFS node staking",
@@ -39,30 +46,26 @@ var StakeCmd = &cmds.Command{
 	},
 
 	Subcommands: map[string]*cmds.Command{
+		"info":     infoCmd,
 		"unlock":   unStakeCmd,
 		"withdraw": withdrawCmd,
 		"query":    queryCmd,
 	},
 
 	Arguments: []cmds.Argument{
-		cmds.StringArg("amount", true, false, "the amount you want to stake (unit: wei)"),
+		cmds.StringArg("amount", true, false, "the amount you want to stake"),
 	},
 
 	Options: []cmds.Option{
-		cmds.StringOption("unit", "u", "the unit of amount, default is BTT").WithDefault(UnitBTT),
+		cmds.StringOption(unitOptionName, "u", "the unit of amount, default is BTT").WithDefault(UnitBTT),
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		amount := req.Arguments[0]
-		unit := req.Options["unit"].(string)
-		amount, err := convertToWei(amount, unit)
+		unit := req.Options[unitOptionName].(string)
+		lockAmount, err := parseAmount(amount, unit)
 		if err != nil {
 			return err
-		}
-
-		lockAmount, ok := new(big.Int).SetString(strings.Replace(amount, ",", "", -1), 10)
-		if !ok {
-			return fmt.Errorf("invalid amount: %s", amount)
 		}
 
 		cctx := env.(*oldcmds.Context)
@@ -96,6 +99,9 @@ var StakeCmd = &cmds.Command{
 		}
 
 		pk, err := ethCrypto.ToECDSA(pkOri[4:])
+		if err != nil {
+			return err
+		}
 		opts, err := bind.NewKeyedTransactorWithChainID(pk, big.NewInt(cfg.ChainInfo.ChainId))
 		if err != nil {
 			return err
@@ -114,9 +120,81 @@ var StakeCmd = &cmds.Command{
 	},
 }
 
+type ContractInfo struct {
+	MinStakeAmount string `json:"min_stake_amount"`
+	UnlockDuration string `json:"unlock_duration"`
+	Address        string `json:"address"`
+}
+
+var infoCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "Query stake contract information",
+		ShortDescription: `
+Query stake contract information, including minimum stake amount and unlock duration.
+Example: btfs stake info
+`,
+	},
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		cctx := env.(*oldcmds.Context)
+		cfg, err := cctx.GetConfig()
+		if err != nil {
+			return err
+		}
+
+		currChainCfg, ok := chainconfig.GetChainConfig(cfg.ChainInfo.ChainId)
+		if !ok {
+			return fmt.Errorf("chain %d is not supported yet", cfg.ChainInfo.ChainId)
+		}
+
+		cli := chain.ChainObject.Backend
+		if cli == nil {
+			cli, err = ethclient.Dial(cfg.ChainInfo.Endpoint)
+			if err != nil {
+				return err
+			}
+		}
+
+		sc, err := abi.NewStakeContract(currChainCfg.StakeAddress, cli)
+		if err != nil {
+			return err
+		}
+
+		minStake, err := sc.MinStakeAmount(nil)
+		if err != nil {
+			return err
+		}
+
+		minStakeBTT := new(big.Float).Quo(
+			new(big.Float).SetInt(minStake),
+			new(big.Float).SetFloat64(1e18),
+		)
+
+		unlockDuration, err := sc.UnlockPeriod(nil)
+		if err != nil {
+			return err
+		}
+
+		durationStr, err := parseUnlockDuration(*unlockDuration)
+		if err != nil {
+			return err
+		}
+
+		if err != nil {
+			return err
+		}
+
+		return res.Emit(&ContractInfo{
+			MinStakeAmount: minStakeBTT.Text('f', 0) + " BTT",
+			UnlockDuration: durationStr,
+			Address:        currChainCfg.StakeAddress.String(),
+		})
+	},
+	Type: ContractInfo{},
+}
+
 var unStakeCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Unlock part of stake (unit: wei)",
+		Tagline: "Unlock part of stake",
 		ShortDescription: `
 Unlock part of stake.
 Example: btfs stake unlock <amount>
@@ -129,13 +207,17 @@ Example: btfs stake unlock <amount>
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		amount := req.Arguments[0]
-		unlockAmount, ok := new(big.Int).SetString(amount, 10)
-		if !ok {
-			return fmt.Errorf("invalid amount: %s", amount)
+		unit := req.Options[unitOptionName].(string)
+		unlockAmount, err := convert2BTT(amount, unit)
+		if err != nil {
+			return err
 		}
 
 		cctx := env.(*oldcmds.Context)
 		cfg, err := cctx.GetConfig()
+		if err != nil {
+			return err
+		}
 
 		currChainCfg, ok := chainconfig.GetChainConfig(cfg.ChainInfo.ChainId)
 		if !ok {
@@ -161,12 +243,19 @@ Example: btfs stake unlock <amount>
 		}
 
 		pk, err := ethCrypto.ToECDSA(pkOri[4:])
+		if err != nil {
+			return err
+		}
 		opts, err := bind.NewKeyedTransactorWithChainID(pk, big.NewInt(cfg.ChainInfo.ChainId))
 		if err != nil {
 			return err
 		}
 
-		tx, err := sc.Unstake(opts, unlockAmount)
+		ua, ok := new(big.Int).SetString(unlockAmount, 10)
+		if !ok {
+			return fmt.Errorf("invalid amount")
+		}
+		tx, err := sc.Unstake(opts, ua)
 		if err != nil {
 			return err
 		}
@@ -217,6 +306,9 @@ Example: btfs stake withdraw
 		}
 
 		pk, err := ethCrypto.ToECDSA(pkOri[4:])
+		if err != nil {
+			return err
+		}
 		opts, err := bind.NewKeyedTransactorWithChainID(pk, big.NewInt(cfg.ChainInfo.ChainId))
 		if err != nil {
 			return err
@@ -248,21 +340,33 @@ type StakeGlobalInfo struct {
 
 var queryCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Query stake info by address",
+		Tagline: "Query stake info",
 		ShortDescription: `
-Query stake info by address.
-Example: btfs stake query <address>
+Query stake information in different modes:
+- total: query global stake statistics
+- self: query your own stake info
+- address: query stake info for specific address
+
+Examples:
+  btfs stake query                     # query total stats
+  btfs stake query --mode self         # query your own stake
+  btfs stake query --mode address --address <address>  # query specific address
 `,
 	},
 	Options: []cmds.Option{
-		cmds.StringOption("address", "a", "address you want to query").WithDefault("ALL"),
+		cmds.StringOption(modOptionName, "m", "query mode: total/self/address").WithDefault("total"),
+		cmds.StringOption(addressOptionName, "a", "address to query (required when mode is 'address')"),
 	},
 
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		address := req.Options["address"].(string)
+		mode := req.Options[modOptionName].(string)
+		address, _ := req.Options[addressOptionName].(string)
 
 		cctx := env.(*oldcmds.Context)
 		cfg, err := cctx.GetConfig()
+		if err != nil {
+			return err
+		}
 
 		currChainCfg, ok := chainconfig.GetChainConfig(cfg.ChainInfo.ChainId)
 		if !ok {
@@ -284,29 +388,67 @@ Example: btfs stake query <address>
 			return err
 		}
 
-		if address == "ALL" {
+		switch mode {
+		case "total":
 			tx, err := sc.GetGlobalStats(nil)
 			if err != nil {
 				return err
 			}
 			return res.Emit(&StakeGlobalInfo{
-				TotalStaked:   tx.TotalStaked.String(),
-				TotalUnlocked: tx.TotalUnlocked.String(),
-				Balance:       tx.ContractBalance.String(),
+				TotalStaked:   convertWei2BTT(tx.TotalStaked.String()),
+				TotalUnlocked: convertWei2BTT(tx.TotalUnlocked.String()),
+				Balance:       convertWei2BTT(tx.ContractBalance.String()),
 			})
+		case "self":
+			pkOri, err := base64.StdEncoding.DecodeString(cfg.Identity.PrivKey)
+			if err != nil {
+				return err
+			}
+			pk, err := ethCrypto.ToECDSA(pkOri[4:])
+			if err != nil {
+				return err
+			}
+
+			nodeAddress := ethCrypto.PubkeyToAddress(pk.PublicKey)
+			tx, err := sc.GetUserStake(nil, nodeAddress)
+			if err != nil {
+				return err
+			}
+			return res.Emit(&StakeInfo{
+				Amount:       convertWei2BTT(tx.StakedAmount.String()),
+				UnlockAmount: convertWei2BTT(tx.UnlockedAmount.String()),
+				UnlockTime:   time.Unix(tx.UnlockTime.Int64(), 0).Format(time.RFC3339),
+			})
+		case "address":
+			if address == "" {
+				return fmt.Errorf("address is required when mode is 'address'")
+			}
+			// Convert ETH address to TRON address if needed
+			var queryAddr common.Address
+			if strings.HasPrefix(address, "T") {
+				// Convert TRON address to ETH address
+				decoded, err := base58.Decode(address)
+				if err != nil || len(decoded) < 21 {
+					return fmt.Errorf("invalid TRON address: %s", address)
+				}
+				// Remove TRON address version prefix (0x41) and take the next 20 bytes
+				queryAddr = common.BytesToAddress(decoded[1:21])
+			} else {
+				queryAddr = common.HexToAddress(address)
+			}
+
+			tx, err := sc.GetUserStake(nil, queryAddr)
+			if err != nil {
+				return err
+			}
+			return res.Emit(&StakeInfo{
+				Amount:       convertWei2BTT(tx.StakedAmount.String()),
+				UnlockAmount: convertWei2BTT(tx.UnlockedAmount.String()),
+				UnlockTime:   time.Unix(tx.UnlockTime.Int64(), 0).Format(time.RFC3339),
+			})
+		default:
+			return fmt.Errorf("invalid mode: %s", mode)
 		}
-
-		tx, err := sc.GetUserStake(nil, common.HexToAddress(address))
-		if err != nil {
-			return err
-		}
-
-		return res.Emit(&StakeInfo{
-			Amount:       tx.StakedAmount.String(),
-			UnlockAmount: tx.UnlockedAmount.String(),
-			UnlockTime:   time.Unix(tx.UnlockTime.Int64(), 0).Format(time.RFC3339),
-		})
-
 	},
 	Type: StakeInfo{},
 }
@@ -332,4 +474,84 @@ func convertToWei(amount string, unit string) (string, error) {
 	}
 
 	return fmt.Sprintf("%s%s", amount, suffix), nil
+}
+
+func convert2BTT(amount string, unit string) (string, error) {
+	amountInWei, err := convertToWei(amount, unit)
+	if err != nil {
+		return "", err
+	}
+
+	return convertWei2BTT(amountInWei), nil
+}
+
+func parseAmount(amount, unit string) (*big.Int, error) {
+	amount, err := convertToWei(amount, unit)
+	if err != nil {
+		return big.NewInt(0), err
+	}
+
+	am, ok := new(big.Int).SetString(strings.Replace(amount, ",", "", -1), 10)
+	if !ok {
+		return big.NewInt(0), fmt.Errorf("invalid amount: %s", amount)
+	}
+	return am, nil
+}
+
+func formatWithCommas(s string) string {
+	n := len(s)
+	if n <= 3 {
+		return s
+	}
+
+	var result []byte
+	for i := 0; i < n; i++ {
+		if i > 0 && (n-i)%3 == 0 {
+			result = append(result, ',')
+		}
+		result = append(result, s[i])
+	}
+	return string(result)
+}
+
+func convertWei2BTT(amount string) string {
+	am, ok := new(big.Int).SetString(strings.Replace(amount, ",", "", -1), 10)
+	if !ok {
+		return "0"
+	}
+
+	a := new(big.Float).Quo(
+		new(big.Float).SetInt(am),
+		new(big.Float).SetFloat64(1e18),
+	)
+	return formatWithCommas(a.Text('f', 0))
+}
+
+type DurationUnit struct {
+	seconds int64
+	name    string
+}
+
+var durationUnits = []DurationUnit{
+	{2592000, "m"},
+	{86400, "d"},
+	{3600, "h"},
+	{60, "m"},
+	{1, "s"},
+}
+
+func parseUnlockDuration(duration big.Int) (string, error) {
+	if duration.Cmp(big.NewInt(0)) == 0 {
+		return "0 s", nil
+	}
+
+	for _, unit := range durationUnits {
+		threshold := big.NewInt(unit.seconds)
+		if duration.Cmp(threshold) >= 0 {
+			result := new(big.Int).Div(new(big.Int).Set(&duration), threshold)
+			return fmt.Sprintf("%d %s", result.Int64(), unit.name), nil
+		}
+	}
+
+	return fmt.Sprintf("%d s", duration.Int64()), nil
 }
