@@ -375,6 +375,7 @@ func TestCommands(t *testing.T) {
 		"/stake/unlock",
 		"/stake/withdraw",
 		"/stake/query",
+		"/stake/info",
 	}
 
 	cmdSet := make(map[string]struct{})
