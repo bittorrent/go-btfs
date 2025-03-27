@@ -10,7 +10,7 @@ require (
 	github.com/bittorrent/go-btfs-chunker v0.4.0
 	github.com/bittorrent/go-btfs-cmds v0.3.0
 	github.com/bittorrent/go-btfs-common v0.9.1-0.20240823025041-824b78e1c643
-	github.com/bittorrent/go-btfs-config v0.13.4-0.20250317074527-15b32c94e25a
+	github.com/bittorrent/go-btfs-config v0.13.4
 	github.com/bittorrent/go-btfs-files v0.3.2
 	github.com/bittorrent/go-btns v0.2.0
 	github.com/bittorrent/go-common/v2 v2.4.0
