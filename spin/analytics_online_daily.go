@@ -139,7 +139,6 @@ func (dc *dcWrap) collectionAgentOnlineDaily(node *core.IpfsNode) {
 			continue
 		}
 
-		// 修改为每周上报一次，距离上次上报时间超过7天
 		if now.Sub(report.LastReportTime) > 7*24*time.Hour {
 			fmt.Printf("every week, SendOnlineDaily, time:%+v\n", time.Now().String())
 			dc.SendOnlineDaily(node, cfg)
