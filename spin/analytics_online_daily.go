@@ -139,13 +139,9 @@ func (dc *dcWrap) collectionAgentOnlineDaily(node *core.IpfsNode) {
 			continue
 		}
 
-		nowMod := now.Unix() % 86400
-		// report only 1 hour every, and must after 10 hour.
-		if nowMod > report.EveryDaySeconds &&
-			nowMod < report.EveryDaySeconds+3600*2 &&
-			now.Sub(report.LastReportTime) > 10*time.Hour {
-
-			fmt.Printf("every day, SendOnlineDaily, time:%+v\n", time.Now().String())
+		// 修改为每周上报一次，距离上次上报时间超过7天
+		if now.Sub(report.LastReportTime) > 7*24*time.Hour {
+			fmt.Printf("every week, SendOnlineDaily, time:%+v\n", time.Now().String())
 			dc.SendOnlineDaily(node, cfg)
 		}
 	}
