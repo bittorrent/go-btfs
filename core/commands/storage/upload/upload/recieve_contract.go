@@ -2,8 +2,10 @@ package upload
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
+	"github.com/bittorrent/go-btfs/protos/metadata"
 	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -11,7 +13,6 @@ import (
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
-	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
 
 	"github.com/gogo/protobuf/proto"
 )
@@ -33,6 +34,7 @@ var StorageUploadRecvContractCmd = &cmds.Command{
 			return err
 		}
 
+		// TODO 这里可能要调整部分参数
 		contractId, err := doRecv(req, env)
 		if contractId != "" {
 			if ch, ok := ShardErrChanMap.Get(contractId); ok {
@@ -49,6 +51,12 @@ var StorageUploadRecvContractCmd = &cmds.Command{
 }
 
 func doRecv(req *cmds.Request, env cmds.Environment) (contractId string, err error) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			fmt.Println("----------------", err)
+		}
+	}()
 	ssID := req.Arguments[0]
 	ctxParams, err := helper.ExtractContextParams(req, env)
 	if err != nil {
@@ -67,24 +75,28 @@ func doRecv(req *cmds.Request, env cmds.Environment) (contractId string, err err
 	//escrowContractBytes := []byte(req.Arguments[3])
 	escrowContractBytes := []byte{}
 	guardContractBytes := []byte(req.Arguments[4])
-	guardContract := new(guardpb.Contract)
+	guardContract := new(metadata.Agreement)
 	err = proto.Unmarshal(guardContractBytes, guardContract)
 	if err != nil {
 		return
 	}
-	bytes, err := proto.Marshal(&guardContract.ContractMeta)
+	bytes, err := proto.Marshal(guardContract.Meta)
 	if err != nil {
 		return
 	}
-	valid, err := rpk.Verify(bytes, guardContract.HostSignature)
+	// 验证签名
+	valid, err := rpk.Verify(bytes, guardContract.SpSignature)
 	if err != nil {
 		return
 	}
-	if !valid || guardContract.ContractMeta.GetHostPid() != requestPid.String() {
+	fmt.Println("receive contract valid: ", valid)
+	fmt.Println("receive contract host pid: ", guardContract.Meta.GetSpId())
+	fmt.Println("receive contract remote peer id: ", requestPid.String())
+	if !valid || guardContract.Meta.GetSpId() != requestPid.String() {
 		err = errors.New("invalid guard contract bytes")
 		return
 	}
-	contractId = guardContract.ContractMeta.ContractId
+	contractId = guardContract.Meta.AgreementId
 
 	shardHash := req.Arguments[1]
 	index, err := strconv.Atoi(req.Arguments[2])

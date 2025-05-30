@@ -167,7 +167,6 @@ var rootSubcommands = map[string]*cmds.Command{
 	"rm":         RmCmd,
 	"storage":    storage.StorageCmd,
 	"metadata":   MetadataCmd,
-	"guard":      GuardCmd,
 	"cheque":     cheque.ChequeCmd,
 	"vault":      vault.VaultCmd,
 	"bttc":       bttc.BttcCmd,
@@ -254,7 +253,7 @@ var rootRemoteSubcommands = map[string]*cmds.Command{
 			},
 			"dcrepair": {
 				Subcommands: map[string]*cmds.Command{
-					"response": upload.HostRepairResponseCmd,
+					// "response": upload.HostRepairResponseCmd,
 				},
 			},
 		},

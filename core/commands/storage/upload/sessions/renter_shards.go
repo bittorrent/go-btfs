@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bittorrent/go-btfs/protos/metadata"
 	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
@@ -29,6 +30,8 @@ const (
 	renterShardStatusKey         = renterShardKey + "status"
 	renterShardContractsKey      = renterShardKey + "contracts"
 	renterShardAdditionalInfoKey = renterShardKey + "additional-info"
+
+	creatorShardAgreementKey = "/btfs/%s/creator/shard-agreements/%s"
 
 	rshInitStatus      = "init"
 	rshContractStatus  = "contract"
@@ -89,7 +92,7 @@ func (rs *RenterShard) enterState(e *fsm.Event) {
 	log.Infof("shard: %s:%s enter status: %s", rs.ssId, rs.hash, e.Dst)
 	switch e.Dst {
 	case rshContractStatus:
-		rs.doContract(e.Args[0].([]byte), e.Args[1].(*guardpb.Contract))
+		rs.doContract(e.Args[0].([]byte), e.Args[1].(*metadata.Agreement))
 	}
 }
 
@@ -128,34 +131,31 @@ func extractSessionIDFromContractID(contractID string) (string, error) {
 	return ids[0], nil
 }
 
-func (rs *RenterShard) doContract(signedEscrowContract []byte, signedGuardContract *guardpb.Contract) error {
+func (rs *RenterShard) doContract(signedEscrowContract []byte, signedGuardContract *metadata.Agreement) error {
 	status := &shardpb.Status{
 		Status: rshContractStatus,
-	}
-	signedContracts := &shardpb.SignedContracts{
-		SignedEscrowContract: signedEscrowContract,
-		SignedGuardContract:  signedGuardContract,
 	}
 	shardId := GetShardId(rs.ssId, rs.hash, rs.index)
 	return Batch(rs.ds, []string{
 		fmt.Sprintf(renterShardStatusKey, rs.peerId, shardId),
 		fmt.Sprintf(renterShardContractsKey, rs.peerId, shardId),
 	}, []proto.Message{
-		status, signedContracts,
+		status, signedGuardContract,
 	})
 }
 
-func (rs *RenterShard) Contract(signedEscrowContract []byte, signedGuardContract *guardpb.Contract) error {
+func (rs *RenterShard) Contract(signedEscrowContract []byte, signedGuardContract *metadata.Agreement) error {
 	return rs.fsm.Event(rshToContractEvent, signedEscrowContract, signedGuardContract)
 }
 
-func (rs *RenterShard) Contracts() (*shardpb.SignedContracts, error) {
-	contracts := &shardpb.SignedContracts{}
-	err := Get(rs.ds, fmt.Sprintf(renterShardContractsKey, rs.peerId, GetShardId(rs.ssId, rs.hash, rs.index)), contracts)
+// 根据shardId获取RenterShard实例
+func (rs *RenterShard) Contracts() (*metadata.Agreement, error) {
+	agreement := &metadata.Agreement{}
+	err := Get(rs.ds, fmt.Sprintf(renterShardContractsKey, rs.peerId, GetShardId(rs.ssId, rs.hash, rs.index)), agreement)
 	if err == datastore.ErrNotFound {
-		return contracts, nil
+		return agreement, nil
 	}
-	return contracts, err
+	return agreement, err
 }
 
 func ListShardsContracts(d datastore.Datastore, peerId string, role string) ([]*shardpb.SignedContracts, error) {

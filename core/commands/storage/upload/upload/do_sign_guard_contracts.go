@@ -7,6 +7,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
+	"github.com/bittorrent/go-btfs/protos/metadata"
 
 	"github.com/bittorrent/go-btfs-common/crypto"
 	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
@@ -42,6 +43,7 @@ func RenterSignGuardContract(rss *sessions.RenterSession, params *ContractParams
 	if err != nil {
 		return nil, err
 	}
+	// 对这个进行签名
 	gm := &guardpb.ContractMeta{
 		ContractId:    params.ContractId,
 		RenterPid:     params.RenterPid,
@@ -114,4 +116,48 @@ func getGuardAndEscrowPid(configuration *config.Config) (peer.ID, peer.ID, error
 		return "", "", err
 	}
 	return guardPid, escrowPid, err
+}
+
+// 对Agreement进行签名
+func GetCreatorAgreement(
+	rss *sessions.RenterSession,
+	agreementMeta *metadata.AgreementMeta,
+	offlineSigning bool,
+	rp *RepairParams,
+	token string) ([]byte, error) {
+	agreement := &metadata.Agreement{
+		Meta: agreementMeta,
+	}
+	if rp != nil {
+		agreement.Status = metadata.Agreement_INIT
+		// agreement.RentStart = rp.RenterStart
+		// agreement.RentEnd = rp.RenterEnd
+	}
+
+	// agreement.RenterPid = params.RenterPid
+	// agreement.PreparerPid = params.RenterPid
+
+	bc := make(chan []byte)
+	shardId := sessions.GetShardId(rss.SsId, agreementMeta.ShardHash, int(agreementMeta.ShardIndex))
+	uh.GuardChanMaps.Set(shardId, bc)
+	bytes, err := proto.Marshal(agreement)
+	if err != nil {
+		return nil, err
+	}
+	uh.GuardContractMaps.Set(shardId, bytes)
+	if !offlineSigning {
+		go func() {
+			sign, err := crypto.Sign(rss.CtxParams.N.PrivateKey, agreementMeta)
+			if err != nil {
+				_ = rss.To(sessions.RssToErrorEvent, err)
+				return
+			}
+			bc <- sign
+		}()
+	}
+	signedBytes := <-bc
+	uh.GuardChanMaps.Remove(shardId)
+	uh.GuardContractMaps.Remove(shardId)
+	agreement.CreatorSignature = signedBytes
+	return proto.Marshal(agreement)
 }

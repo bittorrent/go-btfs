@@ -56,13 +56,14 @@ type ChainInfo struct {
 }
 
 type SettleInfo struct {
-	Factory        vault.Factory
-	VaultService   vault.Service
-	ChequeStore    vault.ChequeStore
-	CashoutService vault.CashoutService
-	SwapService    *swap.Service
-	OracleService  priceoracle.Service
-	BttcService    bttc.Service
+	Factory         vault.Factory
+	VaultService    vault.Service
+	ChequeStore     vault.ChequeStore
+	CashoutService  vault.CashoutService
+	SwapService     *swap.Service
+	OracleService   priceoracle.Service
+	BttcService     bttc.Service
+	FileMetaService vault.FileMeta
 }
 
 // InitChain will initialize the Ethereum backend at the given endpoint and
@@ -148,7 +149,7 @@ func InitSettlement(
 	deployGasPrice string,
 	chainID int64,
 ) (*SettleInfo, error) {
-	//InitVaultFactory
+	// InitVaultFactory
 	factory, err := initVaultFactory(chaininfo.Backend, chaininfo.ChainID, chaininfo.TransactionService,
 		chaininfo.Chainconfig.CurrentFactory.String())
 
@@ -172,7 +173,7 @@ func InitSettlement(
 	// init bttc service
 	bttcService := bttc.New(chaininfo.TransactionService, erc20Service, mpErc20Service)
 
-	//initChequeStoreCashout
+	// initChequeStoreCashout
 	chequeStore, cashoutService := initChequeStoreCashout(
 		stateStore,
 		chaininfo.Backend,
@@ -182,14 +183,14 @@ func InitSettlement(
 		chaininfo.TransactionService,
 	)
 
-	//new accounting
+	// new accounting
 	accounting, err := accounting.NewAccounting(stateStore)
 
 	if err != nil {
 		return nil, errors.New("new accounting service error")
 	}
 
-	//InitVaultService
+	// InitVaultService
 	vaultService, err := initVaultService(
 		ctx,
 		stateStore,
@@ -211,7 +212,7 @@ func InitSettlement(
 		return nil, fmt.Errorf("init vault service: %w", err)
 	}
 
-	//InitSwap
+	// InitSwap
 	swapService, priceOracleService, err := initSwap(
 		stateStore,
 		chaininfo.OverlayAddress,
@@ -230,17 +231,38 @@ func InitSettlement(
 
 	accounting.SetPayFunc(swapService.Pay)
 
+	fileMeta, err := initFileMeta(chaininfo.Backend, chaininfo.Signer, chainID, chaininfo.Chainconfig.FileMeta2Address.String())
+	if err != nil {
+		return nil, fmt.Errorf("init file meta service error: %v", err)
+	}
+
 	SettleObject = SettleInfo{
-		Factory:        factory,
-		VaultService:   vaultService,
-		ChequeStore:    chequeStore,
-		CashoutService: cashoutService,
-		SwapService:    swapService,
-		OracleService:  priceOracleService,
-		BttcService:    bttcService,
+		Factory:         factory,
+		VaultService:    vaultService,
+		ChequeStore:     chequeStore,
+		CashoutService:  cashoutService,
+		SwapService:     swapService,
+		OracleService:   priceOracleService,
+		BttcService:     bttcService,
+		FileMetaService: fileMeta,
 	}
 
 	return &SettleObject, nil
+}
+
+func initFileMeta(
+	backend transaction.Backend,
+	singer crypto.Signer,
+	chainId int64,
+	fileMeatAddress string) (vault.FileMeta, error) {
+
+	if fileMeatAddress == "" {
+		return nil, errors.New("none factory address for chain id")
+	} else if !common.IsHexAddress(fileMeatAddress) {
+		return nil, errors.New("malformed factory address")
+	}
+
+	return vault.NewFileMetaService(common.HexToAddress(fileMeatAddress), backend, singer, big.NewInt(chainId)), nil
 }
 
 // InitVaultFactory will initialize the vault factory with the given

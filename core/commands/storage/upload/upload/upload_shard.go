@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/protos/metadata"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -37,7 +38,10 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 		return err
 	}
 
+	// 正常只有一个，如果是使用了reed-solomon-4-2-1048576算法就可能是多个了
+	// 如果是指定了副本数量的话也是多个, 但是每个都一样的
 	for index, shardHash := range rss.ShardHashes {
+		// 每个shard使用一个协程去处理
 		go func(i int, h string) {
 			err := backoff.Retry(func() error {
 				select {
@@ -65,6 +69,7 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 				//token: check host tokens
 				{
 					ctx, _ := context.WithTimeout(rss.Ctx, 60*time.Second)
+					// TODO sp节点需要支持这个
 					output, err := remote.P2PCall(ctx, rss.CtxParams.N, rss.CtxParams.Api, hostPid, "/storage/upload/supporttokens")
 					if err != nil {
 						fmt.Printf("uploadShard, remote.P2PCall(supporttokens) timeout, hostPid = %v, will try again. \n", hostPid)
@@ -88,28 +93,35 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 					}
 				}
 
-				// TotalPay
-				contractId := helper.NewContractID(rss.SsId)
+				agreementID := helper.NewAgreementID(rss.SsId)
 				cb := make(chan error)
-				ShardErrChanMap.Set(contractId, cb)
+				ShardErrChanMap.Set(agreementID, cb)
 
 				errChan := make(chan error, 2)
-				var guardContractBytes []byte
+				var agreementBytes []byte
+
+				// 对shard进行签名
 				go func() {
 					tmp := func() error {
-						guardContractBytes, err = RenterSignGuardContract(rss, &ContractParams{
-							ContractId:    contractId,
-							RenterPid:     renterId.String(),
-							HostPid:       host,
-							ShardIndex:    int32(i),
-							ShardHash:     h,
-							ShardSize:     shardSize,
-							FileHash:      rss.Hash,
-							StartTime:     time.Now(),
-							StorageLength: int64(storageLength),
-							Price:         price,
-							TotalPay:      expectOnePay,
-						}, offlineSigning, rp, token.String())
+						agreementBytes, err = GetCreatorAgreement(
+							rss,
+							&metadata.AgreementMeta{
+								AgreementId:  agreementID,
+								CreatorId:    renterId.String(),
+								SpId:         host,
+								ShardIndex:   uint64(i),
+								ShardHash:    h,
+								ShardSize:    uint64(shardSize),
+								Token:        token.String(),
+								StorageStart: uint64(time.Now().Unix()),
+								StorageEnd:   uint64(time.Now().Add(time.Duration(storageLength) * time.Second).Unix()),
+								Price:        uint64(price),
+								Amount:       uint64(expectOnePay),
+							},
+							offlineSigning,
+							rp,
+							token.String(),
+						)
 						if err != nil {
 							log.Errorf("shard %s signs guard_contract error: %s", h, err.Error())
 							return err
@@ -118,6 +130,7 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 					}()
 					errChan <- tmp
 				}()
+
 				c := 0
 				for err := range errChan {
 					c++
@@ -129,15 +142,17 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 					}
 				}
 
+				// 发送合同 给 host
 				go func() {
 					ctx, _ := context.WithTimeout(rss.Ctx, 10*time.Second)
+					// TODO 这里调用SP的init接口，SP需要调整
 					_, err := remote.P2PCall(ctx, rss.CtxParams.N, rss.CtxParams.Api, hostPid, "/storage/upload/init",
 						rss.SsId,
 						rss.Hash,
 						h,
 						price,
 						nil,
-						guardContractBytes,
+						agreementBytes,
 						storageLength,
 						shardSize,
 						i,
@@ -151,7 +166,7 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 				tick := time.Tick(30 * time.Second)
 				select {
 				case err = <-cb:
-					ShardErrChanMap.Remove(contractId)
+					ShardErrChanMap.Remove(agreementID)
 					return err
 				case <-tick:
 					return errors.New("host timeout")

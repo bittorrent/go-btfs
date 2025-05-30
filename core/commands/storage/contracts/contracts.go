@@ -509,6 +509,7 @@ func GetUpdatedGuardContractsForRenter(ctx context.Context, n *core.IpfsNode,
 					return err
 				}
 				req.Signature = signedReq
+				// TODO 修改该接口为调用合约 GetFileMeta
 				meta, err := client.CheckFileStoreMeta(ctx, req)
 				if err != nil {
 					return err

@@ -7,9 +7,9 @@ import (
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/protos/metadata"
 	shardpb "github.com/bittorrent/go-btfs/protos/shard"
 
-	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
 	"github.com/bittorrent/protobuf/proto"
 
 	"github.com/ipfs/go-datastore"
@@ -101,7 +101,7 @@ func (hs *HostShard) enterState(e *fsm.Event) {
 	log.Infof("shard: %s enter status: %s\n", hs.contractId, e.Dst)
 	switch e.Dst {
 	case hshContractStatus:
-		hs.doContract(e.Args[0].([]byte), e.Args[1].(*guardpb.Contract))
+		hs.doContract(e.Args[0].([]byte), e.Args[1].(*metadata.Agreement))
 	}
 }
 
@@ -121,23 +121,19 @@ func (hs *HostShard) status() (*shardpb.Status, error) {
 	return status, nil
 }
 
-func (hs *HostShard) doContract(signedEscrowContract []byte, signedGuardContract *guardpb.Contract) error {
+func (hs *HostShard) doContract(signedEscrowContract []byte, signedGuardContract *metadata.Agreement) error {
 	status := &shardpb.Status{
 		Status: hshContractStatus,
-	}
-	signedContracts := &shardpb.SignedContracts{
-		SignedEscrowContract: signedEscrowContract,
-		SignedGuardContract:  signedGuardContract,
 	}
 	return Batch(hs.ds, []string{
 		fmt.Sprintf(hostShardStatusKey, hs.peerId, hs.contractId),
 		fmt.Sprintf(hostShardContractsKey, hs.peerId, hs.contractId),
 	}, []proto.Message{
-		status, signedContracts,
+		status, signedGuardContract,
 	})
 }
 
-func (hs *HostShard) Contract(signedEscrowContract []byte, signedGuardContract *guardpb.Contract) error {
+func (hs *HostShard) Contract(signedEscrowContract []byte, signedGuardContract *metadata.Agreement) error {
 	return hs.fsm.Event(hshToContractEvent, signedEscrowContract, signedGuardContract)
 }
 

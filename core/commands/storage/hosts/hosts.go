@@ -3,6 +3,7 @@ package hosts
 import (
 	"context"
 	"fmt"
+
 	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core"
@@ -70,7 +71,7 @@ Mode options include:` + hub.AllModeHelpText,
 			return err
 		}
 
-		nodes, err := helper.GetHostsFromDatastore(req.Context, n, mode, 0)
+		nodes, err := helper.GetSPsFromDatastore(req.Context, n, mode, 0)
 		if err != nil {
 			return err
 		}
@@ -125,6 +126,7 @@ Mode options include:` + hub.AllModeHelpText,
 }
 
 func SyncHosts(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb.Host, error) {
+	// TODO 调整这里， 调整为获取SP节点
 	nodes, err := hub.QueryHosts(ctx, node, mode)
 	if err != nil {
 		return nil, err

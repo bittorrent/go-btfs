@@ -3,10 +3,11 @@ package upload
 import (
 	"context"
 	"errors"
-	"github.com/bittorrent/go-btfs/chain/tokencfg"
-	"github.com/bittorrent/go-btfs/utils"
 	"strings"
 	"time"
+
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -20,6 +21,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
+// TODO repair相关的命令要不要删除掉，这个是在guard服务里通过定时任务调用的
 var StorageUploadRepairCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Repair specific shards of a file.",
@@ -59,6 +61,7 @@ This command repairs the given shards of a file.`,
 		var meta *guardpb.FileStoreStatus
 		err = grpc.GuardClient(ctxParams.Cfg.Services.GuardDomain).WithContext(ctx, func(ctx context.Context,
 			client guardpb.GuardServiceClient) error {
+			// TODO 调整为调用合约
 			meta, err = client.CheckFileStoreMeta(ctx, metaReq)
 			if err != nil {
 				return err

@@ -133,6 +133,10 @@ func (c *clefSigner) EthereumAddress() (common.Address, error) {
 	return c.account.Address, nil
 }
 
+func (c *clefSigner) PrivKey() *ecdsa.PrivateKey {
+	panic("not implemented")
+}
+
 // SignTypedData signs data according to eip712.
 func (c *clefSigner) SignTypedData(typedData *eip712.TypedData) ([]byte, error) {
 	var sig hexutil.Bytes

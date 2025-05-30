@@ -109,6 +109,7 @@ Use status command to check for completion:
 		cmds.IntOption(storageLengthOptionName, "len", "File storage period on hosts in days.").WithDefault(defaultStorageLength),
 		cmds.BoolOption(customizedPayoutOptionName, "Enable file storage customized payout schedule.").WithDefault(false),
 		cmds.IntOption(customizedPayoutPeriodOptionName, "Period of customized payout schedule.").WithDefault(1),
+		// TODO 副本数需要设置一个最大值，最大值为SP的个数
 		cmds.IntOption(copyName, "copy num of file hash.").WithDefault(0),
 		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 	},
@@ -170,7 +171,14 @@ Use status command to check for completion:
 		fmt.Println("token =", token, tokenStr)
 
 		fileHash := req.Arguments[0]
+		// reed-solomon编码的文件
 		shardHashes, fileSize, shardSize, err = helper.GetShardHashes(ctxParams, fileHash)
+
+		fmt.Println("shardHashes:", shardHashes, "fileSize:", fileSize, "shardSize:", shardSize, "err:", err)
+
+		// 没有使用reed-solomon编码的文件
+		// 没有进行 shard，只有一个 shardHash和fileHash为同一个值
+		// copy表示使用的副本数
 		if len(shardHashes) == 0 && fileSize == -1 && shardSize == -1 &&
 			strings.HasPrefix(err.Error(), "invalid hash: file must be reed-solomon encoded") {
 			if copyNum, ok := req.Options[copyName].(int); ok {
@@ -205,6 +213,7 @@ Use status command to check for completion:
 		}
 
 		// sync hosts from hub hosts.
+		// TODO 这里本次要调整
 		if !ctxParams.Cfg.Experimental.HostsSyncEnabled {
 			_ = SyncHosts(ctxParams)
 		}
@@ -221,7 +230,7 @@ Use status command to check for completion:
 				hp = helper.GetCustomizedHostsProvider(ctxParams, hostIDs)
 			}
 		}
-		rss, err := sessions.GetRenterSessionWithToken(ctxParams, ssId, fileHash, shardHashes, token)
+		rss, err := sessions.GetCreatorSessionWithToken(ctxParams, ssId, fileHash, shardHashes, token)
 		if err != nil {
 			return err
 		}
@@ -243,6 +252,9 @@ Use status command to check for completion:
 		for i, _ := range rss.ShardHashes {
 			shardIndexes = append(shardIndexes, i)
 		}
+
+		fmt.Println("upload shard ...........", "shardIndexes:", shardIndexes, "shardHashes:", shardHashes, "fileSize:", fileSize, "shardSize:", shardSize)
+
 		UploadShard(rss, hp, price, token, shardSize, storageLength, offlineSigning, renterId, fileSize, shardIndexes, nil)
 		seRes := &Res{
 			ID: ssId,

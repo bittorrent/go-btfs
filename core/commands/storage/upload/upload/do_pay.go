@@ -2,9 +2,10 @@ package upload
 
 import (
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
@@ -23,13 +24,13 @@ func payInCheque(rss *sessions.RenterSession) error {
 
 		// token: get real amount
 		//realAmount, err := getRealAmount(c.SignedGuardContract.Amount)
-		realAmount, err := getRealAmount(c.SignedGuardContract.Amount, rss.Token)
+		realAmount, err := getRealAmount(int64(c.Meta.Amount), rss.Token)
 		if err != nil {
 			return err
 		}
 
-		host := c.SignedGuardContract.HostPid
-		contractId := c.SignedGuardContract.ContractId
+		host := c.Meta.SpId
+		contractId := c.Meta.AgreementId
 		fmt.Printf("send cheque: paying...  host:%v, amount:%v, contractId:%v, token:%v. \n", host, realAmount.String(), contractId, rss.Token.String())
 
 		err = chain.SettleObject.SwapService.Settle(host, realAmount, contractId, rss.Token)

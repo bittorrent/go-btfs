@@ -3,6 +3,7 @@ package upload
 import (
 	"context"
 	"fmt"
+
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -19,7 +20,7 @@ func Submit(rss *sessions.RenterSession, fileSize int64, offlineSigning bool) er
 	if err != nil {
 		return err
 	}
-	return doGuardAndPay(rss, nil, fileSize, offlineSigning)
+	return doAgreementAndPay(rss, fileSize, offlineSigning)
 }
 
 func prepareAmount(rss *sessions.RenterSession, shardHashes []string) (int64, error) {
@@ -33,7 +34,7 @@ func prepareAmount(rss *sessions.RenterSession, shardHashes []string) (int64, er
 		if err != nil {
 			return 0, err
 		}
-		totalPrice += c.SignedGuardContract.Amount
+		totalPrice += int64(c.Meta.Amount)
 	}
 	return totalPrice, nil
 }
@@ -59,7 +60,7 @@ func checkAvailableBalance(ctx context.Context, amount int64, token common.Addre
 	}
 
 	// token: get available balance of token.
-	//AvailableBalance, err := chain.SettleObject.VaultService.AvailableBalance(ctx, token)
+	// AvailableBalance, err := chain.SettleObject.VaultService.AvailableBalance(ctx, token)
 	AvailableBalance, err := chain.SettleObject.VaultService.AvailableBalance(ctx, token)
 	if err != nil {
 		return err

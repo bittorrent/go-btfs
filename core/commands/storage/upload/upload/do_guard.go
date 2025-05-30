@@ -3,54 +3,54 @@ package upload
 import (
 	"context"
 	"fmt"
-	"time"
 
+	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/guard"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
+	"github.com/bittorrent/go-btfs/protos/metadata"
 	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
 	"github.com/bittorrent/go-btfs-common/crypto"
-	escrowpb "github.com/bittorrent/go-btfs-common/protos/escrow"
 	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
 	cgrpc "github.com/bittorrent/go-btfs-common/utils/grpc"
 	config "github.com/bittorrent/go-btfs-config"
 
 	"github.com/gogo/protobuf/proto"
-	cidlib "github.com/ipfs/go-cid"
 )
 
-func doGuardAndPay(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult, fileSize int64, offlineSigning bool) error {
+func doAgreementAndPay(rss *sessions.RenterSession, fileSize int64, offlineSigning bool) error {
+	// 事件驱动状态机流转
 	if err := rss.To(sessions.RssToGuardEvent); err != nil {
 		return err
 	}
-	cts := make([]*guardpb.Contract, 0)
-	selectedHosts := make([]string, 0)
+
+	as := make([]*metadata.Agreement, 0)
+	selectedSPs := make([]string, 0)
+
 	for i, h := range rss.ShardHashes {
 		shard, err := sessions.GetRenterShard(rss.CtxParams, rss.SsId, h, i)
 		if err != nil {
 			return err
 		}
-		contracts, err := shard.Contracts()
+		// 获取签名了的agreement
+		agreement, err := shard.Contracts()
 		if err != nil {
 			return err
 		}
-		//contracts.SignedGuardContract.EscrowSignature = res.EscrowSignature
-		//contracts.SignedGuardContract.EscrowSignedTime = res.Result.EscrowSignedTime
-		contracts.SignedGuardContract.LastModifyTime = time.Now()
-		contracts.SignedGuardContract.Token = rss.Token.String()
-		cts = append(cts, contracts.SignedGuardContract)
-		selectedHosts = append(selectedHosts, contracts.SignedGuardContract.HostPid)
+		selectedSPs = append(selectedSPs, agreement.Meta.SpId)
+		as = append(as, agreement)
 	}
-	fsStatus, err := NewFileStatus(cts, rss.CtxParams.Cfg, cts[0].ContractMeta.RenterPid, rss.Hash, fileSize)
+	// TODO 数据结构要调整
+	meta, err := NewFileStatus(as, rss.CtxParams.Cfg, as[0].Meta.CreatorId, rss.Hash, fileSize)
 	if err != nil {
 		return err
 	}
-	fsStatus.FileStoreMeta.Token = rss.Token.String()
 	cb := make(chan []byte)
 	uh.FileMetaChanMaps.Set(rss.SsId, cb)
+	// 离线签名
 	if offlineSigning {
-		raw, err := proto.Marshal(&fsStatus.FileStoreMeta)
+		raw, err := proto.Marshal(meta)
 		if err != nil {
 			return err
 		}
@@ -67,7 +67,7 @@ func doGuardAndPay(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult,
 				if err != nil {
 					return nil, err
 				}
-				sig, err := crypto.Sign(payerPrivKey, &fsStatus.FileStoreMeta)
+				sig, err := crypto.Sign(payerPrivKey, meta)
 				if err != nil {
 					return nil, err
 				}
@@ -81,81 +81,46 @@ func doGuardAndPay(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult,
 		}()
 	}
 	signBytes := <-cb
+	fmt.Println("doAgreementAndPay, signBytes: ", signBytes)
 	uh.FileMetaChanMaps.Remove(rss.SsId)
 	if err := rss.To(sessions.RssToGuardFileMetaSignedEvent); err != nil {
 		return err
 	}
-	fsStatus, err = submitFileMetaHelper(rss.Ctx, rss.CtxParams.Cfg, fsStatus, signBytes)
+	// fsStatus.RenterSignature = signBytes
+	err = chain.SettleObject.FileMetaService.AddFileMeta(rss.Hash, meta)
 	if err != nil {
 		return err
 	}
-	qs, err := guard.PrepFileChallengeQuestions(rss, fsStatus, rss.Hash, offlineSigning, fsStatus.RenterPid)
-	if err != nil {
-		return err
-	}
+	// fsStatus, err = submitFileMetaHelper(rss.Ctx, rss.CtxParams.Cfg, fsStatus, signBytes)
+	// if err != nil {
+	// 	return err
+	// }
+	// qs, err := guard.PrepFileChallengeQuestions(rss, fsStatus, rss.Hash, offlineSigning, fsStatus.RenterPid)
+	// if err != nil {
+	// 	return err
+	// }
+	err = rss.To(sessions.RssToGuardQuestionsSignedEvent)
 
-	fcid, err := cidlib.Parse(rss.Hash)
+	// fcid, err := cidlib.Parse(rss.Hash)
 	if err != nil {
 		return err
 	}
-	err = guard.SendChallengeQuestions(rss.Ctx, rss.CtxParams.Cfg, fcid, qs)
-	if err != nil {
-		return fmt.Errorf("failed to send challenge questions to guard: [%v]", err)
-	}
-	return waitUpload(rss, offlineSigning, fsStatus, false)
+	// err = guard.SendChallengeQuestions(rss.Ctx, rss.CtxParams.Cfg, fcid, qs)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to send challenge questions to guard: [%v]", err)
+	// }
+	return waitUpload(rss, offlineSigning, meta, false)
 }
 
-func NewFileStatus(contracts []*guardpb.Contract, configuration *config.Config,
-	renterId string, fileHash string, fileSize int64) (*guardpb.FileStoreStatus, error) {
-	guardPid, escrowPid, err := getGuardAndEscrowPid(configuration)
-	if err != nil {
-		return nil, err
-	}
-	var (
-		rentStart   time.Time
-		rentEnd     time.Time
-		preparerPid = renterId
-		renterPid   = renterId
-		rentalState = guardpb.FileStoreStatus_NEW
-	)
-	if len(contracts) > 0 {
-		rentStart = contracts[0].RentStart
-		rentEnd = contracts[0].RentEnd
-		preparerPid = contracts[0].PreparerPid
-		renterPid = contracts[0].RenterPid
-		if contracts[0].PreparerPid != contracts[0].RenterPid {
-			rentalState = guardpb.FileStoreStatus_PARTIAL_NEW
-		}
-	}
+func NewFileStatus(contracts []*metadata.Agreement, configuration *config.Config,
+	renterId string, fileHash string, fileSize int64) (*metadata.FileMetaInfo, error) {
 
-	fileStoreMeta := guardpb.FileStoreMeta{
-		RenterPid:        renterPid,
-		FileHash:         fileHash,
-		FileSize:         fileSize,
-		RentStart:        rentStart,
-		RentEnd:          rentEnd,
-		CheckFrequency:   0,
-		GuardFee:         0,
-		EscrowFee:        0,
-		ShardCount:       int32(len(contracts)),
-		MinimumShards:    0,
-		RecoverThreshold: 0,
-		EscrowPid:        escrowPid.String(),
-		GuardPid:         guardPid.String(),
-	}
-
-	return &guardpb.FileStoreStatus{
-		FileStoreMeta:     fileStoreMeta,
-		State:             0,
-		Contracts:         contracts,
-		RenterSignature:   nil,
-		GuardReceiveTime:  time.Time{},
-		ChangeLog:         nil,
-		CurrentTime:       time.Now(),
-		GuardSignature:    nil,
-		RentalState:       rentalState,
-		PreparerPid:       preparerPid,
-		PreparerSignature: nil,
+	return &metadata.FileMetaInfo{
+		CreatorId:  renterId,
+		FileHash:   fileHash,
+		FileSize:   uint64(fileSize),
+		ShardCount: uint64(len(contracts)),
+		Agreements: contracts,
 	}, nil
 }
 

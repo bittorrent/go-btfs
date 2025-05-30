@@ -128,7 +128,7 @@ func GetRenterSession(ctxParams *uh.ContextParams, ssId string, hash string, sha
 	return rs, nil
 }
 
-func GetRenterSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash string, shardHashes []string, token common.Address) (*RenterSession,
+func GetCreatorSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash string, shardHashes []string, token common.Address) (*RenterSession,
 	error) {
 	k := fmt.Sprintf(RenterSessionInMemKey, ctxParams.N.Identity.String(), ssId)
 	var rs *RenterSession

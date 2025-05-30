@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	minimumHosts = 30
+	// TODO 这里要调整，修改SP之后，数量没有这么多了
+	minimumHosts = 1
 	failMsg      = "failed to find more valid hosts, please try again later"
 )
 
@@ -113,7 +114,8 @@ func GetHostsProvider(cp *ContextParams, blacklist []string) IHostsProvider {
 }
 
 func (p *HostsProvider) init() (err error) {
-	p.hosts, err = helper.GetHostsFromDatastore(p.cp.Ctx, p.cp.N, p.mode, minimumHosts)
+	// TODO get sp node
+	p.hosts, err = helper.GetSPsFromDatastore(p.cp.Ctx, p.cp.N, p.mode, minimumHosts)
 	if err != nil {
 		return err
 	}
@@ -252,10 +254,10 @@ LOOP:
 				}
 			}
 			id, err := peer.Decode(host.NodeId)
-			//if err != nil || int64(host.StoragePriceAsk) > price {
+			// if err != nil || int64(host.StoragePriceAsk) > price {
 			//	p.needHigherPrice = true
 			//	continue
-			//}
+			// }
 			if err != nil {
 				continue
 			}

@@ -3,8 +3,9 @@ package upload
 import (
 	"context"
 	"fmt"
-	"github.com/bittorrent/go-btfs/utils"
 	"time"
+
+	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
@@ -76,7 +77,7 @@ This command print upload and payment status by the time queried.`,
 			if err != nil {
 				return err
 			}
-			contracts, err := shard.Contracts()
+			// contracts, err := shard.Contracts()
 			if err != nil {
 				return err
 			}
@@ -98,11 +99,11 @@ This command print upload and payment status by the time queried.`,
 				Message:        st.Message,
 				AdditionalInfo: additionalInfo.Info,
 			}
-			if contracts.SignedGuardContract != nil {
-				c.ContractID = contracts.SignedGuardContract.ContractId
-				c.Price = contracts.SignedGuardContract.Price
-				c.Host = contracts.SignedGuardContract.HostPid
-			}
+			// if contracts.SignedGuardContract != nil {
+			// c.ContractID = contracts.SignedGuardContract.ContractId
+			// c.Price = contracts.SignedGuardContract.Price
+			// c.Host = contracts.SignedGuardContract.HostPid
+			// }
 			shards[sessions.GetShardId(ssId, h, i)] = c
 		}
 		if (status.Status == sessions.RssWaitUploadReqSignedStatus || status.Status == sessions.RssCompleteStatus) && !fullyCompleted {
