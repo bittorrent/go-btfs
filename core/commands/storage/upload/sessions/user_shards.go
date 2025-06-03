@@ -34,9 +34,12 @@ const (
 
 	creatorShardAgreementKey = "/btfs/%s/creator/shard-agreements/%s"
 
-	rshInitStatus      = "init"
-	rshContractStatus  = "contract"
-	rshErrorStatus     = "error"
+	// status
+	rshInitStatus     = "init"
+	rshContractStatus = "contract"
+	rshErrorStatus    = "error"
+
+	// event
 	rshToContractEvent = "to-contract"
 )
 
@@ -93,7 +96,7 @@ func (rs *UserShard) enterState(e *fsm.Event) {
 	log.Infof("shard: %s:%s enter status: %s", rs.ssId, rs.hash, e.Dst)
 	switch e.Dst {
 	case rshContractStatus:
-		rs.doContract(e.Args[0].(*metadata.Agreement))
+		rs.saveContract(e.Args[0].(*metadata.Agreement))
 	}
 }
 
@@ -132,7 +135,7 @@ func extractSessionIDFromContractID(contractID string) (string, error) {
 	return ids[0], nil
 }
 
-func (rs *UserShard) doContract(signedGuardContract *metadata.Agreement) error {
+func (rs *UserShard) saveContract(signedGuardContract *metadata.Agreement) error {
 	status := &shardpb.Status{
 		Status: rshContractStatus,
 	}
@@ -145,7 +148,7 @@ func (rs *UserShard) doContract(signedGuardContract *metadata.Agreement) error {
 	})
 }
 
-func (rs *UserShard) Agreement(signedAgreement *metadata.Agreement) error {
+func (rs *UserShard) UpdateToAgreementStatus(signedAgreement *metadata.Agreement) error {
 	return rs.fsm.Event(rshToContractEvent, signedAgreement)
 }
 

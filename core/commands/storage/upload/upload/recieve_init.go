@@ -128,7 +128,7 @@ the shard and replies back to client for the next challenge step.`,
 			return err
 		}
 
-		fmt.Printf("--- upload init: start, shardSize:%v, requestPid:%v, shardIndex:%v . \n",
+		fmt.Printf("upload init: start, shardSize:%v, requestPid:%v, shardIndex:%v . \n",
 			shardSize, requestPid, shardIndex)
 
 		halfSignedAgreementString := req.Arguments[4]
@@ -241,7 +241,7 @@ the shard and replies back to client for the next challenge step.`,
 					return err
 				}
 
-				if err := shard.Contract(signedAgreement); err != nil {
+				if err := shard.UpdateToAgreementStatus(signedAgreement); err != nil {
 					return err
 				}
 

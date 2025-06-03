@@ -105,6 +105,6 @@ func doRecv(req *cmds.Request, env cmds.Environment) (agreementId string, err er
 		return
 	}
 	// ignore error
-	_ = shard.Agreement(agreement)
+	_ = shard.UpdateToAgreementStatus(agreement)
 	return
 }
