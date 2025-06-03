@@ -55,7 +55,7 @@ const (
 	notSupportErr = "only host and renter contract sync are supported currently"
 )
 
-// Storage Contracts
+// Storage Agreements
 //
 // Includes sub-commands: sync, stat, list
 var StorageContractsCmd = &cmds.Command{
@@ -367,7 +367,7 @@ func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env
 	if len(updated) > 0 {
 		// save and retrieve updated signed contracts
 		var stale []string
-		cs, stale, err = sessions.SaveShardsContracts(n.Repo.Datastore(), cs, updated, n.Identity.String(), role)
+		cs, stale, err = sessions.SaveShardsAgreements(n.Repo.Datastore(), cs, updated, n.Identity.String(), role)
 		if err != nil {
 			return err
 		}

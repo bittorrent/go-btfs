@@ -117,7 +117,7 @@ func waitUpload(rss *sessions.RenterSession, offlineSigning bool, fsStatus *meta
 					case metadata.Agreement_COMPLETED:
 						num++
 					}
-					shard, err := sessions.GetRenterShard(rss.CtxParams, rss.SsId, c.Meta.ShardHash, int(c.Meta.ShardIndex))
+					shard, err := sessions.GetUserShard(rss.CtxParams, rss.SsId, c.Meta.ShardHash, int(c.Meta.ShardIndex))
 					if err != nil {
 						return err
 					}

@@ -82,13 +82,13 @@ func (fm *fileMeta) AddFileMeta(cid string, meta *metadata.FileMetaInfo) error {
 		})
 	}
 
-	fmt.Printf("Adding file meta - CID: %s, Metadata size: %d bytes, Agreement count: %d\n",
+	fmt.Printf("Adding file meta - CID: %s, Metadata size: %d bytes, Agreements count: %d\n",
 		cid, len(mb), len(pairs))
 
 	tx, err := fm.FileMetaAbi.AddFileMeta(opts, cid, mb, new(big.Int).SetUint64(meta.FileSize), pairs)
 	if err != nil {
 		fmt.Printf("Failed to add file meta: %v\n", err)
-		fmt.Printf("Contract address: %s\n", fm.contractAddress.Hex())
+		fmt.Printf("Agreements address: %s\n", fm.contractAddress.Hex())
 		fmt.Printf("Gas limit: %d\n", opts.GasLimit)
 		return fmt.Errorf("smart contract execution failed: %w", err)
 	}

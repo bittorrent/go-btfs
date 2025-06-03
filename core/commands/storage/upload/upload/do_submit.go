@@ -26,11 +26,11 @@ func Submit(rss *sessions.RenterSession, fileSize int64, offlineSigning bool) er
 func prepareAmount(rss *sessions.RenterSession, shardHashes []string) (int64, error) {
 	var totalPrice int64
 	for i, hash := range shardHashes {
-		shard, err := sessions.GetRenterShard(rss.CtxParams, rss.SsId, hash, i)
+		shard, err := sessions.GetUserShard(rss.CtxParams, rss.SsId, hash, i)
 		if err != nil {
 			return 0, err
 		}
-		c, err := shard.Contracts()
+		c, err := shard.Agreements()
 		if err != nil {
 			return 0, err
 		}

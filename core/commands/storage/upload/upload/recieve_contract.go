@@ -25,8 +25,7 @@ var StorageUploadRecvContractCmd = &cmds.Command{
 		cmds.StringArg("session-id", true, false, "Session ID which renter uses to storage all shards information."),
 		cmds.StringArg("shard-hash", true, false, "Shard the storage node should fetch."),
 		cmds.StringArg("shard-index", true, false, "Index of shard within the encoding scheme."),
-		cmds.StringArg("escrow-contract", true, false, "Signed Escrow contract."),
-		cmds.StringArg("guard-contract", true, false, "Signed Guard contract."),
+		cmds.StringArg("agreement", true, false, "Signed agreement."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		err := utils.CheckSimpleMode(env)
@@ -34,7 +33,6 @@ var StorageUploadRecvContractCmd = &cmds.Command{
 			return err
 		}
 
-		// TODO 这里可能要调整部分参数
 		contractId, err := doRecv(req, env)
 		if contractId != "" {
 			if ch, ok := ShardErrChanMap.Get(contractId); ok {
@@ -50,11 +48,11 @@ var StorageUploadRecvContractCmd = &cmds.Command{
 	},
 }
 
-func doRecv(req *cmds.Request, env cmds.Environment) (contractId string, err error) {
+func doRecv(req *cmds.Request, env cmds.Environment) (agreementId string, err error) {
 	defer func() {
 		err := recover()
 		if err != nil {
-			fmt.Println("----------------", err)
+			fmt.Println("receive agreement err: ", err)
 		}
 	}()
 	ssID := req.Arguments[0]
@@ -72,42 +70,41 @@ func doRecv(req *cmds.Request, env cmds.Environment) (contractId string, err err
 		return
 	}
 
-	//escrowContractBytes := []byte(req.Arguments[3])
-	escrowContractBytes := []byte{}
-	guardContractBytes := []byte(req.Arguments[4])
-	guardContract := new(metadata.Agreement)
-	err = proto.Unmarshal(guardContractBytes, guardContract)
+	agreementBytes := []byte(req.Arguments[3])
+	agreement := new(metadata.Agreement)
+	err = proto.Unmarshal(agreementBytes, agreement)
 	if err != nil {
 		return
 	}
-	bytes, err := proto.Marshal(guardContract.Meta)
+	bytes, err := proto.Marshal(agreement.Meta)
 	if err != nil {
 		return
 	}
-	// 验证签名
-	valid, err := rpk.Verify(bytes, guardContract.SpSignature)
+
+	valid, err := rpk.Verify(bytes, agreement.SpSignature)
 	if err != nil {
 		return
 	}
+
 	fmt.Println("receive contract valid: ", valid)
-	fmt.Println("receive contract host pid: ", guardContract.Meta.GetSpId())
+	fmt.Println("receive contract host pid: ", agreement.Meta.GetSpId())
 	fmt.Println("receive contract remote peer id: ", requestPid.String())
-	if !valid || guardContract.Meta.GetSpId() != requestPid.String() {
+	if !valid || agreement.Meta.GetSpId() != requestPid.String() {
 		err = errors.New("invalid guard contract bytes")
 		return
 	}
-	contractId = guardContract.Meta.AgreementId
+	agreementId = agreement.Meta.AgreementId
 
 	shardHash := req.Arguments[1]
 	index, err := strconv.Atoi(req.Arguments[2])
 	if err != nil {
 		return
 	}
-	shard, err := sessions.GetRenterShard(ctxParams, ssID, shardHash, index)
+	shard, err := sessions.GetUserShard(ctxParams, ssID, shardHash, index)
 	if err != nil {
 		return
 	}
 	// ignore error
-	_ = shard.Contract(escrowContractBytes, guardContract)
+	_ = shard.Agreement(agreement)
 	return
 }

@@ -2,6 +2,7 @@ package sessions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -24,29 +25,29 @@ const (
 	hostShardStatusKey    = hostShardKey + "status"
 	hostShardContractsKey = hostShardKey + "contracts"
 
-	hshInitStatus     = "init"
-	hshContractStatus = "contract"
-	hshPayStatus      = "paid"
-	hshCompleteStatus = "complete"
-	hshErrorStatus    = "error"
+	hshInitStatus      = "init"
+	hshAgreementStatus = "agreement"
+	hshPayStatus       = "paid"
+	hshCompleteStatus  = "complete"
+	hshErrorStatus     = "error"
 
-	hshToContractEvent = "to-contract"
-	hshToPayEvent      = "to-pay"
-	hshToCompleteEvent = "to-complete"
-	hshToErrorEvent    = "to-error"
+	hshToAgreementEvent = "to-agreement"
+	hshToPayEvent       = "to-pay"
+	hshToCompleteEvent  = "to-complete"
+	hshToErrorEvent     = "to-error"
 )
 
 var (
-	hostShardFsmEvents = fsm.Events{
-		{Name: hshToContractEvent, Src: []string{hshInitStatus}, Dst: hshContractStatus},
-		{Name: hshToPayEvent, Src: []string{hshContractStatus}, Dst: hshPayStatus},
+	spShardFsmEvents = fsm.Events{
+		{Name: hshToAgreementEvent, Src: []string{hshInitStatus}, Dst: hshAgreementStatus},
+		{Name: hshToPayEvent, Src: []string{hshAgreementStatus}, Dst: hshPayStatus},
 		{Name: hshToCompleteEvent, Src: []string{hshPayStatus}, Dst: hshCompleteStatus},
-		{Name: hshToErrorEvent, Src: []string{hshInitStatus, hshContractStatus}, Dst: hshToErrorEvent},
+		{Name: hshToErrorEvent, Src: []string{hshInitStatus, hshAgreementStatus}, Dst: hshToErrorEvent},
 	}
 	hostShardsInMem = cmap.New()
 )
 
-type HostShard struct {
+type SPShard struct {
 	peerId     string
 	contractId string
 	fsm        *fsm.FSM
@@ -57,14 +58,14 @@ type HostShard struct {
 	rate       *big.Int
 }
 
-func GetHostShard(ctxParams *uh.ContextParams, contractId string, inputPrice int64, amount int64, rate *big.Int) (*HostShard, error) {
+func GetSPShard(ctxParams *uh.ContextParams, contractId string, inputPrice int64, amount int64, rate *big.Int) (*SPShard, error) {
 	k := fmt.Sprintf(hostShardsInMemKey, ctxParams.N.Identity.String(), contractId)
-	var hs *HostShard
+	var hs *SPShard
 	if tmp, ok := hostShardsInMem.Get(k); ok {
-		hs = tmp.(*HostShard)
+		hs = tmp.(*SPShard)
 	} else {
 		ctx, _ := helper.NewGoContext(ctxParams.Ctx)
-		hs = &HostShard{
+		hs = &SPShard{
 			peerId:     ctxParams.N.Identity.String(),
 			contractId: contractId,
 			ctx:        ctx,
@@ -80,40 +81,40 @@ func GetHostShard(ctxParams *uh.ContextParams, contractId string, inputPrice int
 		return nil, err
 	}
 	if hs.fsm == nil && status.Status == hshInitStatus {
-		hs.fsm = fsm.NewFSM(status.Status, hostShardFsmEvents, fsm.Callbacks{
+		hs.fsm = fsm.NewFSM(status.Status, spShardFsmEvents, fsm.Callbacks{
 			"enter_state": hs.enterState,
 		})
 	}
 	return hs, nil
 }
 
-func (hs *HostShard) GetInputPrice() int64 {
+func (hs *SPShard) GetInputPrice() int64 {
 	return hs.inputPrice
 }
-func (hs *HostShard) GetInputAmount() int64 {
+func (hs *SPShard) GetInputAmount() int64 {
 	return hs.amount
 }
-func (hs *HostShard) GetInputRate() *big.Int {
+func (hs *SPShard) GetInputRate() *big.Int {
 	return hs.rate
 }
 
-func (hs *HostShard) enterState(e *fsm.Event) {
+func (hs *SPShard) enterState(e *fsm.Event) {
 	log.Infof("shard: %s enter status: %s\n", hs.contractId, e.Dst)
 	switch e.Dst {
-	case hshContractStatus:
-		hs.doContract(e.Args[0].([]byte), e.Args[1].(*metadata.Agreement))
+	case hshAgreementStatus:
+		hs.doContract(e.Args[0].(*metadata.Agreement))
 	}
 }
 
-func (hs *HostShard) status() (*shardpb.Status, error) {
+func (hs *SPShard) status() (*shardpb.Status, error) {
 	status := new(shardpb.Status)
 	k := fmt.Sprintf(hostShardStatusKey, hs.peerId, hs.contractId)
 	err := Get(hs.ds, k, status)
-	if err == datastore.ErrNotFound {
+	if errors.Is(err, datastore.ErrNotFound) {
 		status = &shardpb.Status{
 			Status: hshInitStatus,
 		}
-		//ignore error
+		// ignore error
 		_ = Save(hs.ds, k, status)
 	} else if err != nil {
 		return nil, err
@@ -121,9 +122,9 @@ func (hs *HostShard) status() (*shardpb.Status, error) {
 	return status, nil
 }
 
-func (hs *HostShard) doContract(signedEscrowContract []byte, signedGuardContract *metadata.Agreement) error {
+func (hs *SPShard) doContract(signedGuardContract *metadata.Agreement) error {
 	status := &shardpb.Status{
-		Status: hshContractStatus,
+		Status: hshAgreementStatus,
 	}
 	return Batch(hs.ds, []string{
 		fmt.Sprintf(hostShardStatusKey, hs.peerId, hs.contractId),
@@ -133,29 +134,29 @@ func (hs *HostShard) doContract(signedEscrowContract []byte, signedGuardContract
 	})
 }
 
-func (hs *HostShard) Contract(signedEscrowContract []byte, signedGuardContract *metadata.Agreement) error {
-	return hs.fsm.Event(hshToContractEvent, signedEscrowContract, signedGuardContract)
+func (hs *SPShard) Contract(signedGuardContract *metadata.Agreement) error {
+	return hs.fsm.Event(hshToAgreementEvent, signedGuardContract)
 }
 
-func (hs *HostShard) IsPayStatus() bool {
+func (hs *SPShard) IsPayStatus() bool {
 	fmt.Printf("IsPayStatus Current:%v,  hshPayStatus:%v \n", hs.fsm.Current(), hshPayStatus)
 	return hs.fsm.Current() == hshPayStatus
 }
-func (hs *HostShard) IsContractStatus() bool {
-	fmt.Printf("IsContractStatus Current:%v,  hshContractStatus:%v \n", hs.fsm.Current(), hshContractStatus)
-	return hs.fsm.Current() == hshContractStatus
+func (hs *SPShard) IsContractStatus() bool {
+	fmt.Printf("IsContractStatus Current:%v,  hshAgreementStatus:%v \n", hs.fsm.Current(), hshAgreementStatus)
+	return hs.fsm.Current() == hshAgreementStatus
 }
 
-func (hs *HostShard) ReceivePayCheque() error {
+func (hs *SPShard) ReceivePayCheque() error {
 	fmt.Printf("ReceivePayCheque cur=%+v \n", hs.fsm.Current())
 	return hs.fsm.Event(hshToPayEvent)
 }
 
-func (hs *HostShard) Complete() error {
+func (hs *SPShard) Complete() error {
 	return hs.fsm.Event(hshToCompleteEvent)
 }
 
-func (hs *HostShard) contracts() (*shardpb.SignedContracts, error) {
+func (hs *SPShard) contracts() (*shardpb.SignedContracts, error) {
 	contracts := &shardpb.SignedContracts{}
 	err := Get(hs.ds, fmt.Sprintf(hostShardContractsKey, hs.peerId, hs.contractId), contracts)
 	if err == datastore.ErrNotFound {

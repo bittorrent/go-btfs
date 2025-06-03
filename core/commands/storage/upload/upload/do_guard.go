@@ -26,11 +26,11 @@ func doAgreementAndPay(rss *sessions.RenterSession, fileSize int64, offlineSigni
 
 	as := make([]*metadata.Agreement, 0)
 	for i, h := range rss.ShardHashes {
-		shard, err := sessions.GetRenterShard(rss.CtxParams, rss.SsId, h, i)
+		shard, err := sessions.GetUserShard(rss.CtxParams, rss.SsId, h, i)
 		if err != nil {
 			return err
 		}
-		agreement, err := shard.Contracts()
+		agreement, err := shard.Agreements()
 		if err != nil {
 			return err
 		}

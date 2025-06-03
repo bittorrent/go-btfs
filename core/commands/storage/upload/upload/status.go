@@ -69,7 +69,7 @@ This command print upload and payment status by the time queried.`,
 		status.FileHash = session.Hash
 		fullyCompleted := true
 		for i, h := range session.ShardHashes {
-			shard, err := sessions.GetRenterShard(ctxParams, ssId, h, i)
+			shard, err := sessions.GetUserShard(ctxParams, ssId, h, i)
 			if err != nil {
 				return err
 			}
@@ -77,7 +77,7 @@ This command print upload and payment status by the time queried.`,
 			if err != nil {
 				return err
 			}
-			// contracts, err := shard.Contracts()
+			// contracts, err := shard.Agreements()
 			if err != nil {
 				return err
 			}
@@ -87,7 +87,7 @@ This command print upload and payment status by the time queried.`,
 			}
 			switch additionalInfo.Info {
 			case guardpb.Contract_UPLOADED.String(), guardpb.Contract_CANCELED.String(), guardpb.Contract_CLOSED.String():
-				//NOP
+				// NOP
 			default:
 				fullyCompleted = false
 			}

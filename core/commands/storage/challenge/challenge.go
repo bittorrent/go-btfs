@@ -2,9 +2,10 @@ package challenge
 
 import (
 	"fmt"
-	"github.com/bittorrent/go-btfs/utils"
 	"strconv"
 	"time"
+
+	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
@@ -107,7 +108,7 @@ This command (on host) reads the challenge question and returns the answer to
 the challenge request back to the caller.`,
 	},
 	Arguments: []cmds.Argument{
-		cmds.StringArg("contract-id", true, false, "Contract ID associated with the challenge requests."),
+		cmds.StringArg("contract-id", true, false, "Agreements ID associated with the challenge requests."),
 		cmds.StringArg("file-hash", true, false, "File root multihash for the data stored at this host."),
 		cmds.StringArg("shard-hash", true, false, "Shard multihash for the data stored at this host."),
 		cmds.StringArg("chunk-index", true, false, "Chunk index for this challenge. Chunks available on this host include root + metadata + shard chunks."),

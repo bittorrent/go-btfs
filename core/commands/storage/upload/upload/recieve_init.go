@@ -164,21 +164,16 @@ the shard and replies back to client for the next challenge step.`,
 			return err
 		}
 		s := halfSignedAgreement.GetCreatorSignature()
-		// if s == nil {
-		// s = halfSignedAgreement.GetPreparerSignature()
-		// }
-		// host 验证 renter 签名
 		ok, err = crypto.Verify(payerPubKey, agreementMeta, s)
 		if !ok || err != nil {
 			return fmt.Errorf("can't verify guard contract: %v", err)
 		}
 
-		// 验证完成之后，host进行签名
 		signedAgreement, err := signAgreement(agreementMeta, halfSignedAgreement, ctxParams.N.PrivateKey)
 		if err != nil {
 			return err
 		}
-		signedGuardContractBytes, err := proto.Marshal(signedAgreement)
+		signedAgreementBytes, err := proto.Marshal(signedAgreement)
 		if err != nil {
 			return err
 		}
@@ -231,36 +226,31 @@ the shard and replies back to client for the next challenge step.`,
 
 		go func() {
 			tmp := func() error {
-				shard, err := sessions.GetHostShard(ctxParams, agreementMeta.AgreementId, price, amount, rate)
+				shard, err := sessions.GetSPShard(ctxParams, agreementMeta.AgreementId, price, amount, rate)
 				if err != nil {
 					return err
 				}
 
-				// TODO 调用renter的这个接口，将合同给到renter
-				// 这个接口参数要调整
 				_, err = remote.P2PCall(ctxParams.Ctx, ctxParams.N, ctxParams.Api, requestPid, "/storage/upload/recvcontract",
 					ssId,
 					shardHash,
 					shardIndex,
-					nil,
-					signedGuardContractBytes,
+					signedAgreementBytes,
 				)
 				if err != nil {
 					return err
 				}
 
-				if err := shard.Contract(nil, signedAgreement); err != nil {
+				if err := shard.Contract(signedAgreement); err != nil {
 					return err
 				}
 
 				fileHash := req.Arguments[1]
-				// TODO 这里使用了一个挑战对象，看看要不要处理一下
 				err = downloadShardFromClient(ctxParams, halfSignedAgreement, fileHash, shardHash, false)
 				if err != nil {
 					return err
 				}
 
-				// TODO 这里该替换掉，不用解决挑战问题了，调用合约的接口，修改合同的状态
 				for i := 0; i < 20; i++ {
 					err := chain.SettleObject.FileMetaService.UpdateContractStatus(agreementMeta.AgreementId)
 					if err != nil {
@@ -271,10 +261,6 @@ the shard and replies back to client for the next challenge step.`,
 						break
 					}
 				}
-				// err = challengeShard(ctxParams, fileHash, false, &guardContractMeta)
-				if err != nil {
-					return err
-				}
 
 				fmt.Printf("upload init: send /storage/upload/recvcontract ok, wait for pay status, requestPid:%v, shardIndex:%v. \n",
 					requestPid, shardIndex)
@@ -282,8 +268,6 @@ the shard and replies back to client for the next challenge step.`,
 				blPay := false
 				var wg sync.WaitGroup
 				wg.Add(1)
-				// 阻塞等待10min，看看renter是否支付了，这里是通过判断shard的状态来判断的
-				// 支付状态是renter调用/storage/upload/cheque驱动支付状态流转的
 				go func() {
 					// every 30s check pay status
 					tick := time.Tick(30 * time.Second)
@@ -466,14 +450,14 @@ func signAgreement(meta *metadata.AgreementMeta, cont *metadata.Agreement, privK
 	return cont, err
 }
 
-// func signGuardContractAndMarshal(meta *guardpb.ContractMeta, cont *guardpb.Contract, privKey ic.PrivKey) ([]byte, error) {
+// func signGuardContractAndMarshal(meta *guardpb.ContractMeta, cont *guardpb.Agreements, privKey ic.PrivKey) ([]byte, error) {
 //	signedBytes, err := crypto.Sign(privKey, meta)
 //	if err != nil {
 //		return nil, err
 //	}
 //
 //	if cont == nil {
-//		cont = &guardpb.Contract{
+//		cont = &guardpb.Agreements{
 //			ContractMeta:   *meta,
 //			LastModifyTime: time.Now(),
 //		}
@@ -563,7 +547,6 @@ func downloadShardFromClient(ctxParams *uh.ContextParams, guardContract *metadat
 	err = backoff.Retry(func() error {
 		ctx, cancel := context.WithTimeout(context.Background(), scaled)
 		defer cancel()
-		// TODO 需要调整
 		_, err = challenge.NewStorageChallengeResponse(ctx, ctxParams.N, ctxParams.Api, fileCid, shardCid, "", blPin, expir)
 		return err
 	}, uh.DownloadShardBo(scaledRetry))
@@ -576,7 +559,7 @@ func downloadShardFromClient(ctxParams *uh.ContextParams, guardContract *metadat
 }
 
 func setPaidStatus(ctxParams *uh.ContextParams, contractId string) error {
-	shard, err := sessions.GetHostShard(ctxParams, contractId, 0, 0, new(big.Int))
+	shard, err := sessions.GetSPShard(ctxParams, contractId, 0, 0, new(big.Int))
 	if err != nil {
 		return err
 	}
@@ -591,7 +574,7 @@ func setPaidStatus(ctxParams *uh.ContextParams, contractId string) error {
 }
 
 func getInputPriceAmountRate(ctxParams *uh.ContextParams, contractId string) (int64, int64, *big.Int, error) {
-	shard, err := sessions.GetHostShard(ctxParams, contractId, 0, 0, new(big.Int))
+	shard, err := sessions.GetSPShard(ctxParams, contractId, 0, 0, new(big.Int))
 	if err != nil {
 		return 0, 0, new(big.Int), err
 	}

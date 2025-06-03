@@ -263,7 +263,7 @@ package upload
 // 			return err
 // 		}
 // 		if repairContractResp.Status == guardpb.RepairContractResponse_BOTH_SIGNED {
-// 			repairContract := repairContractResp.Contract
+// 			repairContract := repairContractResp.Agreements
 // 			arguments := []string{repairContract.FileHash}
 // 			signedContractID, err := signContractID(repairContract.RepairContractId, ctxParams.N.PrivateKey)
 // 			if err != nil {
@@ -394,7 +394,7 @@ package upload
 // 		return nil, fmt.Errorf("file store status is nil")
 // 	}
 
-// 	contracts := statusMeta.Contracts
+// 	contracts := statusMeta.Agreements
 // 	shardHashes := repairContract.LostShardHash
 // 	if len(contracts) == 0 {
 // 		return nil, errors.New("length of contracts is 0")
@@ -436,7 +436,7 @@ package upload
 // 	return fileStatus, nil
 // }
 
-// func downloadAndSignContracts(contract *guardpb.Contract, rss *sessions.RenterSession, ctx context.Context, hp uh.IHostsProvider) {
+// func downloadAndSignContracts(contract *guardpb.Agreements, rss *sessions.RenterSession, ctx context.Context, hp uh.IHostsProvider) {
 // 	go func() {
 // 		err := backoff.Retry(func() error {
 // 			select {
@@ -516,9 +516,9 @@ package upload
 // 	}()
 // }
 
-// func retrieveUpdatedContracts(shardMap map[int]string, rss *sessions.RenterSession) ([]*guardpb.Contract, error) {
+// func retrieveUpdatedContracts(shardMap map[int]string, rss *sessions.RenterSession) ([]*guardpb.Agreements, error) {
 // 	tick := time.Tick(5 * time.Second)
-// 	updatedContracts := make([]*guardpb.Contract, 0)
+// 	updatedContracts := make([]*guardpb.Agreements, 0)
 // 	ctx, cancel := context.WithTimeout(rss.Ctx, 10*time.Minute)
 // 	defer cancel()
 // 	for true {
@@ -541,9 +541,9 @@ package upload
 // 	return updatedContracts, nil
 // }
 
-// func queryUpdatedContracts(shardMap map[int]string, rss *sessions.RenterSession) (int, []*guardpb.Contract, error) {
+// func queryUpdatedContracts(shardMap map[int]string, rss *sessions.RenterSession) (int, []*guardpb.Agreements, error) {
 // 	contractStatus := "contract"
-// 	queryContracts := make([]*guardpb.Contract, 0)
+// 	queryContracts := make([]*guardpb.Agreements, 0)
 // 	for index, shardHash := range shardMap {
 // 		shard, err := sessions.GetRenterShard(rss.CtxParams, rss.SsId, shardHash, index)
 // 		if err != nil {
@@ -554,7 +554,7 @@ package upload
 // 			return -1, nil, err
 // 		}
 // 		if s.Status == contractStatus {
-// 			contracts, err := shard.Contracts()
+// 			contracts, err := shard.Agreements()
 // 			if err != nil {
 // 				return -1, nil, err
 // 			}

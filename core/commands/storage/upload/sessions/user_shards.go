@@ -2,6 +2,7 @@ package sessions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -48,7 +49,7 @@ var (
 	renterShardsInMem = cmap.New()
 )
 
-type RenterShard struct {
+type UserShard struct {
 	peerId string
 	ssId   string
 	hash   string
@@ -58,15 +59,15 @@ type RenterShard struct {
 	ds     datastore.Datastore
 }
 
-func GetRenterShard(ctxParams *uh.ContextParams, ssId string, hash string, index int) (*RenterShard, error) {
+func GetUserShard(ctxParams *uh.ContextParams, ssId string, hash string, index int) (*UserShard, error) {
 	shardId := GetShardId(ssId, hash, index)
 	k := fmt.Sprintf(renterShardsInMemKey, ctxParams.N.Identity.String(), shardId)
-	var rs *RenterShard
+	var rs *UserShard
 	if tmp, ok := renterShardsInMem.Get(k); ok {
-		rs = tmp.(*RenterShard)
+		rs = tmp.(*UserShard)
 	} else {
 		ctx, _ := helper.NewGoContext(ctxParams.Ctx)
-		rs = &RenterShard{
+		rs = &UserShard{
 			peerId: ctxParams.N.Identity.String(),
 			ssId:   ssId,
 			hash:   hash,
@@ -88,15 +89,15 @@ func GetRenterShard(ctxParams *uh.ContextParams, ssId string, hash string, index
 	return rs, nil
 }
 
-func (rs *RenterShard) enterState(e *fsm.Event) {
+func (rs *UserShard) enterState(e *fsm.Event) {
 	log.Infof("shard: %s:%s enter status: %s", rs.ssId, rs.hash, e.Dst)
 	switch e.Dst {
 	case rshContractStatus:
-		rs.doContract(e.Args[0].([]byte), e.Args[1].(*metadata.Agreement))
+		rs.doContract(e.Args[0].(*metadata.Agreement))
 	}
 }
 
-func (rs *RenterShard) Status() (*shardpb.Status, error) {
+func (rs *UserShard) Status() (*shardpb.Status, error) {
 	status := new(shardpb.Status)
 	shardId := GetShardId(rs.ssId, rs.hash, rs.index)
 	k := fmt.Sprintf(renterShardStatusKey, rs.peerId, shardId)
@@ -105,7 +106,7 @@ func (rs *RenterShard) Status() (*shardpb.Status, error) {
 		status = &shardpb.Status{
 			Status: rshInitStatus,
 		}
-		//ignore error
+		// ignore error
 		_ = Save(rs.ds, k, status)
 	} else if err != nil {
 		return nil, err
@@ -131,7 +132,7 @@ func extractSessionIDFromContractID(contractID string) (string, error) {
 	return ids[0], nil
 }
 
-func (rs *RenterShard) doContract(signedEscrowContract []byte, signedGuardContract *metadata.Agreement) error {
+func (rs *UserShard) doContract(signedGuardContract *metadata.Agreement) error {
 	status := &shardpb.Status{
 		Status: rshContractStatus,
 	}
@@ -144,15 +145,14 @@ func (rs *RenterShard) doContract(signedEscrowContract []byte, signedGuardContra
 	})
 }
 
-func (rs *RenterShard) Contract(signedEscrowContract []byte, signedGuardContract *metadata.Agreement) error {
-	return rs.fsm.Event(rshToContractEvent, signedEscrowContract, signedGuardContract)
+func (rs *UserShard) Agreement(signedAgreement *metadata.Agreement) error {
+	return rs.fsm.Event(rshToContractEvent, signedAgreement)
 }
 
-// 根据shardId获取RenterShard实例
-func (rs *RenterShard) Contracts() (*metadata.Agreement, error) {
+func (rs *UserShard) Agreements() (*metadata.Agreement, error) {
 	agreement := &metadata.Agreement{}
 	err := Get(rs.ds, fmt.Sprintf(renterShardContractsKey, rs.peerId, GetShardId(rs.ssId, rs.hash, rs.index)), agreement)
-	if err == datastore.ErrNotFound {
+	if errors.Is(err, datastore.ErrNotFound) {
 		return agreement, nil
 	}
 	return agreement, err
@@ -196,10 +196,10 @@ func DeleteShardsContracts(d datastore.Datastore, peerId string, role string) er
 	return Batch(d, ks, vs)
 }
 
-// SaveShardsContracts persists updated guard contracts from upstream, if an existing entry
+// SaveShardsAgreements persists updated guard contracts from upstream, if an existing entry
 // is not available, then an empty signed escrow contract is inserted along with the
 // new guard contract.
-func SaveShardsContracts(ds datastore.Datastore, scs []*shardpb.SignedContracts,
+func SaveShardsAgreements(ds datastore.Datastore, scs []*shardpb.SignedContracts,
 	gcs []*guardpb.Contract, peerID, role string) ([]*shardpb.SignedContracts, []string, error) {
 	var ks []string
 	var vs []proto.Message
@@ -272,12 +272,12 @@ func SaveShardsContracts(ds datastore.Datastore, scs []*shardpb.SignedContracts,
 		// TODO: Cannot prematurally remove shard because it's indirectly pinned
 		// Need a way to disassociated indirect pins from parent...
 		// remove hash anyway even if no file is getting removed
-		//staleHashes = append(staleHashes, ish)
+		// staleHashes = append(staleHashes, ish)
 	}
 	return scs, staleHashes, nil
 }
 
-func (rs *RenterShard) UpdateAdditionalInfo(info string) error {
+func (rs *UserShard) UpdateAdditionalInfo(info string) error {
 	shardId := GetShardId(rs.ssId, rs.hash, rs.index)
 	return Save(rs.ds, fmt.Sprintf(renterShardAdditionalInfoKey, rs.peerId, shardId),
 		&renterpb.RenterSessionAdditionalInfo{
@@ -286,7 +286,7 @@ func (rs *RenterShard) UpdateAdditionalInfo(info string) error {
 		})
 }
 
-func (rs *RenterShard) GetAdditionalInfo() (*shardpb.AdditionalInfo, error) {
+func (rs *UserShard) GetAdditionalInfo() (*shardpb.AdditionalInfo, error) {
 	pb := &shardpb.AdditionalInfo{}
 	shardId := GetShardId(rs.ssId, rs.hash, rs.index)
 	err := Get(rs.ds, fmt.Sprintf(renterShardAdditionalInfoKey, rs.peerId, shardId), pb)
