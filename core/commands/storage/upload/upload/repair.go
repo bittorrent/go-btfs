@@ -89,7 +89,7 @@ This command repairs the given shards of a file.`,
 		if err != nil {
 			return err
 		}
-		hp := uh.GetHostsProvider(ctxParams, strings.Split(req.Arguments[3], ","))
+		hp := uh.GetSPsProvider(ctxParams, strings.Split(req.Arguments[3], ","))
 		m := contracts[0].ContractMeta
 		renterPid, err := peer.Decode(req.Arguments[2])
 		if err != nil {

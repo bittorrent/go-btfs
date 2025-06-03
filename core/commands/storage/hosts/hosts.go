@@ -120,13 +120,13 @@ Mode options include:` + hub.AllModeHelpText,
 		if err != nil {
 			return err
 		}
-		_, err = SyncHosts(req.Context, n, mode)
+		_, err = SyncSPs(req.Context, n, mode)
 		return err
 	},
 }
 
-func SyncHosts(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb.Host, error) {
-	// TODO 调整这里， 调整为获取SP节点
+func SyncSPs(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb.Host, error) {
+	// TODO v4.0 CHECK
 	nodes, err := hub.QueryHosts(ctx, node, mode)
 	if err != nil {
 		return nil, err

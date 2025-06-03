@@ -38,10 +38,7 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 		return err
 	}
 
-	// 正常只有一个，如果是使用了reed-solomon-4-2-1048576算法就可能是多个了
-	// 如果是指定了副本数量的话也是多个, 但是每个都一样的
 	for index, shardHash := range rss.ShardHashes {
-		// 每个shard使用一个协程去处理
 		go func(i int, h string) {
 			err := backoff.Retry(func() error {
 				select {
@@ -68,8 +65,8 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 
 				//token: check host tokens
 				{
-					ctx, _ := context.WithTimeout(rss.Ctx, 60*time.Second)
-					// TODO sp节点需要支持这个
+					ctx, cancel := context.WithTimeout(rss.Ctx, 60*time.Second)
+					defer cancel()
 					output, err := remote.P2PCall(ctx, rss.CtxParams.N, rss.CtxParams.Api, hostPid, "/storage/upload/supporttokens")
 					if err != nil {
 						fmt.Printf("uploadShard, remote.P2PCall(supporttokens) timeout, hostPid = %v, will try again. \n", hostPid)
@@ -100,7 +97,6 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 				errChan := make(chan error, 2)
 				var agreementBytes []byte
 
-				// 对shard进行签名
 				go func() {
 					tmp := func() error {
 						agreementBytes, err = GetCreatorAgreement(
@@ -142,53 +138,48 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 					}
 				}
 
-				// 发送合同 给 host
 				go func() {
-					ctx, _ := context.WithTimeout(rss.Ctx, 10*time.Second)
-					// TODO 这里调用SP的init接口，SP需要调整
-					_, err := remote.P2PCall(ctx, rss.CtxParams.N, rss.CtxParams.Api, hostPid, "/storage/upload/init",
-						rss.SsId,
-						rss.Hash,
-						h,
-						price,
-						nil,
-						agreementBytes,
-						storageLength,
-						shardSize,
-						i,
-						renterId,
+					ctx, cancel := context.WithTimeout(rss.Ctx, 10*time.Second)
+					defer cancel()
+					_, err := remote.P2PCall(
+						ctx, rss.CtxParams.N, rss.CtxParams.Api, hostPid, "/storage/upload/init",
+						rss.SsId, rss.Hash, h, price, agreementBytes, storageLength, shardSize, i, renterId,
 					)
 					if err != nil {
 						cb <- err
 					}
 				}()
 				// host needs to send recv in 30 seconds, or the contract will be invalid.
-				tick := time.Tick(30 * time.Second)
+				ticker := time.NewTicker(30 * time.Second)
+				defer ticker.Stop()
 				select {
 				case err = <-cb:
 					ShardErrChanMap.Remove(agreementID)
 					return err
-				case <-tick:
+				case <-ticker.C:
 					return errors.New("host timeout")
 				}
 			}, helper.HandleShardBo)
 			if err != nil {
-				_ = rss.To(sessions.RssToErrorEvent,
-					errors.New("timeout: failed to setup contract in "+helper.HandleShardBo.MaxElapsedTime.String()))
+				_ = rss.To(
+					sessions.RssToErrorEvent,
+					errors.New("timeout: failed to setup contract in "+helper.HandleShardBo.MaxElapsedTime.String()),
+				)
 			}
 		}(shardIndexes[index], shardHash)
 	}
 	// waiting for contracts of 30(n) shards
 	go func(rss *sessions.RenterSession, numShards int) {
-		tick := time.Tick(5 * time.Second)
-		for true {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+		for {
 			select {
-			case <-tick:
+			case <-ticker.C:
 				completeNum, errorNum, err := rss.GetCompleteShardsNum()
 				if err != nil {
 					continue
 				}
-				log.Info("session", rss.SsId, "contractNum", completeNum, "errorNum", errorNum)
+				log.Info("session", rss.SsId, "agreementNum", completeNum, "errorNum", errorNum)
 				if completeNum == numShards {
 					// while all shards upload completely, submit its.
 					err := Submit(rss, fileSize, offlineSigning)

@@ -44,7 +44,6 @@ func NewFileMetaService(address common.Address, backend transaction.Backend, sin
 	}
 }
 
-// AddFileMeta 添加文件元数据到智能合约
 func (fm *fileMeta) AddFileMeta(cid string, meta *metadata.FileMetaInfo) error {
 	if cid == "" {
 		return fmt.Errorf("cid cannot be empty")
@@ -83,7 +82,7 @@ func (fm *fileMeta) AddFileMeta(cid string, meta *metadata.FileMetaInfo) error {
 		})
 	}
 
-	fmt.Printf("Adding file meta - CID: %s, Metadata size: %d bytes, Contracts count: %d\n",
+	fmt.Printf("Adding file meta - CID: %s, Metadata size: %d bytes, Agreement count: %d\n",
 		cid, len(mb), len(pairs))
 
 	tx, err := fm.FileMetaAbi.AddFileMeta(opts, cid, mb, new(big.Int).SetUint64(meta.FileSize), pairs)

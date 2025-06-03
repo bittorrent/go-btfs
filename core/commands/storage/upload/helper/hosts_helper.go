@@ -65,7 +65,7 @@ func (p *CustomizedHostsProvider) NextValidHost() (string, error) {
 	return "", errors.New(failMsg)
 }
 
-func GetCustomizedHostsProvider(cp *ContextParams, hosts []string) IHostsProvider {
+func GetCustomizedSPProvider(cp *ContextParams, hosts []string) IHostsProvider {
 	return &CustomizedHostsProvider{
 		cp:      cp,
 		current: -1,
@@ -98,7 +98,7 @@ type HostsProvider struct {
 	needHigherPrice bool
 }
 
-func GetHostsProvider(cp *ContextParams, blacklist []string) IHostsProvider {
+func GetSPsProvider(cp *ContextParams, blacklist []string) IHostsProvider {
 	ctx, cancel := context.WithTimeout(cp.Ctx, 10*time.Minute)
 	p := &HostsProvider{
 		cp:              cp,

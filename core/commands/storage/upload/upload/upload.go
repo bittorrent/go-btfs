@@ -56,7 +56,7 @@ var StorageUploadCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Store files on BTFS network nodes through BTT payment.",
 		ShortDescription: `
-By default, BTFS selects hosts based on overall score according to the current client's environment.
+By default, BTFS selects SP based on overall score according to the current client's environment.
 To upload a file, <file-hash> must refer to a reed-solomon encoded file.
 
 To create a reed-solomon encoded file from a normal file:
@@ -174,8 +174,6 @@ Use status command to check for completion:
 		// reed-solomon编码的文件
 		shardHashes, fileSize, shardSize, err = helper.GetShardHashes(ctxParams, fileHash)
 
-		fmt.Println("shardHashes:", shardHashes, "fileSize:", fileSize, "shardSize:", shardSize, "err:", err)
-
 		// 没有使用reed-solomon编码的文件
 		// 没有进行 shard，只有一个 shardHash和fileHash为同一个值
 		// copy表示使用的副本数
@@ -212,12 +210,13 @@ Use status command to check for completion:
 			return err
 		}
 
-		// sync hosts from hub hosts.
-		// TODO 这里本次要调整
+		// sync sps from hub.
 		if !ctxParams.Cfg.Experimental.HostsSyncEnabled {
-			_ = SyncHosts(ctxParams)
+			_ = SyncSPs(ctxParams)
 		}
-		hp := helper.GetHostsProvider(ctxParams, make([]string, 0))
+
+		sp := helper.GetSPsProvider(ctxParams, make([]string, 0))
+
 		if mode, ok := req.Options[hostSelectModeOptionName].(string); ok {
 			var hostIDs []string
 			if mode == "custom" {
@@ -227,13 +226,16 @@ Use status command to check for completion:
 				if len(hostIDs) != len(shardHashes) {
 					return fmt.Errorf("custom mode hosts length must match shard hashes length")
 				}
-				hp = helper.GetCustomizedHostsProvider(ctxParams, hostIDs)
+				sp = helper.GetCustomizedSPProvider(ctxParams, hostIDs)
 			}
 		}
+
 		rss, err := sessions.GetCreatorSessionWithToken(ctxParams, ssId, fileHash, shardHashes, token)
 		if err != nil {
 			return err
 		}
+
+		// v4.0 TODO offlineSignature
 		if offlineSigning {
 			offNonceTimestamp, err := strconv.ParseUint(req.Arguments[2], 10, 64)
 			if err != nil {
@@ -248,14 +250,14 @@ Use status command to check for completion:
 				return err
 			}
 		}
+
 		shardIndexes := make([]int, 0)
-		for i, _ := range rss.ShardHashes {
+		for i := range rss.ShardHashes {
 			shardIndexes = append(shardIndexes, i)
 		}
 
-		fmt.Println("upload shard ...........", "shardIndexes:", shardIndexes, "shardHashes:", shardHashes, "fileSize:", fileSize, "shardSize:", shardSize)
+		UploadShard(rss, sp, price, token, shardSize, storageLength, offlineSigning, renterId, fileSize, shardIndexes, nil)
 
-		UploadShard(rss, hp, price, token, shardSize, storageLength, offlineSigning, renterId, fileSize, shardIndexes, nil)
 		seRes := &Res{
 			ID: ssId,
 		}
@@ -264,7 +266,7 @@ Use status command to check for completion:
 	Type: Res{},
 }
 
-func SyncHosts(ctxParams *helper.ContextParams) error {
+func SyncSPs(ctxParams *helper.ContextParams) error {
 	cfg, err := ctxParams.N.Repo.Config()
 	if err != nil {
 		log.Errorf("Failed to get configuration %s", err)
@@ -273,7 +275,7 @@ func SyncHosts(ctxParams *helper.ContextParams) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	m := cfg.Experimental.HostsSyncMode
-	_, err = hosts.SyncHosts(ctx, ctxParams.N, m)
+	_, err = hosts.SyncSPs(ctx, ctxParams.N, m)
 	return err
 }
 

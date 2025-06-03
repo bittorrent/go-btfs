@@ -52,8 +52,7 @@ the shard and replies back to client for the next challenge step.`,
 		cmds.StringArg("file-hash", true, false, "Root file storage node should fetch (the DAG)."),
 		cmds.StringArg("shard-hash", true, false, "Shard the storage node should fetch."),
 		cmds.StringArg("price", true, false, "Per GiB per day in µBTT (=0.000001BTT) for storing this shard offered by client."),
-		cmds.StringArg("escrow-contract", true, false, "Client's initial escrow contract data."),
-		cmds.StringArg("guard-contract-meta", true, false, "Client's initial guard contract meta."),
+		cmds.StringArg("agreement-meta", true, false, "Client's initial agreement meta."),
 		cmds.StringArg("storage-length", true, false, "Store file for certain length in days."),
 		cmds.StringArg("shard-size", true, false, "Size of each shard received in bytes."),
 		cmds.StringArg("shard-index", true, false, "Index of shard within the encoding scheme."),
@@ -91,7 +90,7 @@ the shard and replies back to client for the next challenge step.`,
 		// reject contract if holding contracts is above threshold
 		// TODO SP节点的阈值要调整，在配置里面配置的
 		hm := NewHostManager(ctxParams.Cfg)
-		shardSize, err := strconv.ParseInt(req.Arguments[7], 10, 64)
+		shardSize, err := strconv.ParseInt(req.Arguments[6], 10, 64)
 		if err != nil {
 			return err
 		}
@@ -115,7 +114,7 @@ the shard and replies back to client for the next challenge step.`,
 		//	return fmt.Errorf("price invalid: want: >=%d, got: %d", settings.StoragePriceAsk, price)
 		// }
 
-		storeLen, err := strconv.Atoi(req.Arguments[6])
+		storeLen, err := strconv.Atoi(req.Arguments[5])
 		if err != nil {
 			return err
 		}
@@ -124,7 +123,7 @@ the shard and replies back to client for the next challenge step.`,
 		}
 		ssId := req.Arguments[0]
 		shardHash := req.Arguments[2]
-		shardIndex, err := strconv.Atoi(req.Arguments[8])
+		shardIndex, err := strconv.Atoi(req.Arguments[7])
 		if err != nil {
 			return err
 		}
@@ -132,8 +131,7 @@ the shard and replies back to client for the next challenge step.`,
 		fmt.Printf("--- upload init: start, shardSize:%v, requestPid:%v, shardIndex:%v . \n",
 			shardSize, requestPid, shardIndex)
 
-		// halfSignedEscrowContString := req.Arguments[4]
-		halfSignedAgreementString := req.Arguments[5]
+		halfSignedAgreementString := req.Arguments[4]
 		if halfSignedAgreementString == "" {
 			return fmt.Errorf("half signed agreement is empty")
 		}
@@ -159,7 +157,7 @@ the shard and replies back to client for the next challenge step.`,
 		}
 		var peerId string
 		if peerId = pid.String(); len(req.Arguments) >= 10 {
-			peerId = req.Arguments[9]
+			peerId = req.Arguments[8]
 		}
 		payerPubKey, err := crypto.GetPubKeyFromPeerId(peerId)
 		if err != nil {

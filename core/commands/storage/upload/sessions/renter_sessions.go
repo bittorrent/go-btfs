@@ -35,7 +35,7 @@ const (
 	RssErrorStatus                = "error"
 
 	RssToSubmitEvent               = "to-submit-event"
-	RssToGuardEvent                = "to-guard-event"
+	RssToAgreementEvent            = "to-guard-event"
 	RssToGuardFileMetaSignedEvent  = "to-guard:file-meta-signed-event"
 	RssToGuardQuestionsSignedEvent = "to-guard:questions-signed-event"
 	RssToWaitUploadEvent           = "to-wait-upload-event"
@@ -56,8 +56,9 @@ const (
 var (
 	renterSessionsInMem = cmap.New()
 	rssFsmEvents        = fsm.Events{
+		// v4.0 TODO 状态机调整，去掉无效的状态
 		{Name: RssToSubmitEvent, Src: []string{RssInitStatus}, Dst: RssSubmitStatus},
-		{Name: RssToGuardEvent, Src: []string{RssSubmitStatus}, Dst: RssGuardStatus},
+		{Name: RssToAgreementEvent, Src: []string{RssSubmitStatus}, Dst: RssGuardStatus},
 		{Name: RssToGuardFileMetaSignedEvent, Src: []string{RssGuardStatus}, Dst: RssGuardFileMetaSignedStatus},
 		{Name: RssToGuardQuestionsSignedEvent, Src: []string{RssGuardFileMetaSignedStatus}, Dst: RssGuardQuestionsSignedStatus},
 		{Name: RssToWaitUploadEvent, Src: []string{RssGuardQuestionsSignedStatus}, Dst: RssWaitUploadStatus},

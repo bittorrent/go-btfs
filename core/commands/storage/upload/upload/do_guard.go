@@ -20,25 +20,20 @@ import (
 )
 
 func doAgreementAndPay(rss *sessions.RenterSession, fileSize int64, offlineSigning bool) error {
-	// 事件驱动状态机流转
-	if err := rss.To(sessions.RssToGuardEvent); err != nil {
+	if err := rss.To(sessions.RssToAgreementEvent); err != nil {
 		return err
 	}
 
 	as := make([]*metadata.Agreement, 0)
-	selectedSPs := make([]string, 0)
-
 	for i, h := range rss.ShardHashes {
 		shard, err := sessions.GetRenterShard(rss.CtxParams, rss.SsId, h, i)
 		if err != nil {
 			return err
 		}
-		// 获取签名了的agreement
 		agreement, err := shard.Contracts()
 		if err != nil {
 			return err
 		}
-		selectedSPs = append(selectedSPs, agreement.Meta.SpId)
 		as = append(as, agreement)
 	}
 	// TODO 数据结构要调整
@@ -48,7 +43,6 @@ func doAgreementAndPay(rss *sessions.RenterSession, fileSize int64, offlineSigni
 	}
 	cb := make(chan []byte)
 	uh.FileMetaChanMaps.Set(rss.SsId, cb)
-	// 离线签名
 	if offlineSigning {
 		raw, err := proto.Marshal(meta)
 		if err != nil {
@@ -80,8 +74,7 @@ func doAgreementAndPay(rss *sessions.RenterSession, fileSize int64, offlineSigni
 			}
 		}()
 	}
-	signBytes := <-cb
-	fmt.Println("doAgreementAndPay, signBytes: ", signBytes)
+	<-cb
 	uh.FileMetaChanMaps.Remove(rss.SsId)
 	if err := rss.To(sessions.RssToGuardFileMetaSignedEvent); err != nil {
 		return err
@@ -91,24 +84,11 @@ func doAgreementAndPay(rss *sessions.RenterSession, fileSize int64, offlineSigni
 	if err != nil {
 		return err
 	}
-	// fsStatus, err = submitFileMetaHelper(rss.Ctx, rss.CtxParams.Cfg, fsStatus, signBytes)
-	// if err != nil {
-	// 	return err
-	// }
-	// qs, err := guard.PrepFileChallengeQuestions(rss, fsStatus, rss.Hash, offlineSigning, fsStatus.RenterPid)
-	// if err != nil {
-	// 	return err
-	// }
 	err = rss.To(sessions.RssToGuardQuestionsSignedEvent)
-
-	// fcid, err := cidlib.Parse(rss.Hash)
 	if err != nil {
 		return err
 	}
-	// err = guard.SendChallengeQuestions(rss.Ctx, rss.CtxParams.Cfg, fcid, qs)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to send challenge questions to guard: [%v]", err)
-	// }
+
 	return waitUpload(rss, offlineSigning, meta, false)
 }
 
