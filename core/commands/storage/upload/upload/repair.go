@@ -8,6 +8,7 @@ import (
 
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"github.com/bittorrent/go-btfs/utils"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -17,8 +18,6 @@ import (
 	"github.com/bittorrent/go-btfs-common/crypto"
 	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
 	"github.com/bittorrent/go-btfs-common/utils/grpc"
-
-	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 // TODO repair相关的命令要不要删除掉，这个是在guard服务里通过定时任务调用的
@@ -97,11 +96,20 @@ This command repairs the given shards of a file.`,
 		}
 
 		// token: notice repair is dropped. This is just a compatible function of 'UploadShard'.
-		UploadShard(rss, hp, m.Price, tokencfg.GetWbttToken(), m.ShardFileSize, -1, false, renterPid, -1,
-			shardIndexes, &RepairParams{
+		UploadShard(&ShardUploadContext{
+			Rss:           rss,
+			HostsProvider: hp,
+			Price:         m.Price,
+			Token:         tokencfg.GetWbttToken(),
+			ShardSize:     m.ShardFileSize,
+			StorageLength: -1,
+			ShardIndexes:  shardIndexes,
+			RepairParams: &RepairParams{
 				RenterStart: m.RentStart,
 				RenterEnd:   m.RentEnd,
-			})
+			},
+			RenterId: renterPid,
+		})
 		seRes := &Res{
 			ID: ssId,
 		}

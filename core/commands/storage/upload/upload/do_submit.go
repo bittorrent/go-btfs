@@ -16,7 +16,7 @@ func Submit(rss *sessions.RenterSession, fileSize int64, offlineSigning bool) er
 		return err
 	}
 
-	err := doSubmit(rss)
+	err := preCheck(rss)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func prepareAmount(rss *sessions.RenterSession, shardHashes []string) (int64, er
 	return totalPrice, nil
 }
 
-func doSubmit(rss *sessions.RenterSession) error {
+func preCheck(rss *sessions.RenterSession) error {
 	amount, err := prepareAmount(rss, rss.ShardHashes)
 	if err != nil {
 		return err

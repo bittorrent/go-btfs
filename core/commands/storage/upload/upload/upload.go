@@ -256,7 +256,19 @@ Use status command to check for completion:
 			shardIndexes = append(shardIndexes, i)
 		}
 
-		UploadShard(rss, sp, price, token, shardSize, storageLength, offlineSigning, renterId, fileSize, shardIndexes, nil)
+		UploadShard(&ShardUploadContext{
+			Rss:            rss,
+			HostsProvider:  sp,
+			Price:          price,
+			Token:          token,
+			ShardSize:      shardSize,
+			StorageLength:  storageLength,
+			OfflineSigning: offlineSigning,
+			RenterId:       renterId,
+			FileSize:       fileSize,
+			ShardIndexes:   shardIndexes,
+			RepairParams:   nil,
+		})
 
 		seRes := &Res{
 			ID: ssId,

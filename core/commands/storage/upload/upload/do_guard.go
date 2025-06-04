@@ -1,19 +1,13 @@
 package upload
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/bittorrent/go-btfs/chain"
-	"github.com/bittorrent/go-btfs/core/commands/storage/upload/guard"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 	"github.com/bittorrent/go-btfs/protos/metadata"
 	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
 	"github.com/bittorrent/go-btfs-common/crypto"
-	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
-	cgrpc "github.com/bittorrent/go-btfs-common/utils/grpc"
 	config "github.com/bittorrent/go-btfs-config"
 
 	"github.com/gogo/protobuf/proto"
@@ -102,37 +96,4 @@ func NewFileStatus(contracts []*metadata.Agreement, configuration *config.Config
 		ShardCount: uint64(len(contracts)),
 		Agreements: contracts,
 	}, nil
-}
-
-func submitFileMetaHelper(ctx context.Context, configuration *config.Config,
-	fileStatus *guardpb.FileStoreStatus, sign []byte) (*guardpb.FileStoreStatus, error) {
-	if fileStatus.PreparerPid == fileStatus.RenterPid {
-		fileStatus.RenterSignature = sign
-	} else {
-		fileStatus.RenterSignature = sign
-		fileStatus.PreparerSignature = sign
-	}
-
-	err := submitFileStatus(ctx, configuration, fileStatus)
-	if err != nil {
-		return nil, err
-	}
-
-	return fileStatus, nil
-}
-
-func submitFileStatus(ctx context.Context, cfg *config.Config,
-	fileStatus *guardpb.FileStoreStatus) error {
-	cb := cgrpc.GuardClient(cfg.Services.GuardDomain)
-	cb.Timeout(guard.GuardTimeout)
-	return cb.WithContext(ctx, func(ctx context.Context, client guardpb.GuardServiceClient) error {
-		res, err := client.SubmitFileStoreMeta(ctx, fileStatus)
-		if err != nil {
-			return err
-		}
-		if res.Code != guardpb.ResponseCode_SUCCESS {
-			return fmt.Errorf("failed to execute submit file status to guard: %v", res.Message)
-		}
-		return nil
-	})
 }
