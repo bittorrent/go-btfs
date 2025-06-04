@@ -34,11 +34,12 @@ type ShardUploadContext struct {
 }
 
 func UploadShard(ctx *ShardUploadContext) error {
-	if err := checkAndPreparePayment(ctx); err != nil {
+	expectOnePay, err := checkAndPreparePayment(ctx)
+	if err != nil {
 		return err
 	}
 	for i, shardHash := range ctx.Rss.ShardHashes {
-		go uploadSingleShard(ctx, ctx.ShardIndexes[i], shardHash)
+		go uploadSingleShard(ctx, ctx.ShardIndexes[i], shardHash, expectOnePay)
 	}
 
 	complete, err := waitForAllShards(ctx)
@@ -55,22 +56,22 @@ func UploadShard(ctx *ShardUploadContext) error {
 	return nil
 }
 
-func checkAndPreparePayment(ctx *ShardUploadContext) error {
+func checkAndPreparePayment(ctx *ShardUploadContext) (int64, error) {
 	rate, err := chain.SettleObject.OracleService.CurrentRate(ctx.Token)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	expectOnePay, err := helper.TotalPay(ctx.ShardSize, ctx.Price, ctx.StorageLength, rate)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	expectTotalPay := expectOnePay * int64(len(ctx.Rss.ShardHashes))
-	return checkAvailableBalance(ctx.Rss.Ctx, expectTotalPay, ctx.Token)
+	return expectOnePay, checkAvailableBalance(ctx.Rss.Ctx, expectTotalPay, ctx.Token)
 }
 
-func uploadSingleShard(ctx *ShardUploadContext, shardIndex int, shardHash string) {
+func uploadSingleShard(ctx *ShardUploadContext, shardIndex int, shardHash string, amount int64) {
 	err := backoff.Retry(func() error {
-		if err := handleSingleShard(ctx, shardIndex, shardHash); err != nil {
+		if err := handleSingleShard(ctx, shardIndex, shardHash, amount); err != nil {
 			return err
 		}
 		return nil
@@ -83,7 +84,7 @@ func uploadSingleShard(ctx *ShardUploadContext, shardIndex int, shardHash string
 	}
 }
 
-func handleSingleShard(ctx *ShardUploadContext, shardIndex int, shardHash string) error {
+func handleSingleShard(ctx *ShardUploadContext, shardIndex int, shardHash string, amount int64) error {
 	select {
 	case <-ctx.Rss.Ctx.Done():
 		return nil
@@ -105,7 +106,7 @@ func handleSingleShard(ctx *ShardUploadContext, shardIndex int, shardHash string
 	if err := checkHostTokenSupport(ctx, hostPid); err != nil {
 		return err
 	}
-	return processShardAgreementAndInit(ctx, host, hostPid, shardIndex, shardHash)
+	return processShardAgreementAndInit(ctx, host, hostPid, shardIndex, shardHash, amount)
 }
 
 func checkHostTokenSupport(ctx *ShardUploadContext, hostPid peer.ID) error {
@@ -129,7 +130,7 @@ func checkHostTokenSupport(ctx *ShardUploadContext, hostPid peer.ID) error {
 	return errors.New("host does not support token")
 }
 
-func processShardAgreementAndInit(ctx *ShardUploadContext, host string, hostPid peer.ID, shardIndex int, shardHash string) error {
+func processShardAgreementAndInit(ctx *ShardUploadContext, host string, hostPid peer.ID, shardIndex int, shardHash string, amount int64) error {
 	agreementID := helper.NewAgreementID(ctx.Rss.SsId)
 	cb := make(chan error)
 	ShardErrChanMap.Set(agreementID, cb)
@@ -151,7 +152,7 @@ func processShardAgreementAndInit(ctx *ShardUploadContext, host string, hostPid 
 					StorageStart: uint64(time.Now().Unix()),
 					StorageEnd:   uint64(time.Now().Add(time.Duration(ctx.StorageLength) * time.Second).Unix()),
 					Price:        uint64(ctx.Price),
-					Amount:       0, // expectOnePay 已在主流程校验
+					Amount:       uint64(amount),
 				},
 				ctx.OfflineSigning,
 				ctx.RepairParams,

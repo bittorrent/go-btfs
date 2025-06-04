@@ -332,24 +332,6 @@ func signAgreement(meta *metadata.AgreementMeta, cont *metadata.Agreement, privK
 	return cont, err
 }
 
-// func signGuardContractAndMarshal(meta *guardpb.ContractMeta, cont *guardpb.Agreements, privKey ic.PrivKey) ([]byte, error) {
-//	signedBytes, err := crypto.Sign(privKey, meta)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	if cont == nil {
-//		cont = &guardpb.Agreements{
-//			ContractMeta:   *meta,
-//			LastModifyTime: time.Now(),
-//		}
-//	} else {
-//		cont.LastModifyTime = time.Now()
-//	}
-//	cont.HostSignature = signedBytes
-//	return proto.Marshal(cont)
-// }
-
 func pinShard(ctxParams *uh.ContextParams, guardContract *metadata.Agreement, fileHash string,
 	shardHash string) error {
 
