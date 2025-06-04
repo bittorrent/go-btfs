@@ -157,12 +157,3 @@ func (hs *SPShard) ReceivePayCheque() error {
 func (hs *SPShard) Complete() error {
 	return hs.fsm.Event(hshToCompleteEvent)
 }
-
-func (hs *SPShard) contracts() (*shardpb.SignedContracts, error) {
-	contracts := &shardpb.SignedContracts{}
-	err := Get(hs.ds, fmt.Sprintf(hostShardContractsKey, hs.peerId, hs.contractId), contracts)
-	if errors.Is(err, datastore.ErrNotFound) {
-		return contracts, nil
-	}
-	return contracts, err
-}

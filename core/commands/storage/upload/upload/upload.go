@@ -171,12 +171,8 @@ Use status command to check for completion:
 		fmt.Println("token =", token, tokenStr)
 
 		fileHash := req.Arguments[0]
-		// reed-solomon编码的文件
 		shardHashes, fileSize, shardSize, err = helper.GetShardHashes(ctxParams, fileHash)
 
-		// 没有使用reed-solomon编码的文件
-		// 没有进行 shard，只有一个 shardHash和fileHash为同一个值
-		// copy表示使用的副本数
 		if len(shardHashes) == 0 && fileSize == -1 && shardSize == -1 &&
 			strings.HasPrefix(err.Error(), "invalid hash: file must be reed-solomon encoded") {
 			if copyNum, ok := req.Options[copyName].(int); ok {

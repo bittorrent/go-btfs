@@ -2,7 +2,6 @@ package contracts
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -18,6 +17,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 	"github.com/bittorrent/go-btfs/logger"
 	contractspb "github.com/bittorrent/go-btfs/protos/contracts"
+	"github.com/bittorrent/go-btfs/protos/metadata"
 	shardpb "github.com/bittorrent/go-btfs/protos/shard"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -345,19 +345,20 @@ func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env
 	}
 	var latest *time.Time
 	for _, c := range cs {
-		if latest == nil || c.SignedGuardContract.LastModifyTime.After(*latest) {
-			latest = &c.SignedGuardContract.LastModifyTime
+		createTime := time.Unix(int64(c.CreateTime), 0)
+		if latest == nil || createTime.After(*latest) {
+			latest = &createTime
 		}
 	}
-	var updated []*guardpb.Contract
+	var updated []*metadata.Agreement
 	switch role {
 	case nodepb.ContractStat_HOST.String():
-		updated, err = GetUpdatedGuardContractsForHost(ctx, n, latest)
+		updated, err = GetInvalidContractsForHost(cs, n.Identity.String())
 		if err != nil {
 			return err
 		}
 	case nodepb.ContractStat_RENTER.String():
-		updated, err = GetUpdatedGuardContractsForRenter(ctx, n, latest)
+		updated, err = GetInvalidContractForUser(cs, n.Identity.String())
 		if err != nil {
 			return err
 		}
@@ -367,7 +368,7 @@ func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env
 	if len(updated) > 0 {
 		// save and retrieve updated signed contracts
 		var stale []string
-		cs, stale, err = sessions.SaveShardsAgreements(n.Repo.Datastore(), cs, updated, n.Identity.String(), role)
+		cs, stale, err = sessions.SaveShardsContract(n.Repo.Datastore(), cs, updated, n.Identity.String(), role)
 		if err != nil {
 			return err
 		}
@@ -382,45 +383,46 @@ func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env
 			}()
 		}
 	}
-	if len(cs) > 0 {
-		cts, err := ListContracts(n.Repo.Datastore(), n.Identity.String(), role)
-		if err != nil {
-			return err
-		}
-		results, err := syncContractPayoutStatus(ctx, n, cs, cts)
-		if err != nil {
-			return err
-		}
+	// TODO  v4.0
+	// if len(cs) > 0 {
+	// 	cts, err := ListContracts(n.Repo.Datastore(), n.Identity.String(), role)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	// results, err := syncContractPayoutStatus(ctx, n, cs, cts)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		if b := ctx.Value(contractsSyncVerboseOptionName); b != nil && b.(bool) {
-			go func() {
-				for _, ct := range cs {
-					resCt := &nodepb.Contracts_Contract{
-						ContractId: ct.SignedGuardContract.ContractId,
-						HostId:     ct.SignedGuardContract.HostPid,
-						RenterId:   ct.SignedGuardContract.RenterPid,
-						Status:     ct.SignedGuardContract.State,
-						StartTime:  ct.SignedGuardContract.RentStart,
-						EndTime:    ct.SignedGuardContract.RentEnd,
-						UnitPrice:  ct.SignedGuardContract.Price,
-						ShardSize:  ct.SignedGuardContract.ShardFileSize,
-						ShardHash:  ct.SignedGuardContract.ShardHash,
-						FileHash:   ct.SignedGuardContract.FileHash,
-					}
-					for _, r := range results {
-						if ct.SignedGuardContract.ContractId == r.ContractId {
-							resCt = r
-							break
-						}
-					}
-					if bs, err := json.Marshal(resCt); err == nil {
-						log.Info(string(bs))
-					}
-				}
-			}()
-		}
-		return Save(n.Repo.Datastore(), results, role)
-	}
+	// 	if b := ctx.Value(contractsSyncVerboseOptionName); b != nil && b.(bool) {
+	// 		go func() {
+	// 			for _, ct := range cs {
+	// 				resCt := &nodepb.Contracts_Contract{
+	// 					ContractId: ct.SignedGuardContract.ContractId,
+	// 					HostId:     ct.SignedGuardContract.HostPid,
+	// 					RenterId:   ct.SignedGuardContract.RenterPid,
+	// 					Status:     ct.SignedGuardContract.State,
+	// 					StartTime:  ct.SignedGuardContract.RentStart,
+	// 					EndTime:    ct.SignedGuardContract.RentEnd,
+	// 					UnitPrice:  ct.SignedGuardContract.Price,
+	// 					ShardSize:  ct.SignedGuardContract.ShardFileSize,
+	// 					ShardHash:  ct.SignedGuardContract.ShardHash,
+	// 					FileHash:   ct.SignedGuardContract.FileHash,
+	// 				}
+	// 				for _, r := range results {
+	// 					if ct.SignedGuardContract.ContractId == r.ContractId {
+	// 						resCt = r
+	// 						break
+	// 					}
+	// 				}
+	// 				if bs, err := json.Marshal(resCt); err == nil {
+	// 					log.Info(string(bs))
+	// 				}
+	// 			}
+	// 		}()
+	// 	}
+	// 	return Save(n.Repo.Datastore(), results, role)
+	// }
 	return nil
 }
 
@@ -462,6 +464,27 @@ func GetUpdatedGuardContractsForHost(ctx context.Context, n *core.IpfsNode,
 		}
 	}
 	return contracts, nil
+}
+
+func GetInvalidContractsForHost(cs []*metadata.Agreement, spId string) ([]*metadata.Agreement, error) {
+	var invalid []*metadata.Agreement
+	for _, c := range cs {
+		if int64(c.Meta.StorageEnd) < time.Now().Unix() && c.Meta.SpId == spId {
+			invalid = append(invalid, c)
+		}
+	}
+	return invalid, nil
+}
+
+func GetInvalidContractForUser(cs []*metadata.Agreement, peerId string) ([]*metadata.Agreement, error) {
+	var invalid []*metadata.Agreement
+	for _, c := range cs {
+		if c.Meta.CreatorId == peerId && int64(c.Meta.StorageEnd) < time.Now().Unix() {
+			// If the contract is expired, we consider it invalid
+			invalid = append(invalid, c)
+		}
+	}
+	return invalid, nil
 }
 
 // GetUpdatedGuardContractsForRenter retrieves updated guard contracts from remote based on latest timestamp

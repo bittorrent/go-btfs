@@ -14,7 +14,6 @@ import (
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	shardpb "github.com/bittorrent/go-btfs/protos/shard"
 
-	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
 	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
 	"github.com/bittorrent/protobuf/proto"
 
@@ -161,7 +160,7 @@ func (rs *UserShard) Agreements() (*metadata.Agreement, error) {
 	return agreement, err
 }
 
-func ListShardsContracts(d datastore.Datastore, peerId string, role string) ([]*shardpb.SignedContracts, error) {
+func ListShardsContracts(d datastore.Datastore, peerId string, role string) ([]*metadata.Agreement, error) {
 	var k string
 	if k = fmt.Sprintf(renterShardPrefix, peerId); role == nodepb.ContractStat_HOST.String() {
 		k = fmt.Sprintf(hostShardPrefix, peerId)
@@ -170,9 +169,9 @@ func ListShardsContracts(d datastore.Datastore, peerId string, role string) ([]*
 	if err != nil {
 		return nil, err
 	}
-	contracts := make([]*shardpb.SignedContracts, 0)
+	contracts := make([]*metadata.Agreement, 0)
 	for _, v := range vs {
-		sc := &shardpb.SignedContracts{}
+		sc := &metadata.Agreement{}
 		err := proto.Unmarshal(v, sc)
 		if err != nil {
 			log.Error(err)
@@ -199,16 +198,16 @@ func DeleteShardsContracts(d datastore.Datastore, peerId string, role string) er
 	return Batch(d, ks, vs)
 }
 
-// SaveShardsAgreements persists updated guard contracts from upstream, if an existing entry
+// SaveShardsContract persists updated guard contracts from upstream, if an existing entry
 // is not available, then an empty signed escrow contract is inserted along with the
 // new guard contract.
-func SaveShardsAgreements(ds datastore.Datastore, scs []*shardpb.SignedContracts,
-	gcs []*guardpb.Contract, peerID, role string) ([]*shardpb.SignedContracts, []string, error) {
+func SaveShardsContract(ds datastore.Datastore, scs []*metadata.Agreement,
+	gcs []*metadata.Agreement, peerID, role string) ([]*metadata.Agreement, []string, error) {
 	var ks []string
 	var vs []proto.Message
-	gmap := map[string]*guardpb.Contract{}
+	gmap := map[string]*metadata.Agreement{}
 	for _, g := range gcs {
-		gmap[g.ContractId] = g
+		gmap[g.Meta.AgreementId] = g
 	}
 	activeShards := map[string]bool{}      // active shard hash -> has one file hash (bool)
 	activeFiles := map[string]bool{}       // active file hash -> has one shard hash (bool)
@@ -221,37 +220,30 @@ func SaveShardsAgreements(ds datastore.Datastore, scs []*shardpb.SignedContracts
 	}
 	for _, c := range scs {
 		// only append the updated contracts
-		if gc, ok := gmap[c.SignedGuardContract.ContractId]; ok {
-			ks = append(ks, fmt.Sprintf(key, peerID, c.SignedGuardContract.ContractId))
+		if gc, ok := gmap[c.Meta.AgreementId]; ok {
+			ks = append(ks, fmt.Sprintf(key, peerID, c.Meta.AgreementId))
 			// update
-			c.SignedGuardContract = gc
+			c = gc
 			vs = append(vs, c)
-			delete(gmap, c.SignedGuardContract.ContractId)
+			delete(gmap, c.Meta.AgreementId)
 
 			// mark stale files if no longer active (must be synced to become inactive)
-			if _, ok := helper.ContractFilterMap["active"][gc.State]; !ok {
-				invalidShards[gc.ShardHash] = append(invalidShards[gc.ShardHash], gc.FileHash)
-			}
+			invalidShards[gc.Meta.ShardHash] = append(invalidShards[gc.Meta.ShardHash], gc.Meta.ShardHash)
 		} else {
-			activeShards[c.SignedGuardContract.ShardHash] = true
-			activeFiles[c.SignedGuardContract.FileHash] = true
+			activeShards[c.Meta.ShardHash] = true
+			activeFiles[c.Meta.ShardHash] = true
 		}
 	}
 	// append what's left in guard map as new contracts
 	for contractID, gc := range gmap {
 		ks = append(ks, fmt.Sprintf(key, peerID, contractID))
 		// add a new (guard contract only) signed contracts
-		c := &shardpb.SignedContracts{SignedGuardContract: gc}
-		scs = append(scs, c)
-		vs = append(vs, c)
+		scs = append(scs, gc)
+		vs = append(vs, gc)
 
 		// mark stale files if no longer active (must be synced to become inactive)
-		if _, ok := helper.ContractFilterMap["active"][gc.State]; !ok {
-			invalidShards[gc.ShardHash] = append(invalidShards[gc.ShardHash], gc.FileHash)
-		} else {
-			activeShards[gc.ShardHash] = true
-			activeFiles[gc.FileHash] = true
-		}
+		activeShards[gc.Meta.ShardHash] = true
+		activeFiles[gc.Meta.ShardHash] = true
 	}
 	if len(ks) > 0 {
 		err := Batch(ds, ks, vs)
