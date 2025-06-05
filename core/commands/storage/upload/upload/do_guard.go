@@ -13,7 +13,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-func doAgreementAndPay(rss *sessions.RenterSession, fileSize int64, offlineSigning bool) error {
+func addFileMetaToBttcChainAndPay(rss *sessions.RenterSession, fileSize int64, offlineSigning bool) error {
 	if err := rss.To(sessions.RssToAgreementEvent); err != nil {
 		return err
 	}
@@ -30,7 +30,6 @@ func doAgreementAndPay(rss *sessions.RenterSession, fileSize int64, offlineSigni
 		}
 		as = append(as, agreement)
 	}
-	// TODO 数据结构要调整
 	meta, err := NewFileStatus(as, rss.CtxParams.Cfg, as[0].Meta.CreatorId, rss.Hash, fileSize)
 	if err != nil {
 		return err
@@ -83,7 +82,7 @@ func doAgreementAndPay(rss *sessions.RenterSession, fileSize int64, offlineSigni
 		return err
 	}
 
-	return waitUpload(rss, offlineSigning, meta, false)
+	return waitSPSaveFileSuccAndToPay(rss, offlineSigning, meta, false)
 }
 
 func NewFileStatus(contracts []*metadata.Agreement, configuration *config.Config,

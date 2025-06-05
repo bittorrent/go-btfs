@@ -64,12 +64,12 @@ type UserShard struct {
 func GetUserShard(ctxParams *uh.ContextParams, ssId string, hash string, index int) (*UserShard, error) {
 	shardId := GetShardId(ssId, hash, index)
 	k := fmt.Sprintf(renterShardsInMemKey, ctxParams.N.Identity.String(), shardId)
-	var rs *UserShard
+	var us *UserShard
 	if tmp, ok := renterShardsInMem.Get(k); ok {
-		rs = tmp.(*UserShard)
+		us = tmp.(*UserShard)
 	} else {
 		ctx, _ := helper.NewGoContext(ctxParams.Ctx)
-		rs = &UserShard{
+		us = &UserShard{
 			peerId: ctxParams.N.Identity.String(),
 			ssId:   ssId,
 			hash:   hash,
@@ -77,30 +77,32 @@ func GetUserShard(ctxParams *uh.ContextParams, ssId string, hash string, index i
 			ctx:    ctx,
 			ds:     ctxParams.N.Repo.Datastore(),
 		}
-		renterShardsInMem.Set(k, rs)
+		renterShardsInMem.Set(k, us)
 	}
-	status, err := rs.Status()
+	status, err := us.GetShardStatus()
 	if err != nil {
 		return nil, err
 	}
-	if rs.fsm == nil && status.Status == rshInitStatus {
-		rs.fsm = fsm.NewFSM(status.Status, renterShardFsmEvents, fsm.Callbacks{
-			"enter_state": rs.enterState,
+	if us.fsm == nil && status.Status == rshInitStatus {
+		us.fsm = fsm.NewFSM(status.Status, renterShardFsmEvents, fsm.Callbacks{
+			"enter_state": us.enterState,
 		})
 	}
-	return rs, nil
+	return us, nil
 }
 
 func (rs *UserShard) enterState(e *fsm.Event) {
 	log.Infof("shard: %s:%s enter status: %s", rs.ssId, rs.hash, e.Dst)
 	switch e.Dst {
 	case rshContractStatus:
-		rs.saveContract(e.Args[0].(*metadata.Agreement))
+		rs.saveShardStatusAndContract(e.Args[0].(*metadata.Agreement))
 		rs.saveUserShard(e.Args[0].(*metadata.Agreement).Meta.AgreementId)
 	}
 }
 
-func (rs *UserShard) Status() (*shardpb.Status, error) {
+// 获取shard的status
+// 如果这个shar还没有的话就先保存
+func (rs *UserShard) GetShardStatus() (*shardpb.Status, error) {
 	status := new(shardpb.Status)
 	shardId := GetShardId(rs.ssId, rs.hash, rs.index)
 	k := fmt.Sprintf(renterShardStatusKey, rs.peerId, shardId)
@@ -135,7 +137,7 @@ func extractSessionIDFromContractID(contractID string) (string, error) {
 	return ids[0], nil
 }
 
-func (rs *UserShard) saveContract(signedGuardContract *metadata.Agreement) error {
+func (rs *UserShard) saveShardStatusAndContract(signedGuardContract *metadata.Agreement) error {
 	status := &shardpb.Status{
 		Status: rshContractStatus,
 	}
@@ -144,7 +146,8 @@ func (rs *UserShard) saveContract(signedGuardContract *metadata.Agreement) error
 		fmt.Sprintf(renterShardStatusKey, rs.peerId, shardId),
 		fmt.Sprintf(renterShardContractsKey, rs.peerId, shardId),
 	}, []proto.Message{
-		status, signedGuardContract,
+		status,
+		signedGuardContract,
 	})
 }
 
@@ -155,7 +158,7 @@ func (rs *UserShard) saveUserShard(contractId string) {
 	}
 }
 
-func (rs *UserShard) UpdateToAgreementStatus(signedAgreement *metadata.Agreement) error {
+func (rs *UserShard) UpdateShardToContractStatus(signedAgreement *metadata.Agreement) error {
 	return rs.fsm.Event(rshToContractEvent, signedAgreement)
 }
 
@@ -319,6 +322,7 @@ func RefreshLocalContracts(ctx context.Context, ds datastore.Datastore, all []*m
 
 	return staled, err
 }
+
 func (rs *UserShard) UpdateAdditionalInfo(info string) error {
 	shardId := GetShardId(rs.ssId, rs.hash, rs.index)
 	return Save(rs.ds, fmt.Sprintf(renterShardAdditionalInfoKey, rs.peerId, shardId),

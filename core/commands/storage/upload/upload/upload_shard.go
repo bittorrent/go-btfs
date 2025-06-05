@@ -39,20 +39,29 @@ func UploadShard(ctx *ShardUploadContext) error {
 		return err
 	}
 	for i, shardHash := range ctx.Rss.ShardHashes {
-		go uploadSingleShard(ctx, ctx.ShardIndexes[i], shardHash, expectOnePay)
+		go sendShardContractToHost(ctx, ctx.ShardIndexes[i], shardHash, expectOnePay)
 	}
 
-	complete, err := waitForAllShards(ctx)
-	if err != nil {
-		return err
-	}
-	if complete {
-		err := Submit(ctx.Rss, ctx.FileSize, ctx.OfflineSigning)
+	go func() {
+		isComplete, err := waitForAllShardsComplete(ctx)
 		if err != nil {
-			_ = ctx.Rss.To(sessions.RssToErrorEvent, err)
-			return err
+			log.Errorf("wait for all shards complete error: %s", err.Error())
+			return
 		}
-	}
+
+		if isComplete {
+			// set rss status from init to submit
+			if err := ctx.Rss.To(sessions.RssToSubmitEvent); err != nil {
+				log.Errorf("set rss status from init to submit error: %s", err.Error())
+				return
+			}
+			err := SubmitToChain(ctx.Rss, ctx.FileSize, ctx.OfflineSigning)
+			if err != nil {
+				_ = ctx.Rss.To(sessions.RssToErrorEvent, err)
+				return
+			}
+		}
+	}()
 	return nil
 }
 
@@ -69,9 +78,9 @@ func checkAndPreparePayment(ctx *ShardUploadContext) (int64, error) {
 	return expectOnePay, checkAvailableBalance(ctx.Rss.Ctx, expectTotalPay, ctx.Token)
 }
 
-func uploadSingleShard(ctx *ShardUploadContext, shardIndex int, shardHash string, amount int64) {
+func sendShardContractToHost(ctx *ShardUploadContext, shardIndex int, shardHash string, amount int64) {
 	err := backoff.Retry(func() error {
-		if err := handleSingleShard(ctx, shardIndex, shardHash, amount); err != nil {
+		if err := sendShardContract(ctx, shardIndex, shardHash, amount); err != nil {
 			return err
 		}
 		return nil
@@ -84,7 +93,7 @@ func uploadSingleShard(ctx *ShardUploadContext, shardIndex int, shardHash string
 	}
 }
 
-func handleSingleShard(ctx *ShardUploadContext, shardIndex int, shardHash string, amount int64) error {
+func sendShardContract(ctx *ShardUploadContext, shardIndex int, shardHash string, amount int64) error {
 	select {
 	case <-ctx.Rss.Ctx.Done():
 		return nil
@@ -106,7 +115,7 @@ func handleSingleShard(ctx *ShardUploadContext, shardIndex int, shardHash string
 	if err := checkHostTokenSupport(ctx, hostPid); err != nil {
 		return err
 	}
-	return processShardAgreementAndInit(ctx, host, hostPid, shardIndex, shardHash, amount)
+	return signShardContractAndSendToSP(ctx, host, hostPid, shardIndex, shardHash, amount)
 }
 
 func checkHostTokenSupport(ctx *ShardUploadContext, hostPid peer.ID) error {
@@ -130,16 +139,16 @@ func checkHostTokenSupport(ctx *ShardUploadContext, hostPid peer.ID) error {
 	return errors.New("host does not support token")
 }
 
-func processShardAgreementAndInit(ctx *ShardUploadContext, host string, hostPid peer.ID, shardIndex int, shardHash string, amount int64) error {
+func signShardContractAndSendToSP(ctx *ShardUploadContext, host string, hostPid peer.ID, shardIndex int, shardHash string, amount int64) error {
 	agreementID := helper.NewAgreementID(ctx.Rss.SsId)
 	cb := make(chan error)
 	ShardErrChanMap.Set(agreementID, cb)
 	errChan := make(chan error, 2)
-	var agreementBytes []byte
+	var signedContractBytes []byte
 	go func() {
 		errChan <- func() error {
 			var err error
-			agreementBytes, err = GetCreatorAgreement(
+			signedContractBytes, err = SignUserContract(
 				ctx.Rss,
 				&metadata.AgreementMeta{
 					AgreementId:  agreementID,
@@ -165,6 +174,7 @@ func processShardAgreementAndInit(ctx *ShardUploadContext, host string, hostPid 
 			return nil
 		}()
 	}()
+
 	c := 0
 	for err := range errChan {
 		c++
@@ -180,7 +190,7 @@ func processShardAgreementAndInit(ctx *ShardUploadContext, host string, hostPid 
 		defer cancel()
 		_, err := remote.P2PCall(
 			c, ctx.Rss.CtxParams.N, ctx.Rss.CtxParams.Api, hostPid, "/storage/upload/init",
-			ctx.Rss.SsId, ctx.Rss.Hash, shardHash, ctx.Price, agreementBytes, ctx.StorageLength, ctx.ShardSize, shardIndex, ctx.RenterId,
+			ctx.Rss.SsId, ctx.Rss.Hash, shardHash, ctx.Price, signedContractBytes, ctx.StorageLength, ctx.ShardSize, shardIndex, ctx.RenterId,
 		)
 		if err != nil {
 			cb <- err
@@ -197,14 +207,15 @@ func processShardAgreementAndInit(ctx *ShardUploadContext, host string, hostPid 
 	}
 }
 
-// waitForAllShards 只负责等待分片完成并返回状态
-// 返回 complete=true 表示全部分片完成，complete=false 表示有分片出错
-func waitForAllShards(ctx *ShardUploadContext) (complete bool, err error) {
+func waitForAllShardsComplete(ctx *ShardUploadContext) (complete bool, err error) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
+			// 第一次调用的时候，会创建userShard
+			// receive_contract的时候会更新状态
+			// 第二次的时候就有了
 			completeNum, errorNum, err := ctx.Rss.GetCompleteShardsNum()
 			if err != nil {
 				continue

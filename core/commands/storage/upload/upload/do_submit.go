@@ -11,16 +11,12 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 )
 
-func Submit(rss *sessions.RenterSession, fileSize int64, offlineSigning bool) error {
-	if err := rss.To(sessions.RssToSubmitEvent); err != nil {
-		return err
-	}
-
+func SubmitToChain(rss *sessions.RenterSession, fileSize int64, offlineSigning bool) error {
 	err := preCheck(rss)
 	if err != nil {
 		return err
 	}
-	return doAgreementAndPay(rss, fileSize, offlineSigning)
+	return addFileMetaToBttcChainAndPay(rss, fileSize, offlineSigning)
 }
 
 func prepareAmount(rss *sessions.RenterSession, shardHashes []string) (int64, error) {

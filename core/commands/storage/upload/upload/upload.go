@@ -109,7 +109,6 @@ Use status command to check for completion:
 		cmds.IntOption(storageLengthOptionName, "len", "File storage period on hosts in days.").WithDefault(defaultStorageLength),
 		cmds.BoolOption(customizedPayoutOptionName, "Enable file storage customized payout schedule.").WithDefault(false),
 		cmds.IntOption(customizedPayoutPeriodOptionName, "Period of customized payout schedule.").WithDefault(1),
-		// TODO 副本数需要设置一个最大值，最大值为SP的个数
 		cmds.IntOption(copyName, "copy num of file hash.").WithDefault(0),
 		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 	},
@@ -226,7 +225,7 @@ Use status command to check for completion:
 			}
 		}
 
-		rss, err := sessions.GetCreatorSessionWithToken(ctxParams, ssId, fileHash, shardHashes, token)
+		rss, err := sessions.GetUserSessionWithToken(ctxParams, ssId, fileHash, shardHashes, token)
 		if err != nil {
 			return err
 		}

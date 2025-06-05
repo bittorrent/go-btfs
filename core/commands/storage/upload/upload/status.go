@@ -51,7 +51,7 @@ This command print upload and payment status by the time queried.`,
 		if err != nil {
 			return err
 		}
-		sessionStatus, err := session.Status()
+		sessionStatus, err := session.GetRenterSessionStatus()
 		if err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ This command print upload and payment status by the time queried.`,
 			if err != nil {
 				return err
 			}
-			st, err := shard.Status()
+			st, err := shard.GetShardStatus()
 			if err != nil {
 				return err
 			}

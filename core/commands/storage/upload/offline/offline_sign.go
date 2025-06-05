@@ -3,6 +3,7 @@ package offline
 import (
 	"errors"
 	"fmt"
+
 	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
@@ -49,7 +50,7 @@ to the upload session.`,
 		if err != nil {
 			return err
 		}
-		status, err := rss.Status()
+		status, err := rss.GetRenterSessionStatus()
 		if err != nil {
 			return err
 		}

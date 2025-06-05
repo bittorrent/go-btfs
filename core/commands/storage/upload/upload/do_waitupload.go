@@ -38,7 +38,7 @@ func ResumeWaitUploadOnSigning(rss *sessions.RenterSession) error {
 	return nil
 }
 
-func waitUpload(rss *sessions.RenterSession, offlineSigning bool, fsStatus *metadata.FileMetaInfo, resume bool) error {
+func waitSPSaveFileSuccAndToPay(rss *sessions.RenterSession, offlineSigning bool, fsStatus *metadata.FileMetaInfo, resume bool) error {
 	// TODO 调整
 	threshold := getSuccessThreshold(len(rss.ShardHashes))
 	if !resume {

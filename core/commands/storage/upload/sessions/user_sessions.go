@@ -109,14 +109,14 @@ func GetRenterSession(ctxParams *uh.ContextParams, ssId string, hash string, sha
 			Cancel:      cancel,
 			CtxParams:   ctxParams,
 		}
-		status, err := rs.Status()
+		status, err := rs.GetRenterSessionStatus()
 		if err != nil {
 			return nil, err
 		}
 		if rs.Hash = hash; hash == "" {
 			rs.Hash = status.Hash
 		}
-		if rs.ShardHashes = shardHashes; shardHashes == nil || len(shardHashes) == 0 {
+		if rs.ShardHashes = shardHashes; len(shardHashes) == 0 {
 			rs.ShardHashes = status.ShardHashes
 		}
 		if status.Status != RssCompleteStatus {
@@ -129,7 +129,7 @@ func GetRenterSession(ctxParams *uh.ContextParams, ssId string, hash string, sha
 	return rs, nil
 }
 
-func GetCreatorSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash string, shardHashes []string, token common.Address) (*RenterSession,
+func GetUserSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash string, shardHashes []string, token common.Address) (*RenterSession,
 	error) {
 	k := fmt.Sprintf(RenterSessionInMemKey, ctxParams.N.Identity.String(), ssId)
 	var rs *RenterSession
@@ -149,14 +149,14 @@ func GetCreatorSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash s
 			CtxParams:   ctxParams,
 			Token:       token,
 		}
-		status, err := rs.Status()
+		status, err := rs.GetRenterSessionStatus()
 		if err != nil {
 			return nil, err
 		}
 		if rs.Hash = hash; hash == "" {
 			rs.Hash = status.Hash
 		}
-		if rs.ShardHashes = shardHashes; shardHashes == nil || len(shardHashes) == 0 {
+		if rs.ShardHashes = shardHashes; len(shardHashes) == 0 {
 			rs.ShardHashes = status.ShardHashes
 		}
 		if status.Status != RssCompleteStatus {
@@ -226,7 +226,7 @@ func (rs *RenterSession) GetAdditionalInfo() (*renterpb.RenterSessionAdditionalI
 	return pb, err
 }
 
-func (rs *RenterSession) Status() (*renterpb.RenterSessionStatus, error) {
+func (rs *RenterSession) GetRenterSessionStatus() (*renterpb.RenterSessionStatus, error) {
 	status := &renterpb.RenterSessionStatus{}
 	err := Get(rs.CtxParams.N.Repo.Datastore(), fmt.Sprintf(RenterSessionStatusKey, rs.PeerId, rs.SsId), status)
 	if err == datastore.ErrNotFound {
@@ -241,7 +241,7 @@ func (rs *RenterSession) Status() (*renterpb.RenterSessionStatus, error) {
 
 func (rs *RenterSession) GetCompleteShardsNum() (int, int, error) {
 	var completeNum, errorNum int
-	status, err := rs.Status()
+	status, err := rs.GetRenterSessionStatus()
 	if err != nil {
 		return 0, 0, err
 	}
@@ -251,7 +251,7 @@ func (rs *RenterSession) GetCompleteShardsNum() (int, int, error) {
 			log.Errorf("get renter shard error:", err.Error())
 			continue
 		}
-		s, err := shard.Status()
+		s, err := shard.GetShardStatus()
 		if err != nil {
 			return 0, 0, err
 		}

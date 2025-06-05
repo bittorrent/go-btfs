@@ -118,8 +118,7 @@ func getGuardAndEscrowPid(configuration *config.Config) (peer.ID, peer.ID, error
 	return guardPid, escrowPid, err
 }
 
-// 对Agreement进行签名
-func GetCreatorAgreement(
+func SignUserContract(
 	rss *sessions.RenterSession,
 	agreementMeta *metadata.AgreementMeta,
 	offlineSigning bool,
