@@ -7,11 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bittorrent/go-btfs/protos/metadata"
-	renterpb "github.com/bittorrent/go-btfs/protos/renter"
-
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/protos/metadata"
+	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 	shardpb "github.com/bittorrent/go-btfs/protos/shard"
 
 	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
@@ -32,6 +31,7 @@ const (
 	renterShardAdditionalInfoKey = renterShardKey + "additional-info"
 
 	creatorShardAgreementKey = "/btfs/%s/creator/shard-agreements/%s"
+	userFileShard            = "/btfs/%s/shards/file/%s"
 
 	// status
 	rshInitStatus     = "init"
@@ -96,6 +96,7 @@ func (rs *UserShard) enterState(e *fsm.Event) {
 	switch e.Dst {
 	case rshContractStatus:
 		rs.saveContract(e.Args[0].(*metadata.Agreement))
+		rs.saveUserShard(e.Args[0].(*metadata.Agreement).Meta.AgreementId)
 	}
 }
 
@@ -145,6 +146,13 @@ func (rs *UserShard) saveContract(signedGuardContract *metadata.Agreement) error
 	}, []proto.Message{
 		status, signedGuardContract,
 	})
+}
+
+func (rs *UserShard) saveUserShard(contractId string) {
+	err := rs.ds.Put(context.Background(), datastore.NewKey(fmt.Sprintf(userFileShard, rs.peerId, contractId)), []byte(rs.hash))
+	if err != nil {
+		return
+	}
 }
 
 func (rs *UserShard) UpdateToAgreementStatus(signedAgreement *metadata.Agreement) error {
@@ -272,6 +280,45 @@ func SaveShardsContract(ds datastore.Datastore, scs []*metadata.Agreement,
 	return scs, staleHashes, nil
 }
 
+func RefreshLocalContracts(ctx context.Context, ds datastore.Datastore, all []*metadata.Agreement, outdated []*metadata.Agreement, peerID, role string) ([]string, error) {
+	newKeys := make([]string, 0)
+	newValues := make([]proto.Message, 0)
+	outedFileCIDs := make(map[string]bool)
+
+	key := ""
+	if role == nodepb.ContractStat_HOST.String() {
+		key = hostShardContractsKey
+	} else {
+		key = renterShardContractsKey
+	}
+
+	for _, o := range outdated {
+		for _, a := range all {
+			if a.Meta.AgreementId == o.Meta.AgreementId {
+				continue
+			}
+			newKeys = append(newKeys, fmt.Sprintf(key, peerID, a.Meta.AgreementId))
+			newValues = append(newValues, a)
+		}
+	}
+
+	for _, o := range outdated {
+		cid, err := ds.Get(ctx, datastore.NewKey(fmt.Sprintf(userFileShard, peerID, o.Meta.AgreementId)))
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		outedFileCIDs[string(cid)] = true
+	}
+
+	err := Batch(ds, newKeys, newValues)
+	staled := make([]string, 0)
+	for k := range outedFileCIDs {
+		staled = append(staled, k)
+	}
+
+	return staled, err
+}
 func (rs *UserShard) UpdateAdditionalInfo(info string) error {
 	shardId := GetShardId(rs.ssId, rs.hash, rs.index)
 	return Save(rs.ds, fmt.Sprintf(renterShardAdditionalInfoKey, rs.peerId, shardId),
