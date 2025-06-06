@@ -20,6 +20,7 @@ type FileMeta interface {
 	AddFileMeta(cid string, meta *metadata.FileMetaInfo) error
 	UpdateContractStatus(contractId string) error
 	GetFileMeta(cid string, contractIds []string) (*metadata.FileMetaInfo, error)
+	GetFileMetaByCID(cid string) (*metadata.FileMetaInfo, error)
 }
 
 type fileMeta struct {
@@ -64,7 +65,7 @@ func (fm *fileMeta) AddFileMeta(cid string, meta *metadata.FileMetaInfo) error {
 		return err
 	}
 
-	pairs := make([]abi.FileMetaAgreementSPPair, 0)
+	pairs := make([]abi.FileMetaContractSPPair, 0)
 	for _, c := range meta.Contracts {
 		if c.Meta.ContractId == "" {
 			fmt.Printf("Warning: empty contract ID found\n")
@@ -76,9 +77,9 @@ func (fm *fileMeta) AddFileMeta(cid string, meta *metadata.FileMetaInfo) error {
 			fmt.Printf("Warning: failed to get host address for contract ID %s: %v\n", c.Meta.ContractId, err)
 			continue
 		}
-		pairs = append(pairs, abi.FileMetaAgreementSPPair{
-			AgreementId: c.Meta.ContractId,
-			Sp:          common.HexToAddress(hostAddress), // Convert hostID to Ethereum address
+		pairs = append(pairs, abi.FileMetaContractSPPair{
+			ContractId: c.Meta.ContractId,
+			Sp:         common.HexToAddress(hostAddress), // Convert hostID to Ethereum address
 		})
 	}
 
@@ -154,6 +155,19 @@ func (fm *fileMeta) GetFileMeta(cid string, contractIds []string) (*metadata.Fil
 				c.Status = metadata.Contract_ContractStatus(int32(status))
 			}
 		}
+	}
+	return fss, nil
+}
+
+func (fm *fileMeta) GetFileMetaByCID(cid string) (*metadata.FileMetaInfo, error) {
+	meta, err := fm.FileMetaAbi.FileMeta(nil, cid)
+	if err != nil {
+		return nil, err
+	}
+	fss := &metadata.FileMetaInfo{}
+	err = proto.Unmarshal(meta, fss)
+	if err != nil {
+		return nil, err
 	}
 	return fss, nil
 }

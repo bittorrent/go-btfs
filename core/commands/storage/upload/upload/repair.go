@@ -46,7 +46,7 @@ This command repairs the given shards of a file.`,
 		}
 
 		var meta *metadata.FileMetaInfo
-		meta, err = chain.SettleObject.FileMetaService.GetFileMeta(fileHash, []string{})
+		meta, err = chain.SettleObject.FileMetaService.GetFileMetaByCID(fileHash)
 		if err != nil {
 			return err
 		}

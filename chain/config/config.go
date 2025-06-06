@@ -39,7 +39,7 @@ var (
 	bttcTestStatusAddress         = common.HexToAddress("0x38d1fF2C2e9744273E4531FA4608eB6432c1F26A")
 	bttcTestFileMetaAddress       = common.HexToAddress("0xB192bb91c143C196EF3c659923Ef34026B170997")
 	bttcTestStakeAddress          = common.HexToAddress("0xD064E2f1cfa0C038b1ba541c73749DD3C1B0835b")
-	bttcTestFileMeta2Address      = common.HexToAddress("0x083BA744Abd30753be0Cd4A30aa63AB4dB9f538F")
+	bttcTestFileMeta2Address      = common.HexToAddress("0xE5388bAF32180640448cefFe10d168B5C4Da6a92")
 
 	bttcFactoryAddressV1 = common.HexToAddress("0x9AF4bEc1A30BeC47756Ecef4cf43B91592121bC9")
 	bttcFactoryAddress   = common.HexToAddress("0x763d7858287B9a33F4bE5bb3df0241dACc59BCc7") // https://bttcscan.com/address/0x763d7858287B9a33F4bE5bb3df0241dACc59BCc7
