@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
@@ -100,8 +99,6 @@ func (rs *UserShard) enterState(e *fsm.Event) {
 	}
 }
 
-// 获取shard的status
-// 如果这个shar还没有的话就先保存
 func (rs *UserShard) GetShardStatus() (*shardpb.Status, error) {
 	status := new(shardpb.Status)
 	shardId := GetShardId(rs.ssId, rs.hash, rs.index)
@@ -121,20 +118,6 @@ func (rs *UserShard) GetShardStatus() (*shardpb.Status, error) {
 
 func GetShardId(ssId string, shardHash string, index int) (contractId string) {
 	return fmt.Sprintf("%s:%s:%d", ssId, shardHash, index)
-}
-
-// ExtractSessionIDFromContractID takes the first segment separated by ","
-// and returns it as the session id. If in an old format, i.e. did not
-// have a session id, return an error.
-func extractSessionIDFromContractID(contractID string) (string, error) {
-	ids := strings.Split(contractID, ":")
-	if len(ids) != 2 {
-		return "", fmt.Errorf("bad contract id: fewer than 2 segments")
-	}
-	if len(ids[0]) != 36 {
-		return "", fmt.Errorf("invalid session id within contract id")
-	}
-	return ids[0], nil
 }
 
 func (rs *UserShard) saveShardStatusAndContract(signedGuardContract *metadata.Agreement) error {

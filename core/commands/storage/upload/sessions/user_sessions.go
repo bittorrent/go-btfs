@@ -185,6 +185,7 @@ func (rs *RenterSession) enterState(e *fsm.Event) {
 	} else {
 		msg = ""
 	}
+
 	switch e.Dst {
 	case RssErrorStatus:
 		msg = e.Args[0].(error).Error()
@@ -193,9 +194,12 @@ func (rs *RenterSession) enterState(e *fsm.Event) {
 		rs.Cancel()
 	}
 	fmt.Printf("[%s] session: %s entered state: %s, msg: %s\n", time.Now().Format(time.RFC3339), rs.SsId, e.Dst, msg)
+
 	err := Batch(rs.CtxParams.N.Repo.Datastore(),
-		[]string{fmt.Sprintf(RenterSessionStatusKey, rs.PeerId, rs.SsId),
-			fmt.Sprintf(RenterSessionAdditionalInfoKey, rs.PeerId, rs.SsId)},
+		[]string{
+			fmt.Sprintf(RenterSessionStatusKey, rs.PeerId, rs.SsId),
+			fmt.Sprintf(RenterSessionAdditionalInfoKey, rs.PeerId, rs.SsId),
+		},
 		[]proto.Message{
 			&renterpb.RenterSessionStatus{
 				Status:      e.Dst,
@@ -203,10 +207,12 @@ func (rs *RenterSession) enterState(e *fsm.Event) {
 				Hash:        rs.Hash,
 				ShardHashes: rs.ShardHashes,
 				LastUpdated: time.Now().UTC(),
-			}, &renterpb.RenterSessionAdditionalInfo{
+			},
+			&renterpb.RenterSessionAdditionalInfo{
 				Info:        "",
 				LastUpdated: time.Now(),
-			}})
+			}},
+	)
 	go func() {
 		_ = rs.To(RssErrorStatus, err)
 	}()
