@@ -94,8 +94,8 @@ func (rs *UserShard) enterState(e *fsm.Event) {
 	log.Infof("shard: %s:%s enter status: %s", rs.ssId, rs.hash, e.Dst)
 	switch e.Dst {
 	case rshContractStatus:
-		rs.saveShardStatusAndContract(e.Args[0].(*metadata.Agreement))
-		rs.saveUserShard(e.Args[0].(*metadata.Agreement).Meta.AgreementId)
+		rs.saveShardStatusAndContract(e.Args[0].(*metadata.Contract))
+		rs.saveUserShard(e.Args[0].(*metadata.Contract).Meta.ContractId)
 	}
 }
 
@@ -120,7 +120,7 @@ func GetShardId(ssId string, shardHash string, index int) (contractId string) {
 	return fmt.Sprintf("%s:%s:%d", ssId, shardHash, index)
 }
 
-func (rs *UserShard) saveShardStatusAndContract(signedGuardContract *metadata.Agreement) error {
+func (rs *UserShard) saveShardStatusAndContract(signedGuardContract *metadata.Contract) error {
 	status := &shardpb.Status{
 		Status: rshContractStatus,
 	}
@@ -141,20 +141,20 @@ func (rs *UserShard) saveUserShard(contractId string) {
 	}
 }
 
-func (rs *UserShard) UpdateShardToContractStatus(signedAgreement *metadata.Agreement) error {
-	return rs.fsm.Event(rshToContractEvent, signedAgreement)
+func (rs *UserShard) UpdateShardToContractStatus(signedContract *metadata.Contract) error {
+	return rs.fsm.Event(rshToContractEvent, signedContract)
 }
 
-func (rs *UserShard) Agreements() (*metadata.Agreement, error) {
-	agreement := &metadata.Agreement{}
-	err := Get(rs.ds, fmt.Sprintf(renterShardContractsKey, rs.peerId, GetShardId(rs.ssId, rs.hash, rs.index)), agreement)
+func (rs *UserShard) Contracts() (*metadata.Contract, error) {
+	contract := &metadata.Contract{}
+	err := Get(rs.ds, fmt.Sprintf(renterShardContractsKey, rs.peerId, GetShardId(rs.ssId, rs.hash, rs.index)), contract)
 	if errors.Is(err, datastore.ErrNotFound) {
-		return agreement, nil
+		return contract, nil
 	}
-	return agreement, err
+	return contract, err
 }
 
-func ListShardsContracts(d datastore.Datastore, peerId string, role string) ([]*metadata.Agreement, error) {
+func ListShardsContracts(d datastore.Datastore, peerId string, role string) ([]*metadata.Contract, error) {
 	var k string
 	if k = fmt.Sprintf(renterShardPrefix, peerId); role == nodepb.ContractStat_HOST.String() {
 		k = fmt.Sprintf(hostShardPrefix, peerId)
@@ -163,9 +163,9 @@ func ListShardsContracts(d datastore.Datastore, peerId string, role string) ([]*
 	if err != nil {
 		return nil, err
 	}
-	contracts := make([]*metadata.Agreement, 0)
+	contracts := make([]*metadata.Contract, 0)
 	for _, v := range vs {
-		sc := &metadata.Agreement{}
+		sc := &metadata.Contract{}
 		err := proto.Unmarshal(v, sc)
 		if err != nil {
 			log.Error(err)
@@ -195,13 +195,13 @@ func DeleteShardsContracts(d datastore.Datastore, peerId string, role string) er
 // SaveShardsContract persists updated guard contracts from upstream, if an existing entry
 // is not available, then an empty signed escrow contract is inserted along with the
 // new guard contract.
-func SaveShardsContract(ds datastore.Datastore, scs []*metadata.Agreement,
-	gcs []*metadata.Agreement, peerID, role string) ([]*metadata.Agreement, []string, error) {
+func SaveShardsContract(ds datastore.Datastore, scs []*metadata.Contract,
+	gcs []*metadata.Contract, peerID, role string) ([]*metadata.Contract, []string, error) {
 	var ks []string
 	var vs []proto.Message
-	gmap := map[string]*metadata.Agreement{}
+	gmap := map[string]*metadata.Contract{}
 	for _, g := range gcs {
-		gmap[g.Meta.AgreementId] = g
+		gmap[g.Meta.ContractId] = g
 	}
 	activeShards := map[string]bool{}      // active shard hash -> has one file hash (bool)
 	activeFiles := map[string]bool{}       // active file hash -> has one shard hash (bool)
@@ -214,12 +214,12 @@ func SaveShardsContract(ds datastore.Datastore, scs []*metadata.Agreement,
 	}
 	for _, c := range scs {
 		// only append the updated contracts
-		if gc, ok := gmap[c.Meta.AgreementId]; ok {
-			ks = append(ks, fmt.Sprintf(key, peerID, c.Meta.AgreementId))
+		if gc, ok := gmap[c.Meta.ContractId]; ok {
+			ks = append(ks, fmt.Sprintf(key, peerID, c.Meta.ContractId))
 			// update
 			c = gc
 			vs = append(vs, c)
-			delete(gmap, c.Meta.AgreementId)
+			delete(gmap, c.Meta.ContractId)
 
 			// mark stale files if no longer active (must be synced to become inactive)
 			invalidShards[gc.Meta.ShardHash] = append(invalidShards[gc.Meta.ShardHash], gc.Meta.ShardHash)
@@ -266,7 +266,7 @@ func SaveShardsContract(ds datastore.Datastore, scs []*metadata.Agreement,
 	return scs, staleHashes, nil
 }
 
-func RefreshLocalContracts(ctx context.Context, ds datastore.Datastore, all []*metadata.Agreement, outdated []*metadata.Agreement, peerID, role string) ([]string, error) {
+func RefreshLocalContracts(ctx context.Context, ds datastore.Datastore, all []*metadata.Contract, outdated []*metadata.Contract, peerID, role string) ([]string, error) {
 	newKeys := make([]string, 0)
 	newValues := make([]proto.Message, 0)
 	outedFileCIDs := make(map[string]bool)
@@ -280,16 +280,16 @@ func RefreshLocalContracts(ctx context.Context, ds datastore.Datastore, all []*m
 
 	for _, o := range outdated {
 		for _, a := range all {
-			if a.Meta.AgreementId == o.Meta.AgreementId {
+			if a.Meta.ContractId == o.Meta.ContractId {
 				continue
 			}
-			newKeys = append(newKeys, fmt.Sprintf(key, peerID, a.Meta.AgreementId))
+			newKeys = append(newKeys, fmt.Sprintf(key, peerID, a.Meta.ContractId))
 			newValues = append(newValues, a)
 		}
 	}
 
 	for _, o := range outdated {
-		cid, err := ds.Get(ctx, datastore.NewKey(fmt.Sprintf(userFileShard, peerID, o.Meta.AgreementId)))
+		cid, err := ds.Get(ctx, datastore.NewKey(fmt.Sprintf(userFileShard, peerID, o.Meta.ContractId)))
 		if err != nil {
 			log.Error(err)
 			continue

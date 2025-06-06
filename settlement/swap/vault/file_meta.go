@@ -65,30 +65,30 @@ func (fm *fileMeta) AddFileMeta(cid string, meta *metadata.FileMetaInfo) error {
 	}
 
 	pairs := make([]abi.FileMetaAgreementSPPair, 0)
-	for _, c := range meta.Agreements {
-		if c.Meta.AgreementId == "" {
+	for _, c := range meta.Contracts {
+		if c.Meta.ContractId == "" {
 			fmt.Printf("Warning: empty contract ID found\n")
 			continue
 		}
 
 		hostAddress, err := getPublicAddressFromHostID(c.Meta.SpId)
 		if err != nil {
-			fmt.Printf("Warning: failed to get host address for agreement ID %s: %v\n", c.Meta.AgreementId, err)
+			fmt.Printf("Warning: failed to get host address for contract ID %s: %v\n", c.Meta.ContractId, err)
 			continue
 		}
 		pairs = append(pairs, abi.FileMetaAgreementSPPair{
-			AgreementId: c.Meta.AgreementId,
+			AgreementId: c.Meta.ContractId,
 			Sp:          common.HexToAddress(hostAddress), // Convert hostID to Ethereum address
 		})
 	}
 
-	fmt.Printf("Adding file meta - CID: %s, Metadata size: %d bytes, Agreements count: %d\n",
+	fmt.Printf("Adding file meta - CID: %s, Metadata size: %d bytes, Contracts count: %d\n",
 		cid, len(mb), len(pairs))
 
 	tx, err := fm.FileMetaAbi.AddFileMeta(opts, cid, mb, new(big.Int).SetUint64(meta.FileSize), pairs)
 	if err != nil {
 		fmt.Printf("Failed to add file meta: %v\n", err)
-		fmt.Printf("Agreements address: %s\n", fm.contractAddress.Hex())
+		fmt.Printf("Contracts address: %s\n", fm.contractAddress.Hex())
 		fmt.Printf("Gas limit: %d\n", opts.GasLimit)
 		return fmt.Errorf("smart contract execution failed: %w", err)
 	}
@@ -122,7 +122,6 @@ func getPublicAddressFromHostID(hostID string) (string, error) {
 }
 
 func (fm *fileMeta) UpdateContractStatus(contractId string) error {
-	// 创建带有签名者和链ID的交易选项
 	opts, err := bind.NewKeyedTransactorWithChainID(fm.Singer.PrivKey(), fm.chainId)
 	if err != nil {
 		fmt.Printf("Failed to create transactor: %v\n", err)
@@ -130,10 +129,10 @@ func (fm *fileMeta) UpdateContractStatus(contractId string) error {
 	}
 	tx, err := fm.FileMetaAbi.UpdateStatus(opts, contractId, 1)
 	if err != nil {
-		fmt.Printf("xxxxxxxxxxxxxxxxx update status error:%v, %s\n", err, contractId)
+		fmt.Printf("update status error:%v, %s\n", err, contractId)
 		return err
 	}
-	fmt.Println("xxxxxxxxxxxxxxxxx update status ok:", tx.Hash())
+	fmt.Println("update status ok:", tx.Hash())
 	return nil
 }
 
@@ -148,11 +147,11 @@ func (fm *fileMeta) GetFileMeta(cid string, contractIds []string) (*metadata.Fil
 	if err != nil {
 		return nil, err
 	}
-	for _, c := range fss.Agreements {
+	for _, c := range fss.Contracts {
 		for i, contractId := range contractIds {
-			if c.Meta.AgreementId == contractId {
+			if c.Meta.ContractId == contractId {
 				status := meta.Statuses[i]
-				c.Status = metadata.Agreement_AgreementStatus(int32(status))
+				c.Status = metadata.Contract_ContractStatus(int32(status))
 			}
 		}
 	}

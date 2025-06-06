@@ -26,7 +26,7 @@ func prepareAmount(rss *sessions.RenterSession, shardHashes []string) (int64, er
 		if err != nil {
 			return 0, err
 		}
-		c, err := shard.Agreements()
+		c, err := shard.Contracts()
 		if err != nil {
 			return 0, err
 		}

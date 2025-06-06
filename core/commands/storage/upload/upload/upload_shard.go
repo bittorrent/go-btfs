@@ -150,9 +150,9 @@ func signShardContractAndSendToSP(ctx *ShardUploadContext, host string, hostPid 
 			var err error
 			signedContractBytes, err = SignUserContract(
 				ctx.Rss,
-				&metadata.AgreementMeta{
-					AgreementId:  agreementID,
-					CreatorId:    ctx.RenterId.String(),
+				&metadata.ContractMeta{
+					ContractId:   agreementID,
+					UserId:       ctx.RenterId.String(),
 					SpId:         host,
 					ShardIndex:   uint64(shardIndex),
 					ShardHash:    shardHash,

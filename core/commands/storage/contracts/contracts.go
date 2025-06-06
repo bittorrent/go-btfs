@@ -341,7 +341,7 @@ func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env
 			latest = &createTime
 		}
 	}
-	var updated []*metadata.Agreement
+	var updated []*metadata.Contract
 	switch role {
 	case nodepb.ContractStat_HOST.String():
 		updated, err = GetInvalidContractsForHost(cs, n.Identity.String())
@@ -378,8 +378,8 @@ func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env
 	return nil
 }
 
-func GetInvalidContractsForHost(cs []*metadata.Agreement, spId string) ([]*metadata.Agreement, error) {
-	var invalid []*metadata.Agreement
+func GetInvalidContractsForHost(cs []*metadata.Contract, spId string) ([]*metadata.Contract, error) {
+	var invalid []*metadata.Contract
 	for _, c := range cs {
 		if int64(c.Meta.StorageEnd) < time.Now().Unix() && c.Meta.SpId == spId {
 			invalid = append(invalid, c)
@@ -388,10 +388,10 @@ func GetInvalidContractsForHost(cs []*metadata.Agreement, spId string) ([]*metad
 	return invalid, nil
 }
 
-func GetInvalidContractForUser(cs []*metadata.Agreement, peerId string) ([]*metadata.Agreement, error) {
-	var invalid []*metadata.Agreement
+func GetInvalidContractForUser(cs []*metadata.Contract, peerId string) ([]*metadata.Contract, error) {
+	var invalid []*metadata.Contract
 	for _, c := range cs {
-		if c.Meta.CreatorId == peerId && int64(c.Meta.StorageEnd) < time.Now().Unix() {
+		if c.Meta.UserId == peerId && int64(c.Meta.StorageEnd) < time.Now().Unix() {
 			// If the contract is expired, we consider it invalid
 			invalid = append(invalid, c)
 		}

@@ -96,8 +96,8 @@ func waitSPSaveFileSuccAndToPay(rss *sessions.RenterSession, offlineSigning bool
 		scaledRetry = highRetry
 	}
 	var contracts []string
-	for _, c := range fsStatus.Agreements {
-		contracts = append(contracts, c.Meta.AgreementId)
+	for _, c := range fsStatus.Contracts {
+		contracts = append(contracts, c.Meta.ContractId)
 	}
 	err := backoff.Retry(func() error {
 		err := grpc.GuardClient(rss.CtxParams.Cfg.Services.GuardDomain).WithContext(rss.Ctx,
@@ -110,11 +110,11 @@ func waitSPSaveFileSuccAndToPay(rss *sessions.RenterSession, offlineSigning bool
 				}
 				num := 0
 				m := make(map[string]int)
-				for _, c := range meta.Agreements {
+				for _, c := range meta.Contracts {
 					m[c.Status.String()]++
 					// TODO 合约里没有这个状态了，只会返回已经上传了的ID
 					switch c.Status {
-					case metadata.Agreement_COMPLETED:
+					case metadata.Contract_COMPLETED:
 						num++
 					}
 					shard, err := sessions.GetUserShard(rss.CtxParams, rss.SsId, c.Meta.ShardHash, int(c.Meta.ShardIndex))

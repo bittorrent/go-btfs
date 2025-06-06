@@ -18,19 +18,19 @@ func addFileMetaToBttcChainAndPay(rss *sessions.RenterSession, fileSize int64, o
 		return err
 	}
 
-	as := make([]*metadata.Agreement, 0)
+	as := make([]*metadata.Contract, 0)
 	for i, h := range rss.ShardHashes {
 		shard, err := sessions.GetUserShard(rss.CtxParams, rss.SsId, h, i)
 		if err != nil {
 			return err
 		}
-		agreement, err := shard.Agreements()
+		contract, err := shard.Contracts()
 		if err != nil {
 			return err
 		}
-		as = append(as, agreement)
+		as = append(as, contract)
 	}
-	meta, err := NewFileStatus(as, rss.CtxParams.Cfg, as[0].Meta.CreatorId, rss.Hash, fileSize)
+	meta, err := NewFileStatus(as, rss.CtxParams.Cfg, as[0].Meta.UserId, rss.Hash, fileSize)
 	if err != nil {
 		return err
 	}
@@ -85,14 +85,14 @@ func addFileMetaToBttcChainAndPay(rss *sessions.RenterSession, fileSize int64, o
 	return waitSPSaveFileSuccAndToPay(rss, offlineSigning, meta, false)
 }
 
-func NewFileStatus(contracts []*metadata.Agreement, configuration *config.Config,
-	renterId string, fileHash string, fileSize int64) (*metadata.FileMetaInfo, error) {
+func NewFileStatus(contracts []*metadata.Contract, configuration *config.Config,
+	userId string, fileHash string, fileSize int64) (*metadata.FileMetaInfo, error) {
 
 	return &metadata.FileMetaInfo{
-		CreatorId:  renterId,
+		UserId:     userId,
 		FileHash:   fileHash,
 		FileSize:   uint64(fileSize),
 		ShardCount: uint64(len(contracts)),
-		Agreements: contracts,
+		Contracts:  contracts,
 	}, nil
 }

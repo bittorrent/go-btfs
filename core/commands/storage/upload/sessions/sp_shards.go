@@ -104,11 +104,11 @@ func (hs *SPShard) enterState(e *fsm.Event) {
 	log.Infof("shard: %s enter status: %s\n", hs.contractId, e.Dst)
 	switch e.Dst {
 	case hshAgreementStatus:
-		hs.saveContract(e.Args[0].(*metadata.Agreement))
+		hs.saveContract(e.Args[0].(*metadata.Contract))
 	}
 }
 
-func (hs *SPShard) saveContract(signedGuardContract *metadata.Agreement) error {
+func (hs *SPShard) saveContract(signedGuardContract *metadata.Contract) error {
 	status := &shardpb.Status{
 		Status: hshAgreementStatus,
 	}
@@ -145,7 +145,7 @@ func (hs *SPShard) IsContractStatus() bool {
 	return hs.fsm.Current() == hshAgreementStatus
 }
 
-func (hs *SPShard) UpdateToAgreementStatus(signedGuardContract *metadata.Agreement) error {
+func (hs *SPShard) UpdateToAgreementStatus(signedGuardContract *metadata.Contract) error {
 	return hs.fsm.Event(hshToAgreementEvent, signedGuardContract)
 }
 

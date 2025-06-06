@@ -17,7 +17,7 @@ func payInCheque(rss *sessions.RenterSession) error {
 		if err != nil {
 			return err
 		}
-		c, err := shard.Agreements()
+		c, err := shard.Contracts()
 		if err != nil {
 			return err
 		}
@@ -30,7 +30,7 @@ func payInCheque(rss *sessions.RenterSession) error {
 		}
 
 		host := c.Meta.SpId
-		contractId := c.Meta.AgreementId
+		contractId := c.Meta.ContractId
 		fmt.Printf("send cheque: paying...  host:%v, amount:%v, contractId:%v, token:%v. \n", host, realAmount.String(), contractId, rss.Token.String())
 
 		err = chain.SettleObject.SwapService.Settle(host, realAmount, contractId, rss.Token)

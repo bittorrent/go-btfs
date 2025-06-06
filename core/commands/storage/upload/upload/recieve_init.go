@@ -140,14 +140,14 @@ the shard and replies back to client for the next challenge step.`,
 				fmt.Printf("upload init: panic, err:%v, shardIndex:%v, requestPid:%v. \n", err, shardIndex, requestPid)
 			}
 		}()
-		halfSignedAgreement := &metadata.Agreement{}
+		halfSignedAgreement := &metadata.Contract{}
 		if err = proto.Unmarshal(halfSignedAgreementBytes, halfSignedAgreement); err != nil {
 			return fmt.Errorf("unmarshal half signed agreement error: %v", err)
 		}
 		if err != nil {
 			return err
 		}
-		agreementMeta := halfSignedAgreement.Meta
+		contractMeta := halfSignedAgreement.Meta
 		// get renter's public key
 		pid, ok := remote.GetStreamRequestRemotePeerID(req, ctxParams.N)
 		if !ok {
@@ -161,13 +161,13 @@ the shard and replies back to client for the next challenge step.`,
 		if err != nil {
 			return err
 		}
-		s := halfSignedAgreement.GetCreatorSignature()
-		ok, err = crypto.Verify(payerPubKey, agreementMeta, s)
+		s := halfSignedAgreement.GetUserSignature()
+		ok, err = crypto.Verify(payerPubKey, contractMeta, s)
 		if !ok || err != nil {
 			return fmt.Errorf("can't verify guard contract: %v", err)
 		}
 
-		signedAgreement, err := signAgreement(agreementMeta, halfSignedAgreement, ctxParams.N.PrivateKey)
+		signedAgreement, err := signAgreement(contractMeta, halfSignedAgreement, ctxParams.N.PrivateKey)
 		if err != nil {
 			return err
 		}
@@ -189,7 +189,7 @@ the shard and replies back to client for the next challenge step.`,
 			}
 
 			// check renter-price
-			price = int64(agreementMeta.Price)
+			price = int64(contractMeta.Price)
 			priceOnline, err := chain.SettleObject.OracleService.CurrentPrice(token)
 			if err != nil {
 				return err
@@ -206,8 +206,8 @@ the shard and replies back to client for the next challenge step.`,
 			if err != nil {
 				return err
 			}
-			amount = int64(agreementMeta.Amount)
-			amountCal, err := uh.TotalPay(int64(agreementMeta.ShardSize), price, storeLen, rate)
+			amount = int64(contractMeta.Amount)
+			amountCal, err := uh.TotalPay(int64(contractMeta.ShardSize), price, storeLen, rate)
 			if err != nil {
 				return err
 			}
@@ -220,7 +220,7 @@ the shard and replies back to client for the next challenge step.`,
 
 		go func() {
 			tmp := func() error {
-				shard, err := sessions.GetSPShard(ctxParams, agreementMeta.AgreementId, price, amount, rate)
+				shard, err := sessions.GetSPShard(ctxParams, contractMeta.ContractId, price, amount, rate)
 				if err != nil {
 					return err
 				}
@@ -246,7 +246,7 @@ the shard and replies back to client for the next challenge step.`,
 				}
 
 				for i := 0; i < 20; i++ {
-					err := chain.SettleObject.FileMetaService.UpdateContractStatus(agreementMeta.AgreementId)
+					err := chain.SettleObject.FileMetaService.UpdateContractStatus(contractMeta.ContractId)
 					if err != nil {
 						fmt.Printf("update contract status failed, err:%v \n", err)
 						time.Sleep(30 * time.Second)
@@ -315,13 +315,13 @@ the shard and replies back to client for the next challenge step.`,
 	},
 }
 
-func signAgreement(meta *metadata.AgreementMeta, cont *metadata.Agreement, privKey ic.PrivKey) (*metadata.Agreement, error) {
+func signAgreement(meta *metadata.ContractMeta, cont *metadata.Contract, privKey ic.PrivKey) (*metadata.Contract, error) {
 	signedBytes, err := crypto.Sign(privKey, meta)
 	if err != nil {
 		return cont, err
 	}
 	if cont == nil {
-		cont = &metadata.Agreement{
+		cont = &metadata.Contract{
 			Meta: meta,
 			// LastModifyTime: time.Now(),
 		}
@@ -332,7 +332,7 @@ func signAgreement(meta *metadata.AgreementMeta, cont *metadata.Agreement, privK
 	return cont, err
 }
 
-func pinShard(ctxParams *uh.ContextParams, guardContract *metadata.Agreement, fileHash string,
+func pinShard(ctxParams *uh.ContextParams, guardContract *metadata.Contract, fileHash string,
 	shardHash string) error {
 
 	err := downloadShardFromClient(ctxParams, guardContract, fileHash, shardHash, true)
@@ -354,7 +354,7 @@ func rmShard(ctxParams *uh.ContextParams, req *cmds.Request, env cmds.Environmen
 	return nil
 }
 
-func downloadShardFromClient(ctxParams *uh.ContextParams, guardContract *metadata.Agreement, fileHash string,
+func downloadShardFromClient(ctxParams *uh.ContextParams, guardContract *metadata.Contract, fileHash string,
 	shardHash string, blPin bool) error {
 
 	// Get + pin to make sure it does not get accidentally deleted
@@ -397,7 +397,7 @@ func downloadShardFromClient(ctxParams *uh.ContextParams, guardContract *metadat
 
 	if err != nil {
 		return fmt.Errorf("failed to download shard %s from file %s with contract id %s: [%v]",
-			guardContract.Meta.ShardHash, fileCid, guardContract.Meta.AgreementId, err)
+			guardContract.Meta.ShardHash, fileCid, guardContract.Meta.ContractId, err)
 	}
 	return nil
 }

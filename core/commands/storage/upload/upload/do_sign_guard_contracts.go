@@ -120,15 +120,15 @@ func getGuardAndEscrowPid(configuration *config.Config) (peer.ID, peer.ID, error
 
 func SignUserContract(
 	rss *sessions.RenterSession,
-	agreementMeta *metadata.AgreementMeta,
+	agreementMeta *metadata.ContractMeta,
 	offlineSigning bool,
 	rp *RepairParams,
 	token string) ([]byte, error) {
-	agreement := &metadata.Agreement{
+	contract := &metadata.Contract{
 		Meta: agreementMeta,
 	}
 	if rp != nil {
-		agreement.Status = metadata.Agreement_INIT
+		contract.Status = metadata.Contract_INIT
 		// agreement.RentStart = rp.RenterStart
 		// agreement.RentEnd = rp.RenterEnd
 	}
@@ -139,7 +139,7 @@ func SignUserContract(
 	bc := make(chan []byte)
 	shardId := sessions.GetShardId(rss.SsId, agreementMeta.ShardHash, int(agreementMeta.ShardIndex))
 	uh.GuardChanMaps.Set(shardId, bc)
-	bytes, err := proto.Marshal(agreement)
+	bytes, err := proto.Marshal(contract)
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +157,6 @@ func SignUserContract(
 	signedBytes := <-bc
 	uh.GuardChanMaps.Remove(shardId)
 	uh.GuardContractMaps.Remove(shardId)
-	agreement.CreatorSignature = signedBytes
-	return proto.Marshal(agreement)
+	contract.UserSignature = signedBytes
+	return proto.Marshal(contract)
 }

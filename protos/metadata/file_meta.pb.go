@@ -22,35 +22,35 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type Agreement_AgreementStatus int32
+type Contract_ContractStatus int32
 
 const (
-	Agreement_INIT      Agreement_AgreementStatus = 0
-	Agreement_COMPLETED Agreement_AgreementStatus = 1
+	Contract_INIT      Contract_ContractStatus = 0
+	Contract_COMPLETED Contract_ContractStatus = 1
 )
 
-var Agreement_AgreementStatus_name = map[int32]string{
+var Contract_ContractStatus_name = map[int32]string{
 	0: "INIT",
 	1: "COMPLETED",
 }
 
-var Agreement_AgreementStatus_value = map[string]int32{
+var Contract_ContractStatus_value = map[string]int32{
 	"INIT":      0,
 	"COMPLETED": 1,
 }
 
-func (x Agreement_AgreementStatus) String() string {
-	return proto.EnumName(Agreement_AgreementStatus_name, int32(x))
+func (x Contract_ContractStatus) String() string {
+	return proto.EnumName(Contract_ContractStatus_name, int32(x))
 }
 
-func (Agreement_AgreementStatus) EnumDescriptor() ([]byte, []int) {
+func (Contract_ContractStatus) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_9b47804ec1b8d60b, []int{1, 0}
 }
 
-type AgreementMeta struct {
-	AgreementId          string   `protobuf:"bytes,1,opt,name=agreement_id,json=agreementId,proto3" json:"agreement_id,omitempty"`
+type ContractMeta struct {
+	ContractId           string   `protobuf:"bytes,1,opt,name=contract_id,json=contractId,proto3" json:"contract_id,omitempty"`
 	SpId                 string   `protobuf:"bytes,2,opt,name=sp_id,json=spId,proto3" json:"sp_id,omitempty"`
-	CreatorId            string   `protobuf:"bytes,3,opt,name=creator_id,json=creatorId,proto3" json:"creator_id,omitempty"`
+	UserId               string   `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	ShardHash            string   `protobuf:"bytes,4,opt,name=shard_hash,json=shardHash,proto3" json:"shard_hash,omitempty"`
 	ShardIndex           uint64   `protobuf:"varint,5,opt,name=shard_index,json=shardIndex,proto3" json:"shard_index,omitempty"`
 	ShardSize            uint64   `protobuf:"varint,6,opt,name=shard_size,json=shardSize,proto3" json:"shard_size,omitempty"`
@@ -65,18 +65,18 @@ type AgreementMeta struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *AgreementMeta) Reset()         { *m = AgreementMeta{} }
-func (m *AgreementMeta) String() string { return proto.CompactTextString(m) }
-func (*AgreementMeta) ProtoMessage()    {}
-func (*AgreementMeta) Descriptor() ([]byte, []int) {
+func (m *ContractMeta) Reset()         { *m = ContractMeta{} }
+func (m *ContractMeta) String() string { return proto.CompactTextString(m) }
+func (*ContractMeta) ProtoMessage()    {}
+func (*ContractMeta) Descriptor() ([]byte, []int) {
 	return fileDescriptor_9b47804ec1b8d60b, []int{0}
 }
-func (m *AgreementMeta) XXX_Unmarshal(b []byte) error {
+func (m *ContractMeta) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *AgreementMeta) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ContractMeta) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_AgreementMeta.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ContractMeta.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -86,125 +86,125 @@ func (m *AgreementMeta) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (m *AgreementMeta) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AgreementMeta.Merge(m, src)
+func (m *ContractMeta) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContractMeta.Merge(m, src)
 }
-func (m *AgreementMeta) XXX_Size() int {
+func (m *ContractMeta) XXX_Size() int {
 	return m.Size()
 }
-func (m *AgreementMeta) XXX_DiscardUnknown() {
-	xxx_messageInfo_AgreementMeta.DiscardUnknown(m)
+func (m *ContractMeta) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContractMeta.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_AgreementMeta proto.InternalMessageInfo
+var xxx_messageInfo_ContractMeta proto.InternalMessageInfo
 
-func (m *AgreementMeta) GetAgreementId() string {
+func (m *ContractMeta) GetContractId() string {
 	if m != nil {
-		return m.AgreementId
+		return m.ContractId
 	}
 	return ""
 }
 
-func (m *AgreementMeta) GetSpId() string {
+func (m *ContractMeta) GetSpId() string {
 	if m != nil {
 		return m.SpId
 	}
 	return ""
 }
 
-func (m *AgreementMeta) GetCreatorId() string {
+func (m *ContractMeta) GetUserId() string {
 	if m != nil {
-		return m.CreatorId
+		return m.UserId
 	}
 	return ""
 }
 
-func (m *AgreementMeta) GetShardHash() string {
+func (m *ContractMeta) GetShardHash() string {
 	if m != nil {
 		return m.ShardHash
 	}
 	return ""
 }
 
-func (m *AgreementMeta) GetShardIndex() uint64 {
+func (m *ContractMeta) GetShardIndex() uint64 {
 	if m != nil {
 		return m.ShardIndex
 	}
 	return 0
 }
 
-func (m *AgreementMeta) GetShardSize() uint64 {
+func (m *ContractMeta) GetShardSize() uint64 {
 	if m != nil {
 		return m.ShardSize
 	}
 	return 0
 }
 
-func (m *AgreementMeta) GetPrice() uint64 {
+func (m *ContractMeta) GetPrice() uint64 {
 	if m != nil {
 		return m.Price
 	}
 	return 0
 }
 
-func (m *AgreementMeta) GetAmount() uint64 {
+func (m *ContractMeta) GetAmount() uint64 {
 	if m != nil {
 		return m.Amount
 	}
 	return 0
 }
 
-func (m *AgreementMeta) GetToken() string {
+func (m *ContractMeta) GetToken() string {
 	if m != nil {
 		return m.Token
 	}
 	return ""
 }
 
-func (m *AgreementMeta) GetAutoRenewal() bool {
+func (m *ContractMeta) GetAutoRenewal() bool {
 	if m != nil {
 		return m.AutoRenewal
 	}
 	return false
 }
 
-func (m *AgreementMeta) GetStorageStart() uint64 {
+func (m *ContractMeta) GetStorageStart() uint64 {
 	if m != nil {
 		return m.StorageStart
 	}
 	return 0
 }
 
-func (m *AgreementMeta) GetStorageEnd() uint64 {
+func (m *ContractMeta) GetStorageEnd() uint64 {
 	if m != nil {
 		return m.StorageEnd
 	}
 	return 0
 }
 
-type Agreement struct {
-	Meta                 *AgreementMeta            `protobuf:"bytes,1,opt,name=meta,proto3" json:"meta,omitempty"`
-	SpSignature          []byte                    `protobuf:"bytes,2,opt,name=sp_signature,json=spSignature,proto3" json:"sp_signature,omitempty"`
-	CreatorSignature     []byte                    `protobuf:"bytes,3,opt,name=creator_signature,json=creatorSignature,proto3" json:"creator_signature,omitempty"`
-	CreateTime           uint64                    `protobuf:"varint,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
-	Status               Agreement_AgreementStatus `protobuf:"varint,5,opt,name=status,proto3,enum=filemeta.Agreement_AgreementStatus" json:"status,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                  `json:"-"`
-	XXX_unrecognized     []byte                    `json:"-"`
-	XXX_sizecache        int32                     `json:"-"`
+type Contract struct {
+	Meta                 *ContractMeta           `protobuf:"bytes,1,opt,name=meta,proto3" json:"meta,omitempty"`
+	SpSignature          []byte                  `protobuf:"bytes,2,opt,name=sp_signature,json=spSignature,proto3" json:"sp_signature,omitempty"`
+	UserSignature        []byte                  `protobuf:"bytes,3,opt,name=user_signature,json=userSignature,proto3" json:"user_signature,omitempty"`
+	CreateTime           uint64                  `protobuf:"varint,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	Status               Contract_ContractStatus `protobuf:"varint,5,opt,name=status,proto3,enum=filemeta.Contract_ContractStatus" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
+	XXX_unrecognized     []byte                  `json:"-"`
+	XXX_sizecache        int32                   `json:"-"`
 }
 
-func (m *Agreement) Reset()         { *m = Agreement{} }
-func (m *Agreement) String() string { return proto.CompactTextString(m) }
-func (*Agreement) ProtoMessage()    {}
-func (*Agreement) Descriptor() ([]byte, []int) {
+func (m *Contract) Reset()         { *m = Contract{} }
+func (m *Contract) String() string { return proto.CompactTextString(m) }
+func (*Contract) ProtoMessage()    {}
+func (*Contract) Descriptor() ([]byte, []int) {
 	return fileDescriptor_9b47804ec1b8d60b, []int{1}
 }
-func (m *Agreement) XXX_Unmarshal(b []byte) error {
+func (m *Contract) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *Agreement) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *Contract) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_Agreement.Marshal(b, m, deterministic)
+		return xxx_messageInfo_Contract.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -214,62 +214,62 @@ func (m *Agreement) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Agreement) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Agreement.Merge(m, src)
+func (m *Contract) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Contract.Merge(m, src)
 }
-func (m *Agreement) XXX_Size() int {
+func (m *Contract) XXX_Size() int {
 	return m.Size()
 }
-func (m *Agreement) XXX_DiscardUnknown() {
-	xxx_messageInfo_Agreement.DiscardUnknown(m)
+func (m *Contract) XXX_DiscardUnknown() {
+	xxx_messageInfo_Contract.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Agreement proto.InternalMessageInfo
+var xxx_messageInfo_Contract proto.InternalMessageInfo
 
-func (m *Agreement) GetMeta() *AgreementMeta {
+func (m *Contract) GetMeta() *ContractMeta {
 	if m != nil {
 		return m.Meta
 	}
 	return nil
 }
 
-func (m *Agreement) GetSpSignature() []byte {
+func (m *Contract) GetSpSignature() []byte {
 	if m != nil {
 		return m.SpSignature
 	}
 	return nil
 }
 
-func (m *Agreement) GetCreatorSignature() []byte {
+func (m *Contract) GetUserSignature() []byte {
 	if m != nil {
-		return m.CreatorSignature
+		return m.UserSignature
 	}
 	return nil
 }
 
-func (m *Agreement) GetCreateTime() uint64 {
+func (m *Contract) GetCreateTime() uint64 {
 	if m != nil {
 		return m.CreateTime
 	}
 	return 0
 }
 
-func (m *Agreement) GetStatus() Agreement_AgreementStatus {
+func (m *Contract) GetStatus() Contract_ContractStatus {
 	if m != nil {
 		return m.Status
 	}
-	return Agreement_INIT
+	return Contract_INIT
 }
 
 type FileMetaInfo struct {
-	CreatorId            string       `protobuf:"bytes,1,opt,name=creator_id,json=creatorId,proto3" json:"creator_id,omitempty"`
-	FileHash             string       `protobuf:"bytes,2,opt,name=file_hash,json=fileHash,proto3" json:"file_hash,omitempty"`
-	FileSize             uint64       `protobuf:"varint,3,opt,name=file_size,json=fileSize,proto3" json:"file_size,omitempty"`
-	ShardCount           uint64       `protobuf:"varint,4,opt,name=shard_count,json=shardCount,proto3" json:"shard_count,omitempty"`
-	Agreements           []*Agreement `protobuf:"bytes,5,rep,name=agreements,proto3" json:"agreements,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	UserId               string      `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	FileHash             string      `protobuf:"bytes,2,opt,name=file_hash,json=fileHash,proto3" json:"file_hash,omitempty"`
+	FileSize             uint64      `protobuf:"varint,3,opt,name=file_size,json=fileSize,proto3" json:"file_size,omitempty"`
+	ShardCount           uint64      `protobuf:"varint,4,opt,name=shard_count,json=shardCount,proto3" json:"shard_count,omitempty"`
+	Contracts            []*Contract `protobuf:"bytes,5,rep,name=contracts,proto3" json:"contracts,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
 }
 
 func (m *FileMetaInfo) Reset()         { *m = FileMetaInfo{} }
@@ -305,9 +305,9 @@ func (m *FileMetaInfo) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_FileMetaInfo proto.InternalMessageInfo
 
-func (m *FileMetaInfo) GetCreatorId() string {
+func (m *FileMetaInfo) GetUserId() string {
 	if m != nil {
-		return m.CreatorId
+		return m.UserId
 	}
 	return ""
 }
@@ -333,61 +333,59 @@ func (m *FileMetaInfo) GetShardCount() uint64 {
 	return 0
 }
 
-func (m *FileMetaInfo) GetAgreements() []*Agreement {
+func (m *FileMetaInfo) GetContracts() []*Contract {
 	if m != nil {
-		return m.Agreements
+		return m.Contracts
 	}
 	return nil
 }
 
 func init() {
-	proto.RegisterEnum("filemeta.Agreement_AgreementStatus", Agreement_AgreementStatus_name, Agreement_AgreementStatus_value)
-	proto.RegisterType((*AgreementMeta)(nil), "filemeta.AgreementMeta")
-	proto.RegisterType((*Agreement)(nil), "filemeta.Agreement")
+	proto.RegisterEnum("filemeta.Contract_ContractStatus", Contract_ContractStatus_name, Contract_ContractStatus_value)
+	proto.RegisterType((*ContractMeta)(nil), "filemeta.ContractMeta")
+	proto.RegisterType((*Contract)(nil), "filemeta.Contract")
 	proto.RegisterType((*FileMetaInfo)(nil), "filemeta.FileMetaInfo")
 }
 
 func init() { proto.RegisterFile("file_meta.proto", fileDescriptor_9b47804ec1b8d60b) }
 
 var fileDescriptor_9b47804ec1b8d60b = []byte{
-	// 541 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x93, 0xcf, 0x8e, 0x12, 0x4d,
-	0x14, 0xc5, 0xa7, 0x87, 0x1e, 0x3e, 0xfa, 0x36, 0x7c, 0x83, 0x35, 0x46, 0x3b, 0x31, 0x32, 0xc8,
-	0x6c, 0x88, 0x93, 0x81, 0x84, 0x59, 0xba, 0x30, 0x3a, 0x62, 0xec, 0xc4, 0x51, 0xd3, 0xb0, 0x72,
-	0xd3, 0x29, 0xe8, 0x0b, 0x54, 0xa4, 0xff, 0xa4, 0xaa, 0x88, 0x66, 0x1e, 0xc3, 0x95, 0x2f, 0xe3,
-	0xde, 0xa5, 0x8f, 0x60, 0xf0, 0x0d, 0x7c, 0x02, 0x53, 0xb7, 0x1a, 0x18, 0xc9, 0xec, 0xa8, 0xdf,
-	0x39, 0xb7, 0x53, 0xb7, 0xce, 0x01, 0x8e, 0x67, 0x62, 0x89, 0x71, 0x8a, 0x9a, 0xf7, 0x0a, 0x99,
-	0xeb, 0x9c, 0xd5, 0x0c, 0x30, 0xe7, 0xce, 0x9f, 0x43, 0x68, 0xbc, 0x98, 0x4b, 0xc4, 0x14, 0x33,
-	0x7d, 0x8d, 0x9a, 0xb3, 0x27, 0x50, 0xe7, 0x1b, 0x10, 0x8b, 0x24, 0x70, 0xda, 0x4e, 0xd7, 0x8b,
-	0xfc, 0x2d, 0x0b, 0x13, 0x76, 0x02, 0x47, 0xaa, 0x30, 0xda, 0x21, 0x69, 0xae, 0x2a, 0xc2, 0x84,
-	0x3d, 0x06, 0x98, 0x4a, 0xe4, 0x3a, 0x97, 0x46, 0xa9, 0x90, 0xe2, 0x95, 0xc4, 0xca, 0x6a, 0xc1,
-	0x65, 0x12, 0x2f, 0xb8, 0x5a, 0x04, 0xae, 0x95, 0x89, 0xbc, 0xe1, 0x6a, 0xc1, 0x4e, 0xc1, 0xb7,
-	0xb2, 0xc8, 0x12, 0xfc, 0x12, 0x1c, 0xb5, 0x9d, 0xae, 0x1b, 0xd9, 0x89, 0xd0, 0x90, 0xdd, 0xbc,
-	0x12, 0x37, 0x18, 0x54, 0x49, 0xb7, 0xf3, 0x23, 0x71, 0x83, 0xec, 0x3e, 0x1c, 0x15, 0x52, 0x4c,
-	0x31, 0xf8, 0x8f, 0x14, 0x7b, 0x60, 0x0f, 0xa0, 0xca, 0xd3, 0x7c, 0x95, 0xe9, 0xa0, 0x46, 0xb8,
-	0x3c, 0x19, 0xb7, 0xce, 0x3f, 0x61, 0x16, 0x78, 0x74, 0x0f, 0x7b, 0xa0, 0xcd, 0x57, 0x3a, 0x8f,
-	0x25, 0x66, 0xf8, 0x99, 0x2f, 0x03, 0x68, 0x3b, 0xdd, 0x5a, 0xe4, 0x1b, 0x16, 0x59, 0xc4, 0xce,
-	0xa0, 0xa1, 0x74, 0x2e, 0xf9, 0x1c, 0x63, 0xa5, 0xb9, 0xd4, 0x81, 0x4f, 0xdf, 0xad, 0x97, 0x70,
-	0x64, 0x18, 0xed, 0x52, 0x9a, 0x30, 0x4b, 0x82, 0x7a, 0xb9, 0x8b, 0x45, 0xc3, 0x2c, 0xe9, 0x7c,
-	0x3d, 0x04, 0x6f, 0xfb, 0xe8, 0xec, 0x1c, 0x5c, 0x13, 0x05, 0x3d, 0xb4, 0x3f, 0x78, 0xd8, 0xdb,
-	0x64, 0xd3, 0xfb, 0x27, 0x97, 0x88, 0x4c, 0xe6, 0x8e, 0xaa, 0x88, 0x95, 0x98, 0x67, 0x5c, 0xaf,
-	0x24, 0x52, 0x02, 0xf5, 0xc8, 0x57, 0xc5, 0x68, 0x83, 0xd8, 0x39, 0xdc, 0xdb, 0x04, 0xb1, 0xf3,
-	0x55, 0xc8, 0xd7, 0x2c, 0x85, 0x9d, 0xf9, 0x14, 0x7c, 0x62, 0x18, 0x6b, 0x91, 0x22, 0xe5, 0xe2,
-	0x46, 0x36, 0x48, 0x1c, 0x8b, 0x14, 0xd9, 0x33, 0xa8, 0x2a, 0xcd, 0xf5, 0x4a, 0x51, 0x26, 0xff,
-	0x0f, 0xce, 0xee, 0xb8, 0xdf, 0xee, 0xd7, 0x88, 0xac, 0x51, 0x39, 0xd2, 0x79, 0x0a, 0xc7, 0x7b,
-	0x12, 0xab, 0x81, 0x1b, 0xbe, 0x0b, 0xc7, 0xcd, 0x03, 0xd6, 0x00, 0xef, 0xea, 0xfd, 0xf5, 0x87,
-	0xb7, 0xc3, 0xf1, 0xf0, 0x55, 0xd3, 0xe9, 0x7c, 0x77, 0xa0, 0xfe, 0x5a, 0x2c, 0xd1, 0x2c, 0x1b,
-	0x66, 0xb3, 0x7c, 0xaf, 0x50, 0xce, 0x7e, 0xa1, 0x1e, 0x81, 0x47, 0xb5, 0xa6, 0x3e, 0xd9, 0x22,
-	0x52, 0xad, 0xa9, 0x4e, 0x1b, 0x91, 0xca, 0x52, 0xa1, 0xa5, 0x48, 0xa4, 0xae, 0x6c, 0xbb, 0x36,
-	0xa5, 0x6a, 0xb8, 0xb7, 0xba, 0x76, 0x45, 0xf5, 0xb8, 0x04, 0xd8, 0xd6, 0xdd, 0xec, 0x5d, 0xe9,
-	0xfa, 0x83, 0x93, 0x3b, 0xf6, 0x8e, 0x6e, 0xd9, 0x5e, 0x3e, 0xff, 0xb1, 0x6e, 0x39, 0x3f, 0xd7,
-	0x2d, 0xe7, 0xd7, 0xba, 0xe5, 0x7c, 0xfb, 0xdd, 0x3a, 0xf8, 0x78, 0x31, 0x17, 0x7a, 0xb1, 0x9a,
-	0xf4, 0xa6, 0x79, 0xda, 0x9f, 0x08, 0xad, 0x73, 0x29, 0x31, 0xd3, 0xfd, 0x79, 0x7e, 0x31, 0xd1,
-	0x33, 0xd5, 0xa7, 0xbf, 0xa2, 0xea, 0x9b, 0x4f, 0x26, 0x5c, 0xf3, 0x49, 0x95, 0xc0, 0xe5, 0xdf,
-	0x00, 0x00, 0x00, 0xff, 0xff, 0xbd, 0xc7, 0xca, 0x94, 0xae, 0x03, 0x00, 0x00,
+	// 512 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x64, 0x93, 0x41, 0x6e, 0xd3, 0x40,
+	0x14, 0x86, 0x3b, 0x89, 0xe3, 0xda, 0xcf, 0x4e, 0xa8, 0x06, 0x54, 0x46, 0x20, 0x42, 0x1a, 0x84,
+	0x14, 0x58, 0x44, 0x28, 0xac, 0xd8, 0x12, 0x82, 0xb0, 0x44, 0x01, 0x39, 0x59, 0xb1, 0xb1, 0x86,
+	0x78, 0xda, 0x8c, 0x48, 0x6c, 0x6b, 0x66, 0x2c, 0x50, 0x2f, 0xc0, 0x15, 0x38, 0x08, 0x87, 0x60,
+	0xc9, 0x11, 0x50, 0x58, 0x71, 0x8b, 0x6a, 0x9e, 0xed, 0x26, 0x55, 0x76, 0x7e, 0xdf, 0xff, 0x3f,
+	0x7b, 0xde, 0xbc, 0xdf, 0x70, 0xe7, 0x42, 0xae, 0x45, 0xb2, 0x11, 0x86, 0x8f, 0x0b, 0x95, 0x9b,
+	0x9c, 0x7a, 0x16, 0xd8, 0x7a, 0xf8, 0xbf, 0x05, 0xe1, 0x34, 0xcf, 0x8c, 0xe2, 0x4b, 0x73, 0x2e,
+	0x0c, 0xa7, 0x8f, 0x21, 0x58, 0xd6, 0x75, 0x22, 0x53, 0x46, 0x06, 0x64, 0xe4, 0xc7, 0xd0, 0xa0,
+	0x28, 0xa5, 0x77, 0xa1, 0xa3, 0x0b, 0x2b, 0xb5, 0x50, 0x72, 0x74, 0x11, 0xa5, 0xf4, 0x3e, 0x1c,
+	0x97, 0x5a, 0x28, 0x8b, 0xdb, 0x88, 0x5d, 0x5b, 0x46, 0x29, 0x7d, 0x04, 0xa0, 0x57, 0x5c, 0xa5,
+	0xc9, 0x8a, 0xeb, 0x15, 0x73, 0x50, 0xf3, 0x91, 0xbc, 0xe3, 0x7a, 0x65, 0xbf, 0x56, 0xc9, 0x32,
+	0x4b, 0xc5, 0x77, 0xd6, 0x19, 0x90, 0x91, 0x13, 0x57, 0x1d, 0x91, 0x25, 0xbb, 0x7e, 0x2d, 0xaf,
+	0x04, 0x73, 0x51, 0xaf, 0xfa, 0xe7, 0xf2, 0x4a, 0xd0, 0x7b, 0xd0, 0x29, 0x94, 0x5c, 0x0a, 0x76,
+	0x8c, 0x4a, 0x55, 0xd0, 0x53, 0x70, 0xf9, 0x26, 0x2f, 0x33, 0xc3, 0x3c, 0xc4, 0x75, 0x65, 0xdd,
+	0x26, 0xff, 0x2a, 0x32, 0xe6, 0xe3, 0x39, 0xaa, 0x82, 0x9e, 0x41, 0xc8, 0x4b, 0x93, 0x27, 0x4a,
+	0x64, 0xe2, 0x1b, 0x5f, 0x33, 0x18, 0x90, 0x91, 0x17, 0x07, 0x96, 0xc5, 0x15, 0xa2, 0x4f, 0xa0,
+	0xab, 0x4d, 0xae, 0xf8, 0xa5, 0x48, 0xb4, 0xe1, 0xca, 0xb0, 0x00, 0xdf, 0x1b, 0xd6, 0x70, 0x6e,
+	0x19, 0xce, 0x52, 0x9b, 0x44, 0x96, 0xb2, 0xb0, 0x9e, 0xa5, 0x42, 0xb3, 0x2c, 0x1d, 0xfe, 0x68,
+	0x81, 0xd7, 0xdc, 0x35, 0x7d, 0x0e, 0x8e, 0x5d, 0x00, 0x5e, 0x70, 0x30, 0x39, 0x1d, 0x37, 0x1b,
+	0x19, 0xef, 0x6f, 0x23, 0x46, 0x8f, 0x3d, 0xa1, 0x2e, 0x12, 0x2d, 0x2f, 0x33, 0x6e, 0x4a, 0x25,
+	0xf0, 0xe6, 0xc3, 0x38, 0xd0, 0xc5, 0xbc, 0x41, 0xf4, 0x29, 0xf4, 0x70, 0x01, 0x3b, 0x53, 0x1b,
+	0x4d, 0x5d, 0x4b, 0x77, 0x36, 0xbb, 0x5d, 0x25, 0xb8, 0x11, 0x89, 0x91, 0x1b, 0x81, 0xfb, 0x70,
+	0x62, 0xa8, 0xd0, 0x42, 0x6e, 0x04, 0x7d, 0x05, 0xae, 0x36, 0xdc, 0x94, 0x1a, 0x77, 0xd1, 0x9b,
+	0x9c, 0x1d, 0x1e, 0xec, 0xe6, 0x61, 0x8e, 0xc6, 0xb8, 0x6e, 0x18, 0x3e, 0x83, 0xde, 0x6d, 0x85,
+	0x7a, 0xe0, 0x44, 0x1f, 0xa2, 0xc5, 0xc9, 0x11, 0xed, 0x82, 0x3f, 0xfd, 0x78, 0xfe, 0xe9, 0xfd,
+	0x6c, 0x31, 0x7b, 0x73, 0x42, 0x86, 0xbf, 0x08, 0x84, 0x6f, 0xe5, 0x5a, 0xd8, 0x19, 0xa3, 0xec,
+	0x22, 0xdf, 0xcf, 0x0f, 0xb9, 0x95, 0x9f, 0x87, 0xe0, 0x63, 0x78, 0x31, 0x3e, 0x55, 0xe2, 0x30,
+	0xbc, 0x98, 0x9e, 0x46, 0xc4, 0x6c, 0xb4, 0x71, 0x16, 0x14, 0x31, 0x1a, 0x37, 0xd1, 0x5a, 0x62,
+	0x12, 0x9c, 0xbd, 0x68, 0x4d, 0x31, 0x0d, 0x2f, 0xc0, 0x6f, 0x62, 0x6d, 0xa7, 0x6d, 0x8f, 0x82,
+	0x09, 0x3d, 0x9c, 0x36, 0xde, 0x99, 0x5e, 0x3f, 0xf8, 0xbd, 0xed, 0x93, 0x3f, 0xdb, 0x3e, 0xf9,
+	0xbb, 0xed, 0x93, 0x9f, 0xff, 0xfa, 0x47, 0x9f, 0x3d, 0xeb, 0x4d, 0xb9, 0xe1, 0x5f, 0x5c, 0xfc,
+	0xb3, 0x5e, 0x5e, 0x07, 0x00, 0x00, 0xff, 0xff, 0x25, 0x7f, 0x36, 0x6d, 0x6c, 0x03, 0x00, 0x00,
 }
 
-func (m *AgreementMeta) Marshal() (dAtA []byte, err error) {
+func (m *ContractMeta) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -397,12 +395,12 @@ func (m *AgreementMeta) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *AgreementMeta) MarshalTo(dAtA []byte) (int, error) {
+func (m *ContractMeta) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *AgreementMeta) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *ContractMeta) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -465,10 +463,10 @@ func (m *AgreementMeta) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.CreatorId) > 0 {
-		i -= len(m.CreatorId)
-		copy(dAtA[i:], m.CreatorId)
-		i = encodeVarintFileMeta(dAtA, i, uint64(len(m.CreatorId)))
+	if len(m.UserId) > 0 {
+		i -= len(m.UserId)
+		copy(dAtA[i:], m.UserId)
+		i = encodeVarintFileMeta(dAtA, i, uint64(len(m.UserId)))
 		i--
 		dAtA[i] = 0x1a
 	}
@@ -479,17 +477,17 @@ func (m *AgreementMeta) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.AgreementId) > 0 {
-		i -= len(m.AgreementId)
-		copy(dAtA[i:], m.AgreementId)
-		i = encodeVarintFileMeta(dAtA, i, uint64(len(m.AgreementId)))
+	if len(m.ContractId) > 0 {
+		i -= len(m.ContractId)
+		copy(dAtA[i:], m.ContractId)
+		i = encodeVarintFileMeta(dAtA, i, uint64(len(m.ContractId)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *Agreement) Marshal() (dAtA []byte, err error) {
+func (m *Contract) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -499,12 +497,12 @@ func (m *Agreement) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Agreement) MarshalTo(dAtA []byte) (int, error) {
+func (m *Contract) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *Agreement) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *Contract) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -523,10 +521,10 @@ func (m *Agreement) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x20
 	}
-	if len(m.CreatorSignature) > 0 {
-		i -= len(m.CreatorSignature)
-		copy(dAtA[i:], m.CreatorSignature)
-		i = encodeVarintFileMeta(dAtA, i, uint64(len(m.CreatorSignature)))
+	if len(m.UserSignature) > 0 {
+		i -= len(m.UserSignature)
+		copy(dAtA[i:], m.UserSignature)
+		i = encodeVarintFileMeta(dAtA, i, uint64(len(m.UserSignature)))
 		i--
 		dAtA[i] = 0x1a
 	}
@@ -576,10 +574,10 @@ func (m *FileMetaInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= len(m.XXX_unrecognized)
 		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if len(m.Agreements) > 0 {
-		for iNdEx := len(m.Agreements) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Contracts) > 0 {
+		for iNdEx := len(m.Contracts) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Agreements[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Contracts[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -607,10 +605,10 @@ func (m *FileMetaInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.CreatorId) > 0 {
-		i -= len(m.CreatorId)
-		copy(dAtA[i:], m.CreatorId)
-		i = encodeVarintFileMeta(dAtA, i, uint64(len(m.CreatorId)))
+	if len(m.UserId) > 0 {
+		i -= len(m.UserId)
+		copy(dAtA[i:], m.UserId)
+		i = encodeVarintFileMeta(dAtA, i, uint64(len(m.UserId)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -628,13 +626,13 @@ func encodeVarintFileMeta(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *AgreementMeta) Size() (n int) {
+func (m *ContractMeta) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.AgreementId)
+	l = len(m.ContractId)
 	if l > 0 {
 		n += 1 + l + sovFileMeta(uint64(l))
 	}
@@ -642,7 +640,7 @@ func (m *AgreementMeta) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovFileMeta(uint64(l))
 	}
-	l = len(m.CreatorId)
+	l = len(m.UserId)
 	if l > 0 {
 		n += 1 + l + sovFileMeta(uint64(l))
 	}
@@ -681,7 +679,7 @@ func (m *AgreementMeta) Size() (n int) {
 	return n
 }
 
-func (m *Agreement) Size() (n int) {
+func (m *Contract) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -695,7 +693,7 @@ func (m *Agreement) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovFileMeta(uint64(l))
 	}
-	l = len(m.CreatorSignature)
+	l = len(m.UserSignature)
 	if l > 0 {
 		n += 1 + l + sovFileMeta(uint64(l))
 	}
@@ -717,7 +715,7 @@ func (m *FileMetaInfo) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.CreatorId)
+	l = len(m.UserId)
 	if l > 0 {
 		n += 1 + l + sovFileMeta(uint64(l))
 	}
@@ -731,8 +729,8 @@ func (m *FileMetaInfo) Size() (n int) {
 	if m.ShardCount != 0 {
 		n += 1 + sovFileMeta(uint64(m.ShardCount))
 	}
-	if len(m.Agreements) > 0 {
-		for _, e := range m.Agreements {
+	if len(m.Contracts) > 0 {
+		for _, e := range m.Contracts {
 			l = e.Size()
 			n += 1 + l + sovFileMeta(uint64(l))
 		}
@@ -749,7 +747,7 @@ func sovFileMeta(x uint64) (n int) {
 func sozFileMeta(x uint64) (n int) {
 	return sovFileMeta(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *AgreementMeta) Unmarshal(dAtA []byte) error {
+func (m *ContractMeta) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -772,15 +770,15 @@ func (m *AgreementMeta) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: AgreementMeta: wiretype end group for non-group")
+			return fmt.Errorf("proto: ContractMeta: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AgreementMeta: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ContractMeta: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AgreementId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ContractId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -808,7 +806,7 @@ func (m *AgreementMeta) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.AgreementId = string(dAtA[iNdEx:postIndex])
+			m.ContractId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -844,7 +842,7 @@ func (m *AgreementMeta) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CreatorId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field UserId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -872,7 +870,7 @@ func (m *AgreementMeta) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.CreatorId = string(dAtA[iNdEx:postIndex])
+			m.UserId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
@@ -1094,7 +1092,7 @@ func (m *AgreementMeta) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Agreement) Unmarshal(dAtA []byte) error {
+func (m *Contract) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1117,10 +1115,10 @@ func (m *Agreement) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Agreement: wiretype end group for non-group")
+			return fmt.Errorf("proto: Contract: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Agreement: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: Contract: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1153,7 +1151,7 @@ func (m *Agreement) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Meta == nil {
-				m.Meta = &AgreementMeta{}
+				m.Meta = &ContractMeta{}
 			}
 			if err := m.Meta.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1195,7 +1193,7 @@ func (m *Agreement) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CreatorSignature", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field UserSignature", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -1222,9 +1220,9 @@ func (m *Agreement) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.CreatorSignature = append(m.CreatorSignature[:0], dAtA[iNdEx:postIndex]...)
-			if m.CreatorSignature == nil {
-				m.CreatorSignature = []byte{}
+			m.UserSignature = append(m.UserSignature[:0], dAtA[iNdEx:postIndex]...)
+			if m.UserSignature == nil {
+				m.UserSignature = []byte{}
 			}
 			iNdEx = postIndex
 		case 4:
@@ -1260,7 +1258,7 @@ func (m *Agreement) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Status |= Agreement_AgreementStatus(b&0x7F) << shift
+				m.Status |= Contract_ContractStatus(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1318,7 +1316,7 @@ func (m *FileMetaInfo) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CreatorId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field UserId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1346,7 +1344,7 @@ func (m *FileMetaInfo) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.CreatorId = string(dAtA[iNdEx:postIndex])
+			m.UserId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -1420,7 +1418,7 @@ func (m *FileMetaInfo) Unmarshal(dAtA []byte) error {
 			}
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Agreements", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Contracts", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1447,8 +1445,8 @@ func (m *FileMetaInfo) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Agreements = append(m.Agreements, &Agreement{})
-			if err := m.Agreements[len(m.Agreements)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Contracts = append(m.Contracts, &Contract{})
+			if err := m.Contracts[len(m.Contracts)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

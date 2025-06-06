@@ -71,7 +71,7 @@ func doRecv(req *cmds.Request, env cmds.Environment) (agreementId string, err er
 	}
 
 	agreementBytes := []byte(req.Arguments[3])
-	agreement := new(metadata.Agreement)
+	agreement := new(metadata.Contract)
 	err = proto.Unmarshal(agreementBytes, agreement)
 	if err != nil {
 		return
@@ -93,7 +93,7 @@ func doRecv(req *cmds.Request, env cmds.Environment) (agreementId string, err er
 		err = errors.New("invalid guard contract bytes")
 		return
 	}
-	agreementId = agreement.Meta.AgreementId
+	agreementId = agreement.Meta.ContractId
 
 	shardHash := req.Arguments[1]
 	index, err := strconv.Atoi(req.Arguments[2])

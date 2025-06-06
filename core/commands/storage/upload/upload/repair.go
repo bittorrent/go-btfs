@@ -53,11 +53,11 @@ This command repairs the given shards of a file.`,
 		if err != nil {
 			return err
 		}
-		contracts := meta.Agreements
+		contracts := meta.Contracts
 		if len(contracts) <= 0 {
 			return errors.New("length of contracts is 0")
 		}
-		ssId, _ := uh.SplitContractId(contracts[0].Meta.AgreementId)
+		ssId, _ := uh.SplitContractId(contracts[0].Meta.ContractId)
 		shardIndexes := make([]int, 0)
 		i := 0
 		shardHashes := strings.Split(req.Arguments[1], ",")
