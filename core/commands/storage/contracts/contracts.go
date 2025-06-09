@@ -2,6 +2,7 @@ package contracts
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -11,6 +12,7 @@ import (
 	"github.com/bittorrent/go-btfs/utils"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
 	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
@@ -257,23 +259,32 @@ This command get contracts list based on role from the local node data store.`,
 		if err != nil {
 			return err
 		}
-		sort.Sort(ByTime(contracts))
-		if parts[1] == "" || parts[1] == "desc" {
-			// reverse
-			for i, j := 0, len(contracts)-1; i < j; i, j = i+1, j-1 {
-				contracts[i], contracts[j] = contracts[j], contracts[i]
-			}
-		}
-		result := make([]*nodepb.Contracts_Contract, 0)
+
+		// First filter by status
+		filteredContracts := make([]*nodepb.Contracts_Contract, 0)
 		for _, c := range contracts {
 			if _, ok := states[c.Status]; !ok {
 				continue
 			}
-			result = append(result, c)
-			if len(result) == size {
-				break
+
+			filteredContracts = append(filteredContracts, c)
+		}
+
+		// Sort by escrow time
+		sort.Sort(ByTime(filteredContracts))
+		if parts[1] == "" || parts[1] == "desc" {
+			// reverse
+			for i, j := 0, len(filteredContracts)-1; i < j; i, j = i+1, j-1 {
+				filteredContracts[i], filteredContracts[j] = filteredContracts[j], filteredContracts[i]
 			}
 		}
+
+		// Apply size limit
+		result := filteredContracts
+		if len(result) > size {
+			result = result[:size]
+		}
+
 		return cmds.EmitOnce(res, &nodepb.Contracts{Contracts: result})
 	},
 	Type: nodepb.Contracts{},
@@ -298,35 +309,47 @@ func Save(d datastore.Datastore, cs []*nodepb.Contracts_Contract, role string) e
 }
 
 func ListContracts(d datastore.Datastore, peerId, role string) ([]*nodepb.Contracts_Contract, error) {
-	cs := &contractspb.Contracts{}
-	err := sessions.Get(d, getKey(role), cs)
-	if err != nil && err != datastore.ErrNotFound {
-		return nil, err
+	metadataContracts, err := sessions.ListShardsContracts(d, peerId, role)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list shard contracts: %v", err)
 	}
-	// Because of buggy data in the past, we need to filter out non-host or non-renter contracts
-	// It's also possible that user has switched keys manually, so we remove those as well.
-	var fcs []*nodepb.Contracts_Contract
-	filtered := false
+
+	nodeContracts := convertMetadataContractsToNodeContracts(metadataContracts)
+
+	cs := &contractspb.Contracts{}
+	err = sessions.Get(d, getKey(role), cs)
+	if err != nil && err != datastore.ErrNotFound {
+		return nodeContracts, nil
+	}
+
+	existingContracts := make(map[string]bool)
+	for _, c := range nodeContracts {
+		existingContracts[c.ContractId] = true
+	}
+
 	for _, c := range cs.Contracts {
+		if existingContracts[c.ContractId] {
+			continue
+		}
+
 		if role == nodepb.ContractStat_HOST.String() && c.HostId != peerId {
-			filtered = true
 			continue
 		}
 		if role == nodepb.ContractStat_RENTER.String() && c.RenterId != peerId {
-			filtered = true
 			continue
 		}
-		fcs = append(fcs, c)
+
+		nodeContracts = append(nodeContracts, c)
+		existingContracts[c.ContractId] = true
 	}
-	// No change
-	if !filtered {
-		return cs.Contracts, nil
+
+	if len(nodeContracts) > 0 {
+		if err := Save(d, nodeContracts, role); err != nil {
+			log.Warnf("Failed to save contracts to legacy path: %v", err)
+		}
 	}
-	err = Save(d, fcs, role)
-	if err != nil {
-		return nil, err
-	}
-	return fcs, nil
+
+	return nodeContracts, nil
 }
 
 func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env cmds.Environment, role string) error {
@@ -375,7 +398,63 @@ func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env
 			}()
 		}
 	}
+
+	if len(cs) > 0 {
+		results := convertMetadataContractsToNodeContracts(cs)
+
+		if b := ctx.Value(contractsSyncVerboseOptionName); b != nil && b.(bool) {
+			go func() {
+				for _, ct := range results {
+					if bs, err := json.Marshal(ct); err == nil {
+						log.Info(string(bs))
+					}
+				}
+			}()
+		}
+		return Save(n.Repo.Datastore(), results, role)
+	}
 	return nil
+}
+
+func convertMetadataContractsToNodeContracts(contracts []*metadata.Contract) []*nodepb.Contracts_Contract {
+	results := make([]*nodepb.Contracts_Contract, 0, len(contracts))
+
+	for _, c := range contracts {
+		if c.Meta == nil {
+			continue
+		}
+
+		var status guardpb.Contract_ContractState
+		switch c.Status {
+		case metadata.Contract_COMPLETED:
+			status = guardpb.Contract_UPLOADED
+		case metadata.Contract_INIT:
+			status = guardpb.Contract_SIGNED
+		default:
+			status = guardpb.Contract_SIGNED
+		}
+
+		endTime := time.Unix(int64(c.Meta.StorageEnd), 0)
+		if time.Now().Unix() > endTime.Unix() {
+			status = guardpb.Contract_CLOSED
+		}
+
+		nc := &nodepb.Contracts_Contract{
+			ContractId: c.Meta.ContractId,
+			HostId:     c.Meta.SpId,
+			RenterId:   c.Meta.UserId,
+			Status:     status,
+			StartTime:  time.Unix(int64(c.Meta.StorageStart), 0),
+			EndTime:    endTime,
+			UnitPrice:  int64(c.Meta.Price),
+			ShardSize:  int64(c.Meta.ShardSize),
+			ShardHash:  c.Meta.ShardHash,
+		}
+
+		results = append(results, nc)
+	}
+
+	return results
 }
 
 func GetInvalidContractsForHost(cs []*metadata.Contract, spId string) ([]*metadata.Contract, error) {

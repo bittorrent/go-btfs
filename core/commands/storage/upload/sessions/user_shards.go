@@ -161,18 +161,45 @@ func ListShardsContracts(d datastore.Datastore, peerId string, role string) ([]*
 	}
 	vs, err := List(d, k, "/contracts")
 	if err != nil {
+		if err == datastore.ErrNotFound {
+			return make([]*metadata.Contract, 0), nil
+		}
 		return nil, err
 	}
+
 	contracts := make([]*metadata.Contract, 0)
+	contractMap := make(map[string]*metadata.Contract) // Use map to deduplicate contracts
+
 	for _, v := range vs {
 		sc := &metadata.Contract{}
 		err := proto.Unmarshal(v, sc)
 		if err != nil {
-			log.Error(err)
+			log.Error("Failed to unmarshal contract:", err)
 			continue
 		}
-		contracts = append(contracts, sc)
+
+		// Validate contract
+		if sc.Meta == nil || sc.Meta.ContractId == "" {
+			log.Error("Invalid contract: missing metadata or contract ID")
+			continue
+		}
+
+		// Check if we already have this contract
+		if existing, exists := contractMap[sc.Meta.ContractId]; exists {
+			// If existing contract is older, replace it
+			if sc.CreateTime > existing.CreateTime {
+				contractMap[sc.Meta.ContractId] = sc
+			}
+		} else {
+			contractMap[sc.Meta.ContractId] = sc
+		}
 	}
+
+	// Convert map back to slice
+	for _, contract := range contractMap {
+		contracts = append(contracts, contract)
+	}
+
 	return contracts, nil
 }
 
@@ -270,6 +297,7 @@ func RefreshLocalContracts(ctx context.Context, ds datastore.Datastore, all []*m
 	newKeys := make([]string, 0)
 	newValues := make([]proto.Message, 0)
 	outedFileCIDs := make(map[string]bool)
+	updatedContracts := make(map[string]bool)
 
 	key := ""
 	if role == nodepb.ContractStat_HOST.String() {
@@ -278,32 +306,59 @@ func RefreshLocalContracts(ctx context.Context, ds datastore.Datastore, all []*m
 		key = renterShardContractsKey
 	}
 
+	// Mark outdated contracts
+	outdatedMap := make(map[string]bool)
 	for _, o := range outdated {
-		for _, a := range all {
-			if a.Meta.ContractId == o.Meta.ContractId {
-				continue
-			}
-			newKeys = append(newKeys, fmt.Sprintf(key, peerID, a.Meta.ContractId))
-			newValues = append(newValues, a)
+		if o.Meta != nil {
+			outdatedMap[o.Meta.ContractId] = true
 		}
 	}
 
+	// Process all contracts, excluding outdated ones
+	for _, a := range all {
+		if a.Meta == nil || a.Meta.ContractId == "" {
+			continue
+		}
+
+		// Skip if contract is outdated
+		if outdatedMap[a.Meta.ContractId] {
+			continue
+		}
+
+		// Add to new contracts list
+		newKeys = append(newKeys, fmt.Sprintf(key, peerID, a.Meta.ContractId))
+		newValues = append(newValues, a)
+		updatedContracts[a.Meta.ContractId] = true
+	}
+
+	// Get file CIDs for outdated contracts
 	for _, o := range outdated {
+		if o.Meta == nil {
+			continue
+		}
 		cid, err := ds.Get(ctx, datastore.NewKey(fmt.Sprintf(userFileShard, peerID, o.Meta.ContractId)))
 		if err != nil {
-			log.Error(err)
+			log.Error("Failed to get CID for outdated contract:", err)
 			continue
 		}
 		outedFileCIDs[string(cid)] = true
 	}
 
-	err := Batch(ds, newKeys, newValues)
+	// Save updated contracts
+	if len(newKeys) > 0 {
+		err := Batch(ds, newKeys, newValues)
+		if err != nil {
+			return nil, fmt.Errorf("failed to save updated contracts: %v", err)
+		}
+	}
+
+	// Return list of stale CIDs
 	staled := make([]string, 0)
 	for k := range outedFileCIDs {
 		staled = append(staled, k)
 	}
 
-	return staled, err
+	return staled, nil
 }
 
 func (rs *UserShard) UpdateAdditionalInfo(info string) error {
