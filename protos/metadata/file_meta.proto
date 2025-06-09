@@ -28,6 +28,7 @@ message Contract {
     INVALID = 0;
     INIT = 1;
     COMPLETED = 2;
+    CLOSED = 3;
   }
   ContractStatus status = 5;
 }
