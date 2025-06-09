@@ -213,9 +213,6 @@ func waitForAllShardsComplete(ctx *ShardUploadContext) (complete bool, err error
 	for {
 		select {
 		case <-ticker.C:
-			// 第一次调用的时候，会创建userShard
-			// receive_contract的时候会更新状态
-			// 第二次的时候就有了
 			completeNum, errorNum, err := ctx.Rss.GetCompleteShardsNum()
 			if err != nil {
 				continue

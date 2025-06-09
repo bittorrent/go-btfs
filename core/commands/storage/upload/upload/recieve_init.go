@@ -246,10 +246,21 @@ the shard and replies back to client for the next challenge step.`,
 				}
 
 				for i := 0; i < 20; i++ {
-					err := chain.SettleObject.FileMetaService.UpdateContractStatus(contractMeta.ContractId)
+					// get first if exist update status
+					status, err := chain.SettleObject.FileMetaService.GetContractStatus(contractMeta.ContractId)
+					if err != nil {
+						fmt.Printf("get contract status failed, err:%v \n", err)
+						continue
+					}
+
+					if status == metadata.Contract_INVALID {
+						time.Sleep(30 * time.Second)
+						continue
+					}
+
+					err = chain.SettleObject.FileMetaService.UpdateContractStatus(contractMeta.ContractId)
 					if err != nil {
 						fmt.Printf("update contract status failed, err:%v \n", err)
-						time.Sleep(30 * time.Second)
 						continue
 					} else {
 						break

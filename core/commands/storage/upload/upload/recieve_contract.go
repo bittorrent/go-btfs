@@ -70,30 +70,30 @@ func doRecv(req *cmds.Request, env cmds.Environment) (agreementId string, err er
 		return
 	}
 
-	agreementBytes := []byte(req.Arguments[3])
-	agreement := new(metadata.Contract)
-	err = proto.Unmarshal(agreementBytes, agreement)
+	contractBytes := []byte(req.Arguments[3])
+	contract := new(metadata.Contract)
+	err = proto.Unmarshal(contractBytes, contract)
 	if err != nil {
 		return
 	}
-	bytes, err := proto.Marshal(agreement.Meta)
+	bytes, err := proto.Marshal(contract.Meta)
 	if err != nil {
 		return
 	}
 
-	valid, err := rpk.Verify(bytes, agreement.SpSignature)
+	valid, err := rpk.Verify(bytes, contract.SpSignature)
 	if err != nil {
 		return
 	}
 
 	fmt.Println("receive contract valid: ", valid)
-	fmt.Println("receive contract host pid: ", agreement.Meta.GetSpId())
+	fmt.Println("receive contract host pid: ", contract.Meta.GetSpId())
 	fmt.Println("receive contract remote peer id: ", requestPid.String())
-	if !valid || agreement.Meta.GetSpId() != requestPid.String() {
-		err = errors.New("invalid guard contract bytes")
+	if !valid || contract.Meta.GetSpId() != requestPid.String() {
+		err = errors.New("invalid contract bytes")
 		return
 	}
-	agreementId = agreement.Meta.ContractId
+	agreementId = contract.Meta.ContractId
 
 	shardHash := req.Arguments[1]
 	index, err := strconv.Atoi(req.Arguments[2])
@@ -105,6 +105,6 @@ func doRecv(req *cmds.Request, env cmds.Environment) (agreementId string, err er
 		return
 	}
 	// ignore error
-	_ = shard.UpdateShardToContractStatus(agreement)
+	_ = shard.UpdateShardToContractStatus(contract)
 	return
 }

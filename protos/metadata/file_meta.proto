@@ -25,8 +25,9 @@ message Contract {
   bytes user_signature = 3;
   uint64 create_time = 4;
   enum ContractStatus {
-    INIT = 0;
-    COMPLETED = 1;
+    INVALID = 0;
+    INIT = 1;
+    COMPLETED = 2;
   }
   ContractStatus status = 5;
 }

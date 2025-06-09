@@ -39,7 +39,6 @@ func ResumeWaitUploadOnSigning(rss *sessions.RenterSession) error {
 }
 
 func waitSPSaveFileSuccAndToPay(rss *sessions.RenterSession, offlineSigning bool, fsStatus *metadata.FileMetaInfo, resume bool) error {
-	// TODO 调整
 	threshold := getSuccessThreshold(len(rss.ShardHashes))
 	if !resume {
 		if err := rss.To(sessions.RssToWaitUploadEvent); err != nil {
@@ -102,9 +101,7 @@ func waitSPSaveFileSuccAndToPay(rss *sessions.RenterSession, offlineSigning bool
 	err := backoff.Retry(func() error {
 		err := grpc.GuardClient(rss.CtxParams.Cfg.Services.GuardDomain).WithContext(rss.Ctx,
 			func(ctx context.Context, client guardpb.GuardServiceClient) error {
-				// TODO 修改为调用合约，需要合约里返回shard上传的状态
 				meta, err := chain.SettleObject.FileMetaService.GetFileMeta(rss.Hash, contracts)
-				// meta, err := client.CheckFileStoreMeta(ctx, req)
 				if err != nil {
 					return err
 				}
@@ -112,7 +109,6 @@ func waitSPSaveFileSuccAndToPay(rss *sessions.RenterSession, offlineSigning bool
 				m := make(map[string]int)
 				for _, c := range meta.Contracts {
 					m[c.Status.String()]++
-					// TODO 合约里没有这个状态了，只会返回已经上传了的ID
 					switch c.Status {
 					case metadata.Contract_COMPLETED:
 						num++
@@ -121,7 +117,6 @@ func waitSPSaveFileSuccAndToPay(rss *sessions.RenterSession, offlineSigning bool
 					if err != nil {
 						return err
 					}
-					// TODO 调整状态机，要看看这里有没有影响
 					err = shard.UpdateAdditionalInfo(c.Status.String())
 					if err != nil {
 						return err

@@ -21,6 +21,7 @@ type FileMeta interface {
 	UpdateContractStatus(contractId string) error
 	GetFileMeta(cid string, contractIds []string) (*metadata.FileMetaInfo, error)
 	GetFileMetaByCID(cid string) (*metadata.FileMetaInfo, error)
+	GetContractStatus(contractId string) (metadata.Contract_ContractStatus, error)
 }
 
 type fileMeta struct {
@@ -128,12 +129,12 @@ func (fm *fileMeta) UpdateContractStatus(contractId string) error {
 		fmt.Printf("Failed to create transactor: %v\n", err)
 		return err
 	}
-	tx, err := fm.FileMetaAbi.UpdateStatus(opts, contractId, 1)
+	tx, err := fm.FileMetaAbi.UpdateStatus(opts, contractId, uint8(metadata.Contract_COMPLETED))
 	if err != nil {
 		fmt.Printf("update status error:%v, %s\n", err, contractId)
 		return err
 	}
-	fmt.Println("update status ok:", tx.Hash())
+	fmt.Println("update contract:", contractId, "status ok:", tx.Hash())
 	return nil
 }
 
@@ -170,4 +171,12 @@ func (fm *fileMeta) GetFileMetaByCID(cid string) (*metadata.FileMetaInfo, error)
 		return nil, err
 	}
 	return fss, nil
+}
+
+func (fm *fileMeta) GetContractStatus(contractId string) (metadata.Contract_ContractStatus, error) {
+	meta, err := fm.FileMetaAbi.ContractStatus(nil, contractId)
+	if err != nil {
+		return metadata.Contract_ContractStatus(0), err
+	}
+	return metadata.Contract_ContractStatus(int32(meta)), nil
 }
