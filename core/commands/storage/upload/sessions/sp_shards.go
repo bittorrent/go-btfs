@@ -105,6 +105,7 @@ func (hs *SPShard) enterState(e *fsm.Event) {
 	switch e.Dst {
 	case hshContractStatus:
 		hs.saveContract(e.Args[0].(*metadata.Contract))
+		hs.saveUserShard(e.Args[0].(*metadata.Contract).Meta.ContractId, e.Args[0].(*metadata.Contract).Meta.ShardHash)
 	}
 }
 
@@ -118,6 +119,13 @@ func (hs *SPShard) saveContract(signedGuardContract *metadata.Contract) error {
 	}, []proto.Message{
 		status, signedGuardContract,
 	})
+}
+
+func (hs *SPShard) saveUserShard(contractId string, shardHash string) {
+	err := hs.ds.Put(context.Background(), datastore.NewKey(fmt.Sprintf(userFileShard, hs.peerId, contractId)), []byte(shardHash))
+	if err != nil {
+		return
+	}
 }
 
 func (hs *SPShard) status() (*shardpb.Status, error) {

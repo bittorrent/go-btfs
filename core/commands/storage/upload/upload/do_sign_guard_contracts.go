@@ -10,7 +10,6 @@ import (
 	"github.com/bittorrent/go-btfs/protos/metadata"
 
 	"github.com/bittorrent/go-btfs-common/crypto"
-	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
 	config "github.com/bittorrent/go-btfs-config"
 	"github.com/bittorrent/protobuf/proto"
 
@@ -36,65 +35,64 @@ type RepairParams struct {
 	RenterEnd   time.Time
 }
 
-func RenterSignGuardContract(rss *sessions.RenterSession, params *ContractParams, offlineSigning bool,
-	rp *RepairParams, token string) ([]byte,
-	error) {
-	guardPid, escrowPid, err := getGuardAndEscrowPid(rss.CtxParams.Cfg)
-	if err != nil {
-		return nil, err
-	}
-	// 对这个进行签名
-	gm := &guardpb.ContractMeta{
-		ContractId:    params.ContractId,
-		RenterPid:     params.RenterPid,
-		HostPid:       params.HostPid,
-		ShardHash:     params.ShardHash,
-		ShardIndex:    params.ShardIndex,
-		ShardFileSize: params.ShardSize,
-		FileHash:      params.FileHash,
-		RentStart:     params.StartTime,
-		RentEnd:       params.StartTime.Add(time.Duration(params.StorageLength*24) * time.Hour),
-		GuardPid:      guardPid.String(),
-		EscrowPid:     escrowPid.String(),
-		Price:         params.Price,
-		Amount:        params.TotalPay,
-	}
-	cont := &guardpb.Contract{
-		ContractMeta:   *gm,
-		LastModifyTime: time.Now(),
-	}
-	if rp != nil {
-		cont.State = guardpb.Contract_RENEWED
-		cont.RentStart = rp.RenterStart
-		cont.RentEnd = rp.RenterEnd
-	}
-	cont.RenterPid = params.RenterPid
-	cont.PreparerPid = params.RenterPid
-	bc := make(chan []byte)
-	shardId := sessions.GetShardId(rss.SsId, gm.ShardHash, int(gm.ShardIndex))
-	uh.GuardChanMaps.Set(shardId, bc)
-	bytes, err := proto.Marshal(gm)
-	if err != nil {
-		return nil, err
-	}
-	uh.GuardContractMaps.Set(shardId, bytes)
-	if !offlineSigning {
-		go func() {
-			sign, err := crypto.Sign(rss.CtxParams.N.PrivateKey, gm)
-			if err != nil {
-				_ = rss.To(sessions.RssToErrorEvent, err)
-				return
-			}
-			bc <- sign
-		}()
-	}
-	signedBytes := <-bc
-	uh.GuardChanMaps.Remove(shardId)
-	uh.GuardContractMaps.Remove(shardId)
-	cont.RenterSignature = signedBytes
-	cont.Token = token
-	return proto.Marshal(cont)
-}
+// func RenterSignGuardContract(rss *sessions.RenterSession, params *ContractParams, offlineSigning bool,
+// 	rp *RepairParams, token string) ([]byte,
+// 	error) {
+// 	guardPid, escrowPid, err := getGuardAndEscrowPid(rss.CtxParams.Cfg)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	gm := &guardpb.ContractMeta{
+// 		ContractId:    params.ContractId,
+// 		RenterPid:     params.RenterPid,
+// 		HostPid:       params.HostPid,
+// 		ShardHash:     params.ShardHash,
+// 		ShardIndex:    params.ShardIndex,
+// 		ShardFileSize: params.ShardSize,
+// 		FileHash:      params.FileHash,
+// 		RentStart:     params.StartTime,
+// 		RentEnd:       params.StartTime.Add(time.Duration(params.StorageLength*24) * time.Hour),
+// 		GuardPid:      guardPid.String(),
+// 		EscrowPid:     escrowPid.String(),
+// 		Price:         params.Price,
+// 		Amount:        params.TotalPay,
+// 	}
+// 	cont := &guardpb.Contract{
+// 		ContractMeta:   *gm,
+// 		LastModifyTime: time.Now(),
+// 	}
+// 	if rp != nil {
+// 		cont.State = guardpb.Contract_RENEWED
+// 		cont.RentStart = rp.RenterStart
+// 		cont.RentEnd = rp.RenterEnd
+// 	}
+// 	cont.RenterPid = params.RenterPid
+// 	cont.PreparerPid = params.RenterPid
+// 	bc := make(chan []byte)
+// 	shardId := sessions.GetShardId(rss.SsId, gm.ShardHash, int(gm.ShardIndex))
+// 	uh.GuardChanMaps.Set(shardId, bc)
+// 	bytes, err := proto.Marshal(gm)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	uh.GuardContractMaps.Set(shardId, bytes)
+// 	if !offlineSigning {
+// 		go func() {
+// 			sign, err := crypto.Sign(rss.CtxParams.N.PrivateKey, gm)
+// 			if err != nil {
+// 				_ = rss.To(sessions.RssToErrorEvent, err)
+// 				return
+// 			}
+// 			bc <- sign
+// 		}()
+// 	}
+// 	signedBytes := <-bc
+// 	uh.GuardChanMaps.Remove(shardId)
+// 	uh.GuardContractMaps.Remove(shardId)
+// 	cont.RenterSignature = signedBytes
+// 	cont.Token = token
+// 	return proto.Marshal(cont)
+// }
 
 func getGuardAndEscrowPid(configuration *config.Config) (peer.ID, peer.ID, error) {
 	escrowPubKeys := configuration.Services.EscrowPubKeys
@@ -125,7 +123,9 @@ func SignUserContract(
 	rp *RepairParams,
 	token string) ([]byte, error) {
 	contract := &metadata.Contract{
-		Meta: contractMetadata,
+		Meta:       contractMetadata,
+		CreateTime: uint64(time.Now().Unix()),
+		Status:     metadata.Contract_INIT,
 	}
 	if rp != nil {
 		contract.Status = metadata.Contract_INIT

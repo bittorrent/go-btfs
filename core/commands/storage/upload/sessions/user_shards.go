@@ -338,6 +338,9 @@ func RefreshLocalContracts(ctx context.Context, ds datastore.Datastore, all []*m
 		}
 		cid, err := ds.Get(ctx, datastore.NewKey(fmt.Sprintf(userFileShard, peerID, o.Meta.ContractId)))
 		if err != nil {
+			if errors.Is(err, datastore.ErrNotFound) {
+				continue
+			}
 			log.Error("Failed to get CID for outdated contract:", err)
 			continue
 		}

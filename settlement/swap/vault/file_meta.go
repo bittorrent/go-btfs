@@ -14,6 +14,7 @@ import (
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/gogo/protobuf/proto"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"golang.org/x/crypto/sha3"
 )
 
 type FileMeta interface {
@@ -78,8 +79,10 @@ func (fm *fileMeta) AddFileMeta(cid string, meta *metadata.FileMetaInfo) error {
 			fmt.Printf("Warning: failed to get host address for contract ID %s: %v\n", c.Meta.ContractId, err)
 			continue
 		}
+		var hash [32]byte
+		copy(hash[:], keccak256([]byte(c.Meta.ContractId)))
 		pairs = append(pairs, abi.FileMetaContractSPPair{
-			ContractId: c.Meta.ContractId,
+			ContractId: hash,
 			Sp:         common.HexToAddress(hostAddress), // Convert hostID to Ethereum address
 		})
 	}
@@ -161,7 +164,9 @@ func (fm *fileMeta) GetFileMeta(cid string, contractIds []string) (*metadata.Fil
 }
 
 func (fm *fileMeta) GetFileMetaByCID(cid string) (*metadata.FileMetaInfo, error) {
-	meta, err := fm.FileMetaAbi.FileMeta(nil, cid)
+	var hash [32]byte
+	copy(hash[:], keccak256([]byte(cid)))
+	meta, err := fm.FileMetaAbi.FileMeta(nil, hash)
 	if err != nil {
 		return nil, err
 	}
@@ -174,9 +179,19 @@ func (fm *fileMeta) GetFileMetaByCID(cid string) (*metadata.FileMetaInfo, error)
 }
 
 func (fm *fileMeta) GetContractStatus(contractId string) (metadata.Contract_ContractStatus, error) {
-	meta, err := fm.FileMetaAbi.ContractStatus(nil, contractId)
+	var hash [32]byte
+	copy(hash[:], keccak256([]byte(contractId)))
+	meta, err := fm.FileMetaAbi.ContractStatus(nil, hash)
 	if err != nil {
 		return metadata.Contract_ContractStatus(0), err
 	}
 	return metadata.Contract_ContractStatus(int32(meta)), nil
+}
+
+func keccak256(data ...[]byte) []byte {
+	h := sha3.NewLegacyKeccak256()
+	for _, b := range data {
+		h.Write(b)
+	}
+	return h.Sum(nil)
 }

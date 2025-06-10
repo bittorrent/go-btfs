@@ -23,16 +23,16 @@ import (
 )
 
 const (
-	RssInitStatus                 = "init"
-	RssSubmitStatus               = "submit"
-	RssGuardStatus                = "guard"
-	RssGuardFileMetaSignedStatus  = "guard:file-meta-signed"
-	RssGuardQuestionsSignedStatus = "guard:questions-signed"
-	RssWaitUploadStatus           = "wait-upload"
-	RssWaitUploadReqSignedStatus  = "wait-upload:req-signed"
-	RssPayStatus                  = "pay"
-	RssCompleteStatus             = "complete"
-	RssErrorStatus                = "error"
+	RssInitStatus                = "init"
+	RssSubmitStatus              = "submit"
+	RssContractStatus            = "contract"
+	RssGuardFileMetaSignedStatus = "contract:file-meta-added"
+	RssFileMetaAddedStatus       = "contract:file-meta-added"
+	RssWaitUploadStatus          = "wait-upload"
+	RssWaitUploadReqSignedStatus = "wait-upload:req-signed"
+	RssPayStatus                 = "pay"
+	RssCompleteStatus            = "complete"
+	RssErrorStatus               = "error"
 
 	RssToSubmitEvent                 = "to-submit-event"
 	RssToContractEvent               = "to-contract-event"
@@ -57,10 +57,10 @@ var (
 	renterSessionsInMem = cmap.New()
 	rssFsmEvents        = fsm.Events{
 		{Name: RssToSubmitEvent, Src: []string{RssInitStatus}, Dst: RssSubmitStatus},
-		{Name: RssToContractEvent, Src: []string{RssSubmitStatus}, Dst: RssGuardStatus},
-		{Name: RssToContractFileMetaSignedEvent, Src: []string{RssGuardStatus}, Dst: RssGuardFileMetaSignedStatus},
-		{Name: RssToContractFileMetaAddedEvent, Src: []string{RssGuardFileMetaSignedStatus}, Dst: RssGuardQuestionsSignedStatus},
-		{Name: RssToWaitUploadEvent, Src: []string{RssGuardQuestionsSignedStatus}, Dst: RssWaitUploadStatus},
+		{Name: RssToContractEvent, Src: []string{RssSubmitStatus}, Dst: RssContractStatus},
+		{Name: RssToContractFileMetaSignedEvent, Src: []string{RssContractStatus}, Dst: RssGuardFileMetaSignedStatus},
+		{Name: RssToContractFileMetaAddedEvent, Src: []string{RssGuardFileMetaSignedStatus}, Dst: RssFileMetaAddedStatus},
+		{Name: RssToWaitUploadEvent, Src: []string{RssFileMetaAddedStatus}, Dst: RssWaitUploadStatus},
 		{Name: RssToWaitUploadReqSignedEvent, Src: []string{RssWaitUploadStatus}, Dst: RssWaitUploadReqSignedStatus},
 		{Name: RssToPayEvent, Src: []string{RssWaitUploadReqSignedStatus}, Dst: RssPayStatus},
 		{Name: RssToCompleteEvent, Src: []string{RssPayStatus}, Dst: RssCompleteStatus},
@@ -171,7 +171,7 @@ func GetUserSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash stri
 var helperText = map[string]string{
 	RssInitStatus:       "Searching for recommended hosts…",
 	RssSubmitStatus:     "Hosts found! Checking chequebook balance, and visiting guard.",
-	RssGuardStatus:      "Preparing meta-data and challenge questions.",
+	RssContractStatus:   "Preparing meta-data and challenge questions.",
 	RssWaitUploadStatus: "Confirming file shard storage by hosts.",
 	RssPayStatus:        "uploaded, doing the cheque payment.",
 	RssCompleteStatus:   "Payment successful! File storage successful!",

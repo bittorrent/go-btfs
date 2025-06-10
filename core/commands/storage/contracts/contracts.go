@@ -463,6 +463,15 @@ func GetInvalidContractsForHost(cs []*metadata.Contract, spId string) ([]*metada
 		if int64(c.Meta.StorageEnd) < time.Now().Unix() && c.Meta.SpId == spId {
 			invalid = append(invalid, c)
 		}
+
+		if c.Meta.SpId == spId && (c.Status == metadata.Contract_CLOSED || c.Status == metadata.Contract_INVALID) {
+			invalid = append(invalid, c)
+		}
+
+		if c.Meta.SpId == spId && c.Status == metadata.Contract_INIT && c.CreateTime > uint64(time.Now().Unix())-uint64(time.Hour) {
+			invalid = append(invalid, c)
+		}
+
 	}
 	return invalid, nil
 }

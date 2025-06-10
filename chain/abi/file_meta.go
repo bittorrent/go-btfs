@@ -31,13 +31,13 @@ var (
 
 // FileMetaContractSPPair is an auto generated low-level Go binding around an user-defined struct.
 type FileMetaContractSPPair struct {
-	ContractId string
+	ContractId [32]byte
 	Sp         common.Address
 }
 
 // FileMetaContractMetaData contains all meta data concerning the FileMetaContract contract.
 var FileMetaContractMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"AddressEmptyCode\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"ERC1967InvalidImplementation\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ERC1967NonPayable\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FailedCall\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidInitialization\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotInitializing\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"OwnableInvalidOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"OwnableUnauthorizedAccount\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UUPSUnauthorizedCallContext\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"slot\",\"type\":\"bytes32\"}],\"name\":\"UUPSUnsupportedProxiableUUID\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"metaData\",\"type\":\"bytes\"}],\"name\":\"FileMetaAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"version\",\"type\":\"uint64\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"contractId\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"enumFileMeta.FileStoreStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"StatusUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"UPGRADE_INTERFACE_VERSION\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"},{\"internalType\":\"bytes\",\"name\":\"metaData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"size\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"contractId\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"sp\",\"type\":\"address\"}],\"internalType\":\"structFileMeta.ContractSPPair[]\",\"name\":\"pairs\",\"type\":\"tuple[]\"}],\"name\":\"addFileMeta\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"contractSP\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"contractStatus\",\"outputs\":[{\"internalType\":\"enumFileMeta.FileStoreStatus\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"fileMeta\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"},{\"internalType\":\"string[]\",\"name\":\"contractIds\",\"type\":\"string[]\"}],\"name\":\"getFileMeta\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"metaData\",\"type\":\"bytes\"},{\"internalType\":\"enumFileMeta.FileStoreStatus[]\",\"name\":\"statuses\",\"type\":\"uint8[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"proxiableUUID\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalUsedSize\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"contractId\",\"type\":\"string\"},{\"internalType\":\"enumFileMeta.FileStoreStatus\",\"name\":\"status\",\"type\":\"uint8\"}],\"name\":\"updateStatus\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"upgradeToAndCall\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"AddressEmptyCode\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"ERC1967InvalidImplementation\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ERC1967NonPayable\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FailedCall\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidInitialization\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotInitializing\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"OwnableInvalidOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"OwnableUnauthorizedAccount\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UUPSUnauthorizedCallContext\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"slot\",\"type\":\"bytes32\"}],\"name\":\"UUPSUnsupportedProxiableUUID\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"metaData\",\"type\":\"bytes\"}],\"name\":\"FileMetaAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"version\",\"type\":\"uint64\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"contractId\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"enumFileMeta.FileStoreStatus\",\"name\":\"status\",\"type\":\"uint8\"}],\"name\":\"StatusUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"UPGRADE_INTERFACE_VERSION\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"},{\"internalType\":\"bytes\",\"name\":\"metaData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"size\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"contractId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"sp\",\"type\":\"address\"}],\"internalType\":\"structFileMeta.ContractSPPair[]\",\"name\":\"pairs\",\"type\":\"tuple[]\"}],\"name\":\"addFileMeta\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"contractSP\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"contractStatus\",\"outputs\":[{\"internalType\":\"enumFileMeta.FileStoreStatus\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"fileMeta\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"cid\",\"type\":\"string\"},{\"internalType\":\"string[]\",\"name\":\"contractIds\",\"type\":\"string[]\"}],\"name\":\"getFileMeta\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"metaData\",\"type\":\"bytes\"},{\"internalType\":\"enumFileMeta.FileStoreStatus[]\",\"name\":\"statuses\",\"type\":\"uint8[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"proxiableUUID\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalUsedSize\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"contractId\",\"type\":\"string\"},{\"internalType\":\"enumFileMeta.FileStoreStatus\",\"name\":\"status\",\"type\":\"uint8\"}],\"name\":\"updateStatus\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"upgradeToAndCall\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"}]",
 }
 
 // FileMetaContractABI is the input ABI used to generate the binding from.
@@ -217,10 +217,10 @@ func (_FileMetaContract *FileMetaContractCallerSession) UPGRADEINTERFACEVERSION(
 	return _FileMetaContract.Contract.UPGRADEINTERFACEVERSION(&_FileMetaContract.CallOpts)
 }
 
-// ContractSP is a free data retrieval call binding the contract method 0x78afa4b3.
+// ContractSP is a free data retrieval call binding the contract method 0x9866cf58.
 //
-// Solidity: function contractSP(string ) view returns(address)
-func (_FileMetaContract *FileMetaContractCaller) ContractSP(opts *bind.CallOpts, arg0 string) (common.Address, error) {
+// Solidity: function contractSP(bytes32 ) view returns(address)
+func (_FileMetaContract *FileMetaContractCaller) ContractSP(opts *bind.CallOpts, arg0 [32]byte) (common.Address, error) {
 	var out []interface{}
 	err := _FileMetaContract.contract.Call(opts, &out, "contractSP", arg0)
 
@@ -234,24 +234,24 @@ func (_FileMetaContract *FileMetaContractCaller) ContractSP(opts *bind.CallOpts,
 
 }
 
-// ContractSP is a free data retrieval call binding the contract method 0x78afa4b3.
+// ContractSP is a free data retrieval call binding the contract method 0x9866cf58.
 //
-// Solidity: function contractSP(string ) view returns(address)
-func (_FileMetaContract *FileMetaContractSession) ContractSP(arg0 string) (common.Address, error) {
+// Solidity: function contractSP(bytes32 ) view returns(address)
+func (_FileMetaContract *FileMetaContractSession) ContractSP(arg0 [32]byte) (common.Address, error) {
 	return _FileMetaContract.Contract.ContractSP(&_FileMetaContract.CallOpts, arg0)
 }
 
-// ContractSP is a free data retrieval call binding the contract method 0x78afa4b3.
+// ContractSP is a free data retrieval call binding the contract method 0x9866cf58.
 //
-// Solidity: function contractSP(string ) view returns(address)
-func (_FileMetaContract *FileMetaContractCallerSession) ContractSP(arg0 string) (common.Address, error) {
+// Solidity: function contractSP(bytes32 ) view returns(address)
+func (_FileMetaContract *FileMetaContractCallerSession) ContractSP(arg0 [32]byte) (common.Address, error) {
 	return _FileMetaContract.Contract.ContractSP(&_FileMetaContract.CallOpts, arg0)
 }
 
-// ContractStatus is a free data retrieval call binding the contract method 0xeb3a78dc.
+// ContractStatus is a free data retrieval call binding the contract method 0x1b72811e.
 //
-// Solidity: function contractStatus(string ) view returns(uint8)
-func (_FileMetaContract *FileMetaContractCaller) ContractStatus(opts *bind.CallOpts, arg0 string) (uint8, error) {
+// Solidity: function contractStatus(bytes32 ) view returns(uint8)
+func (_FileMetaContract *FileMetaContractCaller) ContractStatus(opts *bind.CallOpts, arg0 [32]byte) (uint8, error) {
 	var out []interface{}
 	err := _FileMetaContract.contract.Call(opts, &out, "contractStatus", arg0)
 
@@ -265,24 +265,24 @@ func (_FileMetaContract *FileMetaContractCaller) ContractStatus(opts *bind.CallO
 
 }
 
-// ContractStatus is a free data retrieval call binding the contract method 0xeb3a78dc.
+// ContractStatus is a free data retrieval call binding the contract method 0x1b72811e.
 //
-// Solidity: function contractStatus(string ) view returns(uint8)
-func (_FileMetaContract *FileMetaContractSession) ContractStatus(arg0 string) (uint8, error) {
+// Solidity: function contractStatus(bytes32 ) view returns(uint8)
+func (_FileMetaContract *FileMetaContractSession) ContractStatus(arg0 [32]byte) (uint8, error) {
 	return _FileMetaContract.Contract.ContractStatus(&_FileMetaContract.CallOpts, arg0)
 }
 
-// ContractStatus is a free data retrieval call binding the contract method 0xeb3a78dc.
+// ContractStatus is a free data retrieval call binding the contract method 0x1b72811e.
 //
-// Solidity: function contractStatus(string ) view returns(uint8)
-func (_FileMetaContract *FileMetaContractCallerSession) ContractStatus(arg0 string) (uint8, error) {
+// Solidity: function contractStatus(bytes32 ) view returns(uint8)
+func (_FileMetaContract *FileMetaContractCallerSession) ContractStatus(arg0 [32]byte) (uint8, error) {
 	return _FileMetaContract.Contract.ContractStatus(&_FileMetaContract.CallOpts, arg0)
 }
 
-// FileMeta is a free data retrieval call binding the contract method 0x6fa361a2.
+// FileMeta is a free data retrieval call binding the contract method 0x821f709f.
 //
-// Solidity: function fileMeta(string ) view returns(bytes)
-func (_FileMetaContract *FileMetaContractCaller) FileMeta(opts *bind.CallOpts, arg0 string) ([]byte, error) {
+// Solidity: function fileMeta(bytes32 ) view returns(bytes)
+func (_FileMetaContract *FileMetaContractCaller) FileMeta(opts *bind.CallOpts, arg0 [32]byte) ([]byte, error) {
 	var out []interface{}
 	err := _FileMetaContract.contract.Call(opts, &out, "fileMeta", arg0)
 
@@ -296,17 +296,17 @@ func (_FileMetaContract *FileMetaContractCaller) FileMeta(opts *bind.CallOpts, a
 
 }
 
-// FileMeta is a free data retrieval call binding the contract method 0x6fa361a2.
+// FileMeta is a free data retrieval call binding the contract method 0x821f709f.
 //
-// Solidity: function fileMeta(string ) view returns(bytes)
-func (_FileMetaContract *FileMetaContractSession) FileMeta(arg0 string) ([]byte, error) {
+// Solidity: function fileMeta(bytes32 ) view returns(bytes)
+func (_FileMetaContract *FileMetaContractSession) FileMeta(arg0 [32]byte) ([]byte, error) {
 	return _FileMetaContract.Contract.FileMeta(&_FileMetaContract.CallOpts, arg0)
 }
 
-// FileMeta is a free data retrieval call binding the contract method 0x6fa361a2.
+// FileMeta is a free data retrieval call binding the contract method 0x821f709f.
 //
-// Solidity: function fileMeta(string ) view returns(bytes)
-func (_FileMetaContract *FileMetaContractCallerSession) FileMeta(arg0 string) ([]byte, error) {
+// Solidity: function fileMeta(bytes32 ) view returns(bytes)
+func (_FileMetaContract *FileMetaContractCallerSession) FileMeta(arg0 [32]byte) ([]byte, error) {
 	return _FileMetaContract.Contract.FileMeta(&_FileMetaContract.CallOpts, arg0)
 }
 
@@ -448,23 +448,23 @@ func (_FileMetaContract *FileMetaContractCallerSession) TotalUsedSize() (*big.In
 	return _FileMetaContract.Contract.TotalUsedSize(&_FileMetaContract.CallOpts)
 }
 
-// AddFileMeta is a paid mutator transaction binding the contract method 0xd1f94065.
+// AddFileMeta is a paid mutator transaction binding the contract method 0xcd56487d.
 //
-// Solidity: function addFileMeta(string cid, bytes metaData, uint256 size, (string,address)[] pairs) returns()
+// Solidity: function addFileMeta(string cid, bytes metaData, uint256 size, (bytes32,address)[] pairs) returns()
 func (_FileMetaContract *FileMetaContractTransactor) AddFileMeta(opts *bind.TransactOpts, cid string, metaData []byte, size *big.Int, pairs []FileMetaContractSPPair) (*types.Transaction, error) {
 	return _FileMetaContract.contract.Transact(opts, "addFileMeta", cid, metaData, size, pairs)
 }
 
-// AddFileMeta is a paid mutator transaction binding the contract method 0xd1f94065.
+// AddFileMeta is a paid mutator transaction binding the contract method 0xcd56487d.
 //
-// Solidity: function addFileMeta(string cid, bytes metaData, uint256 size, (string,address)[] pairs) returns()
+// Solidity: function addFileMeta(string cid, bytes metaData, uint256 size, (bytes32,address)[] pairs) returns()
 func (_FileMetaContract *FileMetaContractSession) AddFileMeta(cid string, metaData []byte, size *big.Int, pairs []FileMetaContractSPPair) (*types.Transaction, error) {
 	return _FileMetaContract.Contract.AddFileMeta(&_FileMetaContract.TransactOpts, cid, metaData, size, pairs)
 }
 
-// AddFileMeta is a paid mutator transaction binding the contract method 0xd1f94065.
+// AddFileMeta is a paid mutator transaction binding the contract method 0xcd56487d.
 //
-// Solidity: function addFileMeta(string cid, bytes metaData, uint256 size, (string,address)[] pairs) returns()
+// Solidity: function addFileMeta(string cid, bytes metaData, uint256 size, (bytes32,address)[] pairs) returns()
 func (_FileMetaContract *FileMetaContractTransactorSession) AddFileMeta(cid string, metaData []byte, size *big.Int, pairs []FileMetaContractSPPair) (*types.Transaction, error) {
 	return _FileMetaContract.Contract.AddFileMeta(&_FileMetaContract.TransactOpts, cid, metaData, size, pairs)
 }
@@ -1065,40 +1065,29 @@ func (it *FileMetaContractStatusUpdatedIterator) Close() error {
 
 // FileMetaContractStatusUpdated represents a StatusUpdated event raised by the FileMetaContract contract.
 type FileMetaContractStatusUpdated struct {
-	ContractId common.Hash
+	ContractId string
 	Status     uint8
-	Timestamp  *big.Int
 	Raw        types.Log // Blockchain specific contextual infos
 }
 
-// FilterStatusUpdated is a free log retrieval operation binding the contract event 0xc1c0ab06b259f062bfd174cf912a7c24b40820e430b30e09c9e96e17737bc9d3.
+// FilterStatusUpdated is a free log retrieval operation binding the contract event 0x4e407d4f938199e743ff3f9c87db0c2b408db2c74b3b83b01299015302ef0532.
 //
-// Solidity: event StatusUpdated(string indexed contractId, uint8 status, uint256 timestamp)
-func (_FileMetaContract *FileMetaContractFilterer) FilterStatusUpdated(opts *bind.FilterOpts, contractId []string) (*FileMetaContractStatusUpdatedIterator, error) {
+// Solidity: event StatusUpdated(string contractId, uint8 status)
+func (_FileMetaContract *FileMetaContractFilterer) FilterStatusUpdated(opts *bind.FilterOpts) (*FileMetaContractStatusUpdatedIterator, error) {
 
-	var contractIdRule []interface{}
-	for _, contractIdItem := range contractId {
-		contractIdRule = append(contractIdRule, contractIdItem)
-	}
-
-	logs, sub, err := _FileMetaContract.contract.FilterLogs(opts, "StatusUpdated", contractIdRule)
+	logs, sub, err := _FileMetaContract.contract.FilterLogs(opts, "StatusUpdated")
 	if err != nil {
 		return nil, err
 	}
 	return &FileMetaContractStatusUpdatedIterator{contract: _FileMetaContract.contract, event: "StatusUpdated", logs: logs, sub: sub}, nil
 }
 
-// WatchStatusUpdated is a free log subscription operation binding the contract event 0xc1c0ab06b259f062bfd174cf912a7c24b40820e430b30e09c9e96e17737bc9d3.
+// WatchStatusUpdated is a free log subscription operation binding the contract event 0x4e407d4f938199e743ff3f9c87db0c2b408db2c74b3b83b01299015302ef0532.
 //
-// Solidity: event StatusUpdated(string indexed contractId, uint8 status, uint256 timestamp)
-func (_FileMetaContract *FileMetaContractFilterer) WatchStatusUpdated(opts *bind.WatchOpts, sink chan<- *FileMetaContractStatusUpdated, contractId []string) (event.Subscription, error) {
+// Solidity: event StatusUpdated(string contractId, uint8 status)
+func (_FileMetaContract *FileMetaContractFilterer) WatchStatusUpdated(opts *bind.WatchOpts, sink chan<- *FileMetaContractStatusUpdated) (event.Subscription, error) {
 
-	var contractIdRule []interface{}
-	for _, contractIdItem := range contractId {
-		contractIdRule = append(contractIdRule, contractIdItem)
-	}
-
-	logs, sub, err := _FileMetaContract.contract.WatchLogs(opts, "StatusUpdated", contractIdRule)
+	logs, sub, err := _FileMetaContract.contract.WatchLogs(opts, "StatusUpdated")
 	if err != nil {
 		return nil, err
 	}
@@ -1130,9 +1119,9 @@ func (_FileMetaContract *FileMetaContractFilterer) WatchStatusUpdated(opts *bind
 	}), nil
 }
 
-// ParseStatusUpdated is a log parse operation binding the contract event 0xc1c0ab06b259f062bfd174cf912a7c24b40820e430b30e09c9e96e17737bc9d3.
+// ParseStatusUpdated is a log parse operation binding the contract event 0x4e407d4f938199e743ff3f9c87db0c2b408db2c74b3b83b01299015302ef0532.
 //
-// Solidity: event StatusUpdated(string indexed contractId, uint8 status, uint256 timestamp)
+// Solidity: event StatusUpdated(string contractId, uint8 status)
 func (_FileMetaContract *FileMetaContractFilterer) ParseStatusUpdated(log types.Log) (*FileMetaContractStatusUpdated, error) {
 	event := new(FileMetaContractStatusUpdated)
 	if err := _FileMetaContract.contract.UnpackLog(event, "StatusUpdated", log); err != nil {

@@ -67,7 +67,7 @@ to the upload session.`,
 			cm = uh.BalanceChanMaps
 		//case sessions.RssSubmitBalanceReqSignedStatus:
 		//	cm = uh.SignedChannelCommitChanMaps
-		case sessions.RssGuardStatus:
+		case sessions.RssContractStatus:
 			cm = uh.FileMetaChanMaps
 		case sessions.RssGuardFileMetaSignedStatus:
 			cm = uh.QuestionsChanMaps
