@@ -126,7 +126,6 @@ Mode options include:` + hub.AllModeHelpText,
 }
 
 func SyncSPs(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb.Host, error) {
-	// TODO v4.0 CHECK
 	nodes, err := hub.QueryHosts(ctx, node, mode)
 	if err != nil {
 		return nil, err

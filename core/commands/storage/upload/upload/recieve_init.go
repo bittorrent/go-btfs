@@ -89,7 +89,6 @@ the shard and replies back to client for the next challenge step.`,
 		}
 
 		// reject contract if holding contracts is above threshold
-		// TODO SP节点的阈值要调整，在配置里面配置的
 		hm := NewHostManager(ctxParams.Cfg)
 		shardSize, err := strconv.ParseInt(req.Arguments[6], 10, 64)
 		if err != nil {
@@ -333,11 +332,11 @@ func signContract(meta *metadata.ContractMeta, cont *metadata.Contract, privKey 
 	}
 	if cont == nil {
 		cont = &metadata.Contract{
-			Meta: meta,
-			// LastModifyTime: time.Now(),
+			Meta:       meta,
+			CreateTime: uint64(time.Now().Unix()),
 		}
 	} else {
-		// cont.LastModifyTime = time.Now()
+		cont.CreateTime = uint64(time.Now().Unix())
 	}
 	cont.SpSignature = signedBytes
 	return cont, err
