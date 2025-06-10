@@ -63,7 +63,7 @@ Mode options include:` + hub.AllModeHelpText,
 
 		mode, ok := req.Options[hostInfoModeOptionName].(string)
 		if !ok {
-			mode = cfg.Experimental.HostsSyncMode
+			mode = hub.SP_MODE
 		}
 
 		n, err := cmdenv.GetNode(env)

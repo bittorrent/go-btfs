@@ -6,7 +6,6 @@ package commands
 // 	guardHostsOptionName                 = "hosts"
 // )
 
-// TODO guard相关的命令也要删除掉
 // var GuardCmd = &cmds.Command{
 // 	Helptext: cmds.HelpText{
 // 		Tagline: "Interact with guard services from BTFS client.",

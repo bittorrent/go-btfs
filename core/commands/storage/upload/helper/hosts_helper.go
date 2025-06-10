@@ -11,6 +11,7 @@ import (
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
+	"github.com/bittorrent/go-btfs/core/hub"
 
 	hubpb "github.com/bittorrent/go-btfs-common/protos/hub"
 	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
@@ -20,7 +21,6 @@ import (
 )
 
 const (
-	// TODO 这里要调整，修改SP之后，数量没有这么多了
 	minimumHosts = 1
 	failMsg      = "failed to find more valid hosts, please try again later"
 )
@@ -102,7 +102,7 @@ func GetSPsProvider(cp *ContextParams, blacklist []string) IHostsProvider {
 	ctx, cancel := context.WithTimeout(cp.Ctx, 10*time.Minute)
 	p := &HostsProvider{
 		cp:              cp,
-		mode:            cp.Cfg.Experimental.HostsSyncMode,
+		mode:            hub.SP_MODE,
 		current:         -1,
 		blacklist:       blacklist,
 		ctx:             ctx,
