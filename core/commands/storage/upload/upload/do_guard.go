@@ -14,7 +14,7 @@ import (
 )
 
 func addFileMetaToBttcChainAndPay(rss *sessions.RenterSession, fileSize int64, offlineSigning bool) error {
-	if err := rss.To(sessions.RssToAgreementEvent); err != nil {
+	if err := rss.To(sessions.RssToContractEvent); err != nil {
 		return err
 	}
 
@@ -69,7 +69,7 @@ func addFileMetaToBttcChainAndPay(rss *sessions.RenterSession, fileSize int64, o
 	}
 	<-cb
 	uh.FileMetaChanMaps.Remove(rss.SsId)
-	if err := rss.To(sessions.RssToGuardFileMetaSignedEvent); err != nil {
+	if err := rss.To(sessions.RssToContractFileMetaSignedEvent); err != nil {
 		return err
 	}
 	// fsStatus.RenterSignature = signBytes
@@ -77,7 +77,7 @@ func addFileMetaToBttcChainAndPay(rss *sessions.RenterSession, fileSize int64, o
 	if err != nil {
 		return err
 	}
-	err = rss.To(sessions.RssToGuardQuestionsSignedEvent)
+	err = rss.To(sessions.RssToContractFileMetaAddedEvent)
 	if err != nil {
 		return err
 	}

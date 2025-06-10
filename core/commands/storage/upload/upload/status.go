@@ -74,10 +74,6 @@ This command print upload and payment status by the time queried.`,
 			if err != nil {
 				return err
 			}
-			// contracts, err := shard.Agreements()
-			if err != nil {
-				return err
-			}
 			additionalInfo, err := shard.GetAdditionalInfo()
 			if err != nil && err != datastore.ErrNotFound {
 				return err

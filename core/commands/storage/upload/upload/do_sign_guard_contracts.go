@@ -120,24 +120,21 @@ func getGuardAndEscrowPid(configuration *config.Config) (peer.ID, peer.ID, error
 
 func SignUserContract(
 	rss *sessions.RenterSession,
-	agreementMeta *metadata.ContractMeta,
+	contractMetadata *metadata.ContractMeta,
 	offlineSigning bool,
 	rp *RepairParams,
 	token string) ([]byte, error) {
 	contract := &metadata.Contract{
-		Meta: agreementMeta,
+		Meta: contractMetadata,
 	}
 	if rp != nil {
 		contract.Status = metadata.Contract_INIT
-		// agreement.RentStart = rp.RenterStart
-		// agreement.RentEnd = rp.RenterEnd
+		contractMetadata.StorageStart = uint64(rp.RenterStart.Unix())
+		contractMetadata.StorageEnd = uint64(rp.RenterEnd.Unix())
 	}
 
-	// agreement.RenterPid = params.RenterPid
-	// agreement.PreparerPid = params.RenterPid
-
 	bc := make(chan []byte)
-	shardId := sessions.GetShardId(rss.SsId, agreementMeta.ShardHash, int(agreementMeta.ShardIndex))
+	shardId := sessions.GetShardId(rss.SsId, contractMetadata.ShardHash, int(contractMetadata.ShardIndex))
 	uh.GuardChanMaps.Set(shardId, bc)
 	bytes, err := proto.Marshal(contract)
 	if err != nil {
@@ -146,7 +143,7 @@ func SignUserContract(
 	uh.GuardContractMaps.Set(shardId, bytes)
 	if !offlineSigning {
 		go func() {
-			sign, err := crypto.Sign(rss.CtxParams.N.PrivateKey, agreementMeta)
+			sign, err := crypto.Sign(rss.CtxParams.N.PrivateKey, contractMetadata)
 			if err != nil {
 				_ = rss.To(sessions.RssToErrorEvent, err)
 				return

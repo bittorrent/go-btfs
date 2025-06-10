@@ -26,25 +26,25 @@ const (
 	hostShardContractsKey = hostShardKey + "contracts"
 
 	// status
-	hshInitStatus      = "init"
-	hshAgreementStatus = "agreement"
-	hshPayStatus       = "paid"
-	hshCompleteStatus  = "complete"
-	hshErrorStatus     = "error"
+	hshInitStatus     = "init"
+	hshContractStatus = "contract"
+	hshPayStatus      = "paid"
+	hshCompleteStatus = "complete"
+	hshErrorStatus    = "error"
 
 	// event
-	hshToAgreementEvent = "to-agreement"
-	hshToPayEvent       = "to-pay"
-	hshToCompleteEvent  = "to-complete"
-	hshToErrorEvent     = "to-error"
+	hshToContractEvent = "to-contract"
+	hshToPayEvent      = "to-pay"
+	hshToCompleteEvent = "to-complete"
+	hshToErrorEvent    = "to-error"
 )
 
 var (
 	spShardFsmEvents = fsm.Events{
-		{Name: hshToAgreementEvent, Src: []string{hshInitStatus}, Dst: hshAgreementStatus},
-		{Name: hshToPayEvent, Src: []string{hshAgreementStatus}, Dst: hshPayStatus},
+		{Name: hshToContractEvent, Src: []string{hshInitStatus}, Dst: hshContractStatus},
+		{Name: hshToPayEvent, Src: []string{hshContractStatus}, Dst: hshPayStatus},
 		{Name: hshToCompleteEvent, Src: []string{hshPayStatus}, Dst: hshCompleteStatus},
-		{Name: hshToErrorEvent, Src: []string{hshInitStatus, hshAgreementStatus}, Dst: hshToErrorEvent},
+		{Name: hshToErrorEvent, Src: []string{hshInitStatus, hshContractStatus}, Dst: hshToErrorEvent},
 	}
 	hostShardsInMem = cmap.New()
 )
@@ -103,14 +103,14 @@ func (hs *SPShard) GetInputRate() *big.Int {
 func (hs *SPShard) enterState(e *fsm.Event) {
 	log.Infof("shard: %s enter status: %s\n", hs.contractId, e.Dst)
 	switch e.Dst {
-	case hshAgreementStatus:
+	case hshContractStatus:
 		hs.saveContract(e.Args[0].(*metadata.Contract))
 	}
 }
 
 func (hs *SPShard) saveContract(signedGuardContract *metadata.Contract) error {
 	status := &shardpb.Status{
-		Status: hshAgreementStatus,
+		Status: hshContractStatus,
 	}
 	return Batch(hs.ds, []string{
 		fmt.Sprintf(hostShardStatusKey, hs.peerId, hs.contractId),
@@ -141,12 +141,12 @@ func (hs *SPShard) IsPayStatus() bool {
 	return hs.fsm.Current() == hshPayStatus
 }
 func (hs *SPShard) IsContractStatus() bool {
-	fmt.Printf("IsContractStatus Current:%v,  hshAgreementStatus:%v \n", hs.fsm.Current(), hshAgreementStatus)
-	return hs.fsm.Current() == hshAgreementStatus
+	fmt.Printf("IsContractStatus Current:%v,  hshContractStatus:%v \n", hs.fsm.Current(), hshContractStatus)
+	return hs.fsm.Current() == hshContractStatus
 }
 
-func (hs *SPShard) UpdateToAgreementStatus(signedGuardContract *metadata.Contract) error {
-	return hs.fsm.Event(hshToAgreementEvent, signedGuardContract)
+func (hs *SPShard) UpdateToContractStatus(signedGuardContract *metadata.Contract) error {
+	return hs.fsm.Event(hshToContractEvent, signedGuardContract)
 }
 
 func (hs *SPShard) ReceivePayCheque() error {

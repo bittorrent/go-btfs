@@ -29,8 +29,8 @@ const (
 	renterShardContractsKey      = renterShardKey + "contracts"
 	renterShardAdditionalInfoKey = renterShardKey + "additional-info"
 
-	creatorShardAgreementKey = "/btfs/%s/creator/shard-agreements/%s"
-	userFileShard            = "/btfs/%s/shards/file/%s"
+	creatorShardContractKey = "/btfs/%s/creator/shard-contracts/%s"
+	userFileShard           = "/btfs/%s/shards/file/%s"
 
 	// status
 	rshInitStatus     = "init"

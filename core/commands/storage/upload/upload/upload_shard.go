@@ -140,9 +140,9 @@ func checkHostTokenSupport(ctx *ShardUploadContext, hostPid peer.ID) error {
 }
 
 func signShardContractAndSendToSP(ctx *ShardUploadContext, host string, hostPid peer.ID, shardIndex int, shardHash string, amount int64) error {
-	agreementID := helper.NewAgreementID(ctx.Rss.SsId)
+	contractID := helper.NewContractID(ctx.Rss.SsId)
 	cb := make(chan error)
-	ShardErrChanMap.Set(agreementID, cb)
+	ShardErrChanMap.Set(contractID, cb)
 	errChan := make(chan error, 2)
 	var signedContractBytes []byte
 	go func() {
@@ -151,7 +151,7 @@ func signShardContractAndSendToSP(ctx *ShardUploadContext, host string, hostPid 
 			signedContractBytes, err = SignUserContract(
 				ctx.Rss,
 				&metadata.ContractMeta{
-					ContractId:   agreementID,
+					ContractId:   contractID,
 					UserId:       ctx.RenterId.String(),
 					SpId:         host,
 					ShardIndex:   uint64(shardIndex),
@@ -159,7 +159,7 @@ func signShardContractAndSendToSP(ctx *ShardUploadContext, host string, hostPid 
 					ShardSize:    uint64(ctx.ShardSize),
 					Token:        ctx.Token.String(),
 					StorageStart: uint64(time.Now().Unix()),
-					StorageEnd:   uint64(time.Now().Add(time.Duration(ctx.StorageLength) * time.Second).Unix()),
+					StorageEnd:   uint64(time.Now().Add(time.Duration(ctx.StorageLength) * 24 * time.Hour).Unix()),
 					Price:        uint64(ctx.Price),
 					Amount:       uint64(amount),
 				},
@@ -200,7 +200,7 @@ func signShardContractAndSendToSP(ctx *ShardUploadContext, host string, hostPid 
 	defer ticker.Stop()
 	select {
 	case err := <-cb:
-		ShardErrChanMap.Remove(agreementID)
+		ShardErrChanMap.Remove(contractID)
 		return err
 	case <-ticker.C:
 		return errors.New("host timeout")
@@ -217,7 +217,7 @@ func waitForAllShardsComplete(ctx *ShardUploadContext) (complete bool, err error
 			if err != nil {
 				continue
 			}
-			log.Info("session", ctx.Rss.SsId, "agreementNum", completeNum, "errorNum", errorNum)
+			log.Info("session", ctx.Rss.SsId, "contractNum", completeNum, "errorNum", errorNum)
 			if completeNum == len(ctx.Rss.ShardHashes) {
 				return true, nil
 			} else if errorNum > 0 {

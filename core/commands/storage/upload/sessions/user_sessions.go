@@ -34,15 +34,15 @@ const (
 	RssCompleteStatus             = "complete"
 	RssErrorStatus                = "error"
 
-	RssToSubmitEvent               = "to-submit-event"
-	RssToAgreementEvent            = "to-guard-event"
-	RssToGuardFileMetaSignedEvent  = "to-guard:file-meta-signed-event"
-	RssToGuardQuestionsSignedEvent = "to-guard:questions-signed-event"
-	RssToWaitUploadEvent           = "to-wait-upload-event"
-	RssToWaitUploadReqSignedEvent  = "to-wait-upload-signed-event"
-	RssToPayEvent                  = "to-pay-event"
-	RssToCompleteEvent             = "to-complete-event"
-	RssToErrorEvent                = "to-error-event"
+	RssToSubmitEvent                 = "to-submit-event"
+	RssToContractEvent               = "to-contract-event"
+	RssToContractFileMetaSignedEvent = "to-contract:file-meta-signed-event"
+	RssToContractFileMetaAddedEvent  = "to-contract:file-meta-added-event"
+	RssToWaitUploadEvent             = "to-wait-upload-event"
+	RssToWaitUploadReqSignedEvent    = "to-wait-upload-signed-event"
+	RssToPayEvent                    = "to-pay-event"
+	RssToCompleteEvent               = "to-complete-event"
+	RssToErrorEvent                  = "to-error-event"
 
 	RenterSessionPrefix            = "/btfs/%s/renter/sessions/"
 	RenterSessionKey               = RenterSessionPrefix + "%s/"
@@ -56,11 +56,10 @@ const (
 var (
 	renterSessionsInMem = cmap.New()
 	rssFsmEvents        = fsm.Events{
-		// v4.0 TODO 状态机调整，去掉无效的状态
 		{Name: RssToSubmitEvent, Src: []string{RssInitStatus}, Dst: RssSubmitStatus},
-		{Name: RssToAgreementEvent, Src: []string{RssSubmitStatus}, Dst: RssGuardStatus},
-		{Name: RssToGuardFileMetaSignedEvent, Src: []string{RssGuardStatus}, Dst: RssGuardFileMetaSignedStatus},
-		{Name: RssToGuardQuestionsSignedEvent, Src: []string{RssGuardFileMetaSignedStatus}, Dst: RssGuardQuestionsSignedStatus},
+		{Name: RssToContractEvent, Src: []string{RssSubmitStatus}, Dst: RssGuardStatus},
+		{Name: RssToContractFileMetaSignedEvent, Src: []string{RssGuardStatus}, Dst: RssGuardFileMetaSignedStatus},
+		{Name: RssToContractFileMetaAddedEvent, Src: []string{RssGuardFileMetaSignedStatus}, Dst: RssGuardQuestionsSignedStatus},
 		{Name: RssToWaitUploadEvent, Src: []string{RssGuardQuestionsSignedStatus}, Dst: RssWaitUploadStatus},
 		{Name: RssToWaitUploadReqSignedEvent, Src: []string{RssWaitUploadStatus}, Dst: RssWaitUploadReqSignedStatus},
 		{Name: RssToPayEvent, Src: []string{RssWaitUploadReqSignedStatus}, Dst: RssPayStatus},

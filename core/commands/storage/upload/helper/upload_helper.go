@@ -208,7 +208,7 @@ func TotalPayRound(shardSize int64, price int64, storageLength int, rate *big.In
 	return totalPay, nil
 }
 
-func NewAgreementID(sessionId string) string {
+func NewContractID(sessionId string) string {
 	id := uuid.New().String()
 	return sessionId + "," + id
 }

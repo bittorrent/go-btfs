@@ -48,7 +48,7 @@ the shard and replies back to client for the next challenge step.`,
 		cmds.StringArg("file-hash", true, false, "Root file storage node should fetch (the DAG)."),
 		cmds.StringArg("shard-hash", true, false, "Shard the storage node should fetch."),
 		cmds.StringArg("price", true, false, "Per GiB per day in µBTT (=0.000001BTT) for storing this shard offered by client."),
-		cmds.StringArg("agreement-meta", true, false, "Client's initial agreement meta."),
+		cmds.StringArg("contract-meta", true, false, "Client's initial contract meta."),
 		cmds.StringArg("storage-length", true, false, "Store file for certain length in days."),
 		cmds.StringArg("shard-size", true, false, "Size of each shard received in bytes."),
 		cmds.StringArg("shard-index", true, false, "Index of shard within the encoding scheme."),
@@ -129,25 +129,25 @@ the shard and replies back to client for the next challenge step.`,
 		fmt.Printf("upload init: start, shardSize:%v, requestPid:%v, shardIndex:%v . \n",
 			shardSize, requestPid, shardIndex)
 
-		halfSignedAgreementString := req.Arguments[4]
-		if halfSignedAgreementString == "" {
-			return fmt.Errorf("half signed agreement is empty")
+		halfSignedContractString := req.Arguments[4]
+		if halfSignedContractString == "" {
+			return fmt.Errorf("half signed contract is empty")
 		}
-		halfSignedAgreementBytes := []byte(halfSignedAgreementString)
+		halfSignedContractBytes := []byte(halfSignedContractString)
 		defer func() {
 			err := recover()
 			if err != nil {
 				fmt.Printf("upload init: panic, err:%v, shardIndex:%v, requestPid:%v. \n", err, shardIndex, requestPid)
 			}
 		}()
-		halfSignedAgreement := &metadata.Contract{}
-		if err = proto.Unmarshal(halfSignedAgreementBytes, halfSignedAgreement); err != nil {
-			return fmt.Errorf("unmarshal half signed agreement error: %v", err)
+		halfSignedContract := &metadata.Contract{}
+		if err = proto.Unmarshal(halfSignedContractBytes, halfSignedContract); err != nil {
+			return fmt.Errorf("unmarshal half signed contract error: %v", err)
 		}
 		if err != nil {
 			return err
 		}
-		contractMeta := halfSignedAgreement.Meta
+		contractMeta := halfSignedContract.Meta
 		// get renter's public key
 		pid, ok := remote.GetStreamRequestRemotePeerID(req, ctxParams.N)
 		if !ok {
@@ -161,17 +161,17 @@ the shard and replies back to client for the next challenge step.`,
 		if err != nil {
 			return err
 		}
-		s := halfSignedAgreement.GetUserSignature()
+		s := halfSignedContract.GetUserSignature()
 		ok, err = crypto.Verify(payerPubKey, contractMeta, s)
 		if !ok || err != nil {
 			return fmt.Errorf("can't verify guard contract: %v", err)
 		}
 
-		signedAgreement, err := signAgreement(contractMeta, halfSignedAgreement, ctxParams.N.PrivateKey)
+		signedContract, err := signContract(contractMeta, halfSignedContract, ctxParams.N.PrivateKey)
 		if err != nil {
 			return err
 		}
-		signedAgreementBytes, err := proto.Marshal(signedAgreement)
+		signedContractBytes, err := proto.Marshal(signedContract)
 		if err != nil {
 			return err
 		}
@@ -181,7 +181,7 @@ the shard and replies back to client for the next challenge step.`,
 		var rate *big.Int
 		{
 			// check renter-token
-			token := common.HexToAddress(halfSignedAgreement.Meta.Token)
+			token := common.HexToAddress(halfSignedContract.Meta.Token)
 			_, bl := tokencfg.MpTokenStr[token]
 			if !bl {
 				err = errors.New("receive upload init, your input token is not supported. " + token.String())
@@ -229,18 +229,18 @@ the shard and replies back to client for the next challenge step.`,
 					ssId,
 					shardHash,
 					shardIndex,
-					signedAgreementBytes,
+					signedContractBytes,
 				)
 				if err != nil {
 					return err
 				}
 
-				if err := shard.UpdateToAgreementStatus(signedAgreement); err != nil {
+				if err := shard.UpdateToContractStatus(signedContract); err != nil {
 					return err
 				}
 
 				fileHash := req.Arguments[1]
-				err = downloadShardFromClient(ctxParams, halfSignedAgreement, fileHash, shardHash, false)
+				err = downloadShardFromClient(ctxParams, halfSignedContract, fileHash, shardHash, false)
 				if err != nil {
 					return err
 				}
@@ -297,7 +297,7 @@ the shard and replies back to client for the next challenge step.`,
 
 				if blPay {
 					// pin shardHash
-					err = pinShard(ctxParams, halfSignedAgreement, fileHash, shardHash)
+					err = pinShard(ctxParams, halfSignedContract, fileHash, shardHash)
 					if err != nil {
 						return err
 					}
@@ -326,7 +326,7 @@ the shard and replies back to client for the next challenge step.`,
 	},
 }
 
-func signAgreement(meta *metadata.ContractMeta, cont *metadata.Contract, privKey ic.PrivKey) (*metadata.Contract, error) {
+func signContract(meta *metadata.ContractMeta, cont *metadata.Contract, privKey ic.PrivKey) (*metadata.Contract, error) {
 	signedBytes, err := crypto.Sign(privKey, meta)
 	if err != nil {
 		return cont, err

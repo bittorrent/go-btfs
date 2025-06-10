@@ -25,7 +25,7 @@ var StorageUploadRecvContractCmd = &cmds.Command{
 		cmds.StringArg("session-id", true, false, "Session ID which renter uses to storage all shards information."),
 		cmds.StringArg("shard-hash", true, false, "Shard the storage node should fetch."),
 		cmds.StringArg("shard-index", true, false, "Index of shard within the encoding scheme."),
-		cmds.StringArg("agreement", true, false, "Signed agreement."),
+		cmds.StringArg("contract", true, false, "Signed contract."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		err := utils.CheckSimpleMode(env)
@@ -48,11 +48,11 @@ var StorageUploadRecvContractCmd = &cmds.Command{
 	},
 }
 
-func doRecv(req *cmds.Request, env cmds.Environment) (agreementId string, err error) {
+func doRecv(req *cmds.Request, env cmds.Environment) (contractID string, err error) {
 	defer func() {
 		err := recover()
 		if err != nil {
-			fmt.Println("receive agreement err: ", err)
+			fmt.Println("receive contract err: ", err)
 		}
 	}()
 	ssID := req.Arguments[0]
@@ -93,7 +93,7 @@ func doRecv(req *cmds.Request, env cmds.Environment) (agreementId string, err er
 		err = errors.New("invalid contract bytes")
 		return
 	}
-	agreementId = contract.Meta.ContractId
+	contractID = contract.Meta.ContractId
 
 	shardHash := req.Arguments[1]
 	index, err := strconv.Atoi(req.Arguments[2])
