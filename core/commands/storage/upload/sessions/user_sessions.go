@@ -26,7 +26,7 @@ const (
 	RssInitStatus                = "init"
 	RssSubmitStatus              = "submit"
 	RssContractStatus            = "contract"
-	RssGuardFileMetaSignedStatus = "contract:file-meta-added"
+	RssGuardFileMetaSignedStatus = "contract:file-meta-signed"
 	RssFileMetaAddedStatus       = "contract:file-meta-added"
 	RssWaitUploadStatus          = "wait-upload"
 	RssWaitUploadReqSignedStatus = "wait-upload:req-signed"
@@ -170,8 +170,8 @@ func GetUserSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash stri
 
 var helperText = map[string]string{
 	RssInitStatus:       "Searching for recommended hosts…",
-	RssSubmitStatus:     "Hosts found! Checking chequebook balance, and visiting guard.",
-	RssContractStatus:   "Preparing meta-data and challenge questions.",
+	RssSubmitStatus:     "Hosts found! Checking chequebook balance.",
+	RssContractStatus:   "Preparing meta-data and add to blockchain.",
 	RssWaitUploadStatus: "Confirming file shard storage by hosts.",
 	RssPayStatus:        "uploaded, doing the cheque payment.",
 	RssCompleteStatus:   "Payment successful! File storage successful!",
