@@ -150,7 +150,7 @@ func syncBlocks(ctx context.Context, d datastore.Datastore, role, identity strin
 			}
 			to = from + blockPage - 1
 		} else {
-			log.Infof("contracts sync finished...")
+			fmt.Println("contracts sync finished...")
 			break
 		}
 
