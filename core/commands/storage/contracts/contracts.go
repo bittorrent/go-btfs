@@ -34,6 +34,7 @@ var log = logger.InitLogger("contracts.log").Sugar()
 const (
 	contractsSyncPurgeOptionName   = "purge"
 	contractsSyncVerboseOptionName = "verbose"
+	contractsSyncBlockHeight       = "height"
 
 	contractsListOrderOptionName  = "order"
 	contractsListStatusOptionName = "status"
@@ -43,10 +44,6 @@ const (
 	hostContractsKey   = contractsKeyPrefix + "host"
 	renterContractsKey = contractsKeyPrefix + "renter"
 	payoutNotFoundErr  = "rpc error: code = Unknown desc = not found"
-
-	guardTimeout = 360 * time.Second
-
-	guardContractPageSize = 100
 
 	notSupportErr = "only host and renter contract sync are supported currently"
 )
@@ -89,6 +86,7 @@ This command contracts stats based on role from network(hub) to local node data 
 	Options: []cmds.Option{
 		cmds.BoolOption(contractsSyncPurgeOptionName, "p", "Purge local contracts cache and sync from the beginning.").WithDefault(false),
 		cmds.BoolOption(contractsSyncVerboseOptionName, "v", "Make the operation more talkative.").WithDefault(false),
+		cmds.Int64Option(contractsSyncBlockHeight, "sh", "Start block height to sync contracts.").WithDefault(53849058),
 	},
 	RunTimeout: 10 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -109,19 +107,26 @@ This command contracts stats based on role from network(hub) to local node data 
 			return fmt.Errorf(notSupportErr)
 		}
 
+		ctx := context.WithValue(req.Context, contractsSyncVerboseOptionName, req.Options[contractsSyncVerboseOptionName].(bool))
+
 		purgeOpt, _ := req.Options[contractsSyncPurgeOptionName].(bool)
 		if purgeOpt {
 			err = sessions.DeleteShardsContracts(n.Repo.Datastore(), n.Identity.String(), role.String())
 			if err != nil {
 				return err
 			}
-			err = Save(n.Repo.Datastore(), nil, role.String())
+			go func() {
+				ScanChainAndSave(n.Repo.Datastore(), role.String(), n.Identity.String(), uint64(req.Options[contractsSyncBlockHeight].(int64)))
+				SyncContracts(ctx, n, req, env, role.String())
+			}()
+			// err = Save(n.Repo.Datastore(), nil, role.String())
 			if err != nil {
 				return err
 			}
+			return nil
 		}
-		ctx := context.WithValue(req.Context, contractsSyncVerboseOptionName, req.Options[contractsSyncVerboseOptionName].(bool))
-		return SyncContracts(ctx, n, req, env, role.String())
+		SyncContracts(ctx, n, req, env, role.String())
+		return err
 	},
 }
 
