@@ -3,6 +3,7 @@ package hosts
 import (
 	"context"
 	"fmt"
+
 	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core"
@@ -62,7 +63,7 @@ Mode options include:` + hub.AllModeHelpText,
 
 		mode, ok := req.Options[hostInfoModeOptionName].(string)
 		if !ok {
-			mode = cfg.Experimental.HostsSyncMode
+			mode = hub.SP_MODE
 		}
 
 		n, err := cmdenv.GetNode(env)
@@ -70,7 +71,7 @@ Mode options include:` + hub.AllModeHelpText,
 			return err
 		}
 
-		nodes, err := helper.GetHostsFromDatastore(req.Context, n, mode, 0)
+		nodes, err := helper.GetSPsFromDatastore(req.Context, n, mode, 0)
 		if err != nil {
 			return err
 		}
@@ -119,12 +120,12 @@ Mode options include:` + hub.AllModeHelpText,
 		if err != nil {
 			return err
 		}
-		_, err = SyncHosts(req.Context, n, mode)
+		_, err = SyncSPs(req.Context, n, mode)
 		return err
 	},
 }
 
-func SyncHosts(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb.Host, error) {
+func SyncSPs(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb.Host, error) {
 	nodes, err := hub.QueryHosts(ctx, node, mode)
 	if err != nil {
 		return nil, err

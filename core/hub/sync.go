@@ -26,10 +26,19 @@ const (
 - "all":     all existing hosts`
 )
 
+const SP_MODE = "sp"
+
+var SP_MODE_MAP = map[string]int32{
+	SP_MODE: 6, // SP_MODE is a special mode for storage providers
+}
+
 // CheckValidMode takes in a raw mode string and returns the host request mode type
 // if valid, and if local is true and mode is empty, return prefix for storing such
 // information into local datastore.
 func CheckValidMode(mode string, local bool) (hubpb.HostsReq_Mode, string, error) {
+	if mode == SP_MODE {
+		return hubpb.HostsReq_Mode(SP_MODE_MAP[SP_MODE]), strings.ToUpper(SP_MODE), nil
+	}
 	if mode == HubModeAll && local {
 		return -1, "", nil
 	}

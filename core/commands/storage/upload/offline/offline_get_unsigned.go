@@ -2,6 +2,7 @@ package offline
 
 import (
 	"errors"
+
 	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
@@ -44,7 +45,7 @@ This command obtains the upload signing input data for from the upload session
 		if err != nil {
 			return err
 		}
-		rssStatus, err := rss.Status()
+		rssStatus, err := rss.GetRenterSessionStatus()
 		if err != nil {
 			return err
 		}

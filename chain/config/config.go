@@ -39,6 +39,7 @@ var (
 	bttcTestStatusAddress         = common.HexToAddress("0x38d1fF2C2e9744273E4531FA4608eB6432c1F26A")
 	bttcTestFileMetaAddress       = common.HexToAddress("0xB192bb91c143C196EF3c659923Ef34026B170997")
 	bttcTestStakeAddress          = common.HexToAddress("0xD064E2f1cfa0C038b1ba541c73749DD3C1B0835b")
+	bttcTestFileMeta2Address      = common.HexToAddress("0xc76fB871b41a66605515a509dD80E085468a30E3")
 
 	bttcFactoryAddressV1 = common.HexToAddress("0x9AF4bEc1A30BeC47756Ecef4cf43B91592121bC9")
 	bttcFactoryAddress   = common.HexToAddress("0x763d7858287B9a33F4bE5bb3df0241dACc59BCc7") // https://bttcscan.com/address/0x763d7858287B9a33F4bE5bb3df0241dACc59BCc7
@@ -98,6 +99,7 @@ type ChainConfig struct {
 	StatusAddress      common.Address
 	FileMetaAddress    common.Address
 	StakeAddress       common.Address
+	FileMeta2Address   common.Address
 	MultiEndpoint      []string
 }
 
@@ -145,6 +147,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.FileMetaAddress = bttcTestFileMetaAddress
 		cfg.MultiEndpoint = bttcTestMultiEndpoint
 		cfg.StakeAddress = bttcTestStakeAddress
+		cfg.FileMeta2Address = bttcTestFileMeta2Address
 		return &cfg, true
 	case testChainID:
 		cfg.StartBlock = ethStartBlock

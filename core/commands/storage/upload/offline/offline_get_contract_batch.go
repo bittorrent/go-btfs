@@ -2,6 +2,7 @@ package offline
 
 import (
 	"fmt"
+
 	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
@@ -49,7 +50,7 @@ the contracts to the caller.`,
 		if err != nil {
 			return err
 		}
-		status, err := rss.Status()
+		status, err := rss.GetRenterSessionStatus()
 		if err != nil {
 			return err
 		}

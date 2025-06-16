@@ -13,7 +13,6 @@ require (
 	github.com/bittorrent/go-btfs-config v0.13.4
 	github.com/bittorrent/go-btfs-files v0.3.3-0.20250424113812-d85c147e3674
 	github.com/bittorrent/go-btns v0.2.0
-	github.com/bittorrent/go-common/v2 v2.4.0
 	github.com/bittorrent/go-eccrypto v0.1.0
 	github.com/bittorrent/go-mfs v0.4.0
 	github.com/bittorrent/go-unixfs v0.8.0
@@ -157,6 +156,7 @@ require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/benbjohnson/immutable v0.3.0 // indirect
 	github.com/bits-and-blooms/bitset v1.17.0 // indirect
+	github.com/bittorrent/go-common/v2 v2.4.0 // indirect
 	github.com/consensys/bavard v0.1.22 // indirect
 	github.com/consensys/gnark-crypto v0.14.0 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect

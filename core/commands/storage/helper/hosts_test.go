@@ -32,7 +32,7 @@ func TestHostsSaveGet(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		stored, err := GetHostsFromDatastore(context.Background(), node, mode, 100)
+		stored, err := GetSPsFromDatastore(context.Background(), node, mode, 100)
 		if err != nil {
 			t.Fatal(err)
 		}

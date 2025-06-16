@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package filemeta;
+
+option go_package = "metadata";
+
+message ContractMeta {
+  string contract_id = 1;
+  string sp_id = 2;
+  string user_id = 3;
+  string shard_hash = 4;
+  uint64 shard_index = 5;
+  uint64 shard_size = 6;
+  uint64 price = 7;
+  uint64 amount = 8;
+  string token = 9;
+  bool auto_renewal = 10;
+  uint64 storage_start = 11;
+  uint64 storage_end = 12;
+}
+
+message Contract {
+  ContractMeta meta = 1;
+  bytes sp_signature = 2;
+  bytes user_signature = 3;
+  uint64 create_time = 4;
+  enum ContractStatus {
+    INVALID = 0;
+    INIT = 1;
+    COMPLETED = 2;
+    CLOSED = 3;
+  }
+  ContractStatus status = 5;
+}
+
+message FileMetaInfo {
+  string user_id = 1;
+  string file_hash = 2;
+  uint64 file_size = 3;
+  uint64 shard_count = 4;
+  repeated Contract contracts = 5;
+}

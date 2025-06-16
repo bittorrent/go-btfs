@@ -3,6 +3,7 @@ package upload
 import (
 	"context"
 	"fmt"
+
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -10,22 +11,18 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 )
 
-func Submit(rss *sessions.RenterSession, fileSize int64, offlineSigning bool) error {
-	if err := rss.To(sessions.RssToSubmitEvent); err != nil {
-		return err
-	}
-
-	err := doSubmit(rss)
+func SubmitToChain(rss *sessions.RenterSession, fileSize int64, offlineSigning bool) error {
+	err := preCheck(rss)
 	if err != nil {
 		return err
 	}
-	return doGuardAndPay(rss, nil, fileSize, offlineSigning)
+	return addFileMetaToBttcChainAndPay(rss, fileSize, offlineSigning)
 }
 
 func prepareAmount(rss *sessions.RenterSession, shardHashes []string) (int64, error) {
 	var totalPrice int64
 	for i, hash := range shardHashes {
-		shard, err := sessions.GetRenterShard(rss.CtxParams, rss.SsId, hash, i)
+		shard, err := sessions.GetUserShard(rss.CtxParams, rss.SsId, hash, i)
 		if err != nil {
 			return 0, err
 		}
@@ -33,12 +30,12 @@ func prepareAmount(rss *sessions.RenterSession, shardHashes []string) (int64, er
 		if err != nil {
 			return 0, err
 		}
-		totalPrice += c.SignedGuardContract.Amount
+		totalPrice += int64(c.Meta.Amount)
 	}
 	return totalPrice, nil
 }
 
-func doSubmit(rss *sessions.RenterSession) error {
+func preCheck(rss *sessions.RenterSession) error {
 	amount, err := prepareAmount(rss, rss.ShardHashes)
 	if err != nil {
 		return err
@@ -59,7 +56,7 @@ func checkAvailableBalance(ctx context.Context, amount int64, token common.Addre
 	}
 
 	// token: get available balance of token.
-	//AvailableBalance, err := chain.SettleObject.VaultService.AvailableBalance(ctx, token)
+	// AvailableBalance, err := chain.SettleObject.VaultService.AvailableBalance(ctx, token)
 	AvailableBalance, err := chain.SettleObject.VaultService.AvailableBalance(ctx, token)
 	if err != nil {
 		return err

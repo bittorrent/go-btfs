@@ -3,8 +3,9 @@ package vault
 import (
 	"bytes"
 	"fmt"
-	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"math/big"
+
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 
 	"github.com/bittorrent/go-btfs/transaction/crypto"
 	"github.com/bittorrent/go-btfs/transaction/crypto/eip712"
@@ -25,19 +26,19 @@ type ChequeRecord struct {
 	Vault       common.Address
 	Beneficiary common.Address
 	Amount      *big.Int
-	ReceiveTime int64 //time.now().Unix()
+	ReceiveTime int64 // time.now().Unix()
 }
 
 type DailyReceivedStats struct {
 	Amount *big.Int
 	Count  int
-	Date   int64 //time.now().Unix()
+	Date   int64 // time.now().Unix()
 }
 
 type DailySentStats struct {
 	Amount *big.Int
 	Count  int
-	Date   int64 //time.now().Unix()
+	Date   int64 // time.now().Unix()
 }
 
 // the valid range is [MinIndex, MaxIndex)

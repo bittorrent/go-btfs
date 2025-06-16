@@ -54,6 +54,10 @@ func (m *signerMock) SignTypedData(d *eip712.TypedData) ([]byte, error) {
 	return nil, errors.New("signerMock.signTypedDataFunc not implemented")
 }
 
+func (m *signerMock) PrivKey() *ecdsa.PrivateKey {
+	panic("implement me")
+}
+
 func New(opts ...Option) crypto.Signer {
 	mock := new(signerMock)
 	for _, o := range opts {
