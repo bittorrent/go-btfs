@@ -48,7 +48,7 @@ func getChainID(client *ethclient.Client) (*big.Int, error) {
 
 func TestDeposit(t *testing.T) {
 	erc20Address := common.HexToAddress("0x00")
-	expectedTxHash := common.HexToAddress("0x01").Hash()
+	expectedTxHash := common.BytesToHash(common.HexToAddress("0x01").Bytes())
 	depositAmount := big.NewInt(200)
 
 	erc20 := erc20.New(
@@ -81,7 +81,7 @@ func TestDeposit(t *testing.T) {
 
 func TestWithdraw(t *testing.T) {
 	erc20Address := common.HexToAddress("0x00")
-	expectedTxHash := common.HexToAddress("0x01").Hash()
+	expectedTxHash := common.BytesToHash(common.HexToAddress("0x01").Bytes())
 	withdrawAmount := big.NewInt(200)
 
 	erc20 := erc20.New(
