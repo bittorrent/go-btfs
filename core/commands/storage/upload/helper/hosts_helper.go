@@ -22,7 +22,7 @@ import (
 
 const (
 	minimumHosts = 1
-	failMsg      = "failed to find more valid hosts, please try again later"
+	failMsg      = "failed to find more valid sp, please try again later"
 )
 
 type IHostsProvider interface {
@@ -76,9 +76,12 @@ func GetCustomizedSPProvider(cp *ContextParams, hosts []string) IHostsProvider {
 func (p *CustomizedHostsProvider) AddIndex() (int, error) {
 	p.Lock()
 	defer p.Unlock()
+	if len(p.hosts) == 0 {
+		return -1, errors.New(failMsg)
+	}
 	p.current++
 	if p.current >= len(p.hosts) {
-		return -1, errors.New(failMsg)
+		p.current = 0
 	}
 	return p.current, nil
 }
@@ -163,9 +166,12 @@ func (p Peers) Swap(i int, j int) {
 func (p *HostsProvider) AddIndex() (int, error) {
 	p.Lock()
 	defer p.Unlock()
+	if len(p.hosts) == 0 {
+		return -1, errors.New(failMsg)
+	}
 	p.current++
 	if p.current >= len(p.hosts) {
-		return -1, errors.New(p.getMsg())
+		p.current = 0
 	}
 	return p.current, nil
 }
