@@ -45,7 +45,7 @@ Each mode ranks hosts based on its criteria and is randomized based on current n
 Mode options include:` + hub.AllModeHelpText,
 	},
 	Options: []cmds.Option{
-		cmds.StringOption(hostInfoModeOptionName, "m", "Hosts info showing mode. Default: mode set in config option Experimental.HostsSyncMode."),
+		cmds.StringOption(hostInfoModeOptionName, "m", "Hosts info showing mode. Default: mode set in config option Experimental.HostsSyncMode.").WithDefault(hub.SP_MODE),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		err := utils.CheckSimpleMode(env)
@@ -95,7 +95,7 @@ Each mode ranks hosts based on its criteria and is randomized based on current n
 Mode options include:` + hub.AllModeHelpText,
 	},
 	Options: []cmds.Option{
-		cmds.StringOption(hostSyncModeOptionName, "m", "Hosts syncing mode. Default: mode set in config option Experimental.HostsSyncMode."),
+		cmds.StringOption(hostSyncModeOptionName, "m", "Hosts syncing mode. Default: mode set in config option Experimental.HostsSyncMode.").WithDefault(hub.SP_MODE),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		err := utils.CheckSimpleMode(env)
@@ -113,7 +113,7 @@ Mode options include:` + hub.AllModeHelpText,
 
 		mode, ok := req.Options[hostSyncModeOptionName].(string)
 		if !ok {
-			mode = cfg.Experimental.HostsSyncMode
+			mode = hub.SP_MODE 
 		}
 
 		n, err := cmdenv.GetNode(env)
