@@ -251,7 +251,7 @@ Use status command to check for completion:
 			shardIndexes = append(shardIndexes, i)
 		}
 
-		UploadShard(&ShardUploadContext{
+		err = UploadShard(&ShardUploadContext{
 			Rss:            rss,
 			HostsProvider:  sp,
 			Price:          price,
@@ -264,6 +264,9 @@ Use status command to check for completion:
 			ShardIndexes:   shardIndexes,
 			RepairParams:   nil,
 		})
+		if err != nil {
+			return err
+		}
 
 		seRes := &Res{
 			ID: ssId,

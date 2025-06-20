@@ -117,15 +117,13 @@ This command contracts stats based on role from network(hub) to local node data 
 			}
 			go func() {
 				ScanChainAndSave(n.Repo.Datastore(), role.String(), n.Identity.String(), uint64(req.Options[contractsSyncBlockHeight].(int64)))
-				SyncContracts(ctx, n, req, env, role.String())
+				// ignore err just print log
+				_ = SyncContracts(ctx, n, req, env, role.String())
 			}()
-			// err = Save(n.Repo.Datastore(), nil, role.String())
-			if err != nil {
-				return err
-			}
 			return nil
 		}
-		SyncContracts(ctx, n, req, env, role.String())
+		// ignore err just print log
+		_ = SyncContracts(ctx, n, req, env, role.String())
 		return err
 	},
 }

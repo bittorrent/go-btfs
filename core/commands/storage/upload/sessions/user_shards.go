@@ -134,6 +134,16 @@ func (rs *UserShard) saveShardStatusAndContract(signedGuardContract *metadata.Co
 	})
 }
 
+func (rs *UserShard) UpdateContractsStatus() error {
+	contract := &metadata.Contract{}
+	err := Get(rs.ds, fmt.Sprintf(renterShardContractsKey, rs.peerId, GetShardId(rs.ssId, rs.hash, rs.index)), contract)
+	if err != nil {
+		return err
+	}
+	contract.Status = metadata.Contract_COMPLETED
+	return Save(rs.ds, fmt.Sprintf(renterShardContractsKey, rs.peerId, GetShardId(rs.ssId, rs.hash, rs.index)), contract)
+}
+
 func (rs *UserShard) saveUserShard(contractId string) {
 	err := rs.ds.Put(context.Background(), datastore.NewKey(fmt.Sprintf(userFileShard, rs.peerId, contractId)), []byte(rs.hash))
 	if err != nil {

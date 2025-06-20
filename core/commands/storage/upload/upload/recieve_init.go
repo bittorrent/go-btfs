@@ -295,6 +295,7 @@ the shard and replies back to client for the next challenge step.`,
 				wg.Wait()
 
 				if blPay {
+					_ = shard.UpdateContractStatus()
 					// pin shardHash
 					err = pinShard(ctxParams, halfSignedContract, fileHash, shardHash)
 					if err != nil {
