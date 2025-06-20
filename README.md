@@ -30,7 +30,7 @@ BTFS, a leading project in the space of DePIN, is committed to advancing and enh
 
 ## BTFS 4.0 Architecture Diagram
 
-![Architecture Diagram](https://files.readme.io/a21e9fb--min.png)
+![Architecture Diagram](https://files.readme.io/ccb76f11b2bebee8329d954dc8aea39e64153731e9860f99e6d435825dae70ec-IMAGE_2025-06-19_172036.jpg)
 
 ## Table of Contents
 
