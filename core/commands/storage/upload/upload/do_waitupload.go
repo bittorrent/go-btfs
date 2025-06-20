@@ -121,10 +121,14 @@ func waitSPSaveFileSuccAndToPay(rss *sessions.RenterSession, offlineSigning bool
 					if err != nil {
 						return err
 					}
+					err = shard.UpdateContractsStatus()
+					if err != nil {
+						return err
+					}
 				}
 				bytes, err := json.Marshal(m)
 				if err == nil {
-					rss.UpdateAdditionalInfo(string(bytes))
+					_ = rss.UpdateAdditionalInfo(string(bytes))
 				}
 				log.Infof("%d shards uploaded.", num)
 				if num >= threshold {

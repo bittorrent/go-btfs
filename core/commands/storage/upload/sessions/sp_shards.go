@@ -165,3 +165,13 @@ func (hs *SPShard) ReceivePayCheque() error {
 func (hs *SPShard) Complete() error {
 	return hs.fsm.Event(hshToCompleteEvent)
 }
+
+func (hs *SPShard) UpdateContractStatus() error {
+	meta := &metadata.Contract{}
+	err := Get(hs.ds, fmt.Sprintf(hostShardContractsKey, hs.peerId, hs.contractId), meta)
+	if err != nil {
+		return err
+	}
+	meta.Status = metadata.Contract_COMPLETED
+	return Save(hs.ds, fmt.Sprintf(hostShardContractsKey, hs.peerId, hs.contractId), meta)
+}
