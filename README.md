@@ -1,41 +1,42 @@
 # go-btfs
 
-## What is BTFS 3.0?
+## What is BTFS 4.0?
 
 BTFS, as an innovative force in the BitTorrent ecosystem, has not only accelerated the development of distributed file sharing technology, but also taken a leading position in the field of DePIN. DePIN - which stands for Decentralized Physical Infrastructure Network - encourages network participants to jointly invest resources to deploy and maintain a more stable and efficient network infrastructure through a token reward mechanism. Current mainstream public blockchains mostly focus on computational tasks but lack cost-effective, scalable, and high-performing file storage and sharing solutions.
 
 These are exactly what BTFS aims to clear up. Additionally, underpinned by BTTC, BTFS enables cross-chain connectivity and multi-channel payments, making it a more convenient choice. The integration of BTFS, BitTorrent, and the BTTC network will boost DApp developers' efficiency in serving a wider market.
 
-* The [documentation](https://docs.btfs.io/) walks developers through BTFS 3.0 setup, usage, and API references.
-* Please join the BTFS community on [Discord](https://discord.com/invite/tJ4fz6C6rw).
+- The [documentation](https://docs.btfs.io/) walks developers through BTFS 4.0 setup, usage, and API references.
+- Please join the BTFS community on [Discord](https://discord.com/invite/tJ4fz6C6rw).
 
 Decentralized Physical Infrastructure Networks (DePINs), catalyzed by advancements in blockchain technology, aim to revolutionize network architecture by shifting away from centralized infrastructure. This transformation is made possible by the evolution of blockchain infrastructure and advancements in cryptography, enabling a global collaborative effort to establish open and permissionless infrastructure. This approach disrupts traditional infrastructure models, which are typically dominated by major corporations.
 The BitTorrent File System (BTFS), an open and distributed file storage system, aligns perfectly with the goals of DePIN.
 
 BTFS represents the next generation of decentralized file storage systems powered by blockchain technology and peer-to-peer transmission. It allows users to store files across multiple global nodes, enhancing file security and reliability while facilitating faster access and transfer. This setup provides an effortless file management and sharing experience. Additionally, it incorporates key features from the BitTorrent Chain (BTTC) network, such as cross-chain connectivity and multichannel payment options.
 
-As a stellar player in the DePIN space, BTFS v3.0 boasts the following advantages:
+As a stellar player in the DePIN space, BTFS v4.0 boasts the following advantages:
 
-* Decentralized Storage: BTFS has achieved global decentralized file storage through its distributed network. Unlike centralized storage on single servers, this method significantly increases data redundancy and reduces the risk of data loss. The BTFS v3.0 update includes enhancements such as symmetric encryption for secure data transmission and new features like Keystore files for managing BTFS nodes.
-* Enhanced Security: The decentralized nature of data storage makes it difficult for attackers to target all nodes simultaneously, greatly improving the system's overall security.
-* Censorship-Proof: The inherent nature of a decentralized storage system makes it extremely difficult for any single organization to censor or block content, ensuring the free flow of data.
-* Seamless Integration Into the BitTorrent Ecosystem: The seamless integration of BTFS with the BitTorrent ecosystem allows users to freely access and share files, as well as facilitates cross-chain transactions and payments via BTTC.
-* User-friendly API and Visual Interface: A newly updated BTFS website offers a user-friendly API and visual interface, featuring detailed road maps on Storage Reward halving and various other modules.
-* Transparent Market Mechanism: The market mechanism within BTFS ensures complete transparency in storage and payment processes, providing users with maximum visibility into their data.
-* Encryption Technology: By leveraging advanced encryption technologies, BTFS enhances data privacy and security, ensuring data integrity and preventing unauthorized access during transmission and storage.
-
-In addition to these features, the upgraded BTFS v3.0 introduces a crucial model update—the Reward Halving. As the BTFS network and its user base grow, the reward halving is likely to contribute to the reliable and sustainable growth of the entire ecosystem.
+- Storage Providers (SPs) as Core Infrastructure: BTFS v4.0 introduces Storage Providers (SPs) as dedicated, verified nodes responsible for secure data storage and service provision. Only BTTC validators can become SPs, ensuring high-quality storage resources and enhanced network reliability.
+- Smart Contract-Based Metadata Management: File metadata is now managed through smart contracts on the BTTC network, providing transparent, auditable, and tamper-resistant metadata storage with on-chain verification.
+- Decentralized Storage: BTFS has achieved global decentralized file storage through its distributed network. Unlike centralized storage on single servers, this method significantly increases data redundancy and reduces the risk of data loss. The BTFS v3.0 update includes enhancements such as symmetric encryption for secure data transmission and new features like Keystore files for managing BTFS nodes.
+- Enhanced Security: The decentralized nature of data storage makes it difficult for attackers to target all nodes simultaneously, greatly improving the system's overall security.
+- Censorship-Proof: The inherent nature of a decentralized storage system makes it extremely difficult for any single organization to censor or block content, ensuring the free flow of data.
+- Seamless Integration Into the BitTorrent Ecosystem: The seamless integration of BTFS with the BitTorrent ecosystem allows users to freely access and share files, as well as facilitates cross-chain transactions and payments via BTTC.
+- User-friendly API and Visual Interface: A newly updated BTFS website offers a user-friendly API and visual interface, featuring detailed road maps on Storage Reward halving and various other modules.
+- Transparent Market Mechanism: The market mechanism within BTFS ensures complete transparency in storage and payment processes, providing users with maximum visibility into their data.
+- Encryption Technology: By leveraging advanced encryption technologies, BTFS enhances data privacy and security, ensuring data integrity and preventing unauthorized access during transmission and storage.
 
 BTFS, a leading project in the space of DePIN, is committed to advancing and enhancing the decentralized physical infrastructure network. The improved token economics of BTFS not only align with the vision of DePIN but also lay a solid foundation for the growth of decentralized networks. As technology and community evolve, BTFS is poised to play an increasingly significant role in the decentralized world.
 
-## BTFS 3.0 Architecture Diagram
+## BTFS 4.0 Architecture Diagram
 
-![Architecture Diagram](https://files.readme.io/a21e9fb--min.png)
+![Architecture Diagram](https://files.readme.io/ccb76f11b2bebee8329d954dc8aea39e64153731e9860f99e6d435825dae70ec-IMAGE_2025-06-19_172036.jpg)
 
 ## Table of Contents
+
 - [go-btfs](#go-btfs)
-  - [What is BTFS 3.0?](#what-is-btfs-30)
-  - [BTFS 3.0 Architecture Diagram](#btfs-30-architecture-diagram)
+  - [What is BTFS 4.0?](#what-is-btfs-40)
+  - [BTFS 4.0 Architecture Diagram](#btfs-40-architecture-diagram)
   - [Table of Contents](#table-of-contents)
   - [Faucet](#faucet)
   - [Install BTFS](#install-btfs)
@@ -58,7 +59,7 @@ BTFS, a leading project in the space of DePIN, is committed to advancing and enh
 
 ## Faucet
 
-In order to ensure the normal use of btfs 3.0 testnet, you need to apply for BTT at BTTC testnet, which is obtained [**here**](https://testfaucet.bt.io/#/).
+In order to ensure the normal use of BTFS 4.0 testnet, you need to apply for BTT at BTTC testnet, which is obtained [**here**](https://testfaucet.bt.io/#/).
 
 ## Install BTFS
 
@@ -77,7 +78,9 @@ Only support compiling from source for mac and unix-based system.
 We host pre-built binaries at https://github.com/bittorrent/go-btfs/releases/latest
 
 #### Initialize a BTFS Daemon
+
 **On testnet**
+
 ```
 $ btfs init -p storage-host-testnet
 Generating TRON key with BIP39 seed phrase...
@@ -93,15 +96,17 @@ to get started, enter:
 #### Start the Daemon
 
 Start the BTFS Daemon
+
 ```
 $ btfs daemon --chain-id <chainid>
 ```
 
 Specify the chain for btfs to run by `--chain-id`, the chainid of the test network is `1029`, and the start command becomes: `btfs daemon --chain-id 1029`
+
 ```
 $ btfs daemon --chain-id 1029
 Initializing daemon...
-go-btfs version: 3.0
+go-btfs version: 4.0
 Repo version: 10
 System version: amd64/darwin
 Golang version: go1.16.5
@@ -118,9 +123,10 @@ When starting the BTFS daemon for the first time, the system will create a node 
 After the recharge, the BTFS node will create the vault contract.
 
 Get BTT on BTTC testnet reference [Faucet](#Faucet)
+
 ```
-cannot continue until there is sufficient (30000 Suggested) BTT (for Gas) available on 0x7cf4b71017f0312037d53fe966ce625bf98ffff6 
-self vault: 0x1f8b3e7e691d733f5eb17e5570c49de3e5aecef9 
+cannot continue until there is sufficient (30000 Suggested) BTT (for Gas) available on 0x7cf4b71017f0312037d53fe966ce625bf98ffff6
+self vault: 0x1f8b3e7e691d733f5eb17e5570c49de3e5aecef9
 Swarm listening on /ip4/127.0.0.1/tcp/4001
 Swarm listening on /ip4/192.168.21.149/tcp/4001
 Swarm listening on /ip6/::1/tcp/4001
@@ -134,18 +140,20 @@ Gateway (readonly) server listening on /ip4/127.0.0.1/tcp/8080
 Remote API server listening on /ip4/127.0.0.1/tcp/5101
 Daemon is ready
 ```
-At this point, the BTFS node is up and running
 
+At this point, the BTFS node is up and running
 
 ### Build from Source
 
 #### Requires
-* GO
-* GNU make
-* Git
-* GCC (or some other go compatible C Compiler) (optional)
+
+- GO
+- GNU make
+- Git
+- GCC (or some other go compatible C Compiler) (optional)
 
 #### Install Go
+
 If you need to update: [Download latest version of Go](https://golang.org/dl/).
 
 You'll need to add Go's bin directories to your `$PATH` environment variable e.g., by adding these lines to your `/etc/profile` (for a system-wide installation) or `$HOME/.profile`:
@@ -158,17 +166,20 @@ export PATH=$PATH:$GOPATH/bin
 (If you run into trouble, see the [Go install instructions](https://golang.org/doc/install)).
 
 Clone the go-btfs repository
+
 ```
 $ git clone https://github.com/bittorrent/go-btfs
 ```
 
 Navigate to the go-btfs directory and run `make install`.
+
 ```
 $ cd go-btfs
 $ make install
 ```
 
 A successful make install outputs something like:
+
 ```
 $ make install
 go: downloading github.com/tron-us/go-btfs-common v0.2.28
@@ -178,17 +189,20 @@ go version go1.14.1 darwin/amd64
 bin/check_go_version 1.14
 go install  "-asmflags=all='-trimpath='" "-gcflags=all='-trimpath='" -ldflags="-X "github.com/bittorrent/go-btfs".CurrentCommit=e4848946d" ./cmd/btfs
 ```
+
 Afterwards, run `btfs init` and `btfs daemon` to initialize and start the daemon. To re-initialize a new pair of keys, you can shut down the daemon first via `btfs shutdown`. Then run `rm -r .btfs` and `btfs init` again.
 
 ### Docker
 
 Developers also have the option to build a BTFS daemon within a Docker container. After cloning the go-btfs repository, navigate into the go-btfs directory. This is where the Dockerfile is located. Build the docker image:
+
 ```
 $ cd go-btfs
-$ docker image build -t btfs_docker .   // Builds the docker image and tags "btfs_docker" as the name 
+$ docker image build -t btfs_docker .   // Builds the docker image and tags "btfs_docker" as the name
 ```
 
 A successful build should have an output like:
+
 ```
 Sending build context to Docker daemon  2.789MB
 Step 1/37 : FROM golang:1.15
@@ -208,18 +222,20 @@ Successfully tagged btfs_docker:latest
 ```
 
 Start the container based on the new image. Starting the container also initializes and starts the BTFS daemon.
+
 ```
 $ docker container run --publish 5001:5001 --detach --name btfs1 btfs_docker
 ```
 
 The CLI flags are as such:
 
-* `--publish` asks Docker to forward traffic incoming on the host’s port 8080, to the container’s port 5001.
-* `--detach` asks Docker to run this container in the background.
-* `--name` specifies a name with which you can refer to your container in subsequent commands, in this case btfs1.
+- `--publish` asks Docker to forward traffic incoming on the host’s port 8080, to the container’s port 5001.
+- `--detach` asks Docker to run this container in the background.
+- `--name` specifies a name with which you can refer to your container in subsequent commands, in this case btfs1.
 
 Configure cross-origin(CORS)
 You need to configure cross-origin (CORS) to access the container from the host.
+
 ```
 (host) docker exec -it btfs1 /bin/sh // Enter the container's shell
 ```
@@ -232,12 +248,14 @@ Then configure cross-origin(CORS) with btfs
 ```
 
 E.g:
+
 ```
 (container) btfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["http://localhost:5001"]'
 (container) btfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT", "GET", "POST"]'
 ```
 
 Exit the container and restart the container
+
 ```
 (container) exit
 (host) docker restart btfs1
@@ -246,18 +264,22 @@ Exit the container and restart the container
 You can access the container from the host with http://localhost:5001/webui.
 
 Execute commands within the docker container:
+
 ```
 docker exec CONTAINER btfs add FILE
 ```
 
 ### Notices
+
 After upgrade to go-btfs v2.3.1, if you find that your node connectivity has deteriorated, you can execute the following command:
 
 ```
 btfs config Swarm.ResourceMgr.Limits.System --json '{"ConnsInbound":0}'
 ```
+
 Then restart your btfs node.
 This command will help you unblock the inbound connections to improve connectivity and thus increase the chances of getting a contract.
+
 ## Getting Started
 
 ### Some things to try
@@ -358,4 +380,3 @@ BTFS Gateway is a free service that allows you to retrieve files from the BTFS n
 ## License
 
 [MIT](./LICENSE)
-
