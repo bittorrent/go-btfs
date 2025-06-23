@@ -1,14 +1,19 @@
 package vault
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"math/big"
+	"sync"
+	"time"
 
 	cp "github.com/bittorrent/go-btfs-common/crypto"
 	"github.com/bittorrent/go-btfs/chain/abi"
 	"github.com/bittorrent/go-btfs/protos/metadata"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/transaction/crypto"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
@@ -31,6 +36,7 @@ type fileMeta struct {
 	backend         transaction.Backend
 	chainId         *big.Int
 	contractAddress common.Address
+	lock            sync.Mutex
 }
 
 func NewFileMetaService(address common.Address, backend transaction.Backend, singer crypto.Signer, chainId *big.Int) FileMeta {
@@ -127,6 +133,8 @@ func getPublicAddressFromHostID(hostID string) (string, error) {
 }
 
 func (fm *fileMeta) UpdateContractStatus(contractId string) error {
+	fm.lock.Lock()
+	defer fm.lock.Unlock()
 	opts, err := bind.NewKeyedTransactorWithChainID(fm.Singer.PrivKey(), fm.chainId)
 	if err != nil {
 		fmt.Printf("Failed to create transactor: %v\n", err)
@@ -136,6 +144,22 @@ func (fm *fileMeta) UpdateContractStatus(contractId string) error {
 	if err != nil {
 		fmt.Printf("update status error:%v, %s\n", err, contractId)
 		return err
+	}
+
+	for i := 0; i < 10; i++ {
+		receipt, err := fm.backend.TransactionReceipt(context.Background(), tx.Hash())
+		if err != nil {
+			if errors.Is(err, ethereum.NotFound) {
+				time.Sleep(10 * time.Second)
+				continue
+			}
+			fmt.Printf("update status error:%v, %s\n", err, contractId)
+			return err
+		}
+		if receipt.Status != 1 {
+			fmt.Printf("transaction failed on-chain (likely out of gas), txHash: %s\n", tx.Hash())
+			return err
+		}
 	}
 	fmt.Println("update contract:", contractId, "status ok:", tx.Hash())
 	return nil
