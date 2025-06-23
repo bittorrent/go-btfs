@@ -249,12 +249,17 @@ the shard and replies back to client for the next challenge step.`,
 					status, err := chain.SettleObject.FileMetaService.GetContractStatus(contractMeta.ContractId)
 					if err != nil {
 						fmt.Printf("get contract status failed, err:%v \n", err)
+						time.Sleep(3 * time.Second)
 						continue
 					}
 
 					if status == metadata.Contract_INVALID {
 						time.Sleep(30 * time.Second)
 						continue
+					}
+
+					if status == metadata.Contract_COMPLETED {
+						break
 					}
 
 					err = chain.SettleObject.FileMetaService.UpdateContractStatus(contractMeta.ContractId)

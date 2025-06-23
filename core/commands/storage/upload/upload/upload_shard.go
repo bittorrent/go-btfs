@@ -39,7 +39,9 @@ func UploadShard(ctx *ShardUploadContext) error {
 		return err
 	}
 	for i, shardHash := range ctx.Rss.ShardHashes {
-		go sendShardContractToHost(ctx, ctx.ShardIndexes[i], shardHash, expectOnePay)
+		h := shardHash
+		index := i
+		go sendShardContractToHost(ctx, ctx.ShardIndexes[index], h, expectOnePay)
 	}
 
 	go func() {
