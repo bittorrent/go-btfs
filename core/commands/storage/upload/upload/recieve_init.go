@@ -260,6 +260,7 @@ the shard and replies back to client for the next challenge step.`,
 					err = chain.SettleObject.FileMetaService.UpdateContractStatus(contractMeta.ContractId)
 					if err != nil {
 						fmt.Printf("update contract status failed, err:%v \n", err)
+						time.Sleep(3 * time.Second)
 						continue
 					} else {
 						break
