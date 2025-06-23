@@ -76,12 +76,9 @@ func GetCustomizedSPProvider(cp *ContextParams, hosts []string) IHostsProvider {
 func (p *CustomizedHostsProvider) AddIndex() (int, error) {
 	p.Lock()
 	defer p.Unlock()
-	if len(p.hosts) == 0 {
-		return -1, errors.New(failMsg)
-	}
 	p.current++
 	if p.current >= len(p.hosts) {
-		p.current = 0
+		return -1, errors.New(failMsg)
 	}
 	return p.current, nil
 }
@@ -275,7 +272,7 @@ LOOP:
 			ctx, _ := context.WithTimeout(p.ctx, 3*time.Second)
 			if err := p.cp.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: id}); err != nil {
 				p.Lock()
-				p.hosts = append(p.hosts, host)
+				// p.hosts = append(p.hosts, host)
 				p.times++
 				p.Unlock()
 				continue
