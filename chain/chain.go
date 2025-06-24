@@ -231,7 +231,7 @@ func InitSettlement(
 
 	accounting.SetPayFunc(swapService.Pay)
 
-	fileMeta, err := initFileMeta(chaininfo.Backend, chaininfo.Signer, chainID, chaininfo.Chainconfig.FileMeta2Address.String())
+	fileMeta, err := initFileMeta(chaininfo.Backend, chaininfo.Signer, chainID, chaininfo.Chainconfig.FileContractMetaAddress.String())
 	if err != nil {
 		return nil, fmt.Errorf("init file meta service error: %v", err)
 	}
