@@ -190,7 +190,7 @@ func ListShardsContracts(d datastore.Datastore, peerId string, role string) ([]*
 
 		// Validate contract
 		if sc.Meta == nil || sc.Meta.ContractId == "" {
-			log.Error("Invalid contract: missing metadata or contract ID")
+			// log.Error("Invalid contract: missing metadata or contract ID")
 			continue
 		}
 
