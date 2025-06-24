@@ -86,7 +86,7 @@ This command contracts stats based on role from network(hub) to local node data 
 	Options: []cmds.Option{
 		cmds.BoolOption(contractsSyncPurgeOptionName, "p", "Purge local contracts cache and sync from the beginning.").WithDefault(false),
 		cmds.BoolOption(contractsSyncVerboseOptionName, "v", "Make the operation more talkative.").WithDefault(false),
-		cmds.Int64Option(contractsSyncBlockHeight, "sh", "Start block height to sync contracts.").WithDefault(53849058),
+		cmds.Int64Option(contractsSyncBlockHeight, "sh", "Start block height to sync contracts.").WithDefault(int64(53849058)),
 	},
 	RunTimeout: 10 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
