@@ -72,7 +72,7 @@ func filterQuery(from, to *big.Int) ethereum.FilterQuery {
 	return ethereum.FilterQuery{
 		FromBlock: from,
 		ToBlock:   to,
-		Addresses: []common.Address{chain.ChainObject.Chainconfig.FileMeta2Address},
+		Addresses: []common.Address{chain.ChainObject.Chainconfig.FileContractMetaAddress},
 		Topics: [][]common.Hash{
 			{
 				fileMetaAddEvent,
