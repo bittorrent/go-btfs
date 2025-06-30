@@ -111,6 +111,9 @@ func GetSPsProvider(cp *ContextParams, blacklist []string) IHostsProvider {
 		needHigherPrice: false,
 	}
 	p.init()
+	if len(p.hosts) == 0 {
+		return p
+	}
 	p.current = rand.Intn(len(p.hosts))
 	return p
 }
