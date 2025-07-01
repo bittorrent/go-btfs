@@ -3,6 +3,7 @@ package hosts
 import (
 	"context"
 	"fmt"
+
 	"github.com/bittorrent/go-btfs/utils"
 
 	"github.com/bittorrent/go-btfs/core"
@@ -44,7 +45,7 @@ Each mode ranks hosts based on its criteria and is randomized based on current n
 Mode options include:` + hub.AllModeHelpText,
 	},
 	Options: []cmds.Option{
-		cmds.StringOption(hostInfoModeOptionName, "m", "Hosts info showing mode. Default: mode set in config option Experimental.HostsSyncMode."),
+		cmds.StringOption(hostInfoModeOptionName, "m", "Hosts info showing mode. Default: mode set in config option Experimental.HostsSyncMode.").WithDefault(hub.SP_MODE),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		err := utils.CheckSimpleMode(env)
@@ -62,7 +63,7 @@ Mode options include:` + hub.AllModeHelpText,
 
 		mode, ok := req.Options[hostInfoModeOptionName].(string)
 		if !ok {
-			mode = cfg.Experimental.HostsSyncMode
+			mode = hub.SP_MODE
 		}
 
 		n, err := cmdenv.GetNode(env)
@@ -70,7 +71,7 @@ Mode options include:` + hub.AllModeHelpText,
 			return err
 		}
 
-		nodes, err := helper.GetHostsFromDatastore(req.Context, n, mode, 0)
+		nodes, err := helper.GetSPsFromDatastore(req.Context, n, mode, 0)
 		if err != nil {
 			return err
 		}
@@ -94,7 +95,7 @@ Each mode ranks hosts based on its criteria and is randomized based on current n
 Mode options include:` + hub.AllModeHelpText,
 	},
 	Options: []cmds.Option{
-		cmds.StringOption(hostSyncModeOptionName, "m", "Hosts syncing mode. Default: mode set in config option Experimental.HostsSyncMode."),
+		cmds.StringOption(hostSyncModeOptionName, "m", "Hosts syncing mode. Default: mode set in config option Experimental.HostsSyncMode.").WithDefault(hub.SP_MODE),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		err := utils.CheckSimpleMode(env)
@@ -112,19 +113,19 @@ Mode options include:` + hub.AllModeHelpText,
 
 		mode, ok := req.Options[hostSyncModeOptionName].(string)
 		if !ok {
-			mode = cfg.Experimental.HostsSyncMode
+			mode = hub.SP_MODE
 		}
 
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
 		}
-		_, err = SyncHosts(req.Context, n, mode)
+		_, err = SyncSPs(req.Context, n, mode)
 		return err
 	},
 }
 
-func SyncHosts(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb.Host, error) {
+func SyncSPs(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb.Host, error) {
 	nodes, err := hub.QueryHosts(ctx, node, mode)
 	if err != nil {
 		return nil, err

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"math/rand"
 	"sort"
 	"sync"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
+	"github.com/bittorrent/go-btfs/core/hub"
 
 	hubpb "github.com/bittorrent/go-btfs-common/protos/hub"
 	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
@@ -20,8 +22,8 @@ import (
 )
 
 const (
-	minimumHosts = 30
-	failMsg      = "failed to find more valid hosts, please try again later"
+	minimumHosts = 1
+	failMsg      = "failed to find more valid sp, please try again later"
 )
 
 type IHostsProvider interface {
@@ -64,7 +66,7 @@ func (p *CustomizedHostsProvider) NextValidHost() (string, error) {
 	return "", errors.New(failMsg)
 }
 
-func GetCustomizedHostsProvider(cp *ContextParams, hosts []string) IHostsProvider {
+func GetCustomizedSPProvider(cp *ContextParams, hosts []string) IHostsProvider {
 	return &CustomizedHostsProvider{
 		cp:      cp,
 		current: -1,
@@ -97,11 +99,11 @@ type HostsProvider struct {
 	needHigherPrice bool
 }
 
-func GetHostsProvider(cp *ContextParams, blacklist []string) IHostsProvider {
+func GetSPsProvider(cp *ContextParams, blacklist []string) IHostsProvider {
 	ctx, cancel := context.WithTimeout(cp.Ctx, 10*time.Minute)
 	p := &HostsProvider{
 		cp:              cp,
-		mode:            cp.Cfg.Experimental.HostsSyncMode,
+		mode:            hub.SP_MODE,
 		current:         -1,
 		blacklist:       blacklist,
 		ctx:             ctx,
@@ -109,11 +111,16 @@ func GetHostsProvider(cp *ContextParams, blacklist []string) IHostsProvider {
 		needHigherPrice: false,
 	}
 	p.init()
+	if len(p.hosts) == 0 {
+		return p
+	}
+	p.current = rand.Intn(len(p.hosts))
 	return p
 }
 
 func (p *HostsProvider) init() (err error) {
-	p.hosts, err = helper.GetHostsFromDatastore(p.cp.Ctx, p.cp.N, p.mode, minimumHosts)
+	// TODO get sp node
+	p.hosts, err = helper.GetSPsFromDatastore(p.cp.Ctx, p.cp.N, p.mode, minimumHosts)
 	if err != nil {
 		return err
 	}
@@ -161,9 +168,12 @@ func (p Peers) Swap(i int, j int) {
 func (p *HostsProvider) AddIndex() (int, error) {
 	p.Lock()
 	defer p.Unlock()
+	if len(p.hosts) == 0 {
+		return -1, errors.New(failMsg)
+	}
 	p.current++
 	if p.current >= len(p.hosts) {
-		return -1, errors.New(p.getMsg())
+		p.current = 0
 	}
 	return p.current, nil
 }
@@ -252,10 +262,10 @@ LOOP:
 				}
 			}
 			id, err := peer.Decode(host.NodeId)
-			//if err != nil || int64(host.StoragePriceAsk) > price {
+			// if err != nil || int64(host.StoragePriceAsk) > price {
 			//	p.needHigherPrice = true
 			//	continue
-			//}
+			// }
 			if err != nil {
 				continue
 			}
@@ -267,7 +277,7 @@ LOOP:
 			ctx, _ := context.WithTimeout(p.ctx, 3*time.Second)
 			if err := p.cp.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: id}); err != nil {
 				p.Lock()
-				p.hosts = append(p.hosts, host)
+				// p.hosts = append(p.hosts, host)
 				p.times++
 				p.Unlock()
 				continue

@@ -11,7 +11,6 @@ import (
 	ocmd "github.com/bittorrent/go-btfs/core/commands/object"
 	settlement "github.com/bittorrent/go-btfs/core/commands/settlements"
 	"github.com/bittorrent/go-btfs/core/commands/storage"
-	"github.com/bittorrent/go-btfs/core/commands/storage/challenge"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/upload"
 	"github.com/bittorrent/go-btfs/core/commands/vault"
 
@@ -167,7 +166,6 @@ var rootSubcommands = map[string]*cmds.Command{
 	"rm":         RmCmd,
 	"storage":    storage.StorageCmd,
 	"metadata":   MetadataCmd,
-	"guard":      GuardCmd,
 	"cheque":     cheque.ChequeCmd,
 	"vault":      vault.VaultCmd,
 	"bttc":       bttc.BttcCmd,
@@ -239,11 +237,11 @@ var RootRemote = &cmds.Command{}
 var rootRemoteSubcommands = map[string]*cmds.Command{
 	"storage": {
 		Subcommands: map[string]*cmds.Command{
-			"challenge": {
-				Subcommands: map[string]*cmds.Command{
-					"response": challenge.StorageChallengeResponseCmd,
-				},
-			},
+			// "challenge": {
+			// 	Subcommands: map[string]*cmds.Command{
+			// 		"response": challenge.StorageChallengeResponseCmd,
+			// 	},
+			// },
 			"upload": {
 				Subcommands: map[string]*cmds.Command{
 					"init":          upload.StorageUploadInitCmd,
@@ -254,7 +252,7 @@ var rootRemoteSubcommands = map[string]*cmds.Command{
 			},
 			"dcrepair": {
 				Subcommands: map[string]*cmds.Command{
-					"response": upload.HostRepairResponseCmd,
+					// "response": upload.HostRepairResponseCmd,
 				},
 			},
 		},

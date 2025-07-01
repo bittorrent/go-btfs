@@ -23,26 +23,26 @@ import (
 )
 
 const (
-	RssInitStatus                 = "init"
-	RssSubmitStatus               = "submit"
-	RssGuardStatus                = "guard"
-	RssGuardFileMetaSignedStatus  = "guard:file-meta-signed"
-	RssGuardQuestionsSignedStatus = "guard:questions-signed"
-	RssWaitUploadStatus           = "wait-upload"
-	RssWaitUploadReqSignedStatus  = "wait-upload:req-signed"
-	RssPayStatus                  = "pay"
-	RssCompleteStatus             = "complete"
-	RssErrorStatus                = "error"
+	RssInitStatus                = "init"
+	RssSubmitStatus              = "submit"
+	RssContractStatus            = "contract"
+	RssGuardFileMetaSignedStatus = "contract:file-meta-signed"
+	RssFileMetaAddedStatus       = "contract:file-meta-added"
+	RssWaitUploadStatus          = "wait-upload"
+	RssWaitUploadReqSignedStatus = "wait-upload:req-signed"
+	RssPayStatus                 = "pay"
+	RssCompleteStatus            = "complete"
+	RssErrorStatus               = "error"
 
-	RssToSubmitEvent               = "to-submit-event"
-	RssToGuardEvent                = "to-guard-event"
-	RssToGuardFileMetaSignedEvent  = "to-guard:file-meta-signed-event"
-	RssToGuardQuestionsSignedEvent = "to-guard:questions-signed-event"
-	RssToWaitUploadEvent           = "to-wait-upload-event"
-	RssToWaitUploadReqSignedEvent  = "to-wait-upload-signed-event"
-	RssToPayEvent                  = "to-pay-event"
-	RssToCompleteEvent             = "to-complete-event"
-	RssToErrorEvent                = "to-error-event"
+	RssToSubmitEvent                 = "to-submit-event"
+	RssToContractEvent               = "to-contract-event"
+	RssToContractFileMetaSignedEvent = "to-contract:file-meta-signed-event"
+	RssToContractFileMetaAddedEvent  = "to-contract:file-meta-added-event"
+	RssToWaitUploadEvent             = "to-wait-upload-event"
+	RssToWaitUploadReqSignedEvent    = "to-wait-upload-signed-event"
+	RssToPayEvent                    = "to-pay-event"
+	RssToCompleteEvent               = "to-complete-event"
+	RssToErrorEvent                  = "to-error-event"
 
 	RenterSessionPrefix            = "/btfs/%s/renter/sessions/"
 	RenterSessionKey               = RenterSessionPrefix + "%s/"
@@ -57,10 +57,10 @@ var (
 	renterSessionsInMem = cmap.New()
 	rssFsmEvents        = fsm.Events{
 		{Name: RssToSubmitEvent, Src: []string{RssInitStatus}, Dst: RssSubmitStatus},
-		{Name: RssToGuardEvent, Src: []string{RssSubmitStatus}, Dst: RssGuardStatus},
-		{Name: RssToGuardFileMetaSignedEvent, Src: []string{RssGuardStatus}, Dst: RssGuardFileMetaSignedStatus},
-		{Name: RssToGuardQuestionsSignedEvent, Src: []string{RssGuardFileMetaSignedStatus}, Dst: RssGuardQuestionsSignedStatus},
-		{Name: RssToWaitUploadEvent, Src: []string{RssGuardQuestionsSignedStatus}, Dst: RssWaitUploadStatus},
+		{Name: RssToContractEvent, Src: []string{RssSubmitStatus}, Dst: RssContractStatus},
+		{Name: RssToContractFileMetaSignedEvent, Src: []string{RssContractStatus}, Dst: RssGuardFileMetaSignedStatus},
+		{Name: RssToContractFileMetaAddedEvent, Src: []string{RssGuardFileMetaSignedStatus}, Dst: RssFileMetaAddedStatus},
+		{Name: RssToWaitUploadEvent, Src: []string{RssFileMetaAddedStatus}, Dst: RssWaitUploadStatus},
 		{Name: RssToWaitUploadReqSignedEvent, Src: []string{RssWaitUploadStatus}, Dst: RssWaitUploadReqSignedStatus},
 		{Name: RssToPayEvent, Src: []string{RssWaitUploadReqSignedStatus}, Dst: RssPayStatus},
 		{Name: RssToCompleteEvent, Src: []string{RssPayStatus}, Dst: RssCompleteStatus},
@@ -108,14 +108,14 @@ func GetRenterSession(ctxParams *uh.ContextParams, ssId string, hash string, sha
 			Cancel:      cancel,
 			CtxParams:   ctxParams,
 		}
-		status, err := rs.Status()
+		status, err := rs.GetRenterSessionStatus()
 		if err != nil {
 			return nil, err
 		}
 		if rs.Hash = hash; hash == "" {
 			rs.Hash = status.Hash
 		}
-		if rs.ShardHashes = shardHashes; shardHashes == nil || len(shardHashes) == 0 {
+		if rs.ShardHashes = shardHashes; len(shardHashes) == 0 {
 			rs.ShardHashes = status.ShardHashes
 		}
 		if status.Status != RssCompleteStatus {
@@ -128,7 +128,7 @@ func GetRenterSession(ctxParams *uh.ContextParams, ssId string, hash string, sha
 	return rs, nil
 }
 
-func GetRenterSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash string, shardHashes []string, token common.Address) (*RenterSession,
+func GetUserSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash string, shardHashes []string, token common.Address) (*RenterSession,
 	error) {
 	k := fmt.Sprintf(RenterSessionInMemKey, ctxParams.N.Identity.String(), ssId)
 	var rs *RenterSession
@@ -148,14 +148,14 @@ func GetRenterSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash st
 			CtxParams:   ctxParams,
 			Token:       token,
 		}
-		status, err := rs.Status()
+		status, err := rs.GetRenterSessionStatus()
 		if err != nil {
 			return nil, err
 		}
 		if rs.Hash = hash; hash == "" {
 			rs.Hash = status.Hash
 		}
-		if rs.ShardHashes = shardHashes; shardHashes == nil || len(shardHashes) == 0 {
+		if rs.ShardHashes = shardHashes; len(shardHashes) == 0 {
 			rs.ShardHashes = status.ShardHashes
 		}
 		if status.Status != RssCompleteStatus {
@@ -170,8 +170,8 @@ func GetRenterSessionWithToken(ctxParams *uh.ContextParams, ssId string, hash st
 
 var helperText = map[string]string{
 	RssInitStatus:       "Searching for recommended hosts…",
-	RssSubmitStatus:     "Hosts found! Checking chequebook balance, and visiting guard.",
-	RssGuardStatus:      "Preparing meta-data and challenge questions.",
+	RssSubmitStatus:     "Hosts found! Checking chequebook balance.",
+	RssContractStatus:   "Preparing meta-data and add to blockchain.",
 	RssWaitUploadStatus: "Confirming file shard storage by hosts.",
 	RssPayStatus:        "uploaded, doing the cheque payment.",
 	RssCompleteStatus:   "Payment successful! File storage successful!",
@@ -184,6 +184,7 @@ func (rs *RenterSession) enterState(e *fsm.Event) {
 	} else {
 		msg = ""
 	}
+
 	switch e.Dst {
 	case RssErrorStatus:
 		msg = e.Args[0].(error).Error()
@@ -192,9 +193,12 @@ func (rs *RenterSession) enterState(e *fsm.Event) {
 		rs.Cancel()
 	}
 	fmt.Printf("[%s] session: %s entered state: %s, msg: %s\n", time.Now().Format(time.RFC3339), rs.SsId, e.Dst, msg)
+
 	err := Batch(rs.CtxParams.N.Repo.Datastore(),
-		[]string{fmt.Sprintf(RenterSessionStatusKey, rs.PeerId, rs.SsId),
-			fmt.Sprintf(RenterSessionAdditionalInfoKey, rs.PeerId, rs.SsId)},
+		[]string{
+			fmt.Sprintf(RenterSessionStatusKey, rs.PeerId, rs.SsId),
+			fmt.Sprintf(RenterSessionAdditionalInfoKey, rs.PeerId, rs.SsId),
+		},
 		[]proto.Message{
 			&renterpb.RenterSessionStatus{
 				Status:      e.Dst,
@@ -202,10 +206,12 @@ func (rs *RenterSession) enterState(e *fsm.Event) {
 				Hash:        rs.Hash,
 				ShardHashes: rs.ShardHashes,
 				LastUpdated: time.Now().UTC(),
-			}, &renterpb.RenterSessionAdditionalInfo{
+			},
+			&renterpb.RenterSessionAdditionalInfo{
 				Info:        "",
 				LastUpdated: time.Now(),
-			}})
+			}},
+	)
 	go func() {
 		_ = rs.To(RssErrorStatus, err)
 	}()
@@ -225,7 +231,7 @@ func (rs *RenterSession) GetAdditionalInfo() (*renterpb.RenterSessionAdditionalI
 	return pb, err
 }
 
-func (rs *RenterSession) Status() (*renterpb.RenterSessionStatus, error) {
+func (rs *RenterSession) GetRenterSessionStatus() (*renterpb.RenterSessionStatus, error) {
 	status := &renterpb.RenterSessionStatus{}
 	err := Get(rs.CtxParams.N.Repo.Datastore(), fmt.Sprintf(RenterSessionStatusKey, rs.PeerId, rs.SsId), status)
 	if err == datastore.ErrNotFound {
@@ -240,17 +246,17 @@ func (rs *RenterSession) Status() (*renterpb.RenterSessionStatus, error) {
 
 func (rs *RenterSession) GetCompleteShardsNum() (int, int, error) {
 	var completeNum, errorNum int
-	status, err := rs.Status()
+	status, err := rs.GetRenterSessionStatus()
 	if err != nil {
 		return 0, 0, err
 	}
 	for i, h := range status.ShardHashes {
-		shard, err := GetRenterShard(rs.CtxParams, rs.SsId, h, i)
+		shard, err := GetUserShard(rs.CtxParams, rs.SsId, h, i)
 		if err != nil {
 			log.Errorf("get renter shard error:", err.Error())
 			continue
 		}
-		s, err := shard.Status()
+		s, err := shard.GetShardStatus()
 		if err != nil {
 			return 0, 0, err
 		}

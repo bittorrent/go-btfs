@@ -11,6 +11,9 @@ import (
 
 	"github.com/bittorrent/go-btfs/utils"
 
+	cmds "github.com/bittorrent/go-btfs-cmds"
+	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
 	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/rm"
@@ -18,14 +21,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 	"github.com/bittorrent/go-btfs/logger"
 	contractspb "github.com/bittorrent/go-btfs/protos/contracts"
-	shardpb "github.com/bittorrent/go-btfs/protos/shard"
-
-	cmds "github.com/bittorrent/go-btfs-cmds"
-	"github.com/bittorrent/go-btfs-common/crypto"
-	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
-	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
-	"github.com/bittorrent/go-btfs-common/utils/grpc"
-	config "github.com/bittorrent/go-btfs-config"
+	"github.com/bittorrent/go-btfs/protos/metadata"
 
 	"github.com/ipfs/go-datastore"
 	logging "github.com/ipfs/go-log"
@@ -38,6 +34,7 @@ var log = logger.InitLogger("contracts.log").Sugar()
 const (
 	contractsSyncPurgeOptionName   = "purge"
 	contractsSyncVerboseOptionName = "verbose"
+	contractsSyncBlockHeight       = "height"
 
 	contractsListOrderOptionName  = "order"
 	contractsListStatusOptionName = "status"
@@ -48,16 +45,12 @@ const (
 	renterContractsKey = contractsKeyPrefix + "renter"
 	payoutNotFoundErr  = "rpc error: code = Unknown desc = not found"
 
-	guardTimeout = 360 * time.Second
-
-	guardContractPageSize = 100
-
 	notSupportErr = "only host and renter contract sync are supported currently"
 )
 
-// Storage Contracts
-//
+// Storage contracts
 // Includes sub-commands: sync, stat, list
+
 var StorageContractsCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Get node storage contracts info.",
@@ -93,6 +86,7 @@ This command contracts stats based on role from network(hub) to local node data 
 	Options: []cmds.Option{
 		cmds.BoolOption(contractsSyncPurgeOptionName, "p", "Purge local contracts cache and sync from the beginning.").WithDefault(false),
 		cmds.BoolOption(contractsSyncVerboseOptionName, "v", "Make the operation more talkative.").WithDefault(false),
+		cmds.Int64Option(contractsSyncBlockHeight, "sh", "Start block height to sync contracts.").WithDefault(int64(53849058)),
 	},
 	RunTimeout: 10 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -112,19 +106,25 @@ This command contracts stats based on role from network(hub) to local node data 
 		if role != nodepb.ContractStat_HOST && role != nodepb.ContractStat_RENTER {
 			return fmt.Errorf(notSupportErr)
 		}
+
+		ctx := context.WithValue(req.Context, contractsSyncVerboseOptionName, req.Options[contractsSyncVerboseOptionName].(bool))
+
 		purgeOpt, _ := req.Options[contractsSyncPurgeOptionName].(bool)
 		if purgeOpt {
 			err = sessions.DeleteShardsContracts(n.Repo.Datastore(), n.Identity.String(), role.String())
 			if err != nil {
 				return err
 			}
-			err = Save(n.Repo.Datastore(), nil, role.String())
-			if err != nil {
-				return err
-			}
+			go func() {
+				ScanChainAndSave(n.Repo.Datastore(), role.String(), n.Identity.String(), uint64(req.Options[contractsSyncBlockHeight].(int64)))
+				// ignore err just print log
+				_ = SyncContracts(ctx, n, req, env, role.String())
+			}()
+			return nil
 		}
-		ctx := context.WithValue(req.Context, contractsSyncVerboseOptionName, req.Options[contractsSyncVerboseOptionName].(bool))
-		return SyncContracts(ctx, n, req, env, role.String())
+		// ignore err just print log
+		_ = SyncContracts(ctx, n, req, env, role.String())
+		return err
 	},
 }
 
@@ -262,23 +262,32 @@ This command get contracts list based on role from the local node data store.`,
 		if err != nil {
 			return err
 		}
-		sort.Sort(ByTime(contracts))
-		if parts[1] == "" || parts[1] == "desc" {
-			// reverse
-			for i, j := 0, len(contracts)-1; i < j; i, j = i+1, j-1 {
-				contracts[i], contracts[j] = contracts[j], contracts[i]
-			}
-		}
-		result := make([]*nodepb.Contracts_Contract, 0)
+
+		// First filter by status
+		filteredContracts := make([]*nodepb.Contracts_Contract, 0)
 		for _, c := range contracts {
 			if _, ok := states[c.Status]; !ok {
 				continue
 			}
-			result = append(result, c)
-			if len(result) == size {
-				break
+
+			filteredContracts = append(filteredContracts, c)
+		}
+
+		// Sort by escrow time
+		sort.Sort(ByTime(filteredContracts))
+		if parts[1] == "" || parts[1] == "desc" {
+			// reverse
+			for i, j := 0, len(filteredContracts)-1; i < j; i, j = i+1, j-1 {
+				filteredContracts[i], filteredContracts[j] = filteredContracts[j], filteredContracts[i]
 			}
 		}
+
+		// Apply size limit
+		result := filteredContracts
+		if len(result) > size {
+			result = result[:size]
+		}
+
 		return cmds.EmitOnce(res, &nodepb.Contracts{Contracts: result})
 	},
 	Type: nodepb.Contracts{},
@@ -303,78 +312,88 @@ func Save(d datastore.Datastore, cs []*nodepb.Contracts_Contract, role string) e
 }
 
 func ListContracts(d datastore.Datastore, peerId, role string) ([]*nodepb.Contracts_Contract, error) {
-	cs := &contractspb.Contracts{}
-	err := sessions.Get(d, getKey(role), cs)
-	if err != nil && err != datastore.ErrNotFound {
-		return nil, err
+	metadataContracts, err := sessions.ListShardsContracts(d, peerId, role)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list shard contracts: %v", err)
 	}
-	// Because of buggy data in the past, we need to filter out non-host or non-renter contracts
-	// It's also possible that user has switched keys manually, so we remove those as well.
-	var fcs []*nodepb.Contracts_Contract
-	filtered := false
+
+	nodeContracts := convertMetadataContractsToNodeContracts(metadataContracts)
+
+	cs := &contractspb.Contracts{}
+	err = sessions.Get(d, getKey(role), cs)
+	if err != nil && err != datastore.ErrNotFound {
+		return nodeContracts, nil
+	}
+
+	existingContracts := make(map[string]bool)
+	for _, c := range nodeContracts {
+		existingContracts[c.ContractId] = true
+	}
+
 	for _, c := range cs.Contracts {
+		if existingContracts[c.ContractId] {
+			continue
+		}
+
 		if role == nodepb.ContractStat_HOST.String() && c.HostId != peerId {
-			filtered = true
 			continue
 		}
 		if role == nodepb.ContractStat_RENTER.String() && c.RenterId != peerId {
-			filtered = true
 			continue
 		}
-		fcs = append(fcs, c)
+
+		nodeContracts = append(nodeContracts, c)
+		existingContracts[c.ContractId] = true
 	}
-	// No change
-	if !filtered {
-		return cs.Contracts, nil
+
+	if len(nodeContracts) > 0 {
+		if err := Save(d, nodeContracts, role); err != nil {
+			log.Warnf("Failed to save contracts to legacy path: %v", err)
+		}
 	}
-	err = Save(d, fcs, role)
-	if err != nil {
-		return nil, err
-	}
-	return fcs, nil
+
+	return nodeContracts, nil
 }
 
-// SyncContracts does the following:
-// 1) Obtain latest guard contract updates and saves into cache
-// 2) Obtain latest payout status updates and saves into cache
-func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env cmds.Environment,
-	role string) error {
+func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env cmds.Environment, role string) error {
 	cs, err := sessions.ListShardsContracts(n.Repo.Datastore(), n.Identity.String(), role)
 	if err != nil {
 		return err
 	}
 	var latest *time.Time
 	for _, c := range cs {
-		if latest == nil || c.SignedGuardContract.LastModifyTime.After(*latest) {
-			latest = &c.SignedGuardContract.LastModifyTime
+		createTime := time.Unix(int64(c.CreateTime), 0)
+		if latest == nil || createTime.After(*latest) {
+			latest = &createTime
 		}
 	}
-	var updated []*guardpb.Contract
+	var updated []*metadata.Contract
 	switch role {
 	case nodepb.ContractStat_HOST.String():
-		updated, err = GetUpdatedGuardContractsForHost(ctx, n, latest)
+		updated, err = GetInvalidContractsForHost(cs, n.Identity.String())
 		if err != nil {
 			return err
 		}
 	case nodepb.ContractStat_RENTER.String():
-		updated, err = GetUpdatedGuardContractsForRenter(ctx, n, latest)
+		updated, err = GetInvalidContractForUser(cs, n.Identity.String())
 		if err != nil {
 			return err
 		}
 	default:
 		return errors.New(notSupportErr)
 	}
+
 	if len(updated) > 0 {
 		// save and retrieve updated signed contracts
-		var stale []string
-		cs, stale, err = sessions.SaveShardsContracts(n.Repo.Datastore(), cs, updated, n.Identity.String(), role)
+		// cs, stale, err = sessions.SaveShardsContract(n.Repo.Datastore(), cs, updated, n.Identity.String(), role)
+		stales, err := sessions.RefreshLocalContracts(ctx, n.Repo.Datastore(), cs, updated, n.Identity.String(), role)
 		if err != nil {
 			return err
 		}
 		if role == nodepb.ContractStat_HOST.String() {
 			go func() {
 				// Use a new context that can clean up in the background
-				_, err := rm.RmDag(context.Background(), stale, n, req, env, true)
+				_, err := rm.RmDag(context.Background(), stales, n, req, env, true)
 				if err != nil {
 					// may have been cleaned up already, ignore
 					contractsLog.Error("stale contracts clean up error:", err)
@@ -382,38 +401,14 @@ func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env
 			}()
 		}
 	}
+
 	if len(cs) > 0 {
-		cts, err := ListContracts(n.Repo.Datastore(), n.Identity.String(), role)
-		if err != nil {
-			return err
-		}
-		results, err := syncContractPayoutStatus(ctx, n, cs, cts)
-		if err != nil {
-			return err
-		}
+		results := convertMetadataContractsToNodeContracts(cs)
 
 		if b := ctx.Value(contractsSyncVerboseOptionName); b != nil && b.(bool) {
 			go func() {
-				for _, ct := range cs {
-					resCt := &nodepb.Contracts_Contract{
-						ContractId: ct.SignedGuardContract.ContractId,
-						HostId:     ct.SignedGuardContract.HostPid,
-						RenterId:   ct.SignedGuardContract.RenterPid,
-						Status:     ct.SignedGuardContract.State,
-						StartTime:  ct.SignedGuardContract.RentStart,
-						EndTime:    ct.SignedGuardContract.RentEnd,
-						UnitPrice:  ct.SignedGuardContract.Price,
-						ShardSize:  ct.SignedGuardContract.ShardFileSize,
-						ShardHash:  ct.SignedGuardContract.ShardHash,
-						FileHash:   ct.SignedGuardContract.FileHash,
-					}
-					for _, r := range results {
-						if ct.SignedGuardContract.ContractId == r.ContractId {
-							resCt = r
-							break
-						}
-					}
-					if bs, err := json.Marshal(resCt); err == nil {
+				for _, ct := range results {
+					if bs, err := json.Marshal(ct); err == nil {
 						log.Info(string(bs))
 					}
 				}
@@ -424,163 +419,73 @@ func SyncContracts(ctx context.Context, n *core.IpfsNode, req *cmds.Request, env
 	return nil
 }
 
-// GetUpdatedGuardContractsForHost retrieves updated guard contracts from remote based on latest timestamp
-// and returns the list updated
-func GetUpdatedGuardContractsForHost(ctx context.Context, n *core.IpfsNode,
-	lastUpdatedTime *time.Time) ([]*guardpb.Contract, error) {
-	// Loop until all pages are obtained
-	var contracts []*guardpb.Contract
-	for i := 0; ; i++ {
-		now := time.Now()
-		req := &guardpb.ListHostContractsRequest{
-			HostPid:             n.Identity.String(),
-			RequesterPid:        n.Identity.String(),
-			RequestPageSize:     guardContractPageSize,
-			RequestPageIndex:    int32(i),
-			LastModifyTimeSince: lastUpdatedTime,
-			State:               guardpb.ListHostContractsRequest_ALL,
-			RequestTime:         &now,
-		}
-		signedReq, err := crypto.Sign(n.PrivateKey, req)
-		if err != nil {
-			return nil, err
-		}
-		req.Signature = signedReq
+func convertMetadataContractsToNodeContracts(contracts []*metadata.Contract) []*nodepb.Contracts_Contract {
+	results := make([]*nodepb.Contracts_Contract, 0, len(contracts))
 
-		cfg, err := n.Repo.Config()
-		if err != nil {
-			return nil, err
-		}
-		cs, last, err := ListHostContracts(ctx, cfg, req)
-		if err != nil {
-			return nil, err
+	for _, c := range contracts {
+		if c.Meta == nil {
+			continue
 		}
 
-		contracts = append(contracts, cs...)
-		if last {
-			break
+		var status guardpb.Contract_ContractState
+		switch c.Status {
+		case metadata.Contract_COMPLETED:
+			status = guardpb.Contract_UPLOADED
+		case metadata.Contract_INIT:
+			status = guardpb.Contract_SIGNED
+		default:
+			status = guardpb.Contract_SIGNED
 		}
+
+		endTime := time.Unix(int64(c.Meta.StorageEnd), 0)
+		if time.Now().Unix() > endTime.Unix() {
+			status = guardpb.Contract_CLOSED
+		}
+
+		nc := &nodepb.Contracts_Contract{
+			ContractId: c.Meta.ContractId,
+			HostId:     c.Meta.SpId,
+			RenterId:   c.Meta.UserId,
+			Status:     status,
+			StartTime:  time.Unix(int64(c.Meta.StorageStart), 0),
+			EndTime:    endTime,
+			UnitPrice:  int64(c.Meta.Price),
+			ShardSize:  int64(c.Meta.ShardSize),
+			ShardHash:  c.Meta.ShardHash,
+		}
+
+		results = append(results, nc)
 	}
-	return contracts, nil
+
+	return results
 }
 
-// GetUpdatedGuardContractsForRenter retrieves updated guard contracts from remote based on latest timestamp
-// and returns the list updated
-func GetUpdatedGuardContractsForRenter(ctx context.Context, n *core.IpfsNode,
-	lastUpdatedTime *time.Time) ([]*guardpb.Contract, error) {
-	// Loop until all pages are obtained
-	var contracts []*guardpb.Contract
-	for i := 0; ; i++ {
-		now := time.Now()
-		req := &guardpb.ListRenterFileInfoRequest{
-			RenterPid:        n.Identity.String(),
-			RequesterPid:     n.Identity.String(),
-			RequestPageSize:  guardContractPageSize,
-			RequestPageIndex: int32(i),
-			LastModifyTime:   lastUpdatedTime,
-			RequestTime:      &now,
-		}
-		signedReq, err := crypto.Sign(n.PrivateKey, req)
-		if err != nil {
-			return nil, err
-		}
-		req.Signature = signedReq
-		cfg, err := n.Repo.Config()
-		if err != nil {
-			return nil, err
-		}
-		cb := grpc.GuardClient(cfg.Services.GuardDomain)
-		cb.Timeout(guardTimeout)
-		lastPage := false
-		cb.WithContext(ctx, func(ctx context.Context, client guardpb.GuardServiceClient) error {
-			info, err := client.RetrieveFileInfo(ctx, req)
-			if err != nil {
-				return err
-			}
-			for _, mt := range info.FileStoreMeta {
-				req := &guardpb.CheckFileStoreMetaRequest{
-					FileHash:     mt.FileHash,
-					RenterPid:    mt.RenterPid,
-					RequesterPid: n.Identity.String(),
-					RequestTime:  now,
-				}
-				signedReq, err := crypto.Sign(n.PrivateKey, req)
-				if err != nil {
-					return err
-				}
-				req.Signature = signedReq
-				meta, err := client.CheckFileStoreMeta(ctx, req)
-				if err != nil {
-					return err
-				}
-				contracts = append(contracts, meta.Contracts...)
-			}
-			lastPage = info.Count < info.Request.RequestPageSize
-			return nil
-		})
-		if lastPage {
-			break
-		}
-	}
-	return contracts, nil
-}
-
-// ListHostContracts opens a grpc connection, sends the host contract list request and
-// closes (short) connection
-func ListHostContracts(ctx context.Context, cfg *config.Config,
-	listReq *guardpb.ListHostContractsRequest) ([]*guardpb.Contract, bool, error) {
-	cb := grpc.GuardClient(cfg.Services.GuardDomain)
-	cb.Timeout(guardTimeout)
-	var contracts []*guardpb.Contract
-	var lastPage bool
-	err := cb.WithContext(ctx, func(ctx context.Context, client guardpb.GuardServiceClient) error {
-		res, err := client.ListHostContracts(ctx, listReq)
-		if err != nil {
-			return err
-		}
-		contracts = res.Contracts
-		lastPage = res.Count < listReq.RequestPageSize
-		return nil
-	})
-	if err != nil {
-		return nil, false, err
-	}
-	return contracts, lastPage, nil
-}
-
-// SyncContractPayoutStatus looks at local contracts, refreshes from Guard, and then
-// syncs payout status for all of them
-func syncContractPayoutStatus(ctx context.Context, n *core.IpfsNode,
-	cs []*shardpb.SignedContracts, cts []*nodepb.Contracts_Contract) ([]*nodepb.Contracts_Contract, error) {
-	// Generate quick lookup map for existing payout contracts
-	ctsIndexMap := map[string]int{}
-	for i, ct := range cts {
-		ctsIndexMap[ct.ContractId] = i
-	}
-
+func GetInvalidContractsForHost(cs []*metadata.Contract, spId string) ([]*metadata.Contract, error) {
+	var invalid []*metadata.Contract
 	for _, c := range cs {
-		resCt := &nodepb.Contracts_Contract{
-			ContractId:     c.SignedGuardContract.ContractId,
-			HostId:         c.SignedGuardContract.HostPid,
-			RenterId:       c.SignedGuardContract.RenterPid,
-			Status:         c.SignedGuardContract.State,
-			StartTime:      c.SignedGuardContract.RentStart,
-			EndTime:        c.SignedGuardContract.RentEnd,
-			LastModifyTime: c.SignedGuardContract.LastModifyTime, // sync time with this batch
-			UnitPrice:      c.SignedGuardContract.Price,
-			ShardSize:      c.SignedGuardContract.ShardFileSize,
-			ShardHash:      c.SignedGuardContract.ShardHash,
-			FileHash:       c.SignedGuardContract.FileHash,
+		if int64(c.Meta.StorageEnd) < time.Now().Unix() && c.Meta.SpId == spId {
+			invalid = append(invalid, c)
 		}
 
-		// If already exists, update existing
-		// Otherwise append/add to list
-		if cti, ok := ctsIndexMap[resCt.ContractId]; ok {
-			cts[cti] = resCt
-		} else {
-			cts = append(cts, resCt)
+		if c.Meta.SpId == spId && (c.Status == metadata.Contract_CLOSED || c.Status == metadata.Contract_INVALID) {
+			invalid = append(invalid, c)
+		}
+
+		if c.Meta.SpId == spId && c.Status == metadata.Contract_INIT && c.CreateTime > uint64(time.Now().Unix())-uint64(time.Hour) {
+			invalid = append(invalid, c)
+		}
+
+	}
+	return invalid, nil
+}
+
+func GetInvalidContractForUser(cs []*metadata.Contract, peerId string) ([]*metadata.Contract, error) {
+	var invalid []*metadata.Contract
+	for _, c := range cs {
+		if c.Meta.UserId == peerId && int64(c.Meta.StorageEnd) < time.Now().Unix() {
+			// If the contract is expired, we consider it invalid
+			invalid = append(invalid, c)
 		}
 	}
-
-	return cts, nil
+	return invalid, nil
 }

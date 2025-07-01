@@ -27,6 +27,8 @@ type Signer interface {
 	PublicKey() (*ecdsa.PublicKey, error)
 	// EthereumAddress returns the ethereum address this signer uses.
 	EthereumAddress() (common.Address, error)
+	// PrivKey returns the private key this signer uses.
+	PrivKey() *ecdsa.PrivateKey
 }
 
 // addEthereumPrefix adds the ethereum prefix to the data.
@@ -141,6 +143,10 @@ func (d *defaultSigner) sign(sighash []byte, isCompressedKey bool) ([]byte, erro
 	copy(signature, signature[1:])
 	signature[64] = v
 	return signature, nil
+}
+
+func (d *defaultSigner) PrivKey() *ecdsa.PrivateKey {
+	return d.key
 }
 
 // RecoverEIP712 recovers the public key for eip712 signed data.

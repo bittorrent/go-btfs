@@ -35,10 +35,11 @@ var (
 	bttcTestBatchAddress      = common.HexToAddress("0x0c9de531dcb38b758fe8a2c163444a5e54ee0db2")
 	// bttcTestVaultLogicAddressV1 = common.HexToAddress("0x212324b18255593AdE87597Fa37C2c582aD72d24")
 	// bttcTestVaultLogicAddress   = common.HexToAddress("0x73bcbE03999913dB7229FD5dC485cf23247c58B5") // https://testnet.bttcscan.com/address/0x67F0366c4c0c83F55D4759D301BEe051EF01E350
-	bttcTestMutiVaultLogicAddress = common.HexToAddress("0x67F0366c4c0c83F55D4759D301BEe051EF01E350") // https://testnet.bttcscan.com/address/0x67F0366c4c0c83F55D4759D301BEe051EF01E350
-	bttcTestStatusAddress         = common.HexToAddress("0x38d1fF2C2e9744273E4531FA4608eB6432c1F26A")
-	bttcTestFileMetaAddress       = common.HexToAddress("0xB192bb91c143C196EF3c659923Ef34026B170997")
-	bttcTestStakeAddress          = common.HexToAddress("0xD064E2f1cfa0C038b1ba541c73749DD3C1B0835b")
+	bttcTestMutiVaultLogicAddress   = common.HexToAddress("0x67F0366c4c0c83F55D4759D301BEe051EF01E350") // https://testnet.bttcscan.com/address/0x67F0366c4c0c83F55D4759D301BEe051EF01E350
+	bttcTestStatusAddress           = common.HexToAddress("0x38d1fF2C2e9744273E4531FA4608eB6432c1F26A")
+	bttcTestFileMetaAddress         = common.HexToAddress("0xB192bb91c143C196EF3c659923Ef34026B170997")
+	bttcTestStakeAddress            = common.HexToAddress("0xD064E2f1cfa0C038b1ba541c73749DD3C1B0835b")
+	bttcTestFileContractMetaAddress = common.HexToAddress("0xc76fB871b41a66605515a509dD80E085468a30E3")
 
 	bttcFactoryAddressV1 = common.HexToAddress("0x9AF4bEc1A30BeC47756Ecef4cf43B91592121bC9")
 	bttcFactoryAddress   = common.HexToAddress("0x763d7858287B9a33F4bE5bb3df0241dACc59BCc7") // https://bttcscan.com/address/0x763d7858287B9a33F4bE5bb3df0241dACc59BCc7
@@ -51,7 +52,8 @@ var (
 	bttcStatusAddress         = common.HexToAddress("0x6DBAd4Bd16C15AE6dDEaA640626e5A3E151F02fC")
 	bttcFileMetaAddress       = common.HexToAddress("0xe74117DC4A3457Eb32436F8F3De10701a3C4F6d7")
 	// stake address
-	bttcStakeAddress = common.HexToAddress("0xE128a86176C39141370c2C4DAAF91063b315fee9")
+	bttcStakeAddress            = common.HexToAddress("0xE128a86176C39141370c2C4DAAF91063b315fee9")
+	bttcFileContractMetaAddress = common.HexToAddress("0xFb10f40D1B0cE49eCfeD1706Da561E345a06bC19")
 
 	// deploy gas
 	ethDeploymentGas  = "10"
@@ -88,17 +90,18 @@ func IsV2FactoryAddr(addr string) bool {
 }
 
 type ChainConfig struct {
-	StartBlock         uint64
-	CurrentFactory     common.Address
-	PriceOracleAddress common.Address
-	BatchAddress       common.Address
-	VaultLogicAddress  common.Address
-	DeploymentGas      string
-	Endpoint           string
-	StatusAddress      common.Address
-	FileMetaAddress    common.Address
-	StakeAddress       common.Address
-	MultiEndpoint      []string
+	StartBlock              uint64
+	CurrentFactory          common.Address
+	PriceOracleAddress      common.Address
+	BatchAddress            common.Address
+	VaultLogicAddress       common.Address
+	DeploymentGas           string
+	Endpoint                string
+	StatusAddress           common.Address
+	FileMetaAddress         common.Address
+	StakeAddress            common.Address
+	FileContractMetaAddress common.Address
+	MultiEndpoint           []string
 }
 
 func GetChainConfig(chainID int64) (*ChainConfig, bool) {
@@ -132,6 +135,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.FileMetaAddress = bttcFileMetaAddress
 		cfg.MultiEndpoint = bttcMultiEndpoint
 		cfg.StakeAddress = bttcStakeAddress
+		cfg.FileContractMetaAddress = bttcFileContractMetaAddress
 		return &cfg, true
 	case bttcTestChainID:
 		cfg.StartBlock = bttcStartBlock
@@ -145,6 +149,7 @@ func GetChainConfig(chainID int64) (*ChainConfig, bool) {
 		cfg.FileMetaAddress = bttcTestFileMetaAddress
 		cfg.MultiEndpoint = bttcTestMultiEndpoint
 		cfg.StakeAddress = bttcTestStakeAddress
+		cfg.FileContractMetaAddress = bttcTestFileContractMetaAddress
 		return &cfg, true
 	case testChainID:
 		cfg.StartBlock = ethStartBlock

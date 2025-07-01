@@ -24,10 +24,10 @@ const (
 	HostStorageInfoPrefix = "/host_storage/" // self or from network
 )
 
-// GetHostsFromDatastore retrieves `num` hosts from the datastore, if not enough hosts are
+// GetSPsFromDatastore retrieves `num` sps from the datastore, if not enough hosts are
 // available, return an error instead of partial return.
 // When num=0 it means unlimited.
-func GetHostsFromDatastore(ctx context.Context, node *core.IpfsNode, mode string, num int) ([]*hubpb.Host, error) {
+func GetSPsFromDatastore(ctx context.Context, node *core.IpfsNode, mode string, num int) ([]*hubpb.Host, error) {
 	// Check valid mode, including all (everything)
 	_, mp, err := hub.CheckValidMode(mode, true)
 	if err != nil {
