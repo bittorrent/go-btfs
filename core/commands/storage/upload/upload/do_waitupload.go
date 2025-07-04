@@ -1,7 +1,6 @@
 package upload
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,9 +11,6 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 	"github.com/bittorrent/go-btfs/protos/metadata"
-
-	guardpb "github.com/bittorrent/go-btfs-common/protos/guard"
-	"github.com/bittorrent/go-btfs-common/utils/grpc"
 
 	"github.com/alecthomas/units"
 	"github.com/cenkalti/backoff/v4"
@@ -99,44 +95,40 @@ func waitSPSaveFileSuccAndToPay(rss *sessions.RenterSession, offlineSigning bool
 		contracts = append(contracts, c.Meta.ContractId)
 	}
 	err := backoff.Retry(func() error {
-		err := grpc.GuardClient(rss.CtxParams.Cfg.Services.GuardDomain).WithContext(rss.Ctx,
-			func(ctx context.Context, client guardpb.GuardServiceClient) error {
-				meta, err := chain.SettleObject.FileMetaService.GetFileMeta(rss.Hash, contracts)
-				if err != nil {
-					return err
-				}
-				num := 0
-				m := make(map[string]int)
-				for _, c := range meta.Contracts {
-					m[c.Status.String()]++
-					switch c.Status {
-					case metadata.Contract_COMPLETED:
-						num++
-					}
-					shard, err := sessions.GetUserShard(rss.CtxParams, rss.SsId, c.Meta.ShardHash, int(c.Meta.ShardIndex))
-					if err != nil {
-						return err
-					}
-					err = shard.UpdateAdditionalInfo(c.Status.String())
-					if err != nil {
-						return err
-					}
-					err = shard.UpdateContractsStatus()
-					if err != nil {
-						return err
-					}
-				}
-				bytes, err := json.Marshal(m)
-				if err == nil {
-					_ = rss.UpdateAdditionalInfo(string(bytes))
-				}
-				log.Infof("%d shards uploaded.", num)
-				if num >= threshold {
-					return nil
-				}
-				return errors.New("uploading")
-			})
-		return err
+		meta, err := chain.SettleObject.FileMetaService.GetFileMeta(rss.Hash, contracts)
+		if err != nil {
+			return err
+		}
+		num := 0
+		m := make(map[string]int)
+		for _, c := range meta.Contracts {
+			m[c.Status.String()]++
+			switch c.Status {
+			case metadata.Contract_COMPLETED:
+				num++
+			}
+			shard, err := sessions.GetUserShard(rss.CtxParams, rss.SsId, c.Meta.ShardHash, int(c.Meta.ShardIndex))
+			if err != nil {
+				return err
+			}
+			err = shard.UpdateAdditionalInfo(c.Status.String())
+			if err != nil {
+				return err
+			}
+			err = shard.UpdateContractsStatus()
+			if err != nil {
+				return err
+			}
+		}
+		bytes, err := json.Marshal(m)
+		if err == nil {
+			_ = rss.UpdateAdditionalInfo(string(bytes))
+		}
+		log.Infof("%d shards uploaded.", num)
+		if num >= threshold {
+			return nil
+		}
+		return errors.New("uploading")
 	}, helper.WaitUploadBo(highRetry))
 	if err != nil {
 		return err
