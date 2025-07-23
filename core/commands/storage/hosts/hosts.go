@@ -13,6 +13,7 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	hubpb "github.com/bittorrent/go-btfs-common/protos/hub"
+	config "github.com/bittorrent/go-btfs-config"
 
 	logging "github.com/ipfs/go-log"
 )
@@ -120,13 +121,14 @@ Mode options include:` + hub.AllModeHelpText,
 		if err != nil {
 			return err
 		}
-		_, err = SyncSPs(req.Context, n, mode)
+		_, err = SyncSPs(req.Context, n, mode, cfg)
 		return err
 	},
 }
 
-func SyncSPs(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb.Host, error) {
-	nodes, err := hub.QueryHosts(ctx, node, mode)
+func SyncSPs(ctx context.Context, node *core.IpfsNode, mode string, cfg *config.Config) ([]*hubpb.Host, error) {
+	// nodes, err := hub.QueryHosts(ctx, node, mode)
+	nodes, err := hub.GetSP(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}

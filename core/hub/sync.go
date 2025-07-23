@@ -2,15 +2,23 @@ package hub
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"strings"
 
 	version "github.com/bittorrent/go-btfs"
 
+	config "github.com/bittorrent/go-btfs-config"
+	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/chain/abi"
+	chainconfig "github.com/bittorrent/go-btfs/chain/config"
 	"github.com/bittorrent/go-btfs/core"
 
 	hubpb "github.com/bittorrent/go-btfs-common/protos/hub"
 	"github.com/bittorrent/go-btfs-common/utils/grpc"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 const (
@@ -83,6 +91,67 @@ func QueryHosts(ctx context.Context, node *core.IpfsNode, mode string) ([]*hubpb
 	}
 
 	return resp.Hosts.Hosts, nil
+}
+
+// GetSP get sp node from proposal contract
+func GetSP(ctx context.Context, cfg *config.Config) ([]*hubpb.Host, error) {
+	cli := chain.ChainObject.Backend
+	if cli == nil {
+		client, err := ethclient.Dial(cfg.ChainInfo.Endpoint)
+		if err != nil {
+			fmt.Printf("failed to dial eth client: %v", err)
+			return nil, err
+		}
+		cli = client
+	}
+	cc, ok := chainconfig.GetChainConfig(cfg.ChainInfo.ChainId)
+	if !ok {
+		return nil, fmt.Errorf("chain %d is not supported yet", cfg.ChainInfo.ChainId)
+	}
+	proposal, err := abi.NewProposalContract(cc.ProposalAddress, cli)
+	if err != nil {
+		return nil, err
+	}
+	proposals, err := proposal.GetProposalsByType(nil, 0)
+	if err != nil {
+		return nil, err
+	}
+	uris := make([]string, 0)
+	for _, p := range proposals {
+		if p.Status != 1 {
+			continue
+		}
+		uris = append(uris, p.Uri)
+	}
+	// request uri to get json file
+	hosts := make([]*hubpb.Host, 0)
+	for _, uri := range uris {
+		// parse json file
+		resp, err := http.Get(uri)
+		if err != nil {
+			fmt.Println("request failed:", err)
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("read body failed:", err)
+			return nil, err
+		}
+
+		var data map[string]interface{}
+		if err := json.Unmarshal(body, &data); err != nil {
+			fmt.Println("parse json failed:", err)
+			return nil, err
+		}
+
+		hosts = append(hosts, &hubpb.Host{
+			NodeId: data["storageProviderNodeId"].(string),
+		})
+	}
+
+	return hosts, nil
 }
 
 // QueryStats queries the BTFS-Hub to retrieve the latest storage stats on this host.

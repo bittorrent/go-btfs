@@ -287,7 +287,7 @@ func SyncSPs(ctxParams *helper.ContextParams) error {
 	// TODO check if ok
 	m := cfg.Experimental.HostsSyncMode
 	m = strings.ToUpper("sp")
-	_, err = hosts.SyncSPs(ctx, ctxParams.N, m)
+	_, err = hosts.SyncSPs(ctx, ctxParams.N, m, cfg)
 	return err
 }
 
