@@ -30,6 +30,7 @@ type ShardUploadContext struct {
 	RenterId       peer.ID
 	FileSize       int64
 	ShardIndexes   []int
+	AutoRenewal    bool
 	RepairParams   *RepairParams
 }
 
@@ -164,6 +165,7 @@ func signShardContractAndSendToSP(ctx *ShardUploadContext, host string, hostPid 
 					StorageEnd:   uint64(time.Now().Add(time.Duration(ctx.StorageLength) * 24 * time.Hour).Unix()),
 					Price:        uint64(ctx.Price),
 					Amount:       uint64(amount),
+					AutoRenewal:  ctx.AutoRenewal,
 				},
 				ctx.OfflineSigning,
 				ctx.RepairParams,

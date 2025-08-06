@@ -89,6 +89,7 @@ Use status command to check for completion:
 		"recvcontract":      StorageUploadRecvContractCmd,
 		"status":            StorageUploadStatusCmd,
 		"repair":            StorageUploadRepairCmd,
+		"renew":             StorageRenewCmd,
 		"getcontractbatch":  offline.StorageUploadGetContractBatchCmd,
 		"signcontractbatch": offline.StorageUploadSignContractBatchCmd,
 		"getunsigned":       offline.StorageUploadGetUnsignedCmd,
@@ -111,6 +112,8 @@ Use status command to check for completion:
 		cmds.IntOption(customizedPayoutPeriodOptionName, "Period of customized payout schedule.").WithDefault(1),
 		cmds.IntOption(copyName, "copy num of file hash.").WithDefault(0),
 		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+		cmds.BoolOption("autorenew", "Enable automatic renewal before expiration.").WithDefault(false),
+		cmds.IntOption("autorenew-duration", "Duration for automatic renewal in days.").WithDefault(30),
 	},
 	RunTimeout: 15 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -251,6 +254,10 @@ Use status command to check for completion:
 			shardIndexes = append(shardIndexes, i)
 		}
 
+		// Check for auto-renewal option
+		autoRenew, _ := req.Options["autorenew"].(bool)
+		autoRenewDuration, _ := req.Options["autorenew-duration"].(int)
+
 		err = UploadShard(&ShardUploadContext{
 			Rss:            rss,
 			HostsProvider:  sp,
@@ -263,9 +270,19 @@ Use status command to check for completion:
 			FileSize:       fileSize,
 			ShardIndexes:   shardIndexes,
 			RepairParams:   nil,
+			AutoRenewal:    autoRenew,
 		})
 		if err != nil {
 			return err
+		}
+
+		// Store auto-renewal configuration if enabled
+		if autoRenew {
+			err = storeAutoRenewalConfig(ctxParams, fileHash, ssId, autoRenewDuration, token, price)
+			if err != nil {
+				log.Errorf("Failed to store auto-renewal config: %v", err)
+				// Don't fail the upload for auto-renewal storage issues
+			}
 		}
 
 		seRes := &Res{
