@@ -248,6 +248,7 @@ var rootRemoteSubcommands = map[string]*cmds.Command{
 					"supporttokens": upload.StorageUploadSupportTokensCmd,
 					"recvcontract":  upload.StorageUploadRecvContractCmd,
 					"cheque":        upload.StorageUploadChequeCmd,
+					"proxy":         upload.StorageUploadProxyCmd,
 				},
 			},
 			"dcrepair": {
