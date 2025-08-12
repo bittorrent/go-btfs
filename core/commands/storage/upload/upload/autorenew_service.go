@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bittorrent/go-btfs/chain"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
@@ -236,6 +237,11 @@ func (ars *AutoRenewalService) DisableAutoRenewal(fileHash string) error {
 
 	if config == nil {
 		return fmt.Errorf("no auto-renewal config found for file: %s", fileHash)
+	}
+
+	err = chain.SettleObject.FileMetaService.UpdateAutoRenewal(fileHash, false)
+	if err != nil {
+		return err
 	}
 
 	config.Enabled = false

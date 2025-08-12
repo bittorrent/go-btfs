@@ -16,7 +16,6 @@ import (
 
 // RenewStatusResponse represents the status of a renewal operation
 type RenewStatusResponse struct {
-	SessionID string    `json:"session_id"`
 	FileHash  string    `json:"file_hash"`
 	Status    string    `json:"status"`
 	Duration  int       `json:"duration"`
@@ -35,17 +34,16 @@ type RenewListResponse struct {
 // StorageRenewStatusCmd checks the status of a specific renewal
 var StorageRenewStatusCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Check the status of a storage renewal operation.",
+		Tagline: "Check the status of a storage renewal for a specific CID.",
 		ShortDescription: `
-This command checks the status of a specific storage renewal operation
-using the renewal session ID.
+This command checks the status of a storage renewal for a specific CID.
 
 Example:
-    $ btfs storage renew status <renewal-session-id>
+    $ btfs storage upload renew status <cid>
 `,
 	},
 	Arguments: []cmds.Argument{
-		cmds.StringArg("renewal-session-id", true, false, "ID of the renewal session to check."),
+		cmds.StringArg("cid", true, false, "CID of the renewal file to check."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		_, err := cmdenv.GetNode(env)
@@ -58,7 +56,7 @@ Example:
 			return err
 		}
 
-		renewalSessionID := req.Arguments[0]
+		renewalCID:= req.Arguments[0]
 
 		// Get context parameters
 		ctxParams, err := uh.ExtractContextParams(req, env)
@@ -67,18 +65,17 @@ Example:
 		}
 
 		// Get renewal information
-		renewalInfo, err := getRenewalInfo(ctxParams, renewalSessionID)
+		renewalInfo, err := getRenewalInfo(ctxParams, renewalCID)
 		if err != nil {
 			return fmt.Errorf("failed to get renewal info: %v", err)
 		}
 
 		if renewalInfo == nil {
-			return fmt.Errorf("renewal session not found: %s", renewalSessionID)
+			return fmt.Errorf("renewal cid not found: %s", renewalCID)
 		}
 
 		// Create status response
 		status := &RenewStatusResponse{
-			SessionID: renewalSessionID,
 			FileHash:  renewalInfo.CID,
 			Status:    "completed", // TODO: Implement actual status tracking
 			Duration:  renewalInfo.Duration,
@@ -137,9 +134,76 @@ Example:
 	Type: RenewListResponse{},
 }
 
+var StorageRenewEnableCmd = &cmds.Command{ 
+	Helptext: cmds.HelpText{
+		Tagline: "Enable storage renewals for a specific CID.",
+		ShortDescription: `
+This command enables storage renewals for a specific CID.
+
+Example:
+    $ btfs storage upload renew enable <cid>
+`,
+	},
+	Type: Res{},
+	Arguments: []cmds.Argument{
+		cmds.StringArg("cid", true, false, "CID of the file to enable renewals for."),
+	},
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		_, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+		err = utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
+		// Get context parameters
+		ctxParams, err := uh.ExtractContextParams(req, env)
+		if err != nil {
+			return err
+		}
+		return enableAutoRenewal(ctxParams, req.Arguments[0])
+	},
+}
+
+
+var StorageRenewDiableCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "Disable storage renewals for a specific CID.",
+		ShortDescription: `
+This command disables storage renewals for a specific CID.
+
+Example:
+    $ btfs storage upload renew disable <cid>
+`,
+	},
+	Type: Res{},
+	Arguments: []cmds.Argument{
+		cmds.StringArg("cid", true, false, "CID of the file to disable renewals for."),
+	},
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		_, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+		err = utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
+
+		// Get context parameters
+		ctxParams, err := uh.ExtractContextParams(req, env)
+		if err != nil {
+			return err
+		}
+		return disableAutoRenewal(ctxParams, req.Arguments[0])
+	},
+}
+
 // getRenewalInfo retrieves renewal information from datastore
-func getRenewalInfo(ctxParams *uh.ContextParams, sessionID string) (*RenewRequest, error) {
-	renewalKey := fmt.Sprintf("/btfs/%s/renewals/%s", ctxParams.N.Identity.String(), sessionID)
+func getRenewalInfo(ctxParams *uh.ContextParams, cid string) (*RenewRequest, error) {
+	renewalKey := fmt.Sprintf("/btfs/%s/renewals/%s", ctxParams.N.Identity.String(), cid)
 
 	data, err := ctxParams.N.Repo.Datastore().Get(ctxParams.Ctx, datastore.NewKey(renewalKey))
 	if err != nil {
@@ -183,11 +247,7 @@ func getAllRenewals(ctxParams *uh.ContextParams) ([]RenewStatusResponse, error) 
 			continue
 		}
 
-		// Extract session ID from key
-		sessionID := result.Key[len(prefix):]
-
 		status := RenewStatusResponse{
-			SessionID: sessionID,
 			FileHash:  renewalInfo.CID,
 			Status:    "completed", // TODO: Implement actual status tracking
 			Duration:  renewalInfo.Duration,
@@ -201,4 +261,11 @@ func getAllRenewals(ctxParams *uh.ContextParams) ([]RenewStatusResponse, error) 
 	}
 
 	return renewals, nil
+}
+
+func enableAutoRenewal(ctxParams *uh.ContextParams, fileHash string) error {
+	return EnableAutoRenewalForFile(ctxParams, fileHash)
+}
+func disableAutoRenewal(ctxParams *uh.ContextParams, fileHash string) error {
+	return DisableAutoRenewalForFile(ctxParams, fileHash)
 }

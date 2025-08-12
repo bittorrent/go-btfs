@@ -72,6 +72,8 @@ Examples:
 `,
 	},
 	Subcommands: map[string]*cmds.Command{
+		"enable":  StorageRenewEnableCmd,
+		"disable": StorageRenewDiableCmd,
 		"status":  StorageRenewStatusCmd,
 		"list":    StorageRenewListCmd,
 		"service": StorageRenewServiceCmd,

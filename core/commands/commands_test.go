@@ -301,6 +301,8 @@ func TestCommands(t *testing.T) {
 		"/storage/upload/cheque",
 		"/storage/upload/supporttokens",
 		"/storage/upload/renew",
+		"/storage/upload/renew/enable",
+		"/storage/upload/renew/disable",
 		"/storage/upload/renew/status",
 		"/storage/upload/renew/list",
 		"/storage/upload/renew/service",
