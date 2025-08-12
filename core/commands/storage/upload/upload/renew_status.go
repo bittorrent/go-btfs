@@ -79,13 +79,13 @@ Example:
 		// Create status response
 		status := &RenewStatusResponse{
 			SessionID: renewalSessionID,
-			FileHash:  renewalInfo.FileHash,
+			FileHash:  renewalInfo.CID,
 			Status:    "completed", // TODO: Implement actual status tracking
 			Duration:  renewalInfo.Duration,
 			TotalCost: renewalInfo.TotalCost,
 			CreatedAt: time.Now(), // TODO: Store actual creation time
 			ExpiresAt: renewalInfo.NewEnd,
-			Message:   fmt.Sprintf("Renewal for file %s is active", renewalInfo.FileHash),
+			Message:   fmt.Sprintf("Renewal for file %s is active", renewalInfo.CID),
 		}
 
 		return res.Emit(status)
@@ -188,13 +188,13 @@ func getAllRenewals(ctxParams *uh.ContextParams) ([]RenewStatusResponse, error) 
 
 		status := RenewStatusResponse{
 			SessionID: sessionID,
-			FileHash:  renewalInfo.FileHash,
+			FileHash:  renewalInfo.CID,
 			Status:    "completed", // TODO: Implement actual status tracking
 			Duration:  renewalInfo.Duration,
 			TotalCost: renewalInfo.TotalCost,
 			CreatedAt: time.Now(), // TODO: Store actual creation time
 			ExpiresAt: renewalInfo.NewEnd,
-			Message:   fmt.Sprintf("Renewal for file %s is active", renewalInfo.FileHash),
+			Message:   fmt.Sprintf("Renewal for file %s is active", renewalInfo.CID),
 		}
 
 		renewals = append(renewals, status)

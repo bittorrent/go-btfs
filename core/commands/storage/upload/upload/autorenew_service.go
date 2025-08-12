@@ -7,10 +7,7 @@ import (
 	"sync"
 	"time"
 
-	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
-	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
-	"github.com/bittorrent/go-btfs/protos/metadata"
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	logging "github.com/ipfs/go-log/v2"
@@ -115,8 +112,7 @@ func (ars *AutoRenewalService) run() {
 func (ars *AutoRenewalService) checkAndRenewFiles() {
 	autoRenewLog.Debug("Checking for files that need renewal")
 
-	// configs, err := ars.getAutoRenewalConfigs()
-	contracts, err := sessions.ListShardsContracts(ars.ctxParams.N.Repo.Datastore(), ars.ctxParams.N.Identity.String(), nodepb.ContractStat_RENTER.String())
+	configs, err := ars.getAutoRenewalConfigs()
 	if err != nil {
 		autoRenewLog.Errorf("Failed to get auto-renewal configs: %v", err)
 		return
@@ -125,32 +121,27 @@ func (ars *AutoRenewalService) checkAndRenewFiles() {
 	now := time.Now()
 	renewalThreshold := 24 * time.Hour // Renew 24 hours before expiration
 
-	for _, contract := range contracts {
-		if !contract.Meta.AutoRenewal {
+	for _, config := range configs {
+		if !config.Enabled {
 			continue
 		}
 
 		// Check if renewal is needed (within threshold of expiration)
-		if now.Add(renewalThreshold).After(time.Unix(int64(contract.Meta.StorageEnd), 0)) {
-			cid, err := ars.ctxParams.N.Repo.Datastore().Get(ars.ctx, datastore.NewKey(fmt.Sprintf(userFileShard, ars.ctxParams.N.Identity.String(), contract.Meta.ContractId)))
-			if err != nil {
-				autoRenewLog.Errorf("Failed to get file CID: %v", err)
-				continue
-			}
-			autoRenewLog.Infof("Processing auto-renewal for file: %s", cid)
+		if now.Add(renewalThreshold).After(config.NextRenewalAt) {
+			autoRenewLog.Infof("Processing auto-renewal for file: %s", config.FileHash)
 
-			err = ars.processAutoRenewal(contract)
+			err = ars.processAutoRenewal(config)
 			if err != nil {
-				autoRenewLog.Errorf("Failed to auto-renew file %s: %v", cid, err)
+				autoRenewLog.Errorf("Failed to auto-renew file %s: %v", config.FileHash, err)
 			} else {
-				autoRenewLog.Infof("Successfully auto-renewed file: %s", cid)
+				autoRenewLog.Infof("Successfully auto-renewed file: %s", config.FileHash)
 			}
 		}
 	}
 }
 
 // getAutoRenewalConfigs retrieves all auto-renewal configurations
-func (ars *AutoRenewalService) getAutoRenewalConfigs() ([]AutoRenewalConfig, error) {
+func (ars *AutoRenewalService) getAutoRenewalConfigs() ([]*AutoRenewalConfig, error) {
 	prefix := fmt.Sprintf("/btfs/%s/autorenew/", ars.ctxParams.N.Identity.String())
 	q := query.Query{
 		Prefix: prefix,
@@ -162,7 +153,7 @@ func (ars *AutoRenewalService) getAutoRenewalConfigs() ([]AutoRenewalConfig, err
 	}
 	defer results.Close()
 
-	var configs []AutoRenewalConfig
+	var configs []*AutoRenewalConfig
 
 	for result := range results.Next() {
 		if result.Error != nil {
@@ -170,8 +161,8 @@ func (ars *AutoRenewalService) getAutoRenewalConfigs() ([]AutoRenewalConfig, err
 			continue
 		}
 
-		var config AutoRenewalConfig
-		if err := json.Unmarshal(result.Value, &config); err != nil {
+		config := &AutoRenewalConfig{}
+		if err := json.Unmarshal(result.Value, config); err != nil {
 			autoRenewLog.Errorf("Failed to unmarshal auto-renewal config: %v", err)
 			continue
 		}
@@ -183,17 +174,15 @@ func (ars *AutoRenewalService) getAutoRenewalConfigs() ([]AutoRenewalConfig, err
 }
 
 // processAutoRenewal processes the automatic renewal for a specific file
-func (ars *AutoRenewalService) processAutoRenewal(contract *metadata.Contract) error {
+func (ars *AutoRenewalService) processAutoRenewal(config *AutoRenewalConfig) error {
 	renewReq := &RenewRequest{
-		FileHash:    contract.Meta.ContractId,
-		Token:       contract.Meta.Token,
-		Price:       contract.Meta.Price,
-		SpId:        contract.Meta.SpId,
-		RenterID:    ars.ctxParams.N.Identity,
-		ShardSize:   int64(contract.Meta.ShardSize),
-		OriginalEnd: time.Unix(int64(contract.Meta.StorageEnd), 0),
-		NewEnd:      time.Unix(int64(contract.Meta.StorageEnd), 0).Add(time.Duration(contract.Meta.StorageEnd - contract.Meta.StorageStart)),
-		Duration:    int(contract.Meta.StorageEnd-contract.Meta.StorageStart) / 86400,
+		CID:       config.FileHash,
+		Token:     config.Token.String(),
+		Price:     uint64(config.Price),
+		ShardId:   config.ShardId,
+		RenterID:  ars.ctxParams.N.Identity,
+		ShardSize: int64(config.ShardSize),
+		SpId:      config.SpId,
 	}
 
 	// Execute renewal

@@ -1,7 +1,6 @@
 package upload
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,7 +17,6 @@ import (
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
@@ -30,7 +28,7 @@ const (
 
 // RenewRequest represents a file renewal request
 type RenewRequest struct {
-	FileHash    string    `json:"file_hash"`
+	CID         string    `json:"cid"`
 	Token       string    `json:"token"`
 	Price       uint64    `json:"price"`
 	Duration    int       `json:"duration"`
@@ -125,11 +123,6 @@ Examples:
 			return fmt.Errorf("invalid token type: %s", tokenStr)
 		}
 
-		// Find existing storage session for this file
-		if err != nil {
-			return fmt.Errorf("failed to find existing storage session: %v", err)
-		}
-
 		// Get current price if not specified
 		var price int64
 		if hasPriceOpt {
@@ -143,7 +136,7 @@ Examples:
 
 		// Create renewal request
 		renewReq := &RenewRequest{
-			FileHash:    fileHash,
+			CID:         fileHash,
 			Duration:    duration,
 			Token:       tokenStr,
 			Price:       uint64(price),
@@ -161,40 +154,6 @@ Examples:
 		return res.Emit(renewResp)
 	},
 	Type: RenewResponse{},
-}
-
-// findExistingSession finds an existing storage session for the given file hash
-func findExistingSession(ctxParams *uh.ContextParams, fileHash string) (string, *sessions.RenterSession, error) {
-	// Search through datastore for existing sessions
-	prefix := fmt.Sprintf(sessions.RenterSessionPrefix, ctxParams.N.Identity.String())
-	q := query.Query{
-		Prefix: prefix,
-	}
-
-	results, err := ctxParams.N.Repo.Datastore().Query(ctxParams.Ctx, q)
-	if err != nil {
-		return "", nil, err
-	}
-	defer results.Close()
-
-	for result := range results.Next() {
-		if result.Error != nil {
-			continue
-		}
-
-		// Try to get session data
-		var sessionData sessions.RenterSession
-		if err := json.Unmarshal(result.Value, &sessionData); err != nil {
-			continue
-		}
-
-		// Check if this session matches our file hash
-		if sessionData.Hash == fileHash {
-			return sessionData.SsId, &sessionData, nil
-		}
-	}
-
-	return "", nil, nil
 }
 
 // executeRenewal performs the actual renewal operation
@@ -225,95 +184,12 @@ func executeRenewal(ctxParams *uh.ContextParams, renewReq *RenewRequest) (*Renew
 
 	return &RenewResponse{
 		Success:       true,
-		FileHash:      renewReq.FileHash,
+		FileHash:      renewReq.CID,
 		NewExpiration: renewReq.NewEnd,
 		TotalCost:     totalCost,
-		Message:       fmt.Sprintf("File %s renewed successfully for %d days", renewReq.FileHash, renewReq.Duration),
+		Message:       fmt.Sprintf("File %s renewed successfully for %d days", renewReq.CID, renewReq.Duration),
 	}, nil
 }
-
-// createRenewalSession creates a new session for renewal based on the original session
-func createRenewalSession(ctxParams *uh.ContextParams, originalSession *sessions.RenterSession, renewReq *RenewRequest, newSessionID string) (*sessions.RenterSession, error) {
-	ctx, cancel := context.WithCancel(ctxParams.Ctx)
-
-	renewalSession := &sessions.RenterSession{
-		PeerId:      originalSession.PeerId,
-		SsId:        newSessionID,
-		Hash:        originalSession.Hash,
-		ShardHashes: originalSession.ShardHashes,
-		CtxParams:   ctxParams,
-		Ctx:         ctx,
-		Cancel:      cancel,
-		Token:       common.HexToAddress(renewReq.Token),
-	}
-
-	// Initialize the session in datastore
-	// Note: For renewal sessions, we'll store basic session info
-	// The actual session management will be handled by the renewal process
-	sessionKey := fmt.Sprintf(sessions.RenterSessionKey, renewalSession.PeerId, renewalSession.SsId)
-	sessionData, err := json.Marshal(renewalSession)
-	if err != nil {
-		cancel()
-		return nil, err
-	}
-
-	err = ctxParams.N.Repo.Datastore().Put(ctxParams.Ctx, datastore.NewKey(sessionKey), sessionData)
-	if err != nil {
-		cancel()
-		return nil, err
-	}
-
-	return renewalSession, nil
-}
-
-// // executeRenewalWithSP executes renewal payments with storage providers via cheques
-// func executeRenewalWithSP(ctxParams *uh.ContextParams, session *sessions.RenterSession, renewReq *RenewRequest) error {
-// 	log.Infof("Executing renewal payment for session %s with %d shards", session.SsId, len(session.ShardHashes))
-
-// 	// Calculate renewal payment for each shard
-// 	rate, err := chain.SettleObject.OracleService.CurrentRate(renewReq.Token)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to get token rate: %v", err)
-// 	}
-
-// 	// Get shard size for payment calculation
-// 	_, _, shardSize, err := uh.GetShardHashes(ctxParams, renewReq.FileHash)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to get shard size: %v", err)
-// 	}
-
-// 	// Calculate payment amount per shard
-// 	paymentPerShard, err := uh.TotalPay(shardSize, renewReq.Price, renewReq.Duration, rate)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to calculate payment amount: %v", err)
-// 	}
-
-// 	var renewalErrors []error
-// 	successCount := 0
-
-// 	for i, shardHash := range session.ShardHashes {
-// 		err := payRenewalCheque(ctxParams, session, renewReq, shardHash, i, paymentPerShard)
-// 		if err != nil {
-// 			log.Errorf("Failed to pay renewal for shard %s: %v", shardHash, err)
-// 			renewalErrors = append(renewalErrors, err)
-// 		} else {
-// 			successCount++
-// 			log.Infof("Successfully paid renewal for shard %s", shardHash)
-// 		}
-// 	}
-
-// 	// Check if we have enough successful payments
-// 	minSuccessRate := 0.8 // Require 80% success rate
-// 	actualSuccessRate := float64(successCount) / float64(len(session.ShardHashes))
-
-// 	if actualSuccessRate < minSuccessRate {
-// 		return fmt.Errorf("renewal payment failed: only %d/%d shards paid successfully (%.1f%% < %.1f%% required)",
-// 			successCount, len(session.ShardHashes), actualSuccessRate*100, minSuccessRate*100)
-// 	}
-
-// 	log.Infof("Renewal payment completed successfully: %d/%d shards paid", successCount, len(session.ShardHashes))
-// 	return nil
-// }
 
 // payRenewalCheque pays renewal fee directly via cheque to storage provider
 func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, shardHash string, paymentAmount int64) error {
@@ -348,18 +224,6 @@ func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, shard
 	log.Infof("Successfully issued renewal cheque for shard %s", shardHash)
 	return nil
 }
-
-// storeRenewalInfo stores renewal information in the datastore
-// func storeRenewalInfo(ctxParams *uh.ContextParams, renewReq *RenewRequest, sessionID string) error {
-// 	renewalKey := fmt.Sprintf("/btfs/%s/renewals/%s", ctxParams.N.Identity.String(), sessionID)
-
-// 	renewalData, err := json.Marshal(renewReq)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return ctxParams.N.Repo.Datastore().Put(ctxParams.Ctx, datastore.NewKey(renewalKey), renewalData)
-// }
 
 // issueRenewalCheque issues a cheque directly to storage provider for renewal payment
 func issueRenewalCheque(ctxParams *uh.ContextParams, providerID string, amount int64, token common.Address, shardHash string, duration int) error {
@@ -455,6 +319,9 @@ func storeRenewalChequeInfo(ctxParams *uh.ContextParams, providerID, shardHash s
 type AutoRenewalConfig struct {
 	FileHash        string         `json:"file_hash"`
 	SessionID       string         `json:"session_id"`
+	SpId            string         `json:"sp_id"`
+	ShardId         string         `json:"shard_id"`
+	ShardSize       int            `json:"shard_size"`
 	RenewalDuration int            `json:"renewal_duration"`
 	Token           common.Address `json:"token"`
 	Price           int64          `json:"price"`

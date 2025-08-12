@@ -256,7 +256,7 @@ Use status command to check for completion:
 
 		// Check for auto-renewal option
 		autoRenew, _ := req.Options["autorenew"].(bool)
-		autoRenewDuration, _ := req.Options["autorenew-duration"].(int)
+		// autoRenewDuration, _ := req.Options["autorenew-duration"].(int)
 
 		err = UploadShard(&ShardUploadContext{
 			Rss:            rss,
@@ -274,15 +274,6 @@ Use status command to check for completion:
 		})
 		if err != nil {
 			return err
-		}
-
-		// Store auto-renewal configuration if enabled
-		if autoRenew {
-			err = storeAutoRenewalConfig(ctxParams, fileHash, ssId, autoRenewDuration, token, price)
-			if err != nil {
-				log.Errorf("Failed to store auto-renewal config: %v", err)
-				// Don't fail the upload for auto-renewal storage issues
-			}
 		}
 
 		seRes := &Res{
