@@ -77,7 +77,7 @@ The service will automatically check for files that need renewal and
 process them according to their auto-renewal configuration.
 
 Example:
-    $ btfs storage renew service start
+    $ btfs storage upload renew service start
 `,
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {

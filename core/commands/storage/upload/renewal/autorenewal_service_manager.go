@@ -12,7 +12,7 @@ var (
 	renewalServiceLog = logging.Logger("renewal-service-manager")
 )
 
-// RenewalServiceManager manages the lifecycle of the auto-renewal service
+// ServiceManager manages the lifecycle of the auto-renewal service
 type ServiceManager struct {
 	service *AutoRenewalService
 	mu      sync.RWMutex
@@ -141,8 +141,8 @@ func IsRenewalServiceRunning() bool {
 	return manager.IsRunning()
 }
 
-// GetRenewalService returns the current renewal service instance
-func GetRenewalService() *AutoRenewalService {
+// GetAutoRenewalService returns the current renewal service instance
+func GetAutoRenewalService() *AutoRenewalService {
 	manager := GetGlobalRenewalServiceManager()
 	return manager.GetService()
 }
@@ -179,7 +179,7 @@ func GetRenewalServiceStatus() *ServiceStatus {
 
 // EnableAutoRenewalForFile enables auto-renewal for a specific file
 func EnableAutoRenewalForFile(ctxParams *uh.ContextParams, fileHash string) error {
-	service := GetRenewalService()
+	service := GetAutoRenewalService()
 	if service == nil {
 		return fmt.Errorf("auto-renewal service is not running")
 	}
@@ -189,7 +189,7 @@ func EnableAutoRenewalForFile(ctxParams *uh.ContextParams, fileHash string) erro
 
 // DisableAutoRenewalForFile disables auto-renewal for a specific file
 func DisableAutoRenewalForFile(ctxParams *uh.ContextParams, fileHash string) error {
-	service := GetRenewalService()
+	service := GetAutoRenewalService()
 	if service == nil {
 		return fmt.Errorf("auto-renewal service is not running")
 	}
@@ -199,7 +199,7 @@ func DisableAutoRenewalForFile(ctxParams *uh.ContextParams, fileHash string) err
 
 // GetAutoRenewalStatusForFile gets the auto-renewal status for a specific file
 func GetAutoRenewalStatusForFile(ctxParams *uh.ContextParams, fileHash string) (*AutoRenewalConfig, error) {
-	service := GetRenewalService()
+	service := GetAutoRenewalService()
 	if service == nil {
 		return nil, fmt.Errorf("auto-renewal service is not running")
 	}
