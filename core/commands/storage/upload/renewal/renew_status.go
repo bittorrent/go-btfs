@@ -98,7 +98,7 @@ var StorageRenewListCmd = &cmds.Command{
 This command lists all storage renewal operations performed by the current node.
 
 Example:
-    $ btfs storage renew list
+    $ btfs storage upload renew list
 `,
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -265,6 +265,7 @@ func getAllRenewals(ctxParams *uh.ContextParams) ([]RenewStatusResponse, error) 
 func enableAutoRenewal(ctxParams *uh.ContextParams, fileHash string) error {
 	return EnableAutoRenewalForFile(ctxParams, fileHash)
 }
+
 func disableAutoRenewal(ctxParams *uh.ContextParams, fileHash string) error {
 	return DisableAutoRenewalForFile(ctxParams, fileHash)
 }

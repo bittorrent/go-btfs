@@ -69,10 +69,7 @@ Examples:
     $ btfs storage renew <file-hash> --duration 30
 
     # Renew with specific token and price
-    $ btfs storage renew <file-hash> --duration 60 --token WBTT --price 1000
-
-    # Check renewal status
-    $ btfs storage renew status <session-id>
+    $ btfs storage upload renew <file-hash> --duration 60 --token WBTT --price 1000
 `,
 	},
 	Subcommands: map[string]*cmds.Command{
@@ -107,7 +104,7 @@ Examples:
 		}
 
 		// Extract parameters
-		fileHash := req.Arguments[0]
+		cid := req.Arguments[0]
 		duration, _ := req.Options[renewDurationOptionName].(int)
 		tokenStr, _ := req.Options[renewTokenOptionName].(string)
 		priceOpt, hasPriceOpt := req.Options[renewPriceOptionName].(int64)
@@ -123,6 +120,14 @@ Examples:
 			return err
 		}
 
+		// check if the cid enabled autorenew
+		info, err := getRenewalInfo(ctxParams, cid)
+		if err != nil {
+			return err
+		}
+		if info != nil {
+			return fmt.Errorf("file %s is already auto-renewed and cannot be renewed manually", cid)
+		}
 		// Get token address
 		_, exists := tokencfg.MpTokenAddr[tokenStr]
 		if !exists {
@@ -142,7 +147,7 @@ Examples:
 
 		// Create renewal request
 		renewReq := &RenewRequest{
-			CID:         fileHash,
+			CID:         cid,
 			Duration:    duration,
 			Token:       tokenStr,
 			Price:       uint64(price),
