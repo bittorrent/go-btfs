@@ -259,6 +259,11 @@ func (ars *AutoRenewalService) EnableAutoRenewal(fileHash string) error {
 		return fmt.Errorf("no auto-renewal config found for file: %s", fileHash)
 	}
 
+	err = chain.SettleObject.FileMetaService.UpdateAutoRenewal(fileHash, true)
+	if err != nil {
+		return err
+	}
+
 	config.Enabled = true
 	return ars.updateAutoRenewalConfig(config)
 }

@@ -167,7 +167,7 @@ Example:
 	},
 }
 
-var StorageRenewDiableCmd = &cmds.Command{
+var StorageRenewDisableCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Disable storage renewals for a specific CID.",
 		ShortDescription: `

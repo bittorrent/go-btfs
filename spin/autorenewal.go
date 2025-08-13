@@ -67,7 +67,7 @@ func StopAutoRenewalService() {
 }
 
 // GetAutoRenewalServiceStatus returns the status of the auto-renewal service
-func GetAutoRenewalServiceStatus() *renewal.RenewalServiceStatus {
+func GetAutoRenewalServiceStatus() *renewal.ServiceStatus {
 	return renewal.GetRenewalServiceStatus()
 }
 

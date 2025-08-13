@@ -64,7 +64,7 @@ Example:
 		status := GetRenewalServiceStatus()
 		return res.Emit(status)
 	},
-	Type: RenewalServiceStatus{},
+	Type: ServiceStatus{},
 }
 
 // StorageRenewServiceStartCmd starts the auto-renewal service

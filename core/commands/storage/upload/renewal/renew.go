@@ -74,13 +74,13 @@ Examples:
 	},
 	Subcommands: map[string]*cmds.Command{
 		"enable":  StorageRenewEnableCmd,
-		"disable": StorageRenewDiableCmd,
+		"disable": StorageRenewDisableCmd,
 		"status":  StorageRenewStatusCmd,
 		"list":    StorageRenewListCmd,
 		"service": StorageRenewServiceCmd,
 	},
 	Arguments: []cmds.Argument{
-		cmds.StringArg("file-hash", true, false, "Hash of the file to renew."),
+		cmds.StringArg("cid", true, false, "cid of the file to renew."),
 	},
 	Options: []cmds.Option{
 		cmds.IntOption(renewDurationOptionName, "d", "Renewal duration in days.").WithDefault(30),

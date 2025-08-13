@@ -13,21 +13,21 @@ var (
 )
 
 // RenewalServiceManager manages the lifecycle of the auto-renewal service
-type RenewalServiceManager struct {
+type ServiceManager struct {
 	service *AutoRenewalService
 	mu      sync.RWMutex
 	started bool
 }
 
 // NewRenewalServiceManager creates a new renewal service manager
-func NewRenewalServiceManager() *RenewalServiceManager {
-	return &RenewalServiceManager{
+func NewRenewalServiceManager() *ServiceManager {
+	return &ServiceManager{
 		started: false,
 	}
 }
 
 // StartService starts the auto-renewal service if it's not already running
-func (rsm *RenewalServiceManager) StartService(ctxParams *uh.ContextParams) error {
+func (rsm *ServiceManager) StartService(ctxParams *uh.ContextParams) error {
 	rsm.mu.Lock()
 	defer rsm.mu.Unlock()
 
@@ -55,7 +55,7 @@ func (rsm *RenewalServiceManager) StartService(ctxParams *uh.ContextParams) erro
 }
 
 // StopService stops the auto-renewal service if it's running
-func (rsm *RenewalServiceManager) StopService() error {
+func (rsm *ServiceManager) StopService() error {
 	rsm.mu.Lock()
 	defer rsm.mu.Unlock()
 
@@ -80,21 +80,21 @@ func (rsm *RenewalServiceManager) StopService() error {
 }
 
 // IsRunning returns whether the auto-renewal service is currently running
-func (rsm *RenewalServiceManager) IsRunning() bool {
+func (rsm *ServiceManager) IsRunning() bool {
 	rsm.mu.RLock()
 	defer rsm.mu.RUnlock()
 	return rsm.started && rsm.service != nil && rsm.service.IsRunning()
 }
 
 // GetService returns the current auto-renewal service instance
-func (rsm *RenewalServiceManager) GetService() *AutoRenewalService {
+func (rsm *ServiceManager) GetService() *AutoRenewalService {
 	rsm.mu.RLock()
 	defer rsm.mu.RUnlock()
 	return rsm.service
 }
 
 // RestartService restarts the auto-renewal service
-func (rsm *RenewalServiceManager) RestartService(ctxParams *uh.ContextParams) error {
+func (rsm *ServiceManager) RestartService(ctxParams *uh.ContextParams) error {
 	renewalServiceLog.Info("Restarting auto-renewal service...")
 
 	// Stop the current service
@@ -108,11 +108,11 @@ func (rsm *RenewalServiceManager) RestartService(ctxParams *uh.ContextParams) er
 }
 
 // Global renewal service manager instance
-var globalRenewalServiceManager *RenewalServiceManager
+var globalRenewalServiceManager *ServiceManager
 var renewalServiceManagerMu sync.Mutex
 
 // GetGlobalRenewalServiceManager returns the global renewal service manager instance
-func GetGlobalRenewalServiceManager() *RenewalServiceManager {
+func GetGlobalRenewalServiceManager() *ServiceManager {
 	renewalServiceManagerMu.Lock()
 	defer renewalServiceManagerMu.Unlock()
 
@@ -147,19 +147,19 @@ func GetRenewalService() *AutoRenewalService {
 	return manager.GetService()
 }
 
-// RenewalServiceStatus represents the status of the renewal service
-type RenewalServiceStatus struct {
+// ServiceStatus represents the status of the renewal service
+type ServiceStatus struct {
 	Running       bool   `json:"running"`
 	CheckInterval string `json:"check_interval"`
 	Message       string `json:"message"`
 }
 
 // GetRenewalServiceStatus returns the current status of the renewal service
-func GetRenewalServiceStatus() *RenewalServiceStatus {
+func GetRenewalServiceStatus() *ServiceStatus {
 	manager := GetGlobalRenewalServiceManager()
 	service := manager.GetService()
 
-	status := &RenewalServiceStatus{
+	status := &ServiceStatus{
 		Running: manager.IsRunning(),
 	}
 
