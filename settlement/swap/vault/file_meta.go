@@ -219,7 +219,7 @@ func (fm *fileMeta) UpdateAutoRenewal(cid string, autoRenewal bool) error {
 	// 	fmt.Printf("Failed to create transactor: %v\n", err)
 	// 	return err
 	// }
-	// TODO 
+	// TODO
 	// tx, err := fm.FileMetaAbi.UpdateAutoRenewal(opts, cid, autoRenewal)
 	return nil
 }

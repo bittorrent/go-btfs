@@ -66,7 +66,7 @@ existing storage providers.
 
 Examples:
     # Renew a file for 30 days
-    $ btfs storage renew <file-hash> --duration 30
+    $ btfs storage upload renew <file-hash> --duration 30
 
     # Renew with specific token and price
     $ btfs storage upload renew <file-hash> --duration 60 --token WBTT --price 1000
