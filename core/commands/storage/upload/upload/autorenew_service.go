@@ -41,7 +41,7 @@ func NewAutoRenewalService(ctxParams *uh.ContextParams) *AutoRenewalService {
 		ctxParams:     ctxParams,
 		ctx:           ctx,
 		cancel:        cancel,
-		checkInterval: 1 * time.Minute, // Check every hour
+		checkInterval: 1 * time.Hour, // Check every hour
 		running:       false,
 	}
 }

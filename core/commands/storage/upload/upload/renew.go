@@ -334,10 +334,9 @@ type AutoRenewalConfig struct {
 }
 
 // storeAutoRenewalConfig stores auto-renewal configuration for a file
-func storeAutoRenewalConfig(ctxParams *uh.ContextParams, fileHash, sessionID string, duration int, token common.Address, price int64) error {
+func storeAutoRenewalConfig(ctxParams *uh.ContextParams, fileHash string, duration int, token common.Address, price int64) error {
 	config := &AutoRenewalConfig{
 		FileHash:        fileHash,
-		SessionID:       sessionID,
 		RenewalDuration: duration,
 		Token:           token,
 		Price:           price,

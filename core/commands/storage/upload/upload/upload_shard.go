@@ -65,7 +65,7 @@ func UploadShard(ctx *ShardUploadContext) error {
 			}
 			// save auto-renewal config if enabled
 			if ctx.AutoRenewal {
-				err = storeAutoRenewalConfig(ctx.Rss.CtxParams, ctx.Rss.Hash, ctx.Rss.SsId, 30, ctx.Token, ctx.Price)
+				err = storeAutoRenewalConfig(ctx.Rss.CtxParams, ctx.Rss.Hash, 30, ctx.Token, ctx.Price)
 				if err != nil {
 					log.Errorf("Failed to store auto-renewal config: %v", err)
 				}
