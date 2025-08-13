@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/renewal"
 	"github.com/bittorrent/go-btfs/utils"
 	coreiface "github.com/bittorrent/interface-go-btfs-core"
 
@@ -89,7 +90,7 @@ Use status command to check for completion:
 		"recvcontract":      StorageUploadRecvContractCmd,
 		"status":            StorageUploadStatusCmd,
 		"repair":            StorageUploadRepairCmd,
-		"renew":             StorageRenewCmd,
+		"renew":             renewal.StorageRenewCmd,
 		"getcontractbatch":  offline.StorageUploadGetContractBatchCmd,
 		"signcontractbatch": offline.StorageUploadSignContractBatchCmd,
 		"getunsigned":       offline.StorageUploadGetUnsignedCmd,

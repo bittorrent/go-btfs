@@ -1,6 +1,7 @@
-package upload
+package renewal
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,14 +12,17 @@ import (
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
-	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
+	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 	"github.com/bittorrent/go-btfs/utils"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ipfs/go-datastore"
+	logging "github.com/ipfs/go-log"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
+
+var log = logging.Logger("renew")
 
 const (
 	renewDurationOptionName = "duration"
@@ -260,37 +264,37 @@ func issueRenewalCheque(ctxParams *uh.ContextParams, providerID string, amount i
 }
 
 // updateShardRenewalInfo updates the shard information with renewal details
-func updateShardRenewalInfo(ctxParams *uh.ContextParams, sessionID, shardHash string, shardIndex int, duration int, amount int64) error {
-	// Verify shard exists (we don't need to use the shard object, just verify it exists)
-	_, err := sessions.GetUserShard(ctxParams, sessionID, shardHash, shardIndex)
-	if err != nil {
-		return fmt.Errorf("failed to get shard info: %v", err)
-	}
-
-	// Update shard with renewal information
-	// This extends the storage period without creating new contracts
-	renewalInfo := map[string]interface{}{
-		"renewed_at":       time.Now().Unix(),
-		"renewal_duration": duration,
-		"renewal_amount":   amount,
-		"new_expiry":       time.Now().Add(time.Duration(duration) * 24 * time.Hour).Unix(),
-	}
-
-	// Store renewal info in shard metadata
-	shardKey := fmt.Sprintf("/btfs/%s/shards/%s/%s/renewal", ctxParams.N.Identity.String(), sessionID, shardHash)
-	renewalData, err := json.Marshal(renewalInfo)
-	if err != nil {
-		return fmt.Errorf("failed to marshal renewal info: %v", err)
-	}
-
-	err = ctxParams.N.Repo.Datastore().Put(ctxParams.Ctx, datastore.NewKey(shardKey), renewalData)
-	if err != nil {
-		return fmt.Errorf("failed to store shard renewal info: %v", err)
-	}
-
-	log.Infof("Updated renewal info for shard %s in session %s", shardHash, sessionID)
-	return nil
-}
+// func updateShardRenewalInfo(ctxParams *uh.ContextParams, sessionID, shardHash string, shardIndex int, duration int, amount int64) error {
+// 	// Verify shard exists (we don't need to use the shard object, just verify it exists)
+// 	_, err := sessions.GetUserShard(ctxParams, sessionID, shardHash, shardIndex)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to get shard info: %v", err)
+// 	}
+//
+// 	// Update shard with renewal information
+// 	// This extends the storage period without creating new contracts
+// 	renewalInfo := map[string]interface{}{
+// 		"renewed_at":       time.Now().Unix(),
+// 		"renewal_duration": duration,
+// 		"renewal_amount":   amount,
+// 		"new_expiry":       time.Now().Add(time.Duration(duration) * 24 * time.Hour).Unix(),
+// 	}
+//
+// 	// Store renewal info in shard metadata
+// 	shardKey := fmt.Sprintf("/btfs/%s/shards/%s/%s/renewal", ctxParams.N.Identity.String(), sessionID, shardHash)
+// 	renewalData, err := json.Marshal(renewalInfo)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to marshal renewal info: %v", err)
+// 	}
+//
+// 	err = ctxParams.N.Repo.Datastore().Put(ctxParams.Ctx, datastore.NewKey(shardKey), renewalData)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to store shard renewal info: %v", err)
+// 	}
+//
+// 	log.Infof("Updated renewal info for shard %s in session %s", shardHash, sessionID)
+// 	return nil
+// }
 
 // storeRenewalChequeInfo stores cheque information for renewal tracking
 func storeRenewalChequeInfo(ctxParams *uh.ContextParams, providerID, shardHash string, contractID string, amount int64, duration int) error {
@@ -333,8 +337,8 @@ type AutoRenewalConfig struct {
 	NextRenewalAt   time.Time      `json:"next_renewal_at"`
 }
 
-// storeAutoRenewalConfig stores auto-renewal configuration for a file
-func storeAutoRenewalConfig(ctxParams *uh.ContextParams, fileHash string, duration int, token common.Address, price int64) error {
+// StoreAutoRenewalConfig stores auto-renewal configuration for a file
+func StoreAutoRenewalConfig(ctxParams *uh.ContextParams, fileHash string, duration int, token common.Address, price int64) error {
 	config := &AutoRenewalConfig{
 		FileHash:        fileHash,
 		RenewalDuration: duration,
@@ -353,4 +357,36 @@ func storeAutoRenewalConfig(ctxParams *uh.ContextParams, fileHash string, durati
 	}
 
 	return ctxParams.N.Repo.Datastore().Put(ctxParams.Ctx, datastore.NewKey(configKey), configData)
+}
+
+func checkAvailableBalance(ctx context.Context, amount int64, token common.Address) error {
+	realAmount, err := getRealAmount(amount, token)
+	if err != nil {
+		return err
+	}
+
+	// token: get available balance of token.
+	// AvailableBalance, err := chain.SettleObject.VaultService.AvailableBalance(ctx, token)
+	AvailableBalance, err := chain.SettleObject.VaultService.AvailableBalance(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("check,  balance=%v, realAmount=%v \n", AvailableBalance, realAmount)
+	if AvailableBalance.Cmp(realAmount) < 0 {
+		fmt.Println("check, err: ", vault.ErrInsufficientFunds)
+		return vault.ErrInsufficientFunds
+	}
+	return nil
+}
+
+func getRealAmount(amount int64, token common.Address) (*big.Int, error) {
+	// this is price's rate [Compatible with older versions]
+	rateObj, err := chain.SettleObject.OracleService.CurrentRate(token)
+	if err != nil {
+		return nil, err
+	}
+
+	realAmount := big.NewInt(0).Mul(big.NewInt(amount), rateObj)
+	return realAmount, nil
 }

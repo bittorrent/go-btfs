@@ -1,4 +1,4 @@
-package upload
+package renewal
 
 import (
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"

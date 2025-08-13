@@ -1,4 +1,4 @@
-package upload
+package renewal
 
 import (
 	"encoding/json"
@@ -56,7 +56,7 @@ Example:
 			return err
 		}
 
-		renewalCID:= req.Arguments[0]
+		renewalCID := req.Arguments[0]
 
 		// Get context parameters
 		ctxParams, err := uh.ExtractContextParams(req, env)
@@ -134,7 +134,7 @@ Example:
 	Type: RenewListResponse{},
 }
 
-var StorageRenewEnableCmd = &cmds.Command{ 
+var StorageRenewEnableCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Enable storage renewals for a specific CID.",
 		ShortDescription: `
@@ -166,7 +166,6 @@ Example:
 		return enableAutoRenewal(ctxParams, req.Arguments[0])
 	},
 }
-
 
 var StorageRenewDiableCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
@@ -268,4 +267,8 @@ func enableAutoRenewal(ctxParams *uh.ContextParams, fileHash string) error {
 }
 func disableAutoRenewal(ctxParams *uh.ContextParams, fileHash string) error {
 	return DisableAutoRenewalForFile(ctxParams, fileHash)
+}
+
+type Res struct {
+	ID string
 }

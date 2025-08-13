@@ -3,11 +3,10 @@ package spin
 import (
 	"fmt"
 
+	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
-	"github.com/bittorrent/go-btfs/core/commands/storage/upload/upload"
-
-	cmds "github.com/bittorrent/go-btfs-cmds"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/renewal"
 	logging "github.com/ipfs/go-log/v2"
 )
 
@@ -44,7 +43,7 @@ func AutoRenewalService(node *core.IpfsNode, req *cmds.Request, env cmds.Environ
 			}
 		}()
 
-		err := upload.InitializeRenewalService(ctxParams)
+		err := renewal.InitializeRenewalService(ctxParams)
 		if err != nil {
 			autoRenewalLog.Errorf("Failed to initialize auto-renewal service: %v", err)
 			return
@@ -58,7 +57,7 @@ func AutoRenewalService(node *core.IpfsNode, req *cmds.Request, env cmds.Environ
 func StopAutoRenewalService() {
 	autoRenewalLog.Info("Stopping auto-renewal service...")
 
-	err := upload.ShutdownRenewalService()
+	err := renewal.ShutdownRenewalService()
 	if err != nil {
 		autoRenewalLog.Errorf("Failed to stop auto-renewal service: %v", err)
 		return
@@ -68,8 +67,8 @@ func StopAutoRenewalService() {
 }
 
 // GetAutoRenewalServiceStatus returns the status of the auto-renewal service
-func GetAutoRenewalServiceStatus() *upload.RenewalServiceStatus {
-	return upload.GetRenewalServiceStatus()
+func GetAutoRenewalServiceStatus() *renewal.RenewalServiceStatus {
+	return renewal.GetRenewalServiceStatus()
 }
 
 // RestartAutoRenewalService restarts the auto-renewal service
@@ -86,7 +85,7 @@ func RestartAutoRenewalService(node *core.IpfsNode, req *cmds.Request, env cmds.
 	}
 
 	// Restart the service
-	manager := upload.GetGlobalRenewalServiceManager()
+	manager := renewal.GetGlobalRenewalServiceManager()
 	err = manager.RestartService(ctxParams)
 	if err != nil {
 		return fmt.Errorf("failed to restart auto-renewal service: %v", err)

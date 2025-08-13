@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/renewal"
 	"github.com/bittorrent/go-btfs/protos/metadata"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -65,7 +66,7 @@ func UploadShard(ctx *ShardUploadContext) error {
 			}
 			// save auto-renewal config if enabled
 			if ctx.AutoRenewal {
-				err = storeAutoRenewalConfig(ctx.Rss.CtxParams, ctx.Rss.Hash, 30, ctx.Token, ctx.Price)
+				err = renewal.StoreAutoRenewalConfig(ctx.Rss.CtxParams, ctx.Rss.Hash, ctx.StorageLength, ctx.Token, ctx.Price)
 				if err != nil {
 					log.Errorf("Failed to store auto-renewal config: %v", err)
 				}
