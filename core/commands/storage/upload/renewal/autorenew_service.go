@@ -31,6 +31,7 @@ type AutoRenewalService struct {
 	mu            sync.RWMutex
 	running       bool
 	checkInterval time.Duration
+	stop          chan struct{}
 }
 
 // NewAutoRenewalService creates a new auto-renewal service
@@ -79,6 +80,8 @@ func (ars *AutoRenewalService) Stop() error {
 	}
 	ars.running = false
 
+	ars.stop <- struct{}{}
+
 	autoRenewLog.Info("Auto-renewal service stopped")
 	return nil
 }
@@ -105,6 +108,9 @@ func (ars *AutoRenewalService) run() {
 			return
 		case <-ars.ticker.C:
 			ars.checkAndRenewFiles()
+		case <-ars.stop:
+			autoRenewLog.Info("Auto-renewal service stopped")
+			return
 		}
 	}
 }
@@ -129,20 +135,20 @@ func (ars *AutoRenewalService) checkAndRenewFiles() {
 
 		// Check if renewal is needed (within threshold of expiration)
 		if now.Add(renewalThreshold).After(config.NextRenewalAt) {
-			autoRenewLog.Infof("Processing auto-renewal for file: %s", config.FileHash)
+			autoRenewLog.Infof("Processing auto-renewal for file: %s", config.CID)
 
 			err = ars.processAutoRenewal(config)
 			if err != nil {
-				autoRenewLog.Errorf("Failed to auto-renew file %s: %v", config.FileHash, err)
+				autoRenewLog.Errorf("Failed to auto-renew file %s: %v", config.CID, err)
 			} else {
-				autoRenewLog.Infof("Successfully auto-renewed file: %s", config.FileHash)
+				autoRenewLog.Infof("Successfully auto-renewed file: %s", config.CID)
 			}
 		}
 	}
 }
 
 // getAutoRenewalConfigs retrieves all auto-renewal configurations
-func (ars *AutoRenewalService) getAutoRenewalConfigs() ([]*AutoRenewalConfig, error) {
+func (ars *AutoRenewalService) getAutoRenewalConfigs() ([]*RenewalInfo, error) {
 	prefix := fmt.Sprintf("/btfs/%s/autorenew/", ars.ctxParams.N.Identity.String())
 	q := query.Query{
 		Prefix: prefix,
@@ -154,7 +160,7 @@ func (ars *AutoRenewalService) getAutoRenewalConfigs() ([]*AutoRenewalConfig, er
 	}
 	defer results.Close()
 
-	var configs []*AutoRenewalConfig
+	var configs []*RenewalInfo
 
 	for result := range results.Next() {
 		if result.Error != nil {
@@ -162,7 +168,7 @@ func (ars *AutoRenewalService) getAutoRenewalConfigs() ([]*AutoRenewalConfig, er
 			continue
 		}
 
-		config := &AutoRenewalConfig{}
+		config := &RenewalInfo{}
 		if err := json.Unmarshal(result.Value, config); err != nil {
 			autoRenewLog.Errorf("Failed to unmarshal auto-renewal config: %v", err)
 			continue
@@ -175,29 +181,34 @@ func (ars *AutoRenewalService) getAutoRenewalConfigs() ([]*AutoRenewalConfig, er
 }
 
 // processAutoRenewal processes the automatic renewal for a specific file
-func (ars *AutoRenewalService) processAutoRenewal(config *AutoRenewalConfig) error {
-	renewReq := &RenewRequest{
-		CID:       config.FileHash,
-		Token:     config.Token.String(),
-		Price:     uint64(config.Price),
-		ShardId:   config.ShardId,
-		RenterID:  ars.ctxParams.N.Identity,
-		ShardSize: int64(config.ShardSize),
-		SpId:      config.SpId,
-	}
+func (ars *AutoRenewalService) processAutoRenewal(config *RenewalInfo) error {
+	for _, s := range config.ShardsInfo {
+		renewReq := &RenewRequest{
+			CID:         config.CID,
+			Token:       config.Token.String(),
+			Price:       uint64(config.Price),
+			Duration:    config.RenewalDuration,
+			SpId:        s.SPId,
+			RenterID:    ars.ctxParams.N.Identity,
+			ShardId:     s.ShardId,
+			ShardSize:   int64(s.ShardSize),
+			OriginalEnd: config.NextRenewalAt,
+			NewEnd:      config.NextRenewalAt.Add(time.Duration(config.RenewalDuration) * time.Hour * 24),
+		}
 
-	// Execute renewal
-	_, err := executeRenewal(ars.ctxParams, renewReq)
-	if err != nil {
-		return fmt.Errorf("renewal execution failed: %v", err)
+		// Execute renewal
+		_, err := executeRenewal(ars.ctxParams, renewReq)
+		if err != nil {
+			return fmt.Errorf("renewal execution failed: %v", err)
+		}
 	}
 
 	return nil
 }
 
 // updateAutoRenewalConfig updates an auto-renewal configuration
-func (ars *AutoRenewalService) updateAutoRenewalConfig(config *AutoRenewalConfig) error {
-	configKey := fmt.Sprintf("/btfs/%s/autorenew/%s", ars.ctxParams.N.Identity.String(), config.FileHash)
+func (ars *AutoRenewalService) updateAutoRenewalConfig(config *RenewalInfo) error {
+	configKey := fmt.Sprintf("/btfs/%s/autorenew/%s", ars.ctxParams.N.Identity.String(), config.CID)
 
 	configData, err := json.Marshal(config)
 	if err != nil {
@@ -208,7 +219,7 @@ func (ars *AutoRenewalService) updateAutoRenewalConfig(config *AutoRenewalConfig
 }
 
 // GetAutoRenewalStatus returns the status of auto-renewal for a specific file
-func (ars *AutoRenewalService) GetAutoRenewalStatus(fileHash string) (*AutoRenewalConfig, error) {
+func (ars *AutoRenewalService) GetAutoRenewalStatus(fileHash string) (*RenewalInfo, error) {
 	configKey := fmt.Sprintf("/btfs/%s/autorenew/%s", ars.ctxParams.N.Identity.String(), fileHash)
 
 	data, err := ars.ctxParams.N.Repo.Datastore().Get(ars.ctx, datastore.NewKey(configKey))
@@ -219,7 +230,7 @@ func (ars *AutoRenewalService) GetAutoRenewalStatus(fileHash string) (*AutoRenew
 		return nil, err
 	}
 
-	var config AutoRenewalConfig
+	var config RenewalInfo
 	err = json.Unmarshal(data, &config)
 	if err != nil {
 		return nil, err

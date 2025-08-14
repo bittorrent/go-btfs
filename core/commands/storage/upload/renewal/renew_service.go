@@ -61,7 +61,13 @@ Example:
 			return err
 		}
 
-		status := GetRenewalServiceStatus()
+		// Get context parameters
+		ctxParams, err := uh.ExtractContextParams(req, env)
+		if err != nil {
+			return err
+		}
+
+		status := GetRenewalServiceStatus(ctxParams)
 		return res.Emit(status)
 	},
 	Type: ServiceStatus{},
@@ -135,8 +141,14 @@ Example:
 			return err
 		}
 
+		// Get context parameters
+		ctxParams, err := uh.ExtractContextParams(req, env)
+		if err != nil {
+			return err
+		}
+
 		// Stop the service
-		err = ShutdownRenewalService()
+		err = ShutdownRenewalService(ctxParams)
 		if err != nil {
 			return err
 		}

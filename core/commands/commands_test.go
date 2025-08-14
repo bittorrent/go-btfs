@@ -303,7 +303,7 @@ func TestCommands(t *testing.T) {
 		"/storage/upload/renew",
 		"/storage/upload/renew/enable",
 		"/storage/upload/renew/disable",
-		"/storage/upload/renew/status",
+		"/storage/upload/renew/info",
 		"/storage/upload/renew/list",
 		"/storage/upload/renew/service",
 		"/storage/upload/renew/service/start",

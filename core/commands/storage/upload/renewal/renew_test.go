@@ -68,13 +68,13 @@ func TestRenewRequest_Validation(t *testing.T) {
 func TestAutoRenewalConfig_Validation(t *testing.T) {
 	tests := []struct {
 		name   string
-		config *AutoRenewalConfig
+		config *RenewalInfo
 		valid  bool
 	}{
 		{
 			name: "valid config",
-			config: &AutoRenewalConfig{
-				FileHash:        "QmTestHash",
+			config: &RenewalInfo{
+				CID:             "QmTestHash",
 				SessionID:       "test-session-id",
 				RenewalDuration: 30,
 				Token:           common.HexToAddress("0x1234567890123456789012345678901234567890"),
@@ -87,8 +87,8 @@ func TestAutoRenewalConfig_Validation(t *testing.T) {
 		},
 		{
 			name: "invalid duration",
-			config: &AutoRenewalConfig{
-				FileHash:        "QmTestHash",
+			config: &RenewalInfo{
+				CID:             "QmTestHash",
 				SessionID:       "test-session-id",
 				RenewalDuration: -1, // Invalid: negative duration
 				Token:           common.HexToAddress("0x1234567890123456789012345678901234567890"),
@@ -193,7 +193,7 @@ func validateRenewRequest(req *RenewRequest) error {
 	return nil
 }
 
-func validateAutoRenewalConfig(config *AutoRenewalConfig) error {
+func validateAutoRenewalConfig(config *RenewalInfo) error {
 	if config.RenewalDuration <= 0 {
 		return fmt.Errorf("renewal duration must be positive")
 	}
@@ -234,8 +234,8 @@ func BenchmarkRenewalCostCalculation(b *testing.B) {
 }
 
 func BenchmarkAutoRenewalConfigValidation(b *testing.B) {
-	config := &AutoRenewalConfig{
-		FileHash:        "QmTestHash",
+	config := &RenewalInfo{
+		CID:             "QmTestHash",
 		SessionID:       "test-session-id",
 		RenewalDuration: 30,
 		Token:           common.HexToAddress("0x1234567890123456789012345678901234567890"),

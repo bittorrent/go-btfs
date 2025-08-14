@@ -14,15 +14,29 @@ import (
 	"github.com/ipfs/go-datastore/query"
 )
 
+const (
+	filterOptionName = "filter"
+)
+
+const (
+	RenewTypeAll    = "all"
+	RenewTypeAuto   = "auto"
+	RenewTypeManual = "manual"
+)
+
+var (
+	renewKeyPrefix = "/btfs/%s/renew/"
+	autoRenewKey   = renewKeyPrefix + "auto"
+	manualRenewKey = renewKeyPrefix + "manual"
+)
+
 // RenewStatusResponse represents the status of a renewal operation
 type RenewStatusResponse struct {
 	FileHash  string    `json:"file_hash"`
-	Status    string    `json:"status"`
 	Duration  int       `json:"duration"`
 	TotalCost int64     `json:"total_cost"`
 	CreatedAt time.Time `json:"created_at"`
 	ExpiresAt time.Time `json:"expires_at"`
-	Message   string    `json:"message"`
 }
 
 // RenewListResponse represents a list of renewals
@@ -31,19 +45,22 @@ type RenewListResponse struct {
 	Total    int                   `json:"total"`
 }
 
-// StorageRenewStatusCmd checks the status of a specific renewal
-var StorageRenewStatusCmd = &cmds.Command{
+// StorageRenewInfoCmd checks the status of a specific renewal
+var StorageRenewInfoCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Check the status of a storage renewal for a specific CID.",
 		ShortDescription: `
 This command checks the status of a storage renewal for a specific CID.
 
 Example:
-    $ btfs storage upload renew status <cid>
+    $ btfs storage upload renew info <cid>
 `,
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("cid", true, false, "CID of the renewal file to check."),
+	},
+	Options: []cmds.Option{
+		cmds.StringOption(filterOptionName, "-f", "Filter renewals by type [auto|manual]").WithDefault(RenewTypeAuto),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		_, err := cmdenv.GetNode(env)
@@ -65,7 +82,7 @@ Example:
 		}
 
 		// Get renewal information
-		renewalInfo, err := getRenewalInfo(ctxParams, renewalCID)
+		renewalInfo, err := getRenewalInfo(ctxParams, renewalCID, req.Options[filterOptionName].(string))
 		if err != nil {
 			return fmt.Errorf("failed to get renewal info: %v", err)
 		}
@@ -74,20 +91,9 @@ Example:
 			return fmt.Errorf("renewal cid not found: %s", renewalCID)
 		}
 
-		// Create status response
-		status := &RenewStatusResponse{
-			FileHash:  renewalInfo.CID,
-			Status:    "completed", // TODO: Implement actual status tracking
-			Duration:  renewalInfo.Duration,
-			TotalCost: renewalInfo.TotalCost,
-			CreatedAt: time.Now(), // TODO: Store actual creation time
-			ExpiresAt: renewalInfo.NewEnd,
-			Message:   fmt.Sprintf("Renewal for file %s is active", renewalInfo.CID),
-		}
-
-		return res.Emit(status)
+		return res.Emit(renewalInfo)
 	},
-	Type: RenewStatusResponse{},
+	Type: RenewalInfo{},
 }
 
 // StorageRenewListCmd lists all renewals for the current node
@@ -100,6 +106,9 @@ This command lists all storage renewal operations performed by the current node.
 Example:
     $ btfs storage upload renew list
 `,
+	},
+	Options: []cmds.Option{
+		cmds.StringOption(filterOptionName, "-f", "Filter renewals by type [all|auto|manual]").WithDefault("all"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		_, err := cmdenv.GetNode(env)
@@ -119,7 +128,7 @@ Example:
 		}
 
 		// Get all renewals
-		renewals, err := getAllRenewals(ctxParams)
+		renewals, err := getRenewalsFiles(ctxParams, req.Options[filterOptionName].(string))
 		if err != nil {
 			return fmt.Errorf("failed to get renewals: %v", err)
 		}
@@ -200,9 +209,37 @@ Example:
 	},
 }
 
+// StoreRenewalInfo stores auto-renewal configuration for a file
+func StoreRenewalInfo(ctxParams *uh.ContextParams, info *RenewalInfo, renewType string) error {
+
+	if renewType != RenewTypeAuto && renewType != RenewTypeManual {
+		return fmt.Errorf("invalid filter type: %s", renewType)
+	}
+	configKey := fmt.Sprintf(autoRenewKey+"/%s", ctxParams.N.Identity.String(), info.CID)
+	if renewType == RenewTypeManual {
+		configKey = fmt.Sprintf(manualRenewKey+"/%s", ctxParams.N.Identity.String(), info.CID)
+	}
+
+	configData, err := json.Marshal(info)
+	if err != nil {
+		return err
+	}
+
+	return ctxParams.N.Repo.Datastore().Put(ctxParams.Ctx, datastore.NewKey(configKey), configData)
+}
+
 // getRenewalInfo retrieves renewal information from datastore
-func getRenewalInfo(ctxParams *uh.ContextParams, cid string) (*RenewRequest, error) {
-	renewalKey := fmt.Sprintf("/btfs/%s/renewals/%s", ctxParams.N.Identity.String(), cid)
+func getRenewalInfo(ctxParams *uh.ContextParams, cid string, renewType string) (*RenewalInfo, error) {
+	if renewType != RenewTypeAuto && renewType != RenewTypeManual {
+		return nil, fmt.Errorf("invalid filter type: %s", renewType)
+	}
+	if cid == "" {
+		return nil, fmt.Errorf("cid cannot be empty")
+	}
+	renewalKey := fmt.Sprintf(autoRenewKey+"/%s", ctxParams.N.Identity.String(), cid)
+	if renewType == RenewTypeManual {
+		renewalKey = fmt.Sprintf(manualRenewKey+"/%s", ctxParams.N.Identity.String(), cid)
+	}
 
 	data, err := ctxParams.N.Repo.Datastore().Get(ctxParams.Ctx, datastore.NewKey(renewalKey))
 	if err != nil {
@@ -212,7 +249,7 @@ func getRenewalInfo(ctxParams *uh.ContextParams, cid string) (*RenewRequest, err
 		return nil, err
 	}
 
-	var renewalInfo RenewRequest
+	var renewalInfo RenewalInfo
 	err = json.Unmarshal(data, &renewalInfo)
 	if err != nil {
 		return nil, err
@@ -221,9 +258,20 @@ func getRenewalInfo(ctxParams *uh.ContextParams, cid string) (*RenewRequest, err
 	return &renewalInfo, nil
 }
 
-// getAllRenewals retrieves all renewal information for the current node
-func getAllRenewals(ctxParams *uh.ContextParams) ([]RenewStatusResponse, error) {
-	prefix := fmt.Sprintf("/btfs/%s/renewals/", ctxParams.N.Identity.String())
+// getRenewalsFiles retrieves all renewal information for the current node
+func getRenewalsFiles(ctxParams *uh.ContextParams, filterType string) ([]RenewStatusResponse, error) {
+	if filterType != RenewTypeAll && filterType != RenewTypeAuto && filterType != RenewTypeManual {
+		return nil, fmt.Errorf("invalid filter type: %s", filterType)
+	}
+
+	prefix := fmt.Sprintf(renewKeyPrefix, ctxParams.N.Identity.String())
+	if filterType == RenewTypeAuto {
+		prefix = fmt.Sprintf(autoRenewKey, ctxParams.N.Identity.String())
+	}
+	if filterType == RenewTypeManual {
+		prefix = fmt.Sprintf(manualRenewKey, ctxParams.N.Identity.String())
+	}
+
 	q := query.Query{
 		Prefix: prefix,
 	}
@@ -248,12 +296,10 @@ func getAllRenewals(ctxParams *uh.ContextParams) ([]RenewStatusResponse, error) 
 
 		status := RenewStatusResponse{
 			FileHash:  renewalInfo.CID,
-			Status:    "completed", // TODO: Implement actual status tracking
 			Duration:  renewalInfo.Duration,
 			TotalCost: renewalInfo.TotalCost,
 			CreatedAt: time.Now(), // TODO: Store actual creation time
 			ExpiresAt: renewalInfo.NewEnd,
-			Message:   fmt.Sprintf("Renewal for file %s is active", renewalInfo.CID),
 		}
 
 		renewals = append(renewals, status)

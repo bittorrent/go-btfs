@@ -8,10 +8,12 @@ import (
 	"math/big"
 	"time"
 
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 	"github.com/bittorrent/go-btfs/settlement/swap/vault"
 	"github.com/bittorrent/go-btfs/utils"
 
@@ -36,10 +38,10 @@ type RenewRequest struct {
 	Token       string    `json:"token"`
 	Price       uint64    `json:"price"`
 	Duration    int       `json:"duration"`
-	ShardSize   int64     `json:"shard_size"`
-	ShardId     string    `json:"shard_id"`
 	SpId        string    `json:"sp_id"`
 	RenterID    peer.ID   `json:"renter_id"`
+	ShardId     string    `json:"shard_id"`
+	ShardSize   int64     `json:"shard_size"`
 	OriginalEnd time.Time `json:"original_end"`
 	NewEnd      time.Time `json:"new_end"`
 	TotalCost   int64     `json:"total_cost"`
@@ -48,17 +50,15 @@ type RenewRequest struct {
 // RenewResponse represents the response of a renewal operation
 type RenewResponse struct {
 	Success       bool      `json:"success"`
-	SessionID     string    `json:"session_id"`
-	FileHash      string    `json:"file_hash"`
+	CID           string    `json:"cid"`
 	NewExpiration time.Time `json:"new_expiration"`
 	TotalCost     int64     `json:"total_cost"`
-	Message       string    `json:"message"`
 }
 
 // StorageRenewCmd implements the storage renew command
 var StorageRenewCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Renew storage duration for uploaded files.",
+		Tagline: "Renew storage duration for uploaded files but not set auto-renewed.",
 		ShortDescription: `
 This command allows users to extend the storage duration of previously uploaded files
 without re-uploading the content. The renewal extends the storage contract with
@@ -75,7 +75,7 @@ Examples:
 	Subcommands: map[string]*cmds.Command{
 		"enable":  StorageRenewEnableCmd,
 		"disable": StorageRenewDisableCmd,
-		"status":  StorageRenewStatusCmd,
+		"info":    StorageRenewInfoCmd,
 		"list":    StorageRenewListCmd,
 		"service": StorageRenewServiceCmd,
 	},
@@ -121,7 +121,7 @@ Examples:
 		}
 
 		// check if the cid enabled autorenew
-		info, err := getRenewalInfo(ctxParams, cid)
+		info, err := getRenewalInfo(ctxParams, cid, "auto")
 		if err != nil {
 			return err
 		}
@@ -145,24 +145,44 @@ Examples:
 			}
 		}
 
-		// Create renewal request
-		renewReq := &RenewRequest{
-			CID:         cid,
-			Duration:    duration,
-			Token:       tokenStr,
-			Price:       uint64(price),
-			RenterID:    ctxParams.N.Identity,
-			OriginalEnd: time.Now().Add(time.Duration(duration) * 24 * time.Hour), // This should be calculated from existing contract
-			NewEnd:      time.Now().Add(time.Duration(duration) * 24 * time.Hour),
-		}
-
-		// Execute renewal
-		renewResp, err := executeRenewal(ctxParams, renewReq)
+		contracts, err := sessions.ListShardsContracts(ctxParams.N.Repo.Datastore(), ctxParams.N.Identity.String(), nodepb.ContractStat_RENTER.String())
 		if err != nil {
-			return fmt.Errorf("renewal failed: %v", err)
+			return fmt.Errorf("failed to get shard contract, you can sync first, then try it again")
 		}
 
-		return res.Emit(renewResp)
+		// TODO GetUserContract
+		for _, c := range contracts {
+			// Create renewal request
+			renewReq := &RenewRequest{
+				CID:         cid,
+				Token:       tokenStr,
+				Price:       uint64(price),
+				Duration:    duration,
+				SpId:        c.Meta.SpId,
+				RenterID:    ctxParams.N.Identity,
+				ShardId:     c.Meta.ShardHash,
+				ShardSize:   int64(c.Meta.ShardSize),
+				OriginalEnd: time.Now().Add(time.Duration(duration) * 24 * time.Hour), // This should be calculated from existing contract
+				NewEnd:      time.Now().Add(time.Duration(duration) * 24 * time.Hour),
+			}
+
+			_, err := executeRenewal(ctxParams, renewReq)
+			if err != nil {
+				return fmt.Errorf("renewal failed: %v", err)
+			}
+
+		}
+
+		info = &RenewalInfo{}
+		StoreRenewalInfo(ctxParams, info, "manual")
+
+		// TODO
+		return res.Emit(RenewResponse{
+			Success:       true,
+			CID:           cid,
+			NewExpiration: time.Now(),
+			TotalCost:     0,
+		})
 	},
 	Type: RenewResponse{},
 }
@@ -195,10 +215,9 @@ func executeRenewal(ctxParams *uh.ContextParams, renewReq *RenewRequest) (*Renew
 
 	return &RenewResponse{
 		Success:       true,
-		FileHash:      renewReq.CID,
+		CID:           renewReq.CID,
 		NewExpiration: renewReq.NewEnd,
 		TotalCost:     totalCost,
-		Message:       fmt.Sprintf("File %s renewed successfully for %d days", renewReq.CID, renewReq.Duration),
 	}, nil
 }
 
@@ -326,42 +345,22 @@ func storeRenewalChequeInfo(ctxParams *uh.ContextParams, providerID, shardHash s
 // Note: We no longer use contract-based renewal. Instead, we directly issue cheques to providers.
 // This simplifies the renewal process and avoids the complexity of contract renegotiation.
 
-// AutoRenewalConfig represents auto-renewal configuration for a file
-type AutoRenewalConfig struct {
-	FileHash        string         `json:"file_hash"`
-	SessionID       string         `json:"session_id"`
-	SpId            string         `json:"sp_id"`
-	ShardId         string         `json:"shard_id"`
-	ShardSize       int            `json:"shard_size"`
-	RenewalDuration int            `json:"renewal_duration"`
-	Token           common.Address `json:"token"`
-	Price           int64          `json:"price"`
-	Enabled         bool           `json:"enabled"`
-	CreatedAt       time.Time      `json:"created_at"`
-	LastRenewalAt   *time.Time     `json:"last_renewal_at,omitempty"`
-	NextRenewalAt   time.Time      `json:"next_renewal_at"`
+// RenewalInfo represents auto-renewal configuration for a file
+type RenewalShardInfo struct {
+	ShardId   string `json:"shard_id"`
+	ShardSize int    `jons:"shard_size"`
+	SPId      string `json:"sp_id"`
 }
-
-// StoreAutoRenewalConfig stores auto-renewal configuration for a file
-func StoreAutoRenewalConfig(ctxParams *uh.ContextParams, fileHash string, duration int, token common.Address, price int64) error {
-	config := &AutoRenewalConfig{
-		FileHash:        fileHash,
-		RenewalDuration: duration,
-		Token:           token,
-		Price:           price,
-		Enabled:         true,
-		CreatedAt:       time.Now(),
-		NextRenewalAt:   time.Now().Add(time.Duration(duration) * 24 * time.Hour),
-	}
-
-	configKey := fmt.Sprintf("/btfs/%s/autorenew/%s", ctxParams.N.Identity.String(), fileHash)
-
-	configData, err := json.Marshal(config)
-	if err != nil {
-		return err
-	}
-
-	return ctxParams.N.Repo.Datastore().Put(ctxParams.Ctx, datastore.NewKey(configKey), configData)
+type RenewalInfo struct {
+	CID             string             `json:"cid"`
+	ShardsInfo      []RenewalShardInfo `json:"shards_info"`
+	RenewalDuration int                `json:"renewal_duration"`
+	Token           common.Address     `json:"token"`
+	Price           int64              `json:"price"`
+	Enabled         bool               `json:"enabled"` // if auto renew is enabled
+	CreatedAt       time.Time          `json:"created_at"`
+	LastRenewalAt   *time.Time         `json:"last_renewal_at,omitempty"`
+	NextRenewalAt   time.Time          `json:"next_renewal_at"`
 }
 
 func checkAvailableBalance(ctx context.Context, amount int64, token common.Address) error {
