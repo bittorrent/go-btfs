@@ -42,6 +42,7 @@ type RenewRequest struct {
 	RenterID    peer.ID        `json:"renter_id"`
 	ShardId     string         `json:"shard_id"`
 	ShardSize   int64          `json:"shard_size"`
+	ContractId  string         `json:"contract_id"`
 	OriginalEnd time.Time      `json:"original_end"`
 	NewEnd      time.Time      `json:"new_end"`
 	TotalCost   int64          `json:"total_cost"`
@@ -170,6 +171,7 @@ Examples:
 				RenterID:    ctxParams.N.Identity,
 				ShardId:     c.Meta.ShardHash,
 				ShardSize:   int64(c.Meta.ShardSize),
+				ContractId:  c.Meta.ContractId,
 				OriginalEnd: time.Unix(int64(c.Meta.StorageEnd), 0),
 				NewEnd:      time.Unix(int64(c.Meta.StorageEnd), 0).Add(time.Duration(duration) * 24 * time.Hour), // This should be calculated from existing contract
 			}
@@ -220,7 +222,7 @@ func executeRenewal(ctxParams *uh.ContextParams, renewReq *RenewRequest) (*Renew
 	}
 
 	// Execute renewal with storage providers
-	err = payRenewalCheque(ctxParams, renewReq, renewReq.ShardId, totalCost)
+	err = payRenewalCheque(ctxParams, renewReq, totalCost)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute renewal with providers: %v", err)
 	}
@@ -234,7 +236,7 @@ func executeRenewal(ctxParams *uh.ContextParams, renewReq *RenewRequest) (*Renew
 }
 
 // payRenewalCheque pays renewal fee directly via cheque to storage provider
-func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, shardHash string, paymentAmount int64) error {
+func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, paymentAmount int64) error {
 	// Get the original shard contract to find the storage provider
 	// Get storage provider ID
 	spId := renewReq.SpId
@@ -242,7 +244,7 @@ func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, shard
 		return fmt.Errorf("no storage provider ID found in contract")
 	}
 
-	log.Infof("Paying renewal cheque for shard %s to sp %s, amount: %d", shardHash, spId, paymentAmount)
+	log.Infof("Paying renewal cheque for shard %s to sp %s, amount: %d", renewReq.ShardId, spId, paymentAmount)
 
 	// Check available balance before issuing cheque
 	err := checkAvailableBalance(ctxParams.Ctx, paymentAmount, renewReq.Token)
@@ -251,7 +253,7 @@ func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, shard
 	}
 
 	// Issue cheque directly to storage provider for renewal
-	err = issueRenewalCheque(ctxParams, spId, paymentAmount, renewReq.Token, shardHash, renewReq.Duration)
+	err = issueRenewalCheque(ctxParams, spId, paymentAmount, renewReq.Token, renewReq.ShardId, renewReq.Duration, renewReq.ContractId)
 	if err != nil {
 		return fmt.Errorf("failed to issue renewal cheque to provider %s: %v", spId, err)
 	}
@@ -263,12 +265,12 @@ func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, shard
 	// 	// Don't fail the payment for info update issues
 	// }
 
-	log.Infof("Successfully issued renewal cheque for shard %s", shardHash)
+	log.Infof("Successfully issued renewal cheque for shard %s", renewReq.ShardId)
 	return nil
 }
 
 // issueRenewalCheque issues a cheque directly to storage provider for renewal payment
-func issueRenewalCheque(ctxParams *uh.ContextParams, providerID string, amount int64, token common.Address, shardHash string, duration int) error {
+func issueRenewalCheque(ctxParams *uh.ContextParams, providerID string, amount int64, token common.Address, shardHash string, duration int, contractId string) error {
 	log.Infof("Issuing renewal cheque to provider %s for shard %s, amount: %d, duration: %d days", providerID, shardHash, amount, duration)
 
 	// Get settlement service
@@ -280,7 +282,7 @@ func issueRenewalCheque(ctxParams *uh.ContextParams, providerID string, amount i
 	paymentAmount := big.NewInt(amount)
 
 	// Generate a renewal contract ID for tracking
-	renewalContractID := fmt.Sprintf("renewal_%s_%s_%d", shardHash, providerID, time.Now().Unix())
+	renewalContractID := fmt.Sprintf("renewal_%d_%s", duration, contractId)
 
 	// Issue cheque through settlement service
 	// This directly pays the provider without creating a new contract

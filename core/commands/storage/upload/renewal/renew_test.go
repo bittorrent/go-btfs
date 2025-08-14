@@ -22,7 +22,7 @@ func TestRenewRequest_Validation(t *testing.T) {
 			request: &RenewRequest{
 				CID:         "QmTestHash",
 				Duration:    30,
-				Token:       "0x1234567890123456789012345678901234567890",
+				Token:       common.HexToAddress("0x1234567890123456789012345678901234567890"),
 				Price:       1000,
 				RenterID:    "12D3KooWTest",
 				OriginalEnd: time.Now().Add(24 * time.Hour),
@@ -36,7 +36,7 @@ func TestRenewRequest_Validation(t *testing.T) {
 			request: &RenewRequest{
 				CID:      "QmTestHash",
 				Duration: 0, // Invalid: zero duration
-				Token:    "0x1234567890123456789012345678901234567890",
+				Token:    common.HexToAddress("0x1234567890123456789012345678901234567890"),
 				Price:    1000,
 			},
 			wantErr: true,
@@ -46,7 +46,7 @@ func TestRenewRequest_Validation(t *testing.T) {
 			request: &RenewRequest{
 				CID:      "", // Invalid: empty file hash
 				Duration: 30,
-				Token:    "0x1234567890123456789012345678901234567890",
+				Token:    common.HexToAddress("0x1234567890123456789012345678901234567890"),
 				Price:    1000,
 			},
 			wantErr: true,
@@ -75,7 +75,6 @@ func TestAutoRenewalConfig_Validation(t *testing.T) {
 			name: "valid config",
 			config: &RenewalInfo{
 				CID:             "QmTestHash",
-				SessionID:       "test-session-id",
 				RenewalDuration: 30,
 				Token:           common.HexToAddress("0x1234567890123456789012345678901234567890"),
 				Price:           1000,
@@ -89,7 +88,6 @@ func TestAutoRenewalConfig_Validation(t *testing.T) {
 			name: "invalid duration",
 			config: &RenewalInfo{
 				CID:             "QmTestHash",
-				SessionID:       "test-session-id",
 				RenewalDuration: -1, // Invalid: negative duration
 				Token:           common.HexToAddress("0x1234567890123456789012345678901234567890"),
 				Price:           1000,
@@ -236,7 +234,6 @@ func BenchmarkRenewalCostCalculation(b *testing.B) {
 func BenchmarkAutoRenewalConfigValidation(b *testing.B) {
 	config := &RenewalInfo{
 		CID:             "QmTestHash",
-		SessionID:       "test-session-id",
 		RenewalDuration: 30,
 		Token:           common.HexToAddress("0x1234567890123456789012345678901234567890"),
 		Price:           1000,
