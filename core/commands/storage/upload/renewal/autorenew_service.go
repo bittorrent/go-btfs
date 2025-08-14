@@ -185,7 +185,7 @@ func (ars *AutoRenewalService) processAutoRenewal(config *RenewalInfo) error {
 	for _, s := range config.ShardsInfo {
 		renewReq := &RenewRequest{
 			CID:         config.CID,
-			Token:       config.Token.String(),
+			Token:       config.Token,
 			Price:       uint64(config.Price),
 			Duration:    config.RenewalDuration,
 			SpId:        s.SPId,

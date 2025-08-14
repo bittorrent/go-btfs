@@ -34,17 +34,17 @@ const (
 
 // RenewRequest represents a file renewal request
 type RenewRequest struct {
-	CID         string    `json:"cid"`
-	Token       string    `json:"token"`
-	Price       uint64    `json:"price"`
-	Duration    int       `json:"duration"`
-	SpId        string    `json:"sp_id"`
-	RenterID    peer.ID   `json:"renter_id"`
-	ShardId     string    `json:"shard_id"`
-	ShardSize   int64     `json:"shard_size"`
-	OriginalEnd time.Time `json:"original_end"`
-	NewEnd      time.Time `json:"new_end"`
-	TotalCost   int64     `json:"total_cost"`
+	CID         string         `json:"cid"`
+	Token       common.Address `json:"token"`
+	Price       uint64         `json:"price"`
+	Duration    int            `json:"duration"`
+	SpId        string         `json:"sp_id"`
+	RenterID    peer.ID        `json:"renter_id"`
+	ShardId     string         `json:"shard_id"`
+	ShardSize   int64          `json:"shard_size"`
+	OriginalEnd time.Time      `json:"original_end"`
+	NewEnd      time.Time      `json:"new_end"`
+	TotalCost   int64          `json:"total_cost"`
 }
 
 // RenewResponse represents the response of a renewal operation
@@ -129,7 +129,7 @@ Examples:
 			return fmt.Errorf("file %s is already auto-renewed and cannot be renewed manually", cid)
 		}
 		// Get token address
-		_, exists := tokencfg.MpTokenAddr[tokenStr]
+		token, exists := tokencfg.MpTokenAddr[tokenStr]
 		if !exists {
 			return fmt.Errorf("invalid token type: %s", tokenStr)
 		}
@@ -150,38 +150,50 @@ Examples:
 			return fmt.Errorf("failed to get shard contract, you can sync first, then try it again")
 		}
 
-		// TODO GetUserContract
+		var totalCost int64
 		for _, c := range contracts {
-			// Create renewal request
+			fileHash, err := ctxParams.N.Repo.Datastore().Get(ctxParams.Ctx, datastore.NewKey(
+				fmt.Sprintf(userFileShard, ctxParams.N.Identity, c.Meta.ContractId)))
+			if err != nil {
+				return fmt.Errorf("failed to get file hash for contract %s: %v", c.Meta.ContractId, err)
+			}
+			if cid != string(fileHash) {
+				continue
+			}
+
 			renewReq := &RenewRequest{
 				CID:         cid,
-				Token:       tokenStr,
+				Token:       token,
 				Price:       uint64(price),
 				Duration:    duration,
 				SpId:        c.Meta.SpId,
 				RenterID:    ctxParams.N.Identity,
 				ShardId:     c.Meta.ShardHash,
 				ShardSize:   int64(c.Meta.ShardSize),
-				OriginalEnd: time.Now().Add(time.Duration(duration) * 24 * time.Hour), // This should be calculated from existing contract
-				NewEnd:      time.Now().Add(time.Duration(duration) * 24 * time.Hour),
+				OriginalEnd: time.Unix(int64(c.Meta.StorageEnd), 0),
+				NewEnd:      time.Unix(int64(c.Meta.StorageEnd), 0).Add(time.Duration(duration) * 24 * time.Hour), // This should be calculated from existing contract
 			}
 
-			_, err := executeRenewal(ctxParams, renewReq)
+			resp, err := executeRenewal(ctxParams, renewReq)
 			if err != nil {
 				return fmt.Errorf("renewal failed: %v", err)
 			}
 
+			totalCost += resp.TotalCost
+
 		}
 
-		info = &RenewalInfo{}
-		StoreRenewalInfo(ctxParams, info, "manual")
+		// TODO fill the field
+		info = &RenewalInfo{
+			CID: cid,
+		}
+		StoreRenewalInfo(ctxParams, info, RenewTypeManual)
 
-		// TODO
 		return res.Emit(RenewResponse{
 			Success:       true,
 			CID:           cid,
 			NewExpiration: time.Now(),
-			TotalCost:     0,
+			TotalCost:     totalCost,
 		})
 	},
 	Type: RenewResponse{},
@@ -190,7 +202,7 @@ Examples:
 // executeRenewal performs the actual renewal operation
 func executeRenewal(ctxParams *uh.ContextParams, renewReq *RenewRequest) (*RenewResponse, error) {
 	// Calculate total cost
-	rate, err := chain.SettleObject.OracleService.CurrentRate(common.HexToAddress(renewReq.Token))
+	rate, err := chain.SettleObject.OracleService.CurrentRate(renewReq.Token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token rate: %v", err)
 	}
@@ -203,7 +215,7 @@ func executeRenewal(ctxParams *uh.ContextParams, renewReq *RenewRequest) (*Renew
 	renewReq.TotalCost = totalCost
 
 	// Check available balance
-	if err := checkAvailableBalance(ctxParams.Ctx, totalCost, common.HexToAddress(renewReq.Token)); err != nil {
+	if err := checkAvailableBalance(ctxParams.Ctx, totalCost, renewReq.Token); err != nil {
 		return nil, fmt.Errorf("insufficient balance: %v", err)
 	}
 
@@ -233,13 +245,13 @@ func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, shard
 	log.Infof("Paying renewal cheque for shard %s to sp %s, amount: %d", shardHash, spId, paymentAmount)
 
 	// Check available balance before issuing cheque
-	err := checkAvailableBalance(ctxParams.Ctx, paymentAmount, common.HexToAddress(renewReq.Token))
+	err := checkAvailableBalance(ctxParams.Ctx, paymentAmount, renewReq.Token)
 	if err != nil {
 		return fmt.Errorf("insufficient balance for renewal payment: %v", err)
 	}
 
 	// Issue cheque directly to storage provider for renewal
-	err = issueRenewalCheque(ctxParams, spId, paymentAmount, common.HexToAddress(renewReq.Token), shardHash, renewReq.Duration)
+	err = issueRenewalCheque(ctxParams, spId, paymentAmount, renewReq.Token, shardHash, renewReq.Duration)
 	if err != nil {
 		return fmt.Errorf("failed to issue renewal cheque to provider %s: %v", spId, err)
 	}
