@@ -298,7 +298,7 @@ func getRenewalsFiles(ctxParams *uh.ContextParams, filterType string) ([]RenewSt
 			FileHash:  renewalInfo.CID,
 			Duration:  renewalInfo.Duration,
 			TotalCost: renewalInfo.TotalCost,
-			CreatedAt: time.Now(), // TODO: Store actual creation time
+			CreatedAt: time.Now(),
 			ExpiresAt: renewalInfo.NewEnd,
 		}
 

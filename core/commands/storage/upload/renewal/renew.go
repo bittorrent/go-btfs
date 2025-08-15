@@ -227,6 +227,11 @@ func executeRenewal(ctxParams *uh.ContextParams, renewReq *RenewRequest) (*Renew
 		return nil, fmt.Errorf("failed to execute renewal with providers: %v", err)
 	}
 
+	err = extendShardEndTime(ctxParams, renewReq.ContractId, renewReq.Duration)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extend shard end time: %v", err)
+	}
+
 	return &RenewResponse{
 		Success:       true,
 		CID:           renewReq.CID,
@@ -407,4 +412,21 @@ func getRealAmount(amount int64, token common.Address) (*big.Int, error) {
 
 	realAmount := big.NewInt(0).Mul(big.NewInt(amount), rateObj)
 	return realAmount, nil
+}
+
+func extendShardEndTime(ctxParams *uh.ContextParams, contractId string, duration int) error {
+	c, err := sessions.GetUserShardContract(ctxParams.N.Repo.Datastore(), ctxParams.N.Identity.String(), nodepb.ContractStat_RENTER.String(), contractId)
+	if err != nil {
+		return err
+	}
+
+	if c.Meta.ContractId == contractId {
+		c.Meta.StorageEnd = uint64(time.Unix(int64(c.Meta.StorageEnd), 0).Add(time.Duration(duration) * time.Hour * 24).Unix())
+		err := sessions.UpdateShardContract(ctxParams.N.Repo.Datastore(), c, ctxParams.N.Identity.String(), nodepb.ContractStat_RENTER.String())
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

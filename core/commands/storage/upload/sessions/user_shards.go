@@ -313,6 +313,21 @@ func UpdateShardContract(ds datastore.Datastore, sc *metadata.Contract, peerID, 
 	return Save(ds, fmt.Sprintf(key, peerID, sc.Meta.ContractId), sc)
 }
 
+func GetUserShardContract(ds datastore.Datastore, peerID string, role string, contractID string) (*metadata.Contract, error) {
+	key := ""
+	if role == nodepb.ContractStat_HOST.String() {
+		key = hostShardContractsKey
+	} else {
+		key = renterShardContractsKey
+	}
+	contract := &metadata.Contract{}
+	err := Get(ds, fmt.Sprintf(key, peerID, contractID), contract)
+	if err != nil {
+		return nil, err
+	}
+	return contract, nil
+}
+
 func RefreshLocalContracts(ctx context.Context, ds datastore.Datastore, all []*metadata.Contract, outdated []*metadata.Contract, peerID, role string) ([]string, error) {
 	newKeys := make([]string, 0)
 	newValues := make([]proto.Message, 0)
