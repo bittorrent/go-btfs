@@ -110,7 +110,7 @@ func provideKeys(ctx context.Context, r routing.Routing, cids []cid.Cid) error {
 func provideKeysRec(ctx context.Context, r routing.Routing, bs blockstore.Blockstore, cids []cid.Cid) error {
 	provided := cidutil.NewStreamingSet()
 
-	errCh := make(chan error)
+	errCh := make(chan error,1)
 	go func() {
 		dserv := dag.NewDAGService(blockservice.New(bs, offline.Exchange(bs)))
 		for _, c := range cids {
