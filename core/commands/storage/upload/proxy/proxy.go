@@ -1,4 +1,4 @@
-package upload
+package proxy
 
 import (
 	"context"
@@ -28,6 +28,10 @@ the shard and replies back to client for the next challenge step.`,
 		cmds.StringArg("proxy-id", true, false, "ProxyId for upload file"),
 		cmds.StringArg("file-hash", true, false, "Root file storage node should fetch (the DAG)."),
 	},
+	Subcommands: map[string]*cmds.Command{
+		"pay":        StorageUploadProxyPayCmd,
+		"notify-pay": StorageUploadProxyNotifyPayCmd,
+	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		fmt.Println("storage proxy do ..............")
@@ -45,6 +49,9 @@ the shard and replies back to client for the next challenge step.`,
 
 		fileHash := req.Arguments[0]
 
+		if !ctxParams.Cfg.Experimental.EnableProxyMode {
+			return errors.New("proxy mode is not enabled")
+		}
 		if req.Arguments[1] == ctxParams.N.Identity.String() {
 			// TODO check react as a proxy node
 			fileCid, err := cidlib.Parse(req.Arguments[0])
@@ -73,7 +80,7 @@ the shard and replies back to client for the next challenge step.`,
 
 		if len(shardHashes) == 0 && fileSize == -1 && shardSize == -1 &&
 			strings.HasPrefix(err.Error(), "invalid hash: file must be reed-solomon encoded") {
-			if copyNum, ok := req.Options[copyName].(int); ok {
+			if copyNum, ok := req.Options["copy"].(int); ok {
 				shardHashes, fileSize, shardSize, err = helper.GetShardHashesCopy(ctxParams, fileHash, copyNum)
 				fmt.Printf("copy get, shardHashes:%v fileSize:%v, shardSize:%v, copy:%v err:%v \n",
 					shardHashes, fileSize, shardSize, copyNum, err)

@@ -11,6 +11,7 @@ import (
 	ocmd "github.com/bittorrent/go-btfs/core/commands/object"
 	settlement "github.com/bittorrent/go-btfs/core/commands/settlements"
 	"github.com/bittorrent/go-btfs/core/commands/storage"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/proxy"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/upload"
 	"github.com/bittorrent/go-btfs/core/commands/vault"
 
@@ -248,7 +249,7 @@ var rootRemoteSubcommands = map[string]*cmds.Command{
 					"supporttokens": upload.StorageUploadSupportTokensCmd,
 					"recvcontract":  upload.StorageUploadRecvContractCmd,
 					"cheque":        upload.StorageUploadChequeCmd,
-					"proxy":         upload.StorageUploadProxyCmd,
+					"proxy":         proxy.StorageUploadProxyCmd,
 				},
 			},
 			"dcrepair": {

@@ -14,6 +14,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/hosts"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/offline"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/proxy"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 	renterpb "github.com/bittorrent/go-btfs/protos/renter"
@@ -93,7 +94,7 @@ Use status command to check for completion:
 		"signcontractbatch": offline.StorageUploadSignContractBatchCmd,
 		"getunsigned":       offline.StorageUploadGetUnsignedCmd,
 		"sign":              offline.StorageUploadSignCmd,
-		"proxy":             StorageUploadProxyCmd,
+		"proxy":             proxy.StorageUploadProxyCmd,
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("file-hash", true, false, "Hash of file to upload."),
