@@ -31,6 +31,7 @@ the shard and replies back to client for the next challenge step.`,
 	Subcommands: map[string]*cmds.Command{
 		"pay":        StorageUploadProxyPayCmd,
 		"notify-pay": StorageUploadProxyNotifyPayCmd,
+		"config":     StorageUploadProxyConfigCmd,
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
