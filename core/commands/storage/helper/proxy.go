@@ -3,14 +3,19 @@ package helper
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/bittorrent/go-btfs/core"
 	ds "github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-datastore/query"
 )
 
 const (
-	ProxyStorageInfoPrefix = "/proxy_storage/" // self or from network
+	ProxyStorageInfoPrefix           = "/proxy_storage/" // self or from network
+	ProxyStoragePaymentPrefix        = "/proxy_payment"  // self or from network
+	ProxyStoragePaymentBalancePrefix = "/proxy_payment_balance"
 )
 
 type ProxyStorageInfo struct {
@@ -43,4 +48,112 @@ func GetProxyStorageConfig(ctx context.Context, node *core.IpfsNode) (*ProxyStor
 
 func GetProxyStorageKey(pid string) ds.Key {
 	return NewKeyHelper(ProxyStorageInfoPrefix, pid)
+}
+
+type ProxyStoragePaymentInfo struct {
+	From    string
+	To      string
+	Value   uint64
+	Hash    string
+	PayTime int64
+	Balance uint64
+}
+
+func PutProxyStoragePayment(ctx context.Context, node *core.IpfsNode, ns *ProxyStoragePaymentInfo) error {
+	rds := node.Repo.Datastore()
+	b, err := json.Marshal(ns)
+	if err != nil {
+		return fmt.Errorf("cannot put current proxy storage settings: %s", err.Error())
+	}
+	return rds.Put(ctx, GetProxyStoragePaymentKey(node.Identity.String()+"/"+ns.From), b)
+}
+
+func GetProxyStoragePayment(ctx context.Context, node *core.IpfsNode) (*ProxyStoragePaymentInfo, error) {
+	rds := node.Repo.Datastore()
+	b, err := rds.Get(ctx, GetProxyStoragePaymentKey(node.Identity.String()))
+	if err != nil {
+		return nil, err
+	}
+	ns := new(ProxyStoragePaymentInfo)
+	err = json.Unmarshal(b, ns)
+	if err != nil {
+		return nil, err
+	}
+	return ns, nil
+}
+
+func ChargeBalance(ctx context.Context, node *core.IpfsNode, from string, value uint64) error {
+	rds := node.Repo.Datastore()
+	b, err := rds.Get(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+from))
+	if !errors.Is(err, ds.ErrNotFound) {
+		return err
+	}
+	if errors.Is(err, ds.ErrNotFound) {
+		return rds.Put(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+from), []byte(fmt.Sprintf("%d", value)))
+	}
+
+	balance, err := strconv.ParseUint(string(b), 10, 64)
+	if err != nil {
+		return err
+	}
+	balance += value
+	return rds.Put(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+from), []byte(fmt.Sprintf("%d", balance)))
+}
+
+func SubBalance(ctx context.Context, node *core.IpfsNode, from string, value uint64) error {
+	rds := node.Repo.Datastore()
+	b, err := rds.Get(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+from))
+	if err != nil {
+		return err
+	}
+	balance, err := strconv.ParseUint(string(b), 10, 64)
+	if err != nil {
+		return err
+	}
+	balance -= value
+	return rds.Put(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+from), []byte(fmt.Sprintf("%d", balance)))
+}
+
+func GetBalance(ctx context.Context, node *core.IpfsNode, from string) (uint64, error) {
+	rds := node.Repo.Datastore()
+	b, err := rds.Get(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+from))
+	if err != nil {
+		return 0, err
+	}
+	balance, err := strconv.ParseUint(string(b), 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return balance, nil
+}
+
+func GetBalanceList(ctx context.Context, node *core.IpfsNode) (map[string]uint64, error) {
+	rds := node.Repo.Datastore()
+	qr, err := rds.Query(ctx, query.Query{
+		Prefix: GetProxyStoragePaymentBalanceKey(node.Identity.String()).String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	ret := make(map[string]uint64)
+	for r := range qr.Next() {
+		if r.Error != nil {
+			return nil, r.Error
+		}
+		balance, err := strconv.ParseUint(string(r.Entry.Value), 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		ret[r.Entry.Key] = balance
+	}
+	return ret, nil
+}
+
+func GetProxyStoragePaymentKey(peerId string) ds.Key {
+	return NewKeyHelper(ProxyStoragePaymentPrefix, peerId)
+}
+
+func GetProxyStoragePaymentBalanceKey(peerId string) ds.Key {
+	return NewKeyHelper(ProxyStoragePaymentBalancePrefix, peerId)
 }

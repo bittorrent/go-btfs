@@ -1,11 +1,12 @@
 package proxy
 
 import (
-	"fmt"
-
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 var StorageUploadProxyNotifyPayCmd = &cmds.Command{
@@ -21,19 +22,36 @@ This command is used to notify the proxy that the payment has been made.
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		hash := req.Arguments[0]
 		txHash := common.HexToHash(hash)
-		tx, isPending, err := chain.ChainObject.Backend.TransactionByHash(req.Context, txHash)
+		tx, _, err := chain.ChainObject.Backend.TransactionByHash(req.Context, txHash)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("tx hash:", tx.Hash().Hex())
-		fmt.Println("is pending:", isPending)
-		fmt.Println("To:", tx.To().Hex())
-		fmt.Println("Value:", tx.Value().String())
-		fmt.Println("Gas Limit:", tx.Gas())
-		fmt.Println("Gas Price:", tx.GasPrice())
+		tx.ChainId()
+		signer := types.NewEIP155Signer(tx.ChainId())
+		from, err := types.Sender(signer, tx)
+		if err != nil {
+			return err
+		}
+
+		currentBalance, err := helper.GetBalance(req.Context, env.(*core.IpfsNode), from.String())
+		if err != nil {
+			return err
+		}
+
+		err = helper.PutProxyStoragePayment(req.Context, env.(*core.IpfsNode), &helper.ProxyStoragePaymentInfo{
+			From:    from.String(),
+			Hash:    tx.Hash().Hex(),
+			PayTime: tx.Time().Unix(),
+			To:      tx.To().Hex(),
+			Value:   tx.Value().Uint64(),
+			Balance: currentBalance + tx.Value().Uint64(),
+		})
+
+		if err != nil {
+			return err
+		}
 
 		return nil
-
 	},
 }
