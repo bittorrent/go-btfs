@@ -82,22 +82,22 @@ func GetProxyStoragePayment(ctx context.Context, node *core.IpfsNode) (*ProxySto
 	return ns, nil
 }
 
-func ChargeBalance(ctx context.Context, node *core.IpfsNode, from string, value uint64) error {
+func ChargeBalance(ctx context.Context, node *core.IpfsNode, from string, value uint64) (uint64, error) {
 	rds := node.Repo.Datastore()
 	b, err := rds.Get(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+from))
 	if !errors.Is(err, ds.ErrNotFound) {
-		return err
+		return 0, err
 	}
 	if errors.Is(err, ds.ErrNotFound) {
-		return rds.Put(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+from), []byte(fmt.Sprintf("%d", value)))
+		return value, rds.Put(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+from), []byte(fmt.Sprintf("%d", value)))
 	}
 
 	balance, err := strconv.ParseUint(string(b), 10, 64)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	balance += value
-	return rds.Put(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+from), []byte(fmt.Sprintf("%d", balance)))
+	return balance, rds.Put(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+from), []byte(fmt.Sprintf("%d", balance)))
 }
 
 func SubBalance(ctx context.Context, node *core.IpfsNode, from string, value uint64) error {

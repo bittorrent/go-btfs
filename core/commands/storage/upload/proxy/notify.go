@@ -3,8 +3,10 @@ package proxy
 import (
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
-	"github.com/bittorrent/go-btfs/core"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	"github.com/bittorrent/go-btfs/utils"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -20,6 +22,19 @@ This command is used to notify the proxy that the payment has been made.
 		cmds.StringArg("hash", true, false, "The hash of the storage-upload-proxy-pay command."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		nd, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+
+		if !nd.IsOnline {
+			return coreiface.ErrOffline
+		}
+		// check simple mode
+		err = utils.CheckSimpleMode(env)
+		if err != nil {
+			return err
+		}
 		hash := req.Arguments[0]
 		txHash := common.HexToHash(hash)
 		tx, _, err := chain.ChainObject.Backend.TransactionByHash(req.Context, txHash)
@@ -34,18 +49,18 @@ This command is used to notify the proxy that the payment has been made.
 			return err
 		}
 
-		currentBalance, err := helper.GetBalance(req.Context, env.(*core.IpfsNode), from.String())
+		currentBalance, err := helper.ChargeBalance(req.Context, nd, from.String(), tx.Value().Uint64())
 		if err != nil {
 			return err
 		}
 
-		err = helper.PutProxyStoragePayment(req.Context, env.(*core.IpfsNode), &helper.ProxyStoragePaymentInfo{
+		err = helper.PutProxyStoragePayment(req.Context, nd, &helper.ProxyStoragePaymentInfo{
 			From:    from.String(),
 			Hash:    tx.Hash().Hex(),
 			PayTime: tx.Time().Unix(),
 			To:      tx.To().Hex(),
 			Value:   tx.Value().Uint64(),
-			Balance: currentBalance + tx.Value().Uint64(),
+			Balance: currentBalance,
 		})
 
 		if err != nil {
