@@ -61,13 +61,16 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 			return err
 		}
 
-		helper.PutProxyStoragePayment(req.Context, node, &helper.ProxyStoragePaymentInfo{
+		err = helper.PutProxyStoragePayment(req.Context, node, &helper.ProxyStoragePaymentInfo{
 			From:    chain.ChainObject.TransactionService.SenderAddress(req.Context).String(),
 			Hash:    hash.String(),
 			PayTime: time.Now().Unix(),
 			To:      recipient,
 			Value:   amount.Uint64(),
 		})
+		if err != nil {
+			return err
+		}
 
 		return cmds.EmitOnce(res, &PayCmdRet{
 			Hash: hash.String(),

@@ -1,13 +1,18 @@
 package proxy
 
 import (
+	"errors"
 	"fmt"
-	"strconv"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	"github.com/bittorrent/go-btfs/utils"
+	ds "github.com/ipfs/go-datastore"
+)
+
+const (
+	ProxyPriceOptionName = "proxy-price"
 )
 
 var StorageUploadProxyConfigCmd = &cmds.Command{
@@ -17,8 +22,8 @@ var StorageUploadProxyConfigCmd = &cmds.Command{
 This command set storage upload proxy config such as price, the unit of price is BTT.`,
 	},
 
-	Arguments: []cmds.Argument{
-		cmds.StringArg("price", true, false, "config"),
+	Options: []cmds.Option{
+		cmds.Int64Option(ProxyPriceOptionName, "the price of proxy storage"),
 	},
 	Subcommands: map[string]*cmds.Command{
 		"show": StorageUploadProxyConfigShowCmd,
@@ -43,13 +48,7 @@ This command set storage upload proxy config such as price, the unit of price is
 			return err
 		}
 
-		price := req.Arguments[0]
-
-		// check price is ok
-		priceInt, err := strconv.Atoi(price)
-		if err != nil {
-			return err
-		}
+		priceInt := req.Options[ProxyPriceOptionName].(int64)
 
 		nc, err := helper.GetHostStorageConfig(req.Context, n)
 		if err != nil {
@@ -80,6 +79,15 @@ This command show storage upload proxy config such as price. The price is in BTT
 			return err
 		}
 		config, err := helper.GetProxyStorageConfig(req.Context, n)
+		if errors.Is(err, ds.ErrNotFound) {
+			nc, err := helper.GetHostStorageConfig(req.Context, n)
+			if err != nil {
+				return err
+			}
+			return cmds.EmitOnce(res, &helper.ProxyStorageInfo{
+				Price: nc.StoragePriceDefault,
+			})
+		}
 		if err != nil {
 			return err
 		}
