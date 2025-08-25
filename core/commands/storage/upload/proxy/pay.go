@@ -7,12 +7,16 @@ import (
 	"time"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	cp "github.com/bittorrent/go-btfs-common/crypto"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/utils"
 	"github.com/ethereum/go-ethereum/common"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 var StorageUploadProxyPayCmd = &cmds.Command{
@@ -20,7 +24,7 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 		Tagline: "Deposit from beneficiary to vault contract account.",
 	},
 	Arguments: []cmds.Argument{
-		cmds.StringArg("recipient", false, false, "proxy account."),
+		cmds.StringArg("proxy-id", false, false, "proxy peerId."),
 		cmds.StringArg("amount", false, false, "deposit amount of BTT."),
 	},
 	RunTimeout: 5 * time.Minute,
@@ -34,21 +38,24 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 			return err
 		}
 
-		recipient := utils.RemoveSpaceAndComma(req.Arguments[0])
-		if !common.IsHexAddress(recipient) {
-			return fmt.Errorf("invalid bttc address %s", recipient)
-		}
-		recipientAddr := common.HexToAddress(recipient)
+		proxyId := utils.RemoveSpaceAndComma(req.Arguments[0])
 
-		argAmount := utils.RemoveSpaceAndComma(req.Arguments[0])
+		proxyAddr, err := getPublicAddressFromPeerID(proxyId)
+		if err != nil {
+			return err
+		}
+
+		argAmount := utils.RemoveSpaceAndComma(req.Arguments[1])
 		amount, ok := new(big.Int).SetString(argAmount, 10)
 		if !ok {
 			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[0])
 		}
 
+		to := common.HexToAddress(proxyAddr)
 		request := &transaction.TxRequest{
-			To:    &recipientAddr,
-			Value: amount,
+			To: &to,
+			// convert wei to btt
+			Value: new(big.Int).Mul(amount, big.NewInt(1e18)),
 		}
 		hash, err := chain.ChainObject.TransactionService.Send(req.Context, request)
 		if err != nil {
@@ -60,13 +67,28 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 			return err
 		}
 
-		err = helper.PutProxyStoragePayment(req.Context, node, &helper.ProxyStoragePaymentInfo{
-			From:    chain.ChainObject.TransactionService.SenderAddress(req.Context).String(),
-			Hash:    hash.String(),
-			PayTime: time.Now().Unix(),
-			To:      recipient,
-			Value:   amount.Uint64(),
-		})
+		api, err := cmdenv.GetApi(env, req)
+		if err != nil {
+			return err
+		}
+
+		pId, err := peer.Decode(proxyId)
+		if err != nil {
+			fmt.Println("invalid peer id:", err)
+			return err
+		}
+
+		// notify the proxy payment
+		_, err = remote.P2PCall(req.Context, node, api, pId, "/storage/upload/proxy/notify-pay",
+			hash,
+		)
+		// err = helper.PutProxyStoragePayment(req.Context, node, &helper.ProxyStoragePaymentInfo{
+		// 	From:    chain.ChainObject.TransactionService.SenderAddress(req.Context).String(),
+		// 	Hash:    hash.String(),
+		// 	PayTime: time.Now().Unix(),
+		// 	To:      proxyId,
+		// 	Value:   amount.Uint64(),
+		// })
 		if err != nil {
 			return err
 		}
@@ -158,4 +180,29 @@ var StorageUploadProxyPaymentBalanceCmd = &cmds.Command{
 type BalanceCmdRet struct {
 	Address string `json:"address"`
 	Balance string `json:"balance"`
+}
+
+func getPublicAddressFromPeerID(hostID string) (string, error) {
+	peerID, err := peer.Decode(hostID)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode hostID: %v", err)
+	}
+
+	pubKey, err := peerID.ExtractPublicKey()
+	if err != nil {
+		return "", fmt.Errorf("failed to extract public key: %v", err)
+	}
+
+	pkBytes, err := cp.Secp256k1PublicKeyRaw(pubKey)
+	if err != nil {
+		panic(err)
+	}
+
+	ethPk, err := ethCrypto.UnmarshalPubkey(pkBytes)
+	if err != nil {
+		return "", err
+	}
+
+	return ethCrypto.PubkeyToAddress(*ethPk).Hex(), nil
+
 }
