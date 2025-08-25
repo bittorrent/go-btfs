@@ -8,7 +8,6 @@ import (
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
-	"github.com/bittorrent/go-btfs/core"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	"github.com/bittorrent/go-btfs/transaction"
@@ -110,6 +109,12 @@ var StorageUploadProxyPaymentBalanceCmd = &cmds.Command{
 	Type:       []*BalanceCmdRet{},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		recipient := ""
+
+		node, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+
 		if len(req.Arguments) > 0 {
 			recipient = utils.RemoveSpaceAndComma(req.Arguments[0])
 			if !common.IsHexAddress(recipient) {
@@ -118,19 +123,16 @@ var StorageUploadProxyPaymentBalanceCmd = &cmds.Command{
 		}
 
 		if recipient != "" {
-			balance, err := helper.GetBalance(req.Context, env.(*core.IpfsNode), recipient)
+			balance, err := helper.GetBalance(req.Context, node, recipient)
 			if err != nil {
 				return err
 			}
-			return cmds.EmitOnce(res, &BalanceCmdRet{
-				Address: recipient,
-				Balance: balance,
+			return cmds.EmitOnce(res, []*BalanceCmdRet{
+				{
+					Address: recipient,
+					Balance: fmt.Sprintf("%d (BTT)", balance),
+				},
 			})
-		}
-
-		node, err := cmdenv.GetNode(env)
-		if err != nil {
-			return err
 		}
 
 		balances, err := helper.GetBalanceList(req.Context, node)
@@ -143,7 +145,7 @@ var StorageUploadProxyPaymentBalanceCmd = &cmds.Command{
 		for k, v := range balances {
 			ret := &BalanceCmdRet{
 				Address: k,
-				Balance: v,
+				Balance: fmt.Sprintf("%d (BTT)", v),
 			}
 
 			result = append(result, ret)
@@ -155,5 +157,5 @@ var StorageUploadProxyPaymentBalanceCmd = &cmds.Command{
 
 type BalanceCmdRet struct {
 	Address string `json:"address"`
-	Balance uint64 `json:"balance"`
+	Balance string `json:"balance"`
 }

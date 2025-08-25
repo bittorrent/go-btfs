@@ -1,6 +1,9 @@
 package proxy
 
 import (
+	"errors"
+	"math/big"
+
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
@@ -42,14 +45,33 @@ This command is used to notify the proxy that the payment has been made.
 			return err
 		}
 
-		tx.ChainId()
+		conf, err := nd.Repo.Config()
+		if err != nil {
+			return err
+		}
+
+		// check if the tx is for me
+		if tx.To().String() != conf.Identity.BttcAddr {
+			return nil
+		}
+
 		signer := types.NewEIP155Signer(tx.ChainId())
 		from, err := types.Sender(signer, tx)
 		if err != nil {
 			return err
 		}
+		// check if the tx has been paid
+		d, err := helper.GetProxyStoragePaymentByTxHash(req.Context, nd, from.String(), tx.Hash().Hex())
+		if err != nil {
+			return nil
+		}
 
-		currentBalance, err := helper.ChargeBalance(req.Context, nd, from.String(), tx.Value().Uint64())
+		if d != nil && d.Hash == tx.Hash().Hex() {
+			return errors.New("the tx hash has been notified")
+		}
+
+		value := new(big.Int).Div(tx.Value(), big.NewInt(1e18))
+		currentBalance, err := helper.ChargeBalance(req.Context, nd, from.String(), value.Uint64())
 		if err != nil {
 			return err
 		}
