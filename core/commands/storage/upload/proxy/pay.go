@@ -110,16 +110,6 @@ type PayCmdRet struct {
 	Hash string `json:"hash"`
 }
 
-var StorageUploadProxyPaymentHistoryCmd = &cmds.Command{
-	Helptext: cmds.HelpText{
-		Tagline: "Get the history of deposit from beneficiary to vault contract account.",
-	},
-	Arguments: []cmds.Argument{
-		cmds.StringArg("recipient", false, false, "proxy account."),
-	},
-	RunTimeout: 5 * time.Minute,
-}
-
 var StorageUploadProxyPaymentBalanceCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Get the balance of deposit from beneficiary to vault contract account.",
@@ -180,6 +170,76 @@ var StorageUploadProxyPaymentBalanceCmd = &cmds.Command{
 type BalanceCmdRet struct {
 	Address string `json:"address"`
 	Balance string `json:"balance"`
+}
+
+var StorageUploadProxyPaymentHistoryCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "Get the history of deposit from beneficiary to vault contract account.",
+	},
+	Arguments: []cmds.Argument{
+		cmds.StringArg("recipient", false, false, "proxy account."),
+	},
+	RunTimeout: 5 * time.Minute,
+	Type:       []*PaymentHistoryCmdRet{},
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+
+		node, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+
+		recipient := ""
+		if len(req.Arguments) > 0 {
+			recipient = utils.RemoveSpaceAndComma(req.Arguments[0])
+			if !common.IsHexAddress(recipient) {
+				return fmt.Errorf("invalid bttc address %s", recipient)
+			}
+		}
+
+		payments := make([]*PaymentHistoryCmdRet, 0)
+		if recipient != "" {
+			ps, err := helper.GetProxyStoragePaymentList(req.Context, node, recipient)
+			if err != nil {
+				return err
+			}
+			for _, p := range ps {
+				ret := &PaymentHistoryCmdRet{
+					Hash:    p.Hash,
+					From:    p.From,
+					To:      p.To,
+					Value:   fmt.Sprintf("%d (BTT)", p.Value),
+					PayTime: p.PayTime,
+				}
+				payments = append(payments, ret)
+			}
+		} else {
+			ps, err := helper.GetProxyStoragePayment(req.Context, node)
+			if err != nil {
+				return err
+			}
+			for _, p := range ps {
+				ret := &PaymentHistoryCmdRet{
+					Hash:    p.Hash,
+					From:    p.From,
+					To:      p.To,
+					Value:   fmt.Sprintf("%d (BTT)", p.Value),
+					PayTime: p.PayTime,
+				}
+				payments = append(payments, ret)
+			}
+
+		}
+
+		return cmds.EmitOnce(res, payments)
+	},
+}
+
+type PaymentHistoryCmdRet struct {
+	Hash    string `json:"hash"`
+	From    string `json:"from"`
+	To      string `json:"to"`
+	Value   string `json:"value"`
+	PayTime int64  `json:"pay_time"`
 }
 
 func getPublicAddressFromPeerID(hostID string) (string, error) {

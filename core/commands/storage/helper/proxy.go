@@ -70,18 +70,50 @@ func PutProxyStoragePayment(ctx context.Context, node *core.IpfsNode, ns *ProxyS
 	return rds.Put(ctx, GetProxyStoragePaymentKey(node.Identity.String()+"/"+ns.From+"/"+ns.Hash), b)
 }
 
-func GetProxyStoragePayment(ctx context.Context, node *core.IpfsNode) (*ProxyStoragePaymentInfo, error) {
+func GetProxyStoragePayment(ctx context.Context, node *core.IpfsNode) ([]*ProxyStoragePaymentInfo, error) {
 	rds := node.Repo.Datastore()
-	b, err := rds.Get(ctx, GetProxyStoragePaymentKey(node.Identity.String()))
+	qr, err := rds.Query(ctx, query.Query{
+		Prefix: GetProxyStoragePaymentKey(node.Identity.String()).String(),
+	})
 	if err != nil {
 		return nil, err
 	}
-	ns := new(ProxyStoragePaymentInfo)
-	err = json.Unmarshal(b, ns)
+	ret := make([]*ProxyStoragePaymentInfo, 0)
+	for r := range qr.Next() {
+		if r.Error != nil {
+			return nil, r.Error
+		}
+		var ns ProxyStoragePaymentInfo
+		err = json.Unmarshal(r.Entry.Value, &ns)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, &ns)
+	}
+	return ret, nil
+}
+
+func GetProxyStoragePaymentList(ctx context.Context, node *core.IpfsNode, from string) ([]*ProxyStoragePaymentInfo, error) {
+	rds := node.Repo.Datastore()
+	qr, err := rds.Query(ctx, query.Query{
+		Prefix: GetProxyStoragePaymentKey(node.Identity.String() + "/" + from).String(),
+	})
 	if err != nil {
 		return nil, err
 	}
-	return ns, nil
+	ret := make([]*ProxyStoragePaymentInfo, 0)
+	for r := range qr.Next() {
+		if r.Error != nil {
+			return nil, r.Error
+		}
+		ns := new(ProxyStoragePaymentInfo)
+		err = json.Unmarshal(r.Entry.Value, ns)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, ns)
+	}
+	return ret, nil
 }
 
 func GetProxyStoragePaymentByTxHash(ctx context.Context, node *core.IpfsNode, from, txHash string) (*ProxyStoragePaymentInfo, error) {

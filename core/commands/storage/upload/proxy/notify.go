@@ -81,7 +81,7 @@ This command is used to notify the proxy that the payment has been made.
 			Hash:    tx.Hash().Hex(),
 			PayTime: tx.Time().Unix(),
 			To:      tx.To().Hex(),
-			Value:   tx.Value().Uint64(),
+			Value:   value.Uint64(),
 			Balance: currentBalance,
 		})
 
