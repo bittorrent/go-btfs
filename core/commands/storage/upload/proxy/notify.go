@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	shell "github.com/bittorrent/go-btfs-api"
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -111,6 +112,17 @@ This command is used to notify the proxy that the payment has been made.
 
 		_ = helper.SubBalance(req.Context, nd, from.String(), needPayInfo.NeedBTT)
 		_ = helper.DeleteProxyNeedPaymentCID(req.Context, nd, req.Arguments[1])
+
+		// save proxy upload cid
+		ui := &helper.ProxyUploadFileInfo{
+			CID:       req.Arguments[1],
+			FileSize:  needPayInfo.FileSize,
+			Price:     needPayInfo.Price,
+			ExpireAt:  needPayInfo.ExpireAt,
+			TotalPay:  needPayInfo.NeedBTT,
+			CreatedAt: time.Now().Unix(),
+		}
+		_ = helper.PutProxyUploadedFileInfo(req.Context, nd, ui)
 
 		return nil
 	},

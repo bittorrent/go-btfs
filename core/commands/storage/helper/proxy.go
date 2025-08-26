@@ -15,10 +15,11 @@ import (
 )
 
 const (
-	ProxyStorageInfoPrefix           = "/proxy_storage/" // self or from network
-	ProxyStoragePaymentPrefix        = "/proxy_payment/" // self or from network
-	ProxyStoragePaymentBalancePrefix = "/proxy_payment_balance/"
-	ProxyNeedPayCIDPrefix            = "/proxy_need_pay_cid/"
+	ProxyStorageInfoPrefix           = "/btfs/proxy_storage/"
+	ProxyStoragePaymentPrefix        = "/btfs/proxy_payment/"
+	ProxyStoragePaymentBalancePrefix = "/btfs/proxy_payment_balance/"
+	ProxyNeedPayCIDPrefix            = "/btfs/proxy_need_pay_cid/"
+	ProxyUploadedFileInfoPrefix      = "/btfs/proxy_uploaded_file/"
 )
 
 const (
@@ -26,7 +27,7 @@ const (
 )
 
 type ProxyStorageInfo struct {
-	Price uint64
+	Price uint64 `json:"price"`
 }
 
 // PutProxyStorageConfig server as a proxy node save storage config.
@@ -73,7 +74,7 @@ func PutProxyStoragePayment(ctx context.Context, node *core.IpfsNode, ns *ProxyS
 		return fmt.Errorf("cannot put current proxy storage settings: %s", err.Error())
 	}
 	// /proxy_payment/address/txHash
-	return rds.Put(ctx, GetProxyStoragePaymentKey(node.Identity.String()+"/"+ns.From+"/"+ns.Hash), b)
+	return rds.Put(ctx, GetProxyStoragePaymentKey(node.Identity.String()+"/"+strings.ToLower(ns.From)+"/"+ns.Hash), b)
 }
 
 func GetProxyStoragePayment(ctx context.Context, node *core.IpfsNode) ([]*ProxyStoragePaymentInfo, error) {
@@ -102,7 +103,7 @@ func GetProxyStoragePayment(ctx context.Context, node *core.IpfsNode) ([]*ProxyS
 func GetProxyStoragePaymentList(ctx context.Context, node *core.IpfsNode, from string) ([]*ProxyStoragePaymentInfo, error) {
 	rds := node.Repo.Datastore()
 	qr, err := rds.Query(ctx, query.Query{
-		Prefix: GetProxyStoragePaymentKey(node.Identity.String() + "/" + from).String(),
+		Prefix: GetProxyStoragePaymentKey(node.Identity.String() + "/" + strings.ToLower(from)).String(),
 	})
 	if err != nil {
 		return nil, err
@@ -124,7 +125,7 @@ func GetProxyStoragePaymentList(ctx context.Context, node *core.IpfsNode, from s
 
 func GetProxyStoragePaymentByTxHash(ctx context.Context, node *core.IpfsNode, from, txHash string) (*ProxyStoragePaymentInfo, error) {
 	rds := node.Repo.Datastore()
-	b, err := rds.Get(ctx, GetProxyStoragePaymentKey(node.Identity.String()+"/"+from+"/"+txHash))
+	b, err := rds.Get(ctx, GetProxyStoragePaymentKey(node.Identity.String()+"/"+strings.ToLower(from)+"/"+txHash))
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return nil, err
 	}
@@ -220,21 +221,19 @@ func GetProxyStoragePaymentBalanceKey(peerId string) ds.Key {
 
 type ProxyNeedPaymentInfo struct {
 	CID      string `json:"cid"`
+	FileSize int64  `json:"file_size"`
+	Price    int64  `json:"price"`
 	ExpireAt int64  `json:"expire_at"`
 	NeedBTT  uint64 `json:"need_btt"`
 }
 
-func PutProxyNeedPaymentCID(ctx context.Context, node *core.IpfsNode, cid string, needBtt uint64) error {
+func PutProxyNeedPaymentCID(ctx context.Context, node *core.IpfsNode, needPayInfo *ProxyNeedPaymentInfo) error {
 	rds := node.Repo.Datastore()
-	p := new(ProxyNeedPaymentInfo)
-	p.CID = cid
-	p.ExpireAt = time.Now().Add(DefaultPayTimeout).Unix()
-	p.NeedBTT = needBtt
-	b, err := json.Marshal(p)
+	b, err := json.Marshal(needPayInfo)
 	if err != nil {
 		return fmt.Errorf("cannot put current proxy storage settings: %s", err.Error())
 	}
-	return rds.Put(ctx, GetProxyNeedPaymentKey(node.Identity.String()+"/"+cid), b)
+	return rds.Put(ctx, GetProxyNeedPaymentKey(node.Identity.String()+"/"+needPayInfo.CID), b)
 }
 
 func GetProxyNeedPaymentCID(ctx context.Context, node *core.IpfsNode, cid string) (*ProxyNeedPaymentInfo, error) {
@@ -255,4 +254,49 @@ func DeleteProxyNeedPaymentCID(ctx context.Context, node *core.IpfsNode, cid str
 
 func GetProxyNeedPaymentKey(cid string) ds.Key {
 	return NewKeyHelper(ProxyNeedPayCIDPrefix, cid)
+}
+
+type ProxyUploadFileInfo struct {
+	CID       string `json:"cid"`
+	FileSize  int64  `json:"file_size"`
+	Price     int64  `json:"price"`
+	ExpireAt  int64  `json:"expire_at"`
+	TotalPay  uint64 `json:"total_pay"`
+	CreatedAt int64  `json:"created_at"`
+}
+
+func PutProxyUploadedFileInfo(ctx context.Context, node *core.IpfsNode, uploadedCidInfo *ProxyUploadFileInfo) error {
+	rds := node.Repo.Datastore()
+	b, err := json.Marshal(uploadedCidInfo)
+	if err != nil {
+		return fmt.Errorf("cannot put current proxy storage settings: %s", err.Error())
+	}
+	return rds.Put(ctx, GetProxyUploadedFileInfoKey(node.Identity.String()+"/"+uploadedCidInfo.CID), b)
+}
+
+func ListProxyUploadedFileInfo(ctx context.Context, node *core.IpfsNode) ([]*ProxyUploadFileInfo, error) {
+	rds := node.Repo.Datastore()
+	qr, err := rds.Query(ctx, query.Query{
+		Prefix: GetProxyUploadedFileInfoKey(node.Identity.String()).String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]*ProxyUploadFileInfo, 0)
+	for r := range qr.Next() {
+		if r.Error != nil {
+			return nil, r.Error
+		}
+		var ns ProxyUploadFileInfo
+		err = json.Unmarshal(r.Entry.Value, &ns)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, &ns)
+	}
+	return ret, nil
+}
+
+func GetProxyUploadedFileInfoKey(cid string) ds.Key {
+	return NewKeyHelper(ProxyUploadedFileInfoPrefix, cid)
 }

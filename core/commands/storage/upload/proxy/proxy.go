@@ -10,6 +10,7 @@ import (
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/challenge"
 	proxy "github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -38,6 +39,7 @@ the shard and replies back to client for the next challenge step.`,
 		"pay":        StorageUploadProxyPayCmd,
 		"notify-pay": StorageUploadProxyNotifyPayCmd,
 		"config":     StorageUploadProxyConfigCmd,
+		"list":       StorageUploadFileListCmd,
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -119,7 +121,13 @@ the shard and replies back to client for the next challenge step.`,
 			return err
 		}
 		// save need pay cid and delete it when pay success
-		err = proxy.PutProxyNeedPaymentCID(ctxParams.Ctx, ctxParams.N, req.Arguments[0], uint64(totalPay))
+		payInfo := &proxy.ProxyNeedPaymentInfo{
+			CID:      req.Arguments[0],
+			FileSize: fileSize,
+			Price:    price,
+			NeedBTT:  uint64(totalPay),
+		}
+		err = proxy.PutProxyNeedPaymentCID(ctxParams.Ctx, ctxParams.N, payInfo)
 		if err != nil {
 			return err
 		}
@@ -141,4 +149,24 @@ the shard and replies back to client for the next challenge step.`,
 			"need_pay_amount": totalPay,
 		})
 	},
+}
+
+var StorageUploadFileListCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "List files that uploaded by proxy.",
+		ShortDescription: `
+This command list files that uploaded by proxy.`,
+	},
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		n, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+		infos, err := proxy.ListProxyUploadedFileInfo(req.Context, n)
+		if err != nil {
+			return err
+		}
+		return cmds.EmitOnce(res, infos)
+	},
+	Type: []*proxy.ProxyUploadFileInfo{},
 }
