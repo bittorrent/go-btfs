@@ -33,11 +33,14 @@ var (
 
 // RenewStatusResponse represents the status of a renewal operation
 type RenewStatusResponse struct {
-	FileHash  string    `json:"file_hash"`
-	Duration  int       `json:"duration"`
-	TotalCost int64     `json:"total_cost"`
-	CreatedAt time.Time `json:"created_at"`
-	ExpiresAt time.Time `json:"expires_at"`
+	FileHash    string    `json:"file_hash"`
+	FileSize    int64     `json:"file_size"`
+	AutoRenewal bool      `json:"auto_renewal"`
+	SP          []string  `json:"sp"`
+	Duration    int       `json:"duration"`
+	TotalCost   int64     `json:"total_cost"`
+	CreatedAt   time.Time `json:"created_at"`
+	ExpiresAt   time.Time `json:"expires_at"`
 }
 
 // RenewListResponse represents a list of renewals
@@ -295,12 +298,21 @@ func getRenewalsFiles(ctxParams *uh.ContextParams, filterType string) ([]RenewSt
 			continue
 		}
 
+		size := 0
+		sps := make([]string, 0)
+		for _, s := range renewalInfo.ShardsInfo {
+			size += s.ShardSize
+			sps = append(sps, s.SPId)
+		}
 		status := RenewStatusResponse{
-			FileHash:  renewalInfo.CID,
-			Duration:  renewalInfo.RenewalDuration,
-			TotalCost: renewalInfo.TotalPay,
-			CreatedAt: renewalInfo.CreatedAt,
-			ExpiresAt: renewalInfo.CreatedAt.Add(time.Duration(renewalInfo.RenewalDuration) * 24 * time.Hour),
+			FileHash:    renewalInfo.CID,
+			FileSize:    int64(size),
+			AutoRenewal: renewalInfo.Enabled,
+			SP:          sps,
+			Duration:    renewalInfo.RenewalDuration,
+			TotalCost:   renewalInfo.TotalPay,
+			CreatedAt:   renewalInfo.CreatedAt,
+			ExpiresAt:   renewalInfo.CreatedAt.Add(time.Duration(renewalInfo.RenewalDuration) * 24 * time.Hour),
 		}
 
 		renewals = append(renewals, status)
