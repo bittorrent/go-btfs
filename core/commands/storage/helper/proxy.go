@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bittorrent/go-btfs/core"
 	ds "github.com/ipfs/go-datastore"
@@ -17,6 +18,11 @@ const (
 	ProxyStorageInfoPrefix           = "/proxy_storage/" // self or from network
 	ProxyStoragePaymentPrefix        = "/proxy_payment/" // self or from network
 	ProxyStoragePaymentBalancePrefix = "/proxy_payment_balance/"
+	ProxyNeedPayCIDPrefix            = "/proxy_need_pay_cid/"
+)
+
+const (
+	DefaultPayTimeout = 30 * time.Minute
 )
 
 type ProxyStorageInfo struct {
@@ -210,4 +216,43 @@ func GetProxyStoragePaymentKey(peerId string) ds.Key {
 
 func GetProxyStoragePaymentBalanceKey(peerId string) ds.Key {
 	return NewKeyHelper(ProxyStoragePaymentBalancePrefix, peerId)
+}
+
+type ProxyNeedPaymentInfo struct {
+	CID      string `json:"cid"`
+	ExpireAt int64  `json:"expire_at"`
+	NeedBTT  uint64 `json:"need_btt"`
+}
+
+func PutProxyNeedPaymentCID(ctx context.Context, node *core.IpfsNode, cid string, needBtt uint64) error {
+	rds := node.Repo.Datastore()
+	p := new(ProxyNeedPaymentInfo)
+	p.CID = cid
+	p.ExpireAt = time.Now().Add(DefaultPayTimeout).Unix()
+	p.NeedBTT = needBtt
+	b, err := json.Marshal(p)
+	if err != nil {
+		return fmt.Errorf("cannot put current proxy storage settings: %s", err.Error())
+	}
+	return rds.Put(ctx, GetProxyNeedPaymentKey(node.Identity.String()+"/"+cid), b)
+}
+
+func GetProxyNeedPaymentCID(ctx context.Context, node *core.IpfsNode, cid string) (*ProxyNeedPaymentInfo, error) {
+	rds := node.Repo.Datastore()
+	p, err := rds.Get(ctx, GetProxyNeedPaymentKey(node.Identity.String()+"/"+cid))
+	if err != nil {
+		return nil, err
+	}
+	var ns ProxyNeedPaymentInfo
+	err = json.Unmarshal(p, &ns)
+	return &ns, err
+}
+
+func DeleteProxyNeedPaymentCID(ctx context.Context, node *core.IpfsNode, cid string) error {
+	rds := node.Repo.Datastore()
+	return rds.Delete(ctx, GetProxyNeedPaymentKey(node.Identity.String()+"/"+cid))
+}
+
+func GetProxyNeedPaymentKey(cid string) ds.Key {
+	return NewKeyHelper(ProxyNeedPayCIDPrefix, cid)
 }

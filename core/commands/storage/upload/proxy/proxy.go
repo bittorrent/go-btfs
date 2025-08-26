@@ -11,9 +11,15 @@ import (
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"github.com/bittorrent/go-btfs/core/commands/storage/challenge"
+	proxy "github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+
 	"github.com/cenkalti/backoff/v4"
 	cidlib "github.com/ipfs/go-cid"
+)
+
+const (
+	storageLengthOptionName = "storage-length"
 )
 
 var StorageUploadProxyCmd = &cmds.Command{
@@ -25,9 +31,9 @@ If current host is interested and all validation checks out, host downloads
 the shard and replies back to client for the next challenge step.`,
 	},
 	Arguments: []cmds.Argument{
-		cmds.StringArg("proxy-id", true, false, "ProxyId for upload file"),
-		cmds.StringArg("file-hash", true, false, "Root file storage node should fetch (the DAG)."),
+		cmds.StringArg("file-hash", true, false, "Need to uploaded cid."),
 	},
+	NoRemote: true,
 	Subcommands: map[string]*cmds.Command{
 		"pay":        StorageUploadProxyPayCmd,
 		"notify-pay": StorageUploadProxyNotifyPayCmd,
@@ -35,10 +41,6 @@ the shard and replies back to client for the next challenge step.`,
 	},
 	RunTimeout: 5 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		fmt.Println("storage proxy do ..............")
-		fmt.Println(req.Arguments)
-		fmt.Println(req.Options)
-
 		ctxParams, err := helper.ExtractContextParams(req, env)
 		if err != nil {
 			return err
@@ -48,47 +50,45 @@ the shard and replies back to client for the next challenge step.`,
 		var fileSize int64
 		var shardSize int64
 
-		fileHash := req.Arguments[0]
-
 		if !ctxParams.Cfg.Experimental.EnableProxyMode {
 			return errors.New("proxy mode is not enabled")
 		}
-		if req.Arguments[1] == ctxParams.N.Identity.String() {
-			// TODO check react as a proxy node
-			fileCid, err := cidlib.Parse(req.Arguments[0])
+
+		cid, err := cidlib.Parse(req.Arguments[0])
+		if err != nil {
+			return err
+		}
+
+		shardHashes, fileSize, shardSize, err = helper.GetShardHashes(ctxParams, req.Arguments[0])
+		if len(shardHashes) == 0 && fileSize == -1 && shardSize == -1 &&
+			strings.HasPrefix(err.Error(), "invalid hash: file must be reed-solomon encoded") {
+			shardHashes, fileSize, shardSize, err = helper.GetShardHashesCopy(ctxParams, req.Arguments[0], 0)
+			fmt.Printf("copy get, shardHashes:%v fileSize:%v, shardSize:%v, copy:%v err:%v \n",
+				shardHashes, fileSize, shardSize, 0, err)
+		}
+		if err != nil {
+			return err
+		}
+		for _, s := range shardHashes {
+			shardCid, err := cidlib.Decode(s)
 			if err != nil {
 				return err
 			}
-			shardCid, err := cidlib.Decode("")
-			if err != nil {
-			}
-
 			scaledRetry := 30 * time.Minute
 			err = backoff.Retry(func() error {
 				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 				defer cancel()
-				_, err = challenge.NewStorageChallengeResponse(ctx, ctxParams.N, ctxParams.Api, fileCid, shardCid, "", false, 0)
+				_, err = challenge.NewStorageChallengeResponse(ctx, ctxParams.N, ctxParams.Api, cid, shardCid, "", true, 1758693644)
 				return err
 			}, helper.DownloadShardBo(scaledRetry))
-
-			if err != nil {
-				fmt.Println("download file error")
-			}
-
 		}
 
-		shardHashes, fileSize, shardSize, err = helper.GetShardHashes(ctxParams, fileHash)
-
-		if len(shardHashes) == 0 && fileSize == -1 && shardSize == -1 &&
-			strings.HasPrefix(err.Error(), "invalid hash: file must be reed-solomon encoded") {
-			if copyNum, ok := req.Options["copy"].(int); ok {
-				shardHashes, fileSize, shardSize, err = helper.GetShardHashesCopy(ctxParams, fileHash, copyNum)
-				fmt.Printf("copy get, shardHashes:%v fileSize:%v, shardSize:%v, copy:%v err:%v \n",
-					shardHashes, fileSize, shardSize, copyNum, err)
-			}
-		}
 		if err != nil {
-			return err
+			fmt.Println("download file error")
+		}
+
+		ctxParams.Req.Options = map[string]interface{}{
+			storageLengthOptionName: 30,
 		}
 		_, storageLength, err := helper.GetPriceAndMinStorageLength(ctxParams)
 		if err != nil {
@@ -118,12 +118,27 @@ the shard and replies back to client for the next challenge step.`,
 			fmt.Println(err.Error())
 			return err
 		}
+		// save need pay cid and delete it when pay success
+		err = proxy.PutProxyNeedPaymentCID(ctxParams.Ctx, ctxParams.N, req.Arguments[0], uint64(totalPay))
+		if err != nil {
+			return err
+		}
+		go func() {
+			t := time.NewTimer(proxy.DefaultPayTimeout)
+			select {
+			case <-t.C:
+				_ = proxy.DeleteProxyNeedPaymentCID(ctxParams.Ctx, ctxParams.N, req.Arguments[0])
+			}
+		}()
 
-		res.Emit(map[string]interface{}{
-			"peer_address": ctxParams.N.Identity.String(),
-			"total_amount": totalPay,
+		proxyAddress, err := getPublicAddressFromPeerID(ctxParams.N.Identity.String())
+		if err != nil {
+			return err
+		}
+
+		return res.Emit(map[string]interface{}{
+			"proxy_address":   proxyAddress,
+			"need_pay_amount": totalPay,
 		})
-
-		return nil
 	},
 }

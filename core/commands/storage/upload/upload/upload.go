@@ -2,6 +2,7 @@ package upload
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -83,6 +84,7 @@ To custom upload and storage a file on specific hosts:
 Use status command to check for completion:
     $ btfs storage upload status <session-id> | jq`,
 	},
+	NoRemote: true,
 	Subcommands: map[string]*cmds.Command{
 		"init":              StorageUploadInitCmd,
 		"supporttokens":     StorageUploadSupportTokensCmd,
@@ -147,10 +149,18 @@ Use status command to check for completion:
 				fmt.Println("invalid peer id:", err)
 				return err
 			}
-			resp, err := remote.P2PCall(ctxParams.Ctx, ctxParams.N, ctxParams.Api, pId, "/storage/upload/proxy",
-				req.Arguments[0], proxyNodeId)
-			fmt.Println(resp)
-			fmt.Println(err)
+			resp, err := remote.P2PCall(ctxParams.Ctx, ctxParams.N, ctxParams.Api, pId, "/storage/upload/proxy", req.Arguments[0])
+			if err != nil {
+				return err
+			}
+			r := make(map[string]interface{})
+			err = json.Unmarshal(resp, &r)
+			if err != nil {
+				return err
+			}
+			for k, v := range r {
+				fmt.Printf("%s: %v\n", k, v)
+			}
 			return nil
 		}
 

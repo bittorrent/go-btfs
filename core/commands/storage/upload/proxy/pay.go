@@ -25,8 +25,10 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("proxy-id", false, false, "proxy peerId."),
+		cmds.StringArg("cid", false, false, "cid that need to pay."),
 		cmds.StringArg("amount", false, false, "deposit amount of BTT."),
 	},
+	NoRemote:   true,
 	RunTimeout: 5 * time.Minute,
 	Subcommands: map[string]*cmds.Command{
 		"balance": StorageUploadProxyPaymentBalanceCmd,
@@ -45,10 +47,10 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 			return err
 		}
 
-		argAmount := utils.RemoveSpaceAndComma(req.Arguments[1])
+		argAmount := utils.RemoveSpaceAndComma(req.Arguments[2])
 		amount, ok := new(big.Int).SetString(argAmount, 10)
 		if !ok {
-			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[0])
+			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[2])
 		}
 
 		to := common.HexToAddress(proxyAddr)
@@ -81,14 +83,8 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 		// notify the proxy payment
 		_, err = remote.P2PCall(req.Context, node, api, pId, "/storage/upload/proxy/notify-pay",
 			hash,
+			req.Arguments[1],
 		)
-		// err = helper.PutProxyStoragePayment(req.Context, node, &helper.ProxyStoragePaymentInfo{
-		// 	From:    chain.ChainObject.TransactionService.SenderAddress(req.Context).String(),
-		// 	Hash:    hash.String(),
-		// 	PayTime: time.Now().Unix(),
-		// 	To:      proxyId,
-		// 	Value:   amount.Uint64(),
-		// })
 		if err != nil {
 			return err
 		}

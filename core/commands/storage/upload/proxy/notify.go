@@ -2,8 +2,10 @@ package proxy
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 
+	shell "github.com/bittorrent/go-btfs-api"
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
@@ -12,6 +14,7 @@ import (
 	coreiface "github.com/bittorrent/interface-go-btfs-core"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	ds "github.com/ipfs/go-datastore"
 )
 
 var StorageUploadProxyNotifyPayCmd = &cmds.Command{
@@ -23,7 +26,9 @@ This command is used to notify the proxy that the payment has been made.
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("hash", true, false, "The hash of the storage-upload-proxy-pay command."),
+		cmds.StringArg("cid", true, false, "The cid that the transaction paid for"),
 	},
+	NoRemote: true,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		nd, err := cmdenv.GetNode(env)
 		if err != nil {
@@ -85,6 +90,21 @@ This command is used to notify the proxy that the payment has been made.
 			Balance: currentBalance,
 		})
 
+		// check if it is enough to pay
+		needPayInfo, err := helper.GetProxyNeedPaymentCID(req.Context, nd, req.Arguments[1])
+		if errors.Is(err, ds.ErrNotFound) {
+			return fmt.Errorf("you do not need to pay for the cid: {%s} or it has been paid, but you btt has been deposited by the proxy", req.Arguments[1])
+		}
+		if err != nil {
+			return fmt.Errorf("get need pay info error: %v", err)
+		}
+		if needPayInfo.NeedBTT > currentBalance {
+			return fmt.Errorf("you payment is not enough for the %s to upload by proxy", req.Arguments[1])
+		}
+
+		// upload file
+		client := shell.NewLocalShell()
+		_, err = client.Request("storage/upload", req.Arguments[1]).Send(req.Context)
 		if err != nil {
 			return err
 		}
