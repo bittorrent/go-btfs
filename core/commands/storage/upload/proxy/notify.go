@@ -109,6 +109,9 @@ This command is used to notify the proxy that the payment has been made.
 			return err
 		}
 
+		_ = helper.SubBalance(req.Context, nd, from.String(), needPayInfo.NeedBTT)
+		_ = helper.DeleteProxyNeedPaymentCID(req.Context, nd, req.Arguments[1])
+
 		return nil
 	},
 }
