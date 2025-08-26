@@ -33,6 +33,7 @@ type ShardUploadContext struct {
 	ShardIndexes   []int
 	AutoRenewal    bool
 	RepairParams   *RepairParams
+	TotalPay       int64
 }
 
 func UploadShard(ctx *ShardUploadContext) error {
@@ -64,42 +65,43 @@ func UploadShard(ctx *ShardUploadContext) error {
 				_ = ctx.Rss.To(sessions.RssToErrorEvent, err)
 				return
 			}
-			// save auto-renewal config if enabled
-			if ctx.AutoRenewal {
-				shardsInfo := make([]renewal.RenewalShardInfo, 0)
-				for i, shard := range ctx.Rss.ShardHashes {
-					shards, err := sessions.GetUserShard(ctx.Rss.CtxParams, ctx.Rss.SsId, shard, i)
-					if err != nil {
-						log.Errorf("get user shard error: %s", err.Error())
-						continue
-					}
-					contracts, err := shards.Contracts()
-					if err != nil {
-						log.Errorf("get contracts error: %s", err.Error())
-						continue
-					}
-					si := renewal.RenewalShardInfo{
-						SPId:      contracts.Meta.SpId,
-						ShardId:   contracts.Meta.ShardHash,
-						ShardSize: int(contracts.Meta.ShardSize),
-					}
-					shardsInfo = append(shardsInfo, si)
-				}
-				info := &renewal.RenewalInfo{
-					CID:             ctx.Rss.Hash,
-					RenewalDuration: ctx.StorageLength,
-					Token:           ctx.Token,
-					Price:           ctx.Price,
-					Enabled:         true,
-					CreatedAt:       time.Now(),
-					LastRenewalAt:   nil,
-					NextRenewalAt:   time.Now().Add(time.Duration(ctx.StorageLength) * 24 * time.Hour),
-					ShardsInfo:      shardsInfo,
-				}
-				err = renewal.StoreRenewalInfo(ctx.Rss.CtxParams, info, "auto")
+
+			// save auto-renewal info
+			shardsInfo := make([]*renewal.RenewalShardInfo, 0)
+			for i, shard := range ctx.Rss.ShardHashes {
+				shards, err := sessions.GetUserShard(ctx.Rss.CtxParams, ctx.Rss.SsId, shard, i)
 				if err != nil {
-					log.Errorf("Failed to store auto-renewal config: %v", err)
+					log.Errorf("get user shard error: %s", err.Error())
+					continue
 				}
+				contracts, err := shards.Contracts()
+				if err != nil {
+					log.Errorf("get contracts error: %s", err.Error())
+					continue
+				}
+				si := &renewal.RenewalShardInfo{
+					SPId:      contracts.Meta.SpId,
+					ShardId:   contracts.Meta.ShardHash,
+					ShardSize: int(contracts.Meta.ShardSize),
+				}
+				shardsInfo = append(shardsInfo, si)
+			}
+			info := &renewal.RenewalInfo{
+				CID:             ctx.Rss.Hash,
+				RenewalDuration: ctx.StorageLength,
+				Token:           ctx.Token,
+				Price:           ctx.Price,
+				Enabled:         ctx.AutoRenewal,
+				CreatedAt:       time.Now(),
+				LastRenewalAt:   nil,
+				NextRenewalAt:   time.Now().Add(time.Duration(ctx.StorageLength) * 24 * time.Hour),
+				ShardsInfo:      shardsInfo,
+				TotalPay:        ctx.TotalPay,
+			}
+			err = renewal.StoreRenewalInfo(ctx.Rss.CtxParams, info, renewal.RenewTypeAuto)
+			if err != nil {
+				log.Errorf("Failed to store auto-renewal config: %v", err)
+				return
 			}
 		}
 	}()

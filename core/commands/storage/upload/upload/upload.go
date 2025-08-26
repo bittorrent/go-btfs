@@ -46,6 +46,9 @@ const (
 
 	uploadPriceOptionName   = "price"
 	storageLengthOptionName = "storage-length"
+
+	autoRenewOptionName         = "autorenew"
+	autoRenewDurationOptionName = "autorenew-duration"
 )
 
 var (
@@ -113,8 +116,8 @@ Use status command to check for completion:
 		cmds.IntOption(customizedPayoutPeriodOptionName, "Period of customized payout schedule.").WithDefault(1),
 		cmds.IntOption(copyName, "copy num of file hash.").WithDefault(0),
 		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
-		cmds.BoolOption("autorenew", "Enable automatic renewal before expiration.").WithDefault(false),
-		cmds.IntOption("autorenew-duration", "Duration for automatic renewal in days.").WithDefault(30),
+		cmds.BoolOption(autoRenewOptionName, "Enable automatic renewal before expiration.").WithDefault(false),
+		cmds.IntOption(autoRenewDurationOptionName, "Duration for automatic renewal in days.").WithDefault(30),
 	},
 	RunTimeout: 15 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -203,7 +206,7 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
-		_, err = helper.TotalPay(shardSize, price, storageLength, rate)
+		totalPay, err := helper.TotalPay(shardSize, price, storageLength, rate)
 		if err != nil {
 			fmt.Println(err.Error())
 			return err
@@ -256,7 +259,7 @@ Use status command to check for completion:
 		}
 
 		// Check for auto-renewal option
-		autoRenew, _ := req.Options["autorenew"].(bool)
+		autoRenew, _ := req.Options[autoRenewOptionName].(bool)
 		// autoRenewDuration, _ := req.Options["autorenew-duration"].(int)
 
 		err = UploadShard(&ShardUploadContext{
@@ -272,6 +275,7 @@ Use status command to check for completion:
 			ShardIndexes:   shardIndexes,
 			RepairParams:   nil,
 			AutoRenewal:    autoRenew,
+			TotalPay:       totalPay,
 		})
 		if err != nil {
 			return err

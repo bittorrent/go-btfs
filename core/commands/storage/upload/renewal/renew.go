@@ -364,22 +364,23 @@ func storeRenewalChequeInfo(ctxParams *uh.ContextParams, providerID, shardHash s
 // Note: We no longer use contract-based renewal. Instead, we directly issue cheques to providers.
 // This simplifies the renewal process and avoids the complexity of contract renegotiation.
 
-// RenewalInfo represents auto-renewal configuration for a file
+// RenewalShardInfo represents auto-renewal configuration for a file
 type RenewalShardInfo struct {
 	ShardId   string `json:"shard_id"`
 	ShardSize int    `jons:"shard_size"`
 	SPId      string `json:"sp_id"`
 }
 type RenewalInfo struct {
-	CID             string             `json:"cid"`
-	ShardsInfo      []RenewalShardInfo `json:"shards_info"`
-	RenewalDuration int                `json:"renewal_duration"`
-	Token           common.Address     `json:"token"`
-	Price           int64              `json:"price"`
-	Enabled         bool               `json:"enabled"` // if auto renew is enabled
-	CreatedAt       time.Time          `json:"created_at"`
-	LastRenewalAt   *time.Time         `json:"last_renewal_at,omitempty"`
-	NextRenewalAt   time.Time          `json:"next_renewal_at"`
+	CID             string              `json:"cid"`
+	ShardsInfo      []*RenewalShardInfo `json:"shards_info"`
+	RenewalDuration int                 `json:"renewal_duration"`
+	Token           common.Address      `json:"token"`
+	Price           int64               `json:"price"`
+	Enabled         bool                `json:"enabled"` // if auto renew is enabled
+	TotalPay        int64               `json:"total_pay"`
+	CreatedAt       time.Time           `json:"created_at"`
+	LastRenewalAt   *time.Time          `json:"last_renewal_at,omitempty"`
+	NextRenewalAt   time.Time           `json:"next_renewal_at"`
 }
 
 func checkAvailableBalance(ctx context.Context, amount int64, token common.Address) error {

@@ -3,6 +3,7 @@ package renewal
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -149,7 +150,7 @@ func (ars *AutoRenewalService) checkAndRenewFiles() {
 
 // getAutoRenewalConfigs retrieves all auto-renewal configurations
 func (ars *AutoRenewalService) getAutoRenewalConfigs() ([]*RenewalInfo, error) {
-	prefix := fmt.Sprintf("/btfs/%s/autorenew/", ars.ctxParams.N.Identity.String())
+	prefix := fmt.Sprintf(autoRenewKey, ars.ctxParams.N.Identity.String())
 	q := query.Query{
 		Prefix: prefix,
 	}
@@ -208,7 +209,7 @@ func (ars *AutoRenewalService) processAutoRenewal(config *RenewalInfo) error {
 
 // updateAutoRenewalConfig updates an auto-renewal configuration
 func (ars *AutoRenewalService) updateAutoRenewalConfig(config *RenewalInfo) error {
-	configKey := fmt.Sprintf("/btfs/%s/autorenew/%s", ars.ctxParams.N.Identity.String(), config.CID)
+	configKey := fmt.Sprintf(autoRenewKey+"/%s", ars.ctxParams.N.Identity.String(), config.CID)
 
 	configData, err := json.Marshal(config)
 	if err != nil {
@@ -220,11 +221,11 @@ func (ars *AutoRenewalService) updateAutoRenewalConfig(config *RenewalInfo) erro
 
 // GetAutoRenewalStatus returns the status of auto-renewal for a specific file
 func (ars *AutoRenewalService) GetAutoRenewalStatus(fileHash string) (*RenewalInfo, error) {
-	configKey := fmt.Sprintf("/btfs/%s/autorenew/%s", ars.ctxParams.N.Identity.String(), fileHash)
+	configKey := fmt.Sprintf(autoRenewKey+"/%s", ars.ctxParams.N.Identity.String(), fileHash)
 
 	data, err := ars.ctxParams.N.Repo.Datastore().Get(ars.ctx, datastore.NewKey(configKey))
 	if err != nil {
-		if err == datastore.ErrNotFound {
+		if errors.Is(err, datastore.ErrNotFound) {
 			return nil, nil
 		}
 		return nil, err

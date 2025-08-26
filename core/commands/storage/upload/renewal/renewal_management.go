@@ -2,6 +2,7 @@ package renewal
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -243,7 +244,7 @@ func getRenewalInfo(ctxParams *uh.ContextParams, cid string, renewType string) (
 
 	data, err := ctxParams.N.Repo.Datastore().Get(ctxParams.Ctx, datastore.NewKey(renewalKey))
 	if err != nil {
-		if err == datastore.ErrNotFound {
+		if errors.Is(err, datastore.ErrNotFound) {
 			return nil, nil
 		}
 		return nil, err
@@ -289,17 +290,17 @@ func getRenewalsFiles(ctxParams *uh.ContextParams, filterType string) ([]RenewSt
 			continue
 		}
 
-		var renewalInfo RenewRequest
+		var renewalInfo RenewalInfo
 		if err := json.Unmarshal(result.Value, &renewalInfo); err != nil {
 			continue
 		}
 
 		status := RenewStatusResponse{
 			FileHash:  renewalInfo.CID,
-			Duration:  renewalInfo.Duration,
-			TotalCost: renewalInfo.TotalCost,
-			CreatedAt: time.Now(),
-			ExpiresAt: renewalInfo.NewEnd,
+			Duration:  renewalInfo.RenewalDuration,
+			TotalCost: renewalInfo.TotalPay,
+			CreatedAt: renewalInfo.CreatedAt,
+			ExpiresAt: renewalInfo.CreatedAt.Add(time.Duration(renewalInfo.RenewalDuration) * 24 * time.Hour),
 		}
 
 		renewals = append(renewals, status)
