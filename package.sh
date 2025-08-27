@@ -26,7 +26,7 @@ for goos in ${os[@]}
 do
     for goarch in ${arch[@]}
     do
-        if [[ ( ${goos} = "windows" || ${goos} = "darwin" ) && ( ${goarch} = "arm64" || ${goarch} = "arm" ) ]]; then continue; fi
+        if [[ ( ${goos} = "windows" && ( ${goarch} = "arm64" || ${goarch} = "arm" ) ) || ( ${goos} = "darwin" && ${goarch} = "arm" ) ]]; then continue; fi
         echo "=============>OS: [${goos}] ARCH: [${goarch}] automatic compiler begin."
         ext=""
         if [[ ${goos} = "windows" ]]; then
