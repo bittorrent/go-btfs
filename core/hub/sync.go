@@ -5,11 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 
 	version "github.com/bittorrent/go-btfs"
-
+	shell "github.com/bittorrent/go-btfs-api"
 	config "github.com/bittorrent/go-btfs-config"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/chain/abi"
@@ -127,14 +126,17 @@ func GetSP(ctx context.Context, cfg *config.Config) ([]*hubpb.Host, error) {
 	hosts := make([]*hubpb.Host, 0)
 	for _, uri := range uris {
 		// parse json file
-		resp, err := http.Get(uri)
+		us := strings.Split(uri, "/")
+		if len(us) < 5 {
+			continue
+		}
+		cid := us[len(us)-1]
+		cat, err := shell.NewLocalShell().Cat(cid)
 		if err != nil {
-			fmt.Println("request failed:", err)
 			return nil, err
 		}
-		defer resp.Body.Close()
 
-		body, err := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(cat)
 		if err != nil {
 			fmt.Println("read body failed:", err)
 			return nil, err
