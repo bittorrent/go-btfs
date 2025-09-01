@@ -257,6 +257,7 @@ func GetProxyNeedPaymentKey(cid string) ds.Key {
 }
 
 type ProxyUploadFileInfo struct {
+	From      string `json:"from"`
 	CID       string `json:"cid"`
 	FileSize  int64  `json:"file_size"`
 	Price     int64  `json:"price"`
