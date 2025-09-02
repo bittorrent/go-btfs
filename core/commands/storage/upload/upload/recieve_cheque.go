@@ -4,11 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"github.com/bittorrent/go-btfs/utils"
 	"github.com/ethereum/go-ethereum/common"
-	"math/big"
-	"time"
+
+	nodepb "github.com/bittorrent/go-btfs-common/protos/node"
+
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -88,6 +95,21 @@ var StorageUploadChequeCmd = &cmds.Command{
 			return err
 		}
 
+		// it means the cheque is used to renew
+		if strings.HasPrefix(contractId, "renewal_") {
+			contractId, duration, err := parseContractIdAndRenewalDuration(contractId)
+			if err != nil {
+				fmt.Println("receive cheque, parseContractIdAndRenewalDuration, error:", err)
+				return err
+			}
+			err = extendShardEndTime(ctxParams, contractId, duration)
+			if err != nil {
+				fmt.Println("receive renewal cheque, updateShardEndTime error:", err)
+				return err
+			}
+			return nil
+		}
+
 		// if receive cheque of contractId, set shard paid status.
 		if len(contractId) > 0 {
 			err := setPaidStatus(ctxParams, contractId)
@@ -99,4 +121,37 @@ var StorageUploadChequeCmd = &cmds.Command{
 
 		return nil
 	},
+}
+
+func parseContractIdAndRenewalDuration(renewContractId string) (contractId string, duration int, err error) {
+	// renewal_%d_%s", duration, contractId
+	strings := strings.Split(renewContractId, "_")
+	if len(strings) != 3 {
+		return "", 0, fmt.Errorf("bad renew contract id: fewer than 3 segments")
+	}
+	duration, err = strconv.Atoi(strings[1])
+	if err != nil {
+		return "", 0, fmt.Errorf("bad renew contract id: duration is not a number")
+	}
+	contractId = strings[2]
+	return
+}
+
+func extendShardEndTime(ctxParams *uh.ContextParams, contractId string, duration int) error {
+	cs, err := sessions.ListShardsContracts(ctxParams.N.Repo.Datastore(), ctxParams.N.Identity.String(), nodepb.ContractStat_HOST.String())
+	if err != nil {
+		return err
+	}
+
+	for _, c := range cs {
+		if c.Meta.ContractId == contractId {
+			c.Meta.StorageEnd = uint64(time.Unix(int64(c.Meta.StorageEnd), 0).Add(time.Duration(duration) * time.Hour * 24).Unix())
+			err := sessions.UpdateShardContract(ctxParams.N.Repo.Datastore(), c, ctxParams.N.Identity.String(), nodepb.ContractStat_HOST.String())
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

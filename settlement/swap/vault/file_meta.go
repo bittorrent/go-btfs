@@ -28,6 +28,7 @@ type FileMeta interface {
 	GetFileMeta(cid string, contractIds []string) (*metadata.FileMetaInfo, error)
 	GetFileMetaByCID(cid string) (*metadata.FileMetaInfo, error)
 	GetContractStatus(contractId string) (metadata.Contract_ContractStatus, error)
+	UpdateAutoRenewal(cid string, autoRenewal bool) error
 }
 
 type fileMeta struct {
@@ -210,6 +211,17 @@ func (fm *fileMeta) GetContractStatus(contractId string) (metadata.Contract_Cont
 		return metadata.Contract_ContractStatus(0), err
 	}
 	return metadata.Contract_ContractStatus(int32(meta)), nil
+}
+
+func (fm *fileMeta) UpdateAutoRenewal(cid string, autoRenewal bool) error {
+	// opts, err := bind.NewKeyedTransactorWithChainID(fm.Singer.PrivKey(), fm.chainId)
+	// if err != nil {
+	// 	fmt.Printf("Failed to create transactor: %v\n", err)
+	// 	return err
+	// }
+	// TODO
+	// tx, err := fm.FileMetaAbi.UpdateAutoRenewal(opts, cid, autoRenewal)
+	return nil
 }
 
 func keccak256(data ...[]byte) []byte {
