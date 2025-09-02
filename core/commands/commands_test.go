@@ -245,6 +245,7 @@ func TestCommands(t *testing.T) {
 		"/storage/upload/sign",
 		"/storage/upload/proxy",
 		"/storage/upload/proxy/pay",
+		"/storage/upload/proxy/list",
 		"/storage/upload/proxy/pay/balance",
 		"/storage/upload/proxy/pay/history",
 		"/storage/upload/proxy/notify-pay",
