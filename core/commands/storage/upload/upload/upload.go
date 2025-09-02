@@ -2,6 +2,7 @@ package upload
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -20,7 +21,9 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/hosts"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/offline"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/proxy"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
+	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 	renterpb "github.com/bittorrent/go-btfs/protos/renter"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
@@ -46,6 +49,7 @@ const (
 
 	uploadPriceOptionName   = "price"
 	storageLengthOptionName = "storage-length"
+	storageProxyOptionName  = "proxy"
 
 	autoRenewOptionName         = "autorenew"
 	autoRenewDurationOptionName = "autorenew-duration"
@@ -86,6 +90,7 @@ To custom upload and storage a file on specific hosts:
 Use status command to check for completion:
     $ btfs storage upload status <session-id> | jq`,
 	},
+	NoRemote: true,
 	Subcommands: map[string]*cmds.Command{
 		"init":              StorageUploadInitCmd,
 		"supporttokens":     StorageUploadSupportTokensCmd,
@@ -98,6 +103,7 @@ Use status command to check for completion:
 		"signcontractbatch": offline.StorageUploadSignContractBatchCmd,
 		"getunsigned":       offline.StorageUploadGetUnsignedCmd,
 		"sign":              offline.StorageUploadSignCmd,
+		"proxy":             proxy.StorageUploadProxyCmd,
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("file-hash", true, false, "Hash of file to upload."),
@@ -116,6 +122,8 @@ Use status command to check for completion:
 		cmds.IntOption(customizedPayoutPeriodOptionName, "Period of customized payout schedule.").WithDefault(1),
 		cmds.IntOption(copyName, "copy num of file hash.").WithDefault(0),
 		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
+		// proxy
+		cmds.StringOption(storageProxyOptionName, "pro", "User proxy to upload file to Storage Provider"),
 		cmds.BoolOption(autoRenewOptionName, "Enable automatic renewal before expiration.").WithDefault(false),
 		cmds.IntOption(autoRenewDurationOptionName, "Duration for automatic renewal in days.").WithDefault(30),
 	},
@@ -142,6 +150,31 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
+
+		if req.Options[storageProxyOptionName] != nil && req.Options[storageProxyOptionName] != ctxParams.N.Identity.String() {
+			proxyNodeId := req.Options[storageProxyOptionName].(string)
+			pId, err := peer.Decode(proxyNodeId)
+			if err != nil {
+				fmt.Println("invalid peer id:", err)
+				return err
+			}
+			resp, err := remote.P2PCall(ctxParams.Ctx, ctxParams.N, ctxParams.Api, pId, "/storage/upload/proxy", req.Arguments[0])
+			if err != nil {
+				return err
+			}
+			r := make(map[string]interface{})
+			err = json.Unmarshal(resp, &r)
+			if err != nil {
+				return err
+			}
+			for k, v := range r {
+				fmt.Printf("%s: %v\n", k, v)
+			}
+			return nil
+		}
+
+		// use proxy to upload file not itself
+
 		renterId := ctxParams.N.Identity
 		offlineSigning := false
 		if len(req.Arguments) > 1 {
