@@ -9,8 +9,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/renewal"
+	"github.com/bittorrent/go-btfs/utils"
+	coreiface "github.com/bittorrent/interface-go-btfs-core"
+
+	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
+
+	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/hosts"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
@@ -19,9 +25,6 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 	renterpb "github.com/bittorrent/go-btfs/protos/renter"
-	"github.com/bittorrent/go-btfs/settlement/swap/swapprotocol"
-	"github.com/bittorrent/go-btfs/utils"
-	coreiface "github.com/bittorrent/interface-go-btfs-core"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
 
@@ -47,6 +50,9 @@ const (
 	uploadPriceOptionName   = "price"
 	storageLengthOptionName = "storage-length"
 	storageProxyOptionName  = "proxy"
+
+	autoRenewOptionName         = "autorenew"
+	autoRenewDurationOptionName = "autorenew-duration"
 )
 
 var (
@@ -92,6 +98,7 @@ Use status command to check for completion:
 		"recvcontract":      StorageUploadRecvContractCmd,
 		"status":            StorageUploadStatusCmd,
 		"repair":            StorageUploadRepairCmd,
+		"renew":             renewal.StorageRenewCmd,
 		"getcontractbatch":  offline.StorageUploadGetContractBatchCmd,
 		"signcontractbatch": offline.StorageUploadSignContractBatchCmd,
 		"getunsigned":       offline.StorageUploadGetUnsignedCmd,
@@ -117,6 +124,8 @@ Use status command to check for completion:
 		cmds.StringOption(tokencfg.TokenTypeName, "tk", "file storage with token type,default WBTT, other TRX/USDD/USDT.").WithDefault("WBTT"),
 		// proxy
 		cmds.StringOption(storageProxyOptionName, "pro", "User proxy to upload file to Storage Provider"),
+		cmds.BoolOption(autoRenewOptionName, "Enable automatic renewal before expiration.").WithDefault(false),
+		cmds.IntOption(autoRenewDurationOptionName, "Duration for automatic renewal in days.").WithDefault(30),
 	},
 	RunTimeout: 15 * time.Minute,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
@@ -230,7 +239,7 @@ Use status command to check for completion:
 		if err != nil {
 			return err
 		}
-		_, err = helper.TotalPay(shardSize, price, storageLength, rate)
+		totalPay, err := helper.TotalPay(shardSize, price, storageLength, rate)
 		if err != nil {
 			fmt.Println(err.Error())
 			return err
@@ -282,6 +291,10 @@ Use status command to check for completion:
 			shardIndexes = append(shardIndexes, i)
 		}
 
+		// Check for auto-renewal option
+		autoRenew, _ := req.Options[autoRenewOptionName].(bool)
+		// autoRenewDuration, _ := req.Options["autorenew-duration"].(int)
+
 		err = UploadShard(&ShardUploadContext{
 			Rss:            rss,
 			HostsProvider:  sp,
@@ -294,6 +307,8 @@ Use status command to check for completion:
 			FileSize:       fileSize,
 			ShardIndexes:   shardIndexes,
 			RepairParams:   nil,
+			AutoRenewal:    autoRenew,
+			TotalPay:       totalPay,
 		})
 		if err != nil {
 			return err
@@ -318,7 +333,7 @@ func SyncSPs(ctxParams *helper.ContextParams) error {
 	// TODO check if ok
 	m := cfg.Experimental.HostsSyncMode
 	m = strings.ToUpper("sp")
-	_, err = hosts.SyncSPs(ctx, ctxParams.N, m)
+	_, err = hosts.SyncSPs(ctx, ctxParams.N, m, cfg)
 	return err
 }
 

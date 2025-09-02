@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/renewal"
 	"github.com/bittorrent/go-btfs/protos/metadata"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -30,7 +31,9 @@ type ShardUploadContext struct {
 	RenterId       peer.ID
 	FileSize       int64
 	ShardIndexes   []int
+	AutoRenewal    bool
 	RepairParams   *RepairParams
+	TotalPay       int64
 }
 
 func UploadShard(ctx *ShardUploadContext) error {
@@ -60,6 +63,44 @@ func UploadShard(ctx *ShardUploadContext) error {
 			err := SubmitToChain(ctx.Rss, ctx.FileSize, ctx.OfflineSigning)
 			if err != nil {
 				_ = ctx.Rss.To(sessions.RssToErrorEvent, err)
+				return
+			}
+
+			// save auto-renewal info
+			shardsInfo := make([]*renewal.RenewalShardInfo, 0)
+			for i, shard := range ctx.Rss.ShardHashes {
+				shards, err := sessions.GetUserShard(ctx.Rss.CtxParams, ctx.Rss.SsId, shard, i)
+				if err != nil {
+					log.Errorf("get user shard error: %s", err.Error())
+					continue
+				}
+				contracts, err := shards.Contracts()
+				if err != nil {
+					log.Errorf("get contracts error: %s", err.Error())
+					continue
+				}
+				si := &renewal.RenewalShardInfo{
+					SPId:      contracts.Meta.SpId,
+					ShardId:   contracts.Meta.ShardHash,
+					ShardSize: int(contracts.Meta.ShardSize),
+				}
+				shardsInfo = append(shardsInfo, si)
+			}
+			info := &renewal.RenewalInfo{
+				CID:             ctx.Rss.Hash,
+				RenewalDuration: ctx.StorageLength,
+				Token:           ctx.Token,
+				Price:           ctx.Price,
+				Enabled:         ctx.AutoRenewal,
+				CreatedAt:       time.Now(),
+				LastRenewalAt:   nil,
+				NextRenewalAt:   time.Now().Add(time.Duration(ctx.StorageLength) * 24 * time.Hour),
+				ShardsInfo:      shardsInfo,
+				TotalPay:        ctx.TotalPay,
+			}
+			err = renewal.StoreRenewalInfo(ctx.Rss.CtxParams, info, renewal.RenewTypeAuto)
+			if err != nil {
+				log.Errorf("Failed to store auto-renewal config: %v", err)
 				return
 			}
 		}
@@ -164,6 +205,7 @@ func signShardContractAndSendToSP(ctx *ShardUploadContext, host string, hostPid 
 					StorageEnd:   uint64(time.Now().Add(time.Duration(ctx.StorageLength) * 24 * time.Hour).Unix()),
 					Price:        uint64(ctx.Price),
 					Amount:       uint64(amount),
+					AutoRenewal:  ctx.AutoRenewal,
 				},
 				ctx.OfflineSigning,
 				ctx.RepairParams,

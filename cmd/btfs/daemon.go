@@ -7,8 +7,6 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
-	"github.com/bittorrent/go-btfs/s3"
-	"github.com/bittorrent/go-btfs/s3/api/services/accesskey"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -22,6 +20,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/bittorrent/go-btfs/s3"
+	"github.com/bittorrent/go-btfs/s3/api/services/accesskey"
 
 	"github.com/bittorrent/go-btfs/chain/tokencfg"
 
@@ -760,6 +761,9 @@ If the user need to start multiple nodes on the same machine, the configuration 
 		spin.Hosts(node, env)
 		spin.Contracts(node, req, env, nodepb.ContractStat_HOST.String())
 		spin.RestartFixChequeCashOut()
+
+		// Start auto-renewal service for storage files
+		spin.AutoRenewalService(node, req, env)
 	}
 
 	// Give the user some immediate feedback when they hit C-c
