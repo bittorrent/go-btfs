@@ -14,6 +14,7 @@ import (
 	"github.com/bittorrent/go-btfs/core/commands/storage/challenge"
 	proxy "github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
+	ds "github.com/ipfs/go-datastore"
 
 	"github.com/cenkalti/backoff/v4"
 	cidlib "github.com/ipfs/go-cid"
@@ -103,18 +104,23 @@ the shard and replies back to client for the next challenge step.`,
 		}
 		fmt.Println("token =", token, tokenStr)
 
-		// token: get new price
-		priceObj, err := chain.SettleObject.OracleService.CurrentPrice(token)
-		if err != nil {
+		config, err := proxy.GetProxyStorageConfig(req.Context, ctxParams.N)
+		if err != nil && errors.Is(err, ds.ErrNotFound) {
+			// token: get new price
+			priceObj, err := chain.SettleObject.OracleService.CurrentPrice(token)
+			if err != nil {
+				return err
+			}
+			config.Price = uint64(priceObj.Int64())
+		} else {
 			return err
 		}
-		price := priceObj.Int64()
 		// token: get new rate
 		rate, err := chain.SettleObject.OracleService.CurrentRate(token)
 		if err != nil {
 			return err
 		}
-		totalPay, err := helper.TotalPay(shardSize, price, storageLength, rate)
+		totalPay, err := helper.TotalPay(shardSize, int64(config.Price), storageLength, rate)
 		if err != nil {
 			fmt.Println(err.Error())
 			return err
@@ -123,7 +129,7 @@ the shard and replies back to client for the next challenge step.`,
 		payInfo := &proxy.ProxyNeedPaymentInfo{
 			CID:      req.Arguments[0],
 			FileSize: fileSize,
-			Price:    price,
+			Price:    int64(config.Price),
 			NeedBTT:  uint64(totalPay),
 		}
 		err = proxy.PutProxyNeedPaymentCID(ctxParams.Ctx, ctxParams.N, payInfo)

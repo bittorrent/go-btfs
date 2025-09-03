@@ -48,18 +48,29 @@ This command set storage upload proxy config such as price, the unit of price is
 			return err
 		}
 
-		priceInt := req.Options[ProxyPriceOptionName].(int64)
+		priceOption := req.Options[ProxyPriceOptionName]
+		if priceOption == nil {
+			return fmt.Errorf("please specify the price with the --%s option", ProxyPriceOptionName)
+		}
+
+		priceInt, ok := priceOption.(int64)
+		if !ok {
+			return fmt.Errorf("price must be a valid integer")
+		}
 
 		nc, err := helper.GetHostStorageConfig(req.Context, n)
 		if err != nil {
 			return err
 		}
+		if priceInt <= 0 {
+			return fmt.Errorf("price must be greater than 0")
+		}
 		if nc.GetStoragePriceDefault() > uint64(priceInt*1000) {
-			return fmt.Errorf("price must be greater than %d", nc.StoragePriceDefault)
+			return fmt.Errorf("price must be greater than default %d (BTT)", nc.StoragePriceDefault/1000)
 		}
 
 		err = helper.PutProxyStorageConfig(req.Context, n, &helper.ProxyStorageInfo{
-			Price: uint64(priceInt),
+			Price: uint64(priceInt) * 1000,
 		})
 
 		return err
@@ -85,12 +96,13 @@ This command show storage upload proxy config such as price. The price is in BTT
 				return err
 			}
 			return cmds.EmitOnce(res, &helper.ProxyStorageInfo{
-				Price: nc.StoragePriceDefault,
+				Price: nc.StoragePriceDefault / 1000,
 			})
 		}
 		if err != nil {
 			return err
 		}
+		config.Price /= 1000
 		return cmds.EmitOnce(res, config)
 	},
 }
