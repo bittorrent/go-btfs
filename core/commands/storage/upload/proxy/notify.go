@@ -29,7 +29,6 @@ This command is used to notify the proxy that the payment has been made.
 		cmds.StringArg("hash", true, false, "The hash of the storage-upload-proxy-pay command."),
 		cmds.StringArg("cid", true, false, "The cid that the transaction paid for"),
 	},
-	NoRemote: true,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		nd, err := cmdenv.GetNode(env)
 		if err != nil {
@@ -90,6 +89,9 @@ This command is used to notify the proxy that the payment has been made.
 			Value:   value.Uint64(),
 			Balance: currentBalance,
 		})
+		if err != nil {
+			return err
+		}
 
 		// check if it is enough to pay
 		needPayInfo, err := helper.GetProxyNeedPaymentCID(req.Context, nd, req.Arguments[1])

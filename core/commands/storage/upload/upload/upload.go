@@ -90,7 +90,6 @@ To custom upload and storage a file on specific hosts:
 Use status command to check for completion:
     $ btfs storage upload status <session-id> | jq`,
 	},
-	NoRemote: true,
 	Subcommands: map[string]*cmds.Command{
 		"init":              StorageUploadInitCmd,
 		"supporttokens":     StorageUploadSupportTokensCmd,

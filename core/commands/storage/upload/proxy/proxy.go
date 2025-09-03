@@ -34,7 +34,6 @@ the shard and replies back to client for the next challenge step.`,
 	Arguments: []cmds.Argument{
 		cmds.StringArg("file-hash", true, false, "Need to uploaded cid."),
 	},
-	NoRemote: true,
 	Subcommands: map[string]*cmds.Command{
 		"pay":        StorageUploadProxyPayCmd,
 		"notify-pay": StorageUploadProxyNotifyPayCmd,
