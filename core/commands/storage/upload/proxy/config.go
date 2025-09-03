@@ -48,7 +48,15 @@ This command set storage upload proxy config such as price, the unit of price is
 			return err
 		}
 
-		priceInt := req.Options[ProxyPriceOptionName].(int64)
+		priceOption := req.Options[ProxyPriceOptionName]
+		if priceOption == nil {
+			return fmt.Errorf("please specify the price with the --%s option", ProxyPriceOptionName)
+		}
+
+		priceInt, ok := priceOption.(int64)
+		if !ok {
+			return fmt.Errorf("price must be a valid integer")
+		}
 
 		nc, err := helper.GetHostStorageConfig(req.Context, n)
 		if err != nil {
