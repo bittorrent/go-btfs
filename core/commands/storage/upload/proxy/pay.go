@@ -28,7 +28,6 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 		cmds.StringArg("cid", false, false, "cid that need to pay."),
 		cmds.StringArg("amount", false, false, "deposit amount of BTT."),
 	},
-	NoRemote:   true,
 	RunTimeout: 5 * time.Minute,
 	Subcommands: map[string]*cmds.Command{
 		"balance": StorageUploadProxyPaymentBalanceCmd,
