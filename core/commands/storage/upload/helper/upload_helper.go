@@ -170,10 +170,10 @@ func GetPriceAndMinStorageLength(params *ContextParams) (price int64, storageLen
 		price = int64(ns.StoragePriceAsk)
 	}
 	storageLength = params.Req.Options[storageLengthOptionName].(int)
-	if uint64(storageLength) < ns.StorageTimeMin {
-		return -1, -1, fmt.Errorf("invalid storage len. want: >= %d, got: %d",
-			ns.StorageTimeMin, storageLength)
-	}
+	// if uint64(storageLength) < ns.StorageTimeMin {
+	// 	return -1, -1, fmt.Errorf("invalid storage len. want: >= %d, got: %d",
+	// 		ns.StorageTimeMin, storageLength)
+	// }
 	return
 }
 
@@ -189,7 +189,7 @@ func TotalPayReal(shardSize int64, price int64, storageLength int, rate *big.Int
 	if totalPay <= 0 {
 		totalPay = 1
 	}
-	//fmt.Printf("size:%v GB, price:%v000000000000 , storageLength:%v,  TotalPay:%v000000000000 \n", float64(shardSize)/float64(units.GiB), price, storageLength, totalPay)
+	// fmt.Printf("size:%v GB, price:%v000000000000 , storageLength:%v,  TotalPay:%v000000000000 \n", float64(shardSize)/float64(units.GiB), price, storageLength, totalPay)
 	fmt.Printf("size:%v GB, price:%v*%v , storageLength:%v,  TotalPay:%v*%v \n", float64(shardSize)/float64(units.GiB), price, rate.String(), storageLength, totalPay, rate.String())
 
 	return totalPay, nil
@@ -199,7 +199,7 @@ func TotalPayRound(shardSize int64, price int64, storageLength int, rate *big.In
 	totalPayFloat := float64(shardSize) / float64(units.GiB) * float64(price) * float64(storageLength)
 
 	totalPay := int64(math.Floor(totalPayFloat + 0.5))
-	//fmt.Printf("size:%v GB, price:%v*%v , storageLength:%v,  TotalPay:%v*%v \n", float64(shardSize)/float64(units.GiB), price, rate.String(), storageLength, totalPay, rate.String())
+	// fmt.Printf("size:%v GB, price:%v*%v , storageLength:%v,  TotalPay:%v*%v \n", float64(shardSize)/float64(units.GiB), price, rate.String(), storageLength, totalPay, rate.String())
 	fmt.Printf("size:%v GB, price:%v*%v , storageLength:%v,  TotalPay:%v*%v, TotalPayFloat:%v*%v \n", float64(shardSize)/float64(units.GiB), price, rate.String(), storageLength, totalPay, rate.String(), totalPayFloat, rate.String())
 	if totalPay < 1 {
 		return 0, errors.New("Your file upload fee is less than 1 precision minimum unit, please use WBTT token to upload. ")
