@@ -113,7 +113,8 @@ the shard and replies back to client for the next challenge step.`,
 			}
 			config = &proxy.ProxyStorageInfo{}
 			config.Price = uint64(priceObj.Int64())
-		} else {
+		}
+		if err != nil {
 			return err
 		}
 		// token: get new rate
