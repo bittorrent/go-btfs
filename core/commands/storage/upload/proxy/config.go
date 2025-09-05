@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	cmds "github.com/bittorrent/go-btfs-cmds"
+	"github.com/bittorrent/go-btfs/chain"
+	"github.com/bittorrent/go-btfs/chain/tokencfg"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	"github.com/bittorrent/go-btfs/utils"
@@ -58,19 +60,29 @@ This command set storage upload proxy config such as price, the unit of price is
 			return fmt.Errorf("price must be a valid integer")
 		}
 
-		nc, err := helper.GetHostStorageConfig(req.Context, n)
+		tokenStr := "WBTT"
+		token, bl := tokencfg.MpTokenAddr[tokenStr]
+		if !bl {
+			return errors.New("your input token is none. ")
+		}
+		priceObj, err := chain.SettleObject.OracleService.CurrentPrice(token)
 		if err != nil {
 			return err
 		}
+		if err != nil {
+			return err
+		}
+
 		if priceInt <= 0 {
 			return fmt.Errorf("price must be greater than 0")
 		}
-		if nc.GetStoragePriceDefault() > uint64(priceInt*1000) {
-			return fmt.Errorf("price must be greater than default %d (BTT)", nc.StoragePriceDefault/1000)
+
+		if priceObj.Uint64() > uint64(priceInt*1000000) {
+			return fmt.Errorf("price must be greater than default %d (BTT)", priceObj.Uint64()/1000000)
 		}
 
 		err = helper.PutProxyStorageConfig(req.Context, n, &helper.ProxyStorageInfo{
-			Price: uint64(priceInt) * 1000,
+			Price: uint64(priceInt) * 1000000,
 		})
 
 		return err
