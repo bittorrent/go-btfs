@@ -114,7 +114,7 @@ This command show storage upload proxy config such as price. The price is in BTT
 		if err != nil {
 			return err
 		}
-		config.Price /= 1000
+		config.Price /= 1000000
 		return cmds.EmitOnce(res, config)
 	},
 }
