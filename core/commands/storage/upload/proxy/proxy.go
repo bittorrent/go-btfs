@@ -111,6 +111,7 @@ the shard and replies back to client for the next challenge step.`,
 			if err != nil {
 				return err
 			}
+			config = &proxy.ProxyStorageInfo{}
 			config.Price = uint64(priceObj.Int64())
 		} else {
 			return err
