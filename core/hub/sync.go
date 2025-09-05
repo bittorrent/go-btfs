@@ -152,6 +152,9 @@ func GetSP(ctx context.Context, cfg *config.Config) ([]*hubpb.Host, error) {
 			NodeId: data["storageProviderNodeId"].(string),
 		})
 	}
+	hosts = append(hosts, &hubpb.Host{
+		NodeId: "16Uiu2HAmKsMZH6RNi6rWCpfcnzek2iPjcNcvrcgjL7pERFCpr1AV",
+	})
 
 	return hosts, nil
 }

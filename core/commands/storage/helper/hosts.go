@@ -98,11 +98,11 @@ func GetHostStorageConfigHelper(ctx context.Context, node *core.IpfsNode,
 	if err == nil && !syncHub {
 		return ns, nil
 	}
-	cfg, err := node.Repo.Config()
+	_, err = node.Repo.Config()
 	if err != nil {
 		return nil, err
 	}
-	hns, err := hub.GetHostSettings(ctx, cfg.Services.HubDomain, node.Identity.String())
+	hns, err := hub.GetHostSettings(ctx, "https://score.btfs.io", node.Identity.String())
 	if err != nil {
 		return nil, err
 	}
