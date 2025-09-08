@@ -94,6 +94,10 @@ Example:
 		if renewalInfo == nil {
 			return fmt.Errorf("renewal cid not found: %s", renewalCID)
 		}
+		renewalInfo.Price = renewalInfo.Price / 1000000
+		if !renewalInfo.Enabled {
+			renewalInfo.NextRenewalAt = time.Time{}
+		}
 
 		return res.Emit(renewalInfo)
 	},
