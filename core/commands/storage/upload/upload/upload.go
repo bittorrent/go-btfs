@@ -307,7 +307,7 @@ Use status command to check for completion:
 			ShardIndexes:   shardIndexes,
 			RepairParams:   nil,
 			AutoRenewal:    autoRenew,
-			TotalPay:       totalPay,
+			TotalPay:       totalPay * rate.Int64(),
 		})
 		if err != nil {
 			return err
