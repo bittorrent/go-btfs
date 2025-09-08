@@ -20,7 +20,6 @@ import (
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/rm"
 	"github.com/bittorrent/go-btfs/core/commands/storage/challenge"
-	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
 	uh "github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/commands/storage/upload/sessions"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
@@ -106,7 +105,7 @@ the shard and replies back to client for the next challenge step.`,
 		if err != nil {
 			return err
 		}
-		settings, err := helper.GetHostStorageConfig(ctxParams.Ctx, ctxParams.N)
+		// settings, err := helper.GetHostStorageConfig(ctxParams.Ctx, ctxParams.N)
 		if err != nil {
 			return err
 		}
@@ -115,9 +114,9 @@ the shard and replies back to client for the next challenge step.`,
 		if err != nil {
 			return err
 		}
-		if uint64(storeLen) < settings.StorageTimeMin {
-			return fmt.Errorf("storage length invalid: want: >=%d, got: %d", settings.StorageTimeMin, storeLen)
-		}
+		// if uint64(storeLen) < settings.StorageTimeMin {
+		// 	return fmt.Errorf("storage length invalid: want: >=%d, got: %d", settings.StorageTimeMin, storeLen)
+		// }
 		ssId := req.Arguments[0]
 		shardHash := req.Arguments[2]
 		shardIndex, err := strconv.Atoi(req.Arguments[7])
