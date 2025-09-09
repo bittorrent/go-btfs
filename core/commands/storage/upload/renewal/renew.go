@@ -249,7 +249,7 @@ func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, payme
 		return fmt.Errorf("no storage provider ID found in contract")
 	}
 
-	log.Infof("Paying renewal cheque for shard %s to sp %s, amount: %d", renewReq.ShardId, spId, paymentAmount)
+	fmt.Printf("Paying renewal cheque for shard %s to sp %s, amount: %d\n", renewReq.ShardId, spId, paymentAmount)
 
 	// Check available balance before issuing cheque
 	err := checkAvailableBalance(ctxParams.Ctx, paymentAmount, renewReq.Token)
@@ -263,20 +263,13 @@ func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, payme
 		return fmt.Errorf("failed to issue renewal cheque to provider %s: %v", spId, err)
 	}
 
-	// Update shard renewal information
-	// err = updateShardRenewalInfo(ctxParams, session.SsId, shardHash, shardIndex, renewReq.Duration, paymentAmount)
-	// if err != nil {
-	// 	log.Errorf("Failed to update shard renewal info: %v", err)
-	// 	// Don't fail the payment for info update issues
-	// }
-
-	log.Infof("Successfully issued renewal cheque for shard %s", renewReq.ShardId)
+	fmt.Printf("Successfully issued renewal cheque for shard %s\n", renewReq.ShardId)
 	return nil
 }
 
 // issueRenewalCheque issues a cheque directly to storage provider for renewal payment
 func issueRenewalCheque(ctxParams *uh.ContextParams, providerID string, amount int64, token common.Address, shardHash string, duration int, contractId string) error {
-	log.Infof("Issuing renewal cheque to provider %s for shard %s, amount: %d, duration: %d days", providerID, shardHash, amount, duration)
+	fmt.Printf("Issuing renewal cheque to provider %s for shard %s, amount: %d, duration: %d days\n", providerID, shardHash, amount, duration)
 
 	// Get settlement service
 	if chain.SettleObject.SwapService == nil {
@@ -292,12 +285,15 @@ func issueRenewalCheque(ctxParams *uh.ContextParams, providerID string, amount i
 	// Issue cheque through settlement service
 	// This directly pays the provider without creating a new contract
 	// Pay method signature: Pay(ctx context.Context, peer string, amount *big.Int, contractId string, token common.Address)
-	chain.SettleObject.SwapService.Settle(providerID, paymentAmount, renewalContractID, token)
+	err := chain.SettleObject.SwapService.Settle(providerID, paymentAmount, renewalContractID, token)
+	if err != nil {
+		return err
+	}
 
-	log.Infof("Successfully issued renewal cheque to provider %s for contract %s", providerID, renewalContractID)
+	fmt.Printf("Successfully issued renewal cheque to provider %s for contract %s\n", providerID, renewalContractID)
 
 	// Store cheque information for tracking
-	err := storeRenewalChequeInfo(ctxParams, providerID, shardHash, renewalContractID, amount, duration)
+	err = storeRenewalChequeInfo(ctxParams, providerID, shardHash, renewalContractID, amount, duration)
 	if err != nil {
 		log.Errorf("Failed to store renewal cheque info: %v", err)
 		// Don't fail the payment for storage issues
@@ -416,14 +412,14 @@ func getRealAmount(amount int64, token common.Address) (*big.Int, error) {
 }
 
 func extendShardEndTime(ctxParams *uh.ContextParams, contractId string, duration int) error {
-	c, err := sessions.GetUserShardContract(ctxParams.N.Repo.Datastore(), ctxParams.N.Identity.String(), nodepb.ContractStat_RENTER.String(), contractId)
+	k, c, err := sessions.GetUserShardContract(ctxParams.N.Repo.Datastore(), ctxParams.N.Identity.String(), nodepb.ContractStat_RENTER.String(), contractId)
 	if err != nil {
 		return err
 	}
 
 	if c.Meta.ContractId == contractId {
 		c.Meta.StorageEnd = uint64(time.Unix(int64(c.Meta.StorageEnd), 0).Add(time.Duration(duration) * time.Hour * 24).Unix())
-		err := sessions.UpdateShardContract(ctxParams.N.Repo.Datastore(), c, ctxParams.N.Identity.String(), nodepb.ContractStat_RENTER.String())
+		err = sessions.UpdateShardContract(ctxParams.N.Repo.Datastore(), c, k)
 		if err != nil {
 			return err
 		}

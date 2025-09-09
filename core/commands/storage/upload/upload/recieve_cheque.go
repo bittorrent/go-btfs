@@ -138,20 +138,17 @@ func parseContractIdAndRenewalDuration(renewContractId string) (contractId strin
 }
 
 func extendShardEndTime(ctxParams *uh.ContextParams, contractId string, duration int) error {
-	cs, err := sessions.ListShardsContracts(ctxParams.N.Repo.Datastore(), ctxParams.N.Identity.String(), nodepb.ContractStat_HOST.String())
+	key, cs, err := sessions.GetUserShardContract(ctxParams.N.Repo.Datastore(), ctxParams.N.Identity.String(), nodepb.ContractStat_HOST.String(), contractId)
 	if err != nil {
 		return err
 	}
 
-	for _, c := range cs {
-		if c.Meta.ContractId == contractId {
-			c.Meta.StorageEnd = uint64(time.Unix(int64(c.Meta.StorageEnd), 0).Add(time.Duration(duration) * time.Hour * 24).Unix())
-			err := sessions.UpdateShardContract(ctxParams.N.Repo.Datastore(), c, ctxParams.N.Identity.String(), nodepb.ContractStat_HOST.String())
-			if err != nil {
-				return err
-			}
+	if cs.Meta.ContractId == contractId {
+		cs.Meta.StorageEnd = uint64(time.Unix(int64(cs.Meta.StorageEnd), 0).Add(time.Duration(duration) * time.Hour * 24).Unix())
+		err := sessions.UpdateShardContract(ctxParams.N.Repo.Datastore(), cs, key)
+		if err != nil {
+			return err
 		}
 	}
-
 	return nil
 }
