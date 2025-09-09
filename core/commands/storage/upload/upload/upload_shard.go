@@ -80,9 +80,10 @@ func UploadShard(ctx *ShardUploadContext) error {
 					continue
 				}
 				si := &renewal.RenewalShardInfo{
-					SPId:      contracts.Meta.SpId,
-					ShardId:   contracts.Meta.ShardHash,
-					ShardSize: int(contracts.Meta.ShardSize),
+					SPId:       contracts.Meta.SpId,
+					ShardId:    contracts.Meta.ShardHash,
+					ShardSize:  int(contracts.Meta.ShardSize),
+					ContractID: contracts.Meta.ContractId,
 				}
 				shardsInfo = append(shardsInfo, si)
 			}

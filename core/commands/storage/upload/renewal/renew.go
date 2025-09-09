@@ -323,9 +323,10 @@ func storeRenewalChequeInfo(ctxParams *uh.ContextParams, providerID, shardHash s
 
 // RenewalShardInfo represents auto-renewal configuration for a file
 type RenewalShardInfo struct {
-	ShardId   string `json:"shard_id"`
-	ShardSize int    `jons:"shard_size"`
-	SPId      string `json:"sp_id"`
+	ShardId    string `json:"shard_id"`
+	ShardSize  int    `jons:"shard_size"`
+	SPId       string `json:"sp_id"`
+	ContractID string `json:"contract_id"`
 }
 type RenewalInfo struct {
 	CID             string              `json:"cid"`

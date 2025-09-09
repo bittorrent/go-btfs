@@ -192,6 +192,7 @@ func (ars *AutoRenewalService) processAutoRenewal(config *RenewalInfo) error {
 			SpId:        s.SPId,
 			RenterID:    ars.ctxParams.N.Identity,
 			ShardId:     s.ShardId,
+			ContractId:  s.ContractID,
 			ShardSize:   int64(s.ShardSize),
 			OriginalEnd: config.NextRenewalAt,
 			NewEnd:      config.NextRenewalAt.Add(time.Duration(config.RenewalDuration) * time.Hour * 24),
