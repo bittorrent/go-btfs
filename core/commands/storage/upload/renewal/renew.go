@@ -122,11 +122,11 @@ Examples:
 		}
 
 		// check if the cid enabled autorenew
-		info, err := getRenewalInfo(ctxParams, cid, "auto")
+		info, err := getRenewalInfo(ctxParams, cid, RenewTypeAuto)
 		if err != nil {
 			return err
 		}
-		if info != nil {
+		if info != nil && info.Enabled {
 			return fmt.Errorf("file %s is already auto-renewed and cannot be renewed manually", cid)
 		}
 		// Get token address
@@ -140,10 +140,11 @@ Examples:
 		if hasPriceOpt {
 			price = priceOpt
 		} else {
-			price, _, err = uh.GetPriceAndMinStorageLength(ctxParams)
+			priceObj, err := chain.SettleObject.OracleService.CurrentPrice(token)
 			if err != nil {
-				return fmt.Errorf("failed to get current price: %v", err)
+				return err
 			}
+			price = priceObj.Int64()
 		}
 
 		contracts, err := sessions.ListShardsContracts(ctxParams.N.Repo.Datastore(), ctxParams.N.Identity.String(), nodepb.ContractStat_RENTER.String())
@@ -214,13 +215,7 @@ func executeRenewal(ctxParams *uh.ContextParams, renewReq *RenewRequest) (*Renew
 		return nil, fmt.Errorf("failed to calculate total cost: %v", err)
 	}
 
-	renewReq.TotalCost = totalCost
-
-	// Check available balance
-	if err := checkAvailableBalance(ctxParams.Ctx, totalCost, renewReq.Token); err != nil {
-		return nil, fmt.Errorf("insufficient balance: %v", err)
-	}
-
+	renewReq.TotalCost = totalCost * rate.Int64()
 	// Execute renewal with storage providers
 	err = payRenewalCheque(ctxParams, renewReq, totalCost)
 	if err != nil {
@@ -263,7 +258,6 @@ func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, payme
 		return fmt.Errorf("failed to issue renewal cheque to provider %s: %v", spId, err)
 	}
 
-	fmt.Printf("Successfully issued renewal cheque for shard %s\n", renewReq.ShardId)
 	return nil
 }
 
@@ -301,39 +295,6 @@ func issueRenewalCheque(ctxParams *uh.ContextParams, providerID string, amount i
 
 	return nil
 }
-
-// updateShardRenewalInfo updates the shard information with renewal details
-// func updateShardRenewalInfo(ctxParams *uh.ContextParams, sessionID, shardHash string, shardIndex int, duration int, amount int64) error {
-// 	// Verify shard exists (we don't need to use the shard object, just verify it exists)
-// 	_, err := sessions.GetUserShard(ctxParams, sessionID, shardHash, shardIndex)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to get shard info: %v", err)
-// 	}
-//
-// 	// Update shard with renewal information
-// 	// This extends the storage period without creating new contracts
-// 	renewalInfo := map[string]interface{}{
-// 		"renewed_at":       time.Now().Unix(),
-// 		"renewal_duration": duration,
-// 		"renewal_amount":   amount,
-// 		"new_expiry":       time.Now().Add(time.Duration(duration) * 24 * time.Hour).Unix(),
-// 	}
-//
-// 	// Store renewal info in shard metadata
-// 	shardKey := fmt.Sprintf("/btfs/%s/shards/%s/%s/renewal", ctxParams.N.Identity.String(), sessionID, shardHash)
-// 	renewalData, err := json.Marshal(renewalInfo)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to marshal renewal info: %v", err)
-// 	}
-//
-// 	err = ctxParams.N.Repo.Datastore().Put(ctxParams.Ctx, datastore.NewKey(shardKey), renewalData)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to store shard renewal info: %v", err)
-// 	}
-//
-// 	log.Infof("Updated renewal info for shard %s in session %s", shardHash, sessionID)
-// 	return nil
-// }
 
 // storeRenewalChequeInfo stores cheque information for renewal tracking
 func storeRenewalChequeInfo(ctxParams *uh.ContextParams, providerID, shardHash string, contractID string, amount int64, duration int) error {
