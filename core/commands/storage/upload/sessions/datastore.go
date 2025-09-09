@@ -95,3 +95,30 @@ func ListKeys(d ds.Datastore, prefix string, substrInKey ...string) ([]string, e
 	}
 	return ks, nil
 }
+
+func ListWithKeys(d ds.Datastore, prefix string, substrInKey ...string) ([][]byte, []string, error) {
+	results, err := d.Query(context.Background(), query.Query{
+		Prefix:   prefix,
+		Filters:  []query.Filter{},
+		KeysOnly: false,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	vs := make([][]byte, 0)
+	ks := make([]string, 0)
+	for v := range results.Next() {
+		contains := true
+		for _, substr := range substrInKey {
+			contains = contains && strings.Contains(v.Key, substr)
+		}
+		if contains {
+			value := v.Value
+			key := v.Key
+			vs = append(vs, value)
+			ks = append(ks, key)
+		}
+	}
+
+	return vs, ks, nil
+}
