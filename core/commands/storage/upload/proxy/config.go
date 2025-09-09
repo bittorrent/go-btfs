@@ -108,7 +108,7 @@ This command show storage upload proxy config such as price. The price is in BTT
 				return err
 			}
 			return cmds.EmitOnce(res, &helper.ProxyStorageInfo{
-				Price: nc.StoragePriceDefault / 1000000,
+				Price: nc.StoragePriceDefault / 1000,
 			})
 		}
 		if err != nil {

@@ -303,29 +303,34 @@ func SaveShardsContract(ds datastore.Datastore, scs []*metadata.Contract,
 	return scs, staleHashes, nil
 }
 
-func UpdateShardContract(ds datastore.Datastore, sc *metadata.Contract, peerID, role string) error {
-	key := ""
-	if role == nodepb.ContractStat_HOST.String() {
-		key = hostShardContractsKey
-	} else {
-		key = renterShardContractsKey
-	}
-	return Save(ds, fmt.Sprintf(key, peerID, sc.Meta.ContractId), sc)
+func UpdateShardContract(ds datastore.Datastore, sc *metadata.Contract, key string) error {
+	return Save(ds, key, sc)
 }
 
-func GetUserShardContract(ds datastore.Datastore, peerID string, role string, contractID string) (*metadata.Contract, error) {
+func GetUserShardContract(ds datastore.Datastore, peerID string, role string, contractID string) (string, *metadata.Contract, error) {
 	key := ""
 	if role == nodepb.ContractStat_HOST.String() {
-		key = hostShardContractsKey
+		key = hostShardPrefix
 	} else {
-		key = renterShardContractsKey
+		key = renterShardPrefix
 	}
-	contract := &metadata.Contract{}
-	err := Get(ds, fmt.Sprintf(key, peerID, contractID), contract)
+	values, keys, err := ListWithKeys(ds, fmt.Sprintf(key, peerID), "contract")
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
-	return contract, nil
+	for i, v := range values {
+		sc := &metadata.Contract{}
+		err = proto.Unmarshal(v, sc)
+		if err != nil {
+			fmt.Println("get contract error", err)
+			continue
+		}
+		if sc.Meta.ContractId == contractID {
+			return keys[i], sc, nil
+		}
+	}
+
+	return "", nil, datastore.ErrNotFound
 }
 
 func RefreshLocalContracts(ctx context.Context, ds datastore.Datastore, all []*metadata.Contract, outdated []*metadata.Contract, peerID, role string) ([]string, error) {
