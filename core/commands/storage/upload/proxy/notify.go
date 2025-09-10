@@ -101,7 +101,7 @@ This command is used to notify the proxy that the payment has been made.
 		if err != nil {
 			return fmt.Errorf("get need pay info error: %v", err)
 		}
-		if int64(needPayInfo.NeedBTT) > big.NewInt(0).Mul(big.NewInt(int64(currentBalance)), big.NewInt(1e12)).Int64() {
+		if int64(needPayInfo.NeedBTT) > big.NewInt(0).Mul(big.NewInt(int64(currentBalance)), big.NewInt(1e18)).Int64() {
 			return fmt.Errorf("your payment is not enough for the %s to be uploaded by proxy", req.Arguments[1])
 		}
 
