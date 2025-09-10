@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 	"time"
 
@@ -132,7 +133,7 @@ the shard and replies back to client for the next challenge step.`,
 			CID:      req.Arguments[0],
 			FileSize: fileSize,
 			Price:    int64(config.Price),
-			NeedBTT:  uint64(totalPay),
+			NeedBTT:  uint64(totalPay * rate.Int64()),
 		}
 		err = proxy.PutProxyNeedPaymentCID(ctxParams.Ctx, ctxParams.N, payInfo)
 		if err != nil {
@@ -150,10 +151,10 @@ the shard and replies back to client for the next challenge step.`,
 		if err != nil {
 			return err
 		}
-
+		t := new(big.Float).Quo(new(big.Float).SetInt(big.NewInt(totalPay)), big.NewFloat(1e6)).Text('f', 18)
 		return res.Emit(map[string]interface{}{
 			"proxy_address":   proxyAddress,
-			"need_pay_amount": totalPay,
+			"need_pay_amount": fmt.Sprintf("%s (BTT)", t), // convert to btt
 		})
 	},
 }
@@ -172,6 +173,9 @@ This command list files that uploaded by proxy.`,
 		infos, err := proxy.ListProxyUploadedFileInfo(req.Context, n)
 		if err != nil {
 			return err
+		}
+		for _, info := range infos {
+			info.Price = info.Price / 1e6
 		}
 		return cmds.EmitOnce(res, infos)
 	},

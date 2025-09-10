@@ -40,23 +40,27 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 		}
 
 		proxyId := utils.RemoveSpaceAndComma(req.Arguments[0])
-
 		proxyAddr, err := getPublicAddressFromPeerID(proxyId)
 		if err != nil {
 			return err
 		}
 
 		argAmount := utils.RemoveSpaceAndComma(req.Arguments[2])
-		amount, ok := new(big.Int).SetString(argAmount, 10)
+		amount, _, err := big.ParseFloat(argAmount, 10, 0, big.ToZero)
+		if err != nil {
+			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[2])
+		}
+		to := common.HexToAddress(proxyAddr)
+
+		// convert btt to wei
+		v := new(big.Float).Mul(amount, big.NewFloat(1e18))
+		value, ok := new(big.Int).SetString(v.Text('f', 0), 10)
 		if !ok {
 			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[2])
 		}
-
-		to := common.HexToAddress(proxyAddr)
 		request := &transaction.TxRequest{
-			To: &to,
-			// convert wei to btt
-			Value: new(big.Int).Mul(amount, big.NewInt(1e18)),
+			To:    &to,
+			Value: value,
 		}
 		hash, err := chain.ChainObject.TransactionService.Send(req.Context, request)
 		if err != nil {
