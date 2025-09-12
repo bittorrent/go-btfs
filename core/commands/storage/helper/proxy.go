@@ -157,7 +157,10 @@ func ChargeBalance(ctx context.Context, node *core.IpfsNode, from string, value 
 	if !ok {
 		return &big.Int{}, errors.New("get balance error")
 	}
-	return balance, rds.Put(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+strings.ToLower(from)), []byte(fmt.Sprintf("%d", new(big.Int).Add(balance, value))))
+
+	r := new(big.Int).Add(balance, value)
+
+	return r, rds.Put(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+strings.ToLower(from)), []byte(fmt.Sprintf("%d", r)))
 }
 
 func SubBalance(ctx context.Context, node *core.IpfsNode, from string, value *big.Int) error {
@@ -169,9 +172,6 @@ func SubBalance(ctx context.Context, node *core.IpfsNode, from string, value *bi
 	balance, ok := new(big.Int).SetString(string(b), 10)
 	if !ok {
 		return errors.New("sub balance error")
-	}
-	if err != nil {
-		return err
 	}
 	return rds.Put(ctx, GetProxyStoragePaymentBalanceKey(node.Identity.String()+"/"+strings.ToLower(from)), []byte(fmt.Sprintf("%d", new(big.Int).Sub(balance, value))))
 }
