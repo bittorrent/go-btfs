@@ -3,7 +3,6 @@ package proxy
 import (
 	"errors"
 	"fmt"
-	"math/big"
 	"time"
 
 	shell "github.com/bittorrent/go-btfs-api"
@@ -75,8 +74,8 @@ This command is used to notify the proxy that the payment has been made.
 			return errors.New("the tx hash has been notified")
 		}
 
-		value := new(big.Int).Div(tx.Value(), big.NewInt(1e18))
-		currentBalance, err := helper.ChargeBalance(req.Context, nd, from.String(), value.Uint64())
+		// balance is wei
+		currentBalance, err := helper.ChargeBalance(req.Context, nd, from.String(), tx.Value())
 		if err != nil {
 			return err
 		}
@@ -86,7 +85,7 @@ This command is used to notify the proxy that the payment has been made.
 			Hash:    tx.Hash().Hex(),
 			PayTime: tx.Time().Unix(),
 			To:      tx.To().Hex(),
-			Value:   value.Uint64(),
+			Value:   tx.Value(),
 			Balance: currentBalance,
 		})
 		if err != nil {
@@ -101,7 +100,7 @@ This command is used to notify the proxy that the payment has been made.
 		if err != nil {
 			return fmt.Errorf("get need pay info error: %v", err)
 		}
-		if int64(needPayInfo.NeedBTT) > big.NewInt(0).Mul(big.NewInt(int64(currentBalance)), big.NewInt(1e18)).Int64() {
+		if needPayInfo.NeedBTT.Cmp(currentBalance) == 1 {
 			return fmt.Errorf("your payment is not enough for the %s to be uploaded by proxy", req.Arguments[1])
 		}
 

@@ -138,10 +138,14 @@ var StorageUploadProxyPaymentBalanceCmd = &cmds.Command{
 			if err != nil {
 				return err
 			}
+
+			result := new(big.Float).Quo(new(big.Float).SetInt(balance), new(big.Float).SetFloat64(1e18))
+
 			return cmds.EmitOnce(res, []*BalanceCmdRet{
 				{
 					Address: recipient,
-					Balance: fmt.Sprintf("%d (BTT)", balance),
+					// convert wei to btt
+					Balance: fmt.Sprintf("%s BTT", result.Text('f', 18)),
 				},
 			})
 		}
@@ -154,9 +158,11 @@ var StorageUploadProxyPaymentBalanceCmd = &cmds.Command{
 		result := make([]*BalanceCmdRet, 0)
 
 		for k, v := range balances {
+
+			v := new(big.Float).Quo(new(big.Float).SetInt(v), new(big.Float).SetFloat64(1e18))
 			ret := &BalanceCmdRet{
 				Address: k,
-				Balance: fmt.Sprintf("%d (BTT)", v),
+				Balance: fmt.Sprintf("%s BTT", v.Text('f', 18)),
 			}
 
 			result = append(result, ret)
