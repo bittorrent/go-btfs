@@ -10,7 +10,8 @@ import (
 	cp "github.com/bittorrent/go-btfs-common/crypto"
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
-	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	proxy "github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	"github.com/bittorrent/go-btfs/core/commands/storage/upload/helper"
 	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 	"github.com/bittorrent/go-btfs/transaction"
 	"github.com/bittorrent/go-btfs/utils"
@@ -24,9 +25,11 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 		Tagline: "Deposit from beneficiary to vault contract account.",
 	},
 	Arguments: []cmds.Argument{
-		cmds.StringArg("proxy-id", false, false, "proxy peerId."),
-		cmds.StringArg("cid", false, false, "cid that need to pay."),
-		cmds.StringArg("amount", false, false, "deposit amount of BTT."),
+		cmds.StringArg("proxy-id", true, false, "proxy peerId."),
+		cmds.StringArg("amount", true, false, "deposit amount of BTT."),
+	},
+	Options: []cmds.Option{
+		cmds.StringOption("cid", "cid that need to pay"),
 	},
 	RunTimeout: 5 * time.Minute,
 	Subcommands: map[string]*cmds.Command{
@@ -39,16 +42,21 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 			return err
 		}
 
+		ctxParams, err := helper.ExtractContextParams(req, env)
+		if err != nil {
+			return err
+		}
+
 		proxyId := utils.RemoveSpaceAndComma(req.Arguments[0])
 		proxyAddr, err := getPublicAddressFromPeerID(proxyId)
 		if err != nil {
 			return err
 		}
 
-		argAmount := utils.RemoveSpaceAndComma(req.Arguments[2])
+		argAmount := utils.RemoveSpaceAndComma(req.Arguments[1])
 		amount, _, err := big.ParseFloat(argAmount, 10, 0, big.ToZero)
 		if err != nil {
-			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[2])
+			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[1])
 		}
 		to := common.HexToAddress(proxyAddr)
 
@@ -56,7 +64,7 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 		v := new(big.Float).Mul(amount, big.NewFloat(1e18))
 		value, ok := new(big.Int).SetString(v.Text('f', 0), 10)
 		if !ok {
-			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[2])
+			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[1])
 		}
 		request := &transaction.TxRequest{
 			To:    &to,
@@ -67,26 +75,21 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 			return err
 		}
 
-		node, err := cmdenv.GetNode(env)
-		if err != nil {
-			return err
-		}
-
-		api, err := cmdenv.GetApi(env, req)
-		if err != nil {
-			return err
-		}
-
 		pId, err := peer.Decode(proxyId)
 		if err != nil {
 			fmt.Println("invalid peer id:", err)
 			return err
 		}
 
+		var cid string
+		if c, ok := req.Options["cid"]; ok {
+			cid = c.(string)
+		}
 		// notify the proxy payment
-		_, err = remote.P2PCall(req.Context, node, api, pId, "/storage/upload/proxy/notify-pay",
+		_, err = remote.P2PCall(req.Context, ctxParams.N, ctxParams.Api, pId, "/storage/upload/proxy/notify-pay",
 			hash,
-			req.Arguments[1],
+			cid,
+			"",
 		)
 		if err != nil {
 			return err
@@ -134,7 +137,7 @@ var StorageUploadProxyPaymentBalanceCmd = &cmds.Command{
 		}
 
 		if recipient != "" {
-			balance, err := helper.GetBalance(req.Context, node, recipient)
+			balance, err := proxy.GetBalance(req.Context, node, recipient)
 			if err != nil {
 				return err
 			}
@@ -150,7 +153,7 @@ var StorageUploadProxyPaymentBalanceCmd = &cmds.Command{
 			})
 		}
 
-		balances, err := helper.GetBalanceList(req.Context, node)
+		balances, err := proxy.GetBalanceList(req.Context, node)
 		if err != nil {
 			return err
 		}
@@ -203,7 +206,7 @@ var StorageUploadProxyPaymentHistoryCmd = &cmds.Command{
 
 		payments := make([]*PaymentHistoryCmdRet, 0)
 		if recipient != "" {
-			ps, err := helper.GetProxyStoragePaymentList(req.Context, node, recipient)
+			ps, err := proxy.GetProxyStoragePaymentList(req.Context, node, recipient)
 			if err != nil {
 				return err
 			}
@@ -218,16 +221,17 @@ var StorageUploadProxyPaymentHistoryCmd = &cmds.Command{
 				payments = append(payments, ret)
 			}
 		} else {
-			ps, err := helper.GetProxyStoragePayment(req.Context, node)
+			ps, err := proxy.GetProxyStoragePayment(req.Context, node)
 			if err != nil {
 				return err
 			}
 			for _, p := range ps {
+				v := new(big.Float).Quo(new(big.Float).SetInt(p.Value), new(big.Float).SetFloat64(1e18))
 				ret := &PaymentHistoryCmdRet{
 					Hash:    p.Hash,
 					From:    p.From,
 					To:      p.To,
-					Value:   fmt.Sprintf("%d (BTT)", p.Value),
+					Value:   fmt.Sprintf("%s BTT", v.Text('f', 18)),
 					PayTime: p.PayTime,
 				}
 				payments = append(payments, ret)

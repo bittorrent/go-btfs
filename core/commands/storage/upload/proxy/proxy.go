@@ -39,6 +39,7 @@ the shard and replies back to client for the next challenge step.`,
 	Subcommands: map[string]*cmds.Command{
 		"pay":        StorageUploadProxyPayCmd,
 		"notify-pay": StorageUploadProxyNotifyPayCmd,
+		"notify":     StorageUploadProxyNotifyCmd,
 		"config":     StorageUploadProxyConfigCmd,
 		"list":       StorageUploadFileListCmd,
 	},
@@ -115,7 +116,7 @@ the shard and replies back to client for the next challenge step.`,
 			config = &proxy.ProxyStorageInfo{}
 			config.Price = uint64(priceObj.Int64())
 		}
-		if err != nil {
+		if err != nil && !errors.Is(err, ds.ErrNotFound) {
 			return err
 		}
 		// token: get new rate
