@@ -11,11 +11,13 @@ import (
 	"github.com/bittorrent/go-btfs/chain"
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
 	"github.com/bittorrent/go-btfs/core/commands/storage/helper"
+	"github.com/bittorrent/go-btfs/core/corehttp/remote"
 	"github.com/bittorrent/go-btfs/utils"
 	coreiface "github.com/bittorrent/interface-go-btfs-core"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	ds "github.com/ipfs/go-datastore"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 var StorageUploadProxyNotifyPayCmd = &cmds.Command{
@@ -26,8 +28,9 @@ This command is used to notify the proxy that the payment has been made.
 `,
 	},
 	Arguments: []cmds.Argument{
-		cmds.StringArg("hash", true, false, "The hash of the storage-upload-proxy-pay command."),
+		cmds.StringArg("hash", false, false, "The hash of the storage-upload-proxy-pay command."),
 		cmds.StringArg("cid", true, false, "The cid that the transaction paid for"),
+		cmds.StringArg("address", false, false, "The address that the payment is paid for"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		nd, err := cmdenv.GetNode(env)
@@ -43,81 +46,101 @@ This command is used to notify the proxy that the payment has been made.
 		if err != nil {
 			return err
 		}
+
+		var currentBalance *big.Int
+		var from string
+		var cid string
+
 		hash := req.Arguments[0]
-		txHash := common.HexToHash(hash)
-		tx, _, err := chain.ChainObject.Backend.TransactionByHash(req.Context, txHash)
-		if err != nil {
-			return err
+		if hash != "" {
+			txHash := common.HexToHash(hash)
+			tx, _, err := chain.ChainObject.Backend.TransactionByHash(req.Context, txHash)
+			if err != nil {
+				return err
+			}
+
+			conf, err := nd.Repo.Config()
+			if err != nil {
+				return err
+			}
+
+			// check if the tx is for me
+			if tx.To().String() != conf.Identity.BttcAddr {
+				return nil
+			}
+
+			signer := types.NewEIP155Signer(tx.ChainId())
+			f, err := types.Sender(signer, tx)
+			if err != nil {
+				return err
+			}
+			from = f.String()
+			// check if the tx has been notified
+			d, err := helper.GetProxyStoragePaymentByTxHash(req.Context, nd, from, tx.Hash().Hex())
+			if err != nil {
+				return nil
+			}
+
+			if d != nil && d.Hash == tx.Hash().Hex() {
+				return errors.New("the tx hash has been notified")
+			}
+
+			// save payment record
+			err = helper.PutProxyStoragePayment(req.Context, nd, &helper.ProxyStoragePaymentInfo{
+				From:    from,
+				Hash:    tx.Hash().Hex(),
+				PayTime: tx.Time().Unix(),
+				To:      tx.To().Hex(),
+				Value:   tx.Value(),
+				Balance: currentBalance,
+			})
+
+			// charge balance is wei
+			currentBalance, err = helper.ChargeBalance(req.Context, nd, from, tx.Value())
+			if err != nil {
+				return err
+			}
 		}
 
-		conf, err := nd.Repo.Config()
-		if err != nil {
-			return err
-		}
-
-		// check if the tx is for me
-		if tx.To().String() != conf.Identity.BttcAddr {
+		// if cid is empty, just pay
+		cid = req.Arguments[1]
+		if cid == "" {
 			return nil
 		}
 
-		signer := types.NewEIP155Signer(tx.ChainId())
-		from, err := types.Sender(signer, tx)
-		if err != nil {
-			return err
+		if from == "" {
+			from = req.Arguments[2]
 		}
-		// check if the tx has been paid
-		d, err := helper.GetProxyStoragePaymentByTxHash(req.Context, nd, from.String(), tx.Hash().Hex())
-		if err != nil {
-			return nil
-		}
-
-		if d != nil && d.Hash == tx.Hash().Hex() {
-			return errors.New("the tx hash has been notified")
-		}
-
-		value := new(big.Int).Div(tx.Value(), big.NewInt(1e18))
-		currentBalance, err := helper.ChargeBalance(req.Context, nd, from.String(), value.Uint64())
-		if err != nil {
-			return err
-		}
-
-		err = helper.PutProxyStoragePayment(req.Context, nd, &helper.ProxyStoragePaymentInfo{
-			From:    from.String(),
-			Hash:    tx.Hash().Hex(),
-			PayTime: tx.Time().Unix(),
-			To:      tx.To().Hex(),
-			Value:   value.Uint64(),
-			Balance: currentBalance,
-		})
+		currentBalance, err = helper.GetBalance(req.Context, nd, from)
 		if err != nil {
 			return err
 		}
 
 		// check if it is enough to pay
-		needPayInfo, err := helper.GetProxyNeedPaymentCID(req.Context, nd, req.Arguments[1])
+		needPayInfo, err := helper.GetProxyNeedPaymentCID(req.Context, nd, cid)
 		if errors.Is(err, ds.ErrNotFound) {
-			return fmt.Errorf("you do not need to pay for the cid: {%s} or it has been paid, but you btt has been deposited by the proxy", req.Arguments[1])
+			return fmt.Errorf("you do not need to pay for the cid: {%s} or it has been paid, but you btt has been deposited by the proxy", cid)
 		}
 		if err != nil {
 			return fmt.Errorf("get need pay info error: %v", err)
 		}
-		if int64(needPayInfo.NeedBTT) > big.NewInt(0).Mul(big.NewInt(int64(currentBalance)), big.NewInt(1e18)).Int64() {
-			return fmt.Errorf("your payment is not enough for the %s to be uploaded by proxy", req.Arguments[1])
+		if needPayInfo.NeedBTT.Cmp(currentBalance) == 1 {
+			return fmt.Errorf("your payment is not enough for the %s to be uploaded by proxy", cid)
 		}
 
 		// upload file
 		client := shell.NewLocalShell()
-		_, err = client.Request("storage/upload", req.Arguments[1]).Send(req.Context)
+		_, err = client.Request("storage/upload", cid).Send(req.Context)
 		if err != nil {
 			return err
 		}
 
-		_ = helper.SubBalance(req.Context, nd, from.String(), needPayInfo.NeedBTT)
+		_ = helper.SubBalance(req.Context, nd, from, needPayInfo.NeedBTT)
 		_ = helper.DeleteProxyNeedPaymentCID(req.Context, nd, req.Arguments[1])
 
 		// save proxy upload cid
 		ui := &helper.ProxyUploadFileInfo{
-			From:      from.String(),
+			From:      from,
 			CID:       req.Arguments[1],
 			FileSize:  needPayInfo.FileSize,
 			Price:     needPayInfo.Price,
@@ -128,5 +151,51 @@ This command is used to notify the proxy that the payment has been made.
 		_ = helper.PutProxyUploadedFileInfo(req.Context, nd, ui)
 
 		return nil
+	},
+}
+
+// client used to notify proxy it will call proxy notify pay method
+
+var StorageUploadProxyNotifyCmd = &cmds.Command{
+	Helptext: cmds.HelpText{
+		Tagline: "Notify the proxy to upload file",
+		LongDescription: `
+This command is used to notify the proxy to upload file to SP.
+`,
+	},
+	Arguments: []cmds.Argument{
+		cmds.StringArg("proxy-id", true, false, "The proxy id that will be notified to upload file"),
+		cmds.StringArg("cid", true, false, "The cid that need to be uploaded"),
+	},
+	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		proxyId := req.Arguments[0]
+		node, err := cmdenv.GetNode(env)
+		if err != nil {
+			return err
+		}
+
+		api, err := cmdenv.GetApi(env, req)
+		if err != nil {
+			return err
+		}
+
+		pId, err := peer.Decode(proxyId)
+		if err != nil {
+			fmt.Println("invalid peer id:", err)
+			return err
+		}
+
+		address, err := getPublicAddressFromPeerID(node.Identity.String())
+		if err != nil {
+			return err
+		}
+		// notify the proxy payment
+		_, err = remote.P2PCall(req.Context, node, api, pId, "/storage/upload/proxy/notify-pay",
+			"",
+			req.Arguments[1],
+			address,
+		)
+
+		return err
 	},
 }
