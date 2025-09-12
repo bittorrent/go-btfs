@@ -48,11 +48,11 @@ This command is used to notify the proxy that the payment has been made.
 		}
 
 		var currentBalance *big.Int
-		var f string
+		var from string
 		var cid string
-		// just pay
-		if req.Arguments[1] == "" {
-			hash := req.Arguments[0]
+
+		hash := req.Arguments[0]
+		if hash != "" {
 			txHash := common.HexToHash(hash)
 			tx, _, err := chain.ChainObject.Backend.TransactionByHash(req.Context, txHash)
 			if err != nil {
@@ -70,12 +70,13 @@ This command is used to notify the proxy that the payment has been made.
 			}
 
 			signer := types.NewEIP155Signer(tx.ChainId())
-			from, err := types.Sender(signer, tx)
+			f, err := types.Sender(signer, tx)
 			if err != nil {
 				return err
 			}
+			from = f.String()
 			// check if the tx has been notified
-			d, err := helper.GetProxyStoragePaymentByTxHash(req.Context, nd, from.String(), tx.Hash().Hex())
+			d, err := helper.GetProxyStoragePaymentByTxHash(req.Context, nd, from, tx.Hash().Hex())
 			if err != nil {
 				return nil
 			}
@@ -84,28 +85,36 @@ This command is used to notify the proxy that the payment has been made.
 				return errors.New("the tx hash has been notified")
 			}
 
-			// balance is wei
-			currentBalance, err = helper.ChargeBalance(req.Context, nd, from.String(), tx.Value())
-			if err != nil {
-				return err
-			}
-
+			// save payment record
 			err = helper.PutProxyStoragePayment(req.Context, nd, &helper.ProxyStoragePaymentInfo{
-				From:    from.String(),
+				From:    from,
 				Hash:    tx.Hash().Hex(),
 				PayTime: tx.Time().Unix(),
 				To:      tx.To().Hex(),
 				Value:   tx.Value(),
 				Balance: currentBalance,
 			})
-			return err
+
+			// charge balance is wei
+			currentBalance, err = helper.ChargeBalance(req.Context, nd, from, tx.Value())
+			if err != nil {
+				return err
+			}
 		}
-		f = req.Arguments[2]
-		currentBalance, err = helper.GetBalance(req.Context, nd, f)
+
+		// if cid is empty, just pay
+		cid = req.Arguments[1]
+		if cid == "" {
+			return nil
+		}
+
+		if from == "" {
+			from = req.Arguments[2]
+		}
+		currentBalance, err = helper.GetBalance(req.Context, nd, from)
 		if err != nil {
 			return err
 		}
-		cid = req.Arguments[1]
 
 		// check if it is enough to pay
 		needPayInfo, err := helper.GetProxyNeedPaymentCID(req.Context, nd, cid)
@@ -126,12 +135,12 @@ This command is used to notify the proxy that the payment has been made.
 			return err
 		}
 
-		_ = helper.SubBalance(req.Context, nd, f, needPayInfo.NeedBTT)
+		_ = helper.SubBalance(req.Context, nd, from, needPayInfo.NeedBTT)
 		_ = helper.DeleteProxyNeedPaymentCID(req.Context, nd, req.Arguments[1])
 
 		// save proxy upload cid
 		ui := &helper.ProxyUploadFileInfo{
-			From:      f,
+			From:      from,
 			CID:       req.Arguments[1],
 			FileSize:  needPayInfo.FileSize,
 			Price:     needPayInfo.Price,
