@@ -211,11 +211,12 @@ var StorageUploadProxyPaymentHistoryCmd = &cmds.Command{
 				return err
 			}
 			for _, p := range ps {
+				v := new(big.Float).Quo(new(big.Float).SetInt(p.Value), new(big.Float).SetFloat64(1e18))
 				ret := &PaymentHistoryCmdRet{
 					Hash:    p.Hash,
 					From:    p.From,
 					To:      p.To,
-					Value:   fmt.Sprintf("%d (BTT)", p.Value),
+					Value:   fmt.Sprintf("%s BTT", v.Text('f', 18)),
 					PayTime: p.PayTime,
 				}
 				payments = append(payments, ret)

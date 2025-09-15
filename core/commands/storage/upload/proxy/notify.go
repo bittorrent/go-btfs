@@ -29,7 +29,7 @@ This command is used to notify the proxy that the payment has been made.
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("hash", false, false, "The hash of the storage-upload-proxy-pay command."),
-		cmds.StringArg("cid", true, false, "The cid that the transaction paid for"),
+		cmds.StringArg("cid", false, false, "The cid that the transaction paid for"),
 		cmds.StringArg("address", false, false, "The address that the payment is paid for"),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
