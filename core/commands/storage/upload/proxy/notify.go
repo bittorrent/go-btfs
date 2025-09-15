@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
@@ -130,25 +131,74 @@ This command is used to notify the proxy that the payment has been made.
 
 		// upload file
 		client := shell.NewLocalShell()
-		_, err = client.Request("storage/upload", cid).Send(req.Context)
+		resp, err := client.Request("storage/upload", cid).Send(context.Background())
 		if err != nil {
 			return err
 		}
-
-		_ = helper.SubBalance(req.Context, nd, from, needPayInfo.NeedBTT)
-		_ = helper.DeleteProxyNeedPaymentCID(req.Context, nd, req.Arguments[1])
-
-		// save proxy upload cid
-		ui := &helper.ProxyUploadFileInfo{
-			From:      from,
-			CID:       req.Arguments[1],
-			FileSize:  needPayInfo.FileSize,
-			Price:     needPayInfo.Price,
-			ExpireAt:  needPayInfo.ExpireAt,
-			TotalPay:  needPayInfo.NeedBTT,
-			CreatedAt: time.Now().Unix(),
+		defer resp.Close()
+		type uploadResponse struct {
+			ID string `json:"ID"`
 		}
-		_ = helper.PutProxyUploadedFileInfo(req.Context, nd, ui)
+
+		if resp.Error != nil {
+			fmt.Printf("Upload error: %s\n", resp.Error.Message)
+			return fmt.Errorf("upload failed: %s", resp.Error.Message)
+		}
+
+		var uploadResp uploadResponse
+		err = resp.Decode(&uploadResp)
+		if err != nil {
+			fmt.Printf("Failed to decode response: %v\n", err)
+			return err
+		}
+
+		go func() {
+			// wait for upload success
+			ticker := time.NewTicker(time.Second * 10)
+			defer ticker.Stop()
+			for range ticker.C {
+				resp, err := client.Request("storage/upload/status", uploadResp.ID).Send(context.Background())
+				if err != nil {
+					fmt.Println("proxy get upload status error: ", err)
+				}
+				if resp.Error != nil {
+					fmt.Println("proxy get upload status error: ", resp.Error)
+				}
+				type StatusRes struct {
+					Status   string
+					Message  string
+					FileHash string
+				}
+				// parse response
+				var statusResp StatusRes
+				err = resp.Decode(&statusResp)
+				if err != nil {
+					fmt.Println("proxy parse upload status error: ", err)
+				}
+				if statusResp.Status == "complete" {
+					fmt.Println("upload file success")
+					_ = helper.SubBalance(req.Context, nd, from, needPayInfo.NeedBTT)
+					_ = helper.DeleteProxyNeedPaymentCID(req.Context, nd, req.Arguments[1])
+
+					// save proxy upload cid
+					ui := &helper.ProxyUploadFileInfo{
+						From:      from,
+						CID:       req.Arguments[1],
+						FileSize:  needPayInfo.FileSize,
+						Price:     needPayInfo.Price,
+						ExpireAt:  needPayInfo.ExpireAt,
+						TotalPay:  needPayInfo.NeedBTT,
+						CreatedAt: time.Now().Unix(),
+					}
+					_ = helper.PutProxyUploadedFileInfo(req.Context, nd, ui)
+					return
+				}
+				if statusResp.Status == "error" {
+					fmt.Println("proxy upload file error: ", statusResp.Message)
+					return
+				}
+			}
+		}()
 
 		return nil
 	},
