@@ -277,6 +277,7 @@ the shard and replies back to client for the next challenge step.`,
 				var wg sync.WaitGroup
 				wg.Add(1)
 				go func() {
+					defer wg.Done()
 					// every 30s check pay status
 					ticker := time.NewTicker(30 * time.Second)
 					defer ticker.Stop()
@@ -288,7 +289,6 @@ the shard and replies back to client for the next challenge step.`,
 						case <-ticker.C:
 							if bl := shard.IsPayStatus(); bl {
 								blPay = true
-								wg.Done()
 								return
 							}
 						case <-timeoutPay.C:
