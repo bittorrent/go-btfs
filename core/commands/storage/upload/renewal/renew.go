@@ -183,19 +183,31 @@ Examples:
 			}
 
 			totalCost += resp.TotalCost
-
 		}
 
-		// TODO fill the field
-		info = &RenewalInfo{
-			CID: cid,
+		now := time.Now()
+		newInfo := &RenewalInfo{
+			CID:             cid,
+			ShardsInfo:      []*RenewalShardInfo{},
+			RenewalDuration: duration,
+			Token:           token,
+			Price:           price,
+			TotalPay:        totalCost,
+			LastRenewalAt:   &now,
+			NextRenewalAt:   now.Add(time.Duration(duration) * 24 * time.Hour),
+		}
+
+		if info == nil {
+			newInfo.CreatedAt = time.Now()
+		} else {
+			newInfo.CreatedAt = info.CreatedAt
 		}
 		StoreRenewalInfo(ctxParams, info, RenewTypeManual)
 
 		return res.Emit(RenewResponse{
 			Success:       true,
 			CID:           cid,
-			NewExpiration: time.Now(),
+			NewExpiration: newInfo.NextRenewalAt,
 			TotalCost:     totalCost,
 		})
 	},
@@ -217,7 +229,7 @@ func executeRenewal(ctxParams *uh.ContextParams, renewReq *RenewRequest) (*Renew
 
 	renewReq.TotalCost = totalCost * rate.Int64()
 	// Execute renewal with storage providers
-	err = payRenewalCheque(ctxParams, renewReq, totalCost)
+	err = payRenewalCheque(ctxParams, renewReq, totalCost, rate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute renewal with providers: %v", err)
 	}
@@ -231,12 +243,12 @@ func executeRenewal(ctxParams *uh.ContextParams, renewReq *RenewRequest) (*Renew
 		Success:       true,
 		CID:           renewReq.CID,
 		NewExpiration: renewReq.NewEnd,
-		TotalCost:     totalCost,
+		TotalCost:     totalCost * rate.Int64(),
 	}, nil
 }
 
 // payRenewalCheque pays renewal fee directly via cheque to storage provider
-func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, paymentAmount int64) error {
+func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, paymentAmount int64, rate *big.Int) error {
 	// Get the original shard contract to find the storage provider
 	// Get storage provider ID
 	spId := renewReq.SpId
@@ -244,7 +256,7 @@ func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, payme
 		return fmt.Errorf("no storage provider ID found in contract")
 	}
 
-	fmt.Printf("Paying renewal cheque for shard %s to sp %s, amount: %d\n", renewReq.ShardId, spId, paymentAmount)
+	fmt.Printf("Paying renewal cheque for shard %s to sp %s, amount: %d * %s\n", renewReq.ShardId, spId, paymentAmount, rate.String())
 
 	// Check available balance before issuing cheque
 	err := checkAvailableBalance(ctxParams.Ctx, paymentAmount, renewReq.Token)
