@@ -275,8 +275,6 @@ func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, payme
 
 // issueRenewalCheque issues a cheque directly to storage provider for renewal payment
 func issueRenewalCheque(ctxParams *uh.ContextParams, providerID string, amount int64, token common.Address, shardHash string, duration int, contractId string) error {
-	fmt.Printf("Issuing renewal cheque to provider %s for shard %s, amount: %d, duration: %d days\n", providerID, shardHash, amount, duration)
-
 	// Get settlement service
 	if chain.SettleObject.SwapService == nil {
 		return fmt.Errorf("settlement service not available")
