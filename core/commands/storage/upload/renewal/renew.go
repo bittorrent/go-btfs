@@ -205,10 +205,10 @@ Examples:
 		StoreRenewalInfo(ctxParams, info, RenewTypeManual)
 
 		return res.Emit(RenewResponse{
-			Success:   true,
-			CID:       cid,
+			Success:       true,
+			CID:           cid,
 			NewExpiration: newInfo.NextRenewalAt,
-			TotalCost: totalCost,
+			TotalCost:     totalCost,
 		})
 	},
 	Type: RenewResponse{},
