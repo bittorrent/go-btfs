@@ -229,7 +229,7 @@ type ProxyNeedPaymentInfo struct {
 	CID      string `json:"cid"`
 	FileSize int64  `json:"file_size"`
 	Price    int64  `json:"price"`
-	ExpireAt int64  `json:"expire_at"`
+	// ExpireAt int64  `json:"expire_at"`
 	// wei
 	NeedBTT *big.Int `json:"need_btt"`
 }
@@ -268,7 +268,7 @@ type ProxyUploadFileInfo struct {
 	CID      string `json:"cid"`
 	FileSize int64  `json:"file_size"`
 	Price    int64  `json:"price"`
-	ExpireAt int64  `json:"expire_at"`
+	// ExpireAt int64  `json:"expire_at"`
 	// wei
 	TotalPay  *big.Int `json:"total_pay"`
 	CreatedAt int64    `json:"created_at"`
