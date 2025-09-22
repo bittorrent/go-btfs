@@ -182,10 +182,10 @@ This command is used to notify the proxy that the payment has been made.
 
 					// save proxy upload cid
 					ui := &helper.ProxyUploadFileInfo{
-						From:      from,
-						CID:       req.Arguments[1],
-						FileSize:  needPayInfo.FileSize,
-						Price:     needPayInfo.Price,
+						From:     from,
+						CID:      req.Arguments[1],
+						FileSize: needPayInfo.FileSize,
+						Price:    needPayInfo.Price,
 						// ExpireAt:  needPayInfo.ExpireAt,
 						TotalPay:  needPayInfo.NeedBTT,
 						CreatedAt: time.Now().Unix(),
