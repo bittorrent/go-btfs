@@ -186,7 +186,7 @@ This command is used to notify the proxy that the payment has been made.
 						CID:       req.Arguments[1],
 						FileSize:  needPayInfo.FileSize,
 						Price:     needPayInfo.Price,
-						ExpireAt:  needPayInfo.ExpireAt,
+						// ExpireAt:  needPayInfo.ExpireAt,
 						TotalPay:  needPayInfo.NeedBTT,
 						CreatedAt: time.Now().Unix(),
 					}
