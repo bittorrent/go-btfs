@@ -202,7 +202,7 @@ Examples:
 		} else {
 			newInfo.CreatedAt = info.CreatedAt
 		}
-		StoreRenewalInfo(ctxParams, info, RenewTypeManual)
+		StoreRenewalInfo(ctxParams, newInfo, RenewTypeManual)
 
 		return res.Emit(RenewResponse{
 			Success:       true,
@@ -256,7 +256,7 @@ func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, payme
 		return fmt.Errorf("no storage provider ID found in contract")
 	}
 
-	fmt.Printf("Paying renewal cheque for shard %s to sp %s, amount: %d * %s\n", renewReq.ShardId, spId, paymentAmount, rate.String())
+	fmt.Printf("Paying renewal cheque for shard %s to sp %s, amount: %d*%s\n", renewReq.ShardId, spId, paymentAmount, rate.String())
 
 	// Check available balance before issuing cheque
 	err := checkAvailableBalance(ctxParams.Ctx, paymentAmount, renewReq.Token)
@@ -275,8 +275,6 @@ func payRenewalCheque(ctxParams *uh.ContextParams, renewReq *RenewRequest, payme
 
 // issueRenewalCheque issues a cheque directly to storage provider for renewal payment
 func issueRenewalCheque(ctxParams *uh.ContextParams, providerID string, amount int64, token common.Address, shardHash string, duration int, contractId string) error {
-	fmt.Printf("Issuing renewal cheque to provider %s for shard %s, amount: %d, duration: %d days\n", providerID, shardHash, amount, duration)
-
 	// Get settlement service
 	if chain.SettleObject.SwapService == nil {
 		return fmt.Errorf("settlement service not available")
