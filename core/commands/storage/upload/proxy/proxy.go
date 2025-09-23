@@ -134,7 +134,7 @@ the shard and replies back to client for the next challenge step.`,
 			CID:      req.Arguments[0],
 			FileSize: fileSize,
 			Price:    int64(config.Price),
-			NeedBTT:  new(big.Int).SetInt64(totalPay * rate.Int64()),
+			NeedBTT:  new(big.Int).Mul(big.NewInt(totalPay), rate),
 		}
 		err = proxy.PutProxyNeedPaymentCID(ctxParams.Ctx, ctxParams.N, payInfo)
 		if err != nil {
