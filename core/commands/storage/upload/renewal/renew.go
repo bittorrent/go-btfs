@@ -153,6 +153,10 @@ Examples:
 		}
 
 		var totalCost int64
+
+		now := time.Now()
+		nextRenewAt := now.Add(time.Duration(duration) * 24 * time.Hour)
+		renewShardInfo := make([]*RenewalShardInfo, 0)
 		for _, c := range contracts {
 			fileHash, err := ctxParams.N.Repo.Datastore().Get(ctxParams.Ctx, datastore.NewKey(
 				fmt.Sprintf(userFileShard, ctxParams.N.Identity, c.Meta.ContractId)))
@@ -181,20 +185,27 @@ Examples:
 			if err != nil {
 				return fmt.Errorf("renewal failed: %v", err)
 			}
+			nextRenewAt = resp.NewExpiration
+
+			renewShardInfo = append(renewShardInfo, &RenewalShardInfo{
+				ShardId:    c.Meta.ShardHash,
+				ShardSize:  int(c.Meta.ShardSize),
+				SPId:       c.Meta.SpId,
+				ContractID: c.Meta.ContractId,
+			})
 
 			totalCost += resp.TotalCost
 		}
 
-		now := time.Now()
 		newInfo := &RenewalInfo{
 			CID:             cid,
-			ShardsInfo:      []*RenewalShardInfo{},
+			ShardsInfo:      renewShardInfo,
 			RenewalDuration: duration,
 			Token:           token,
 			Price:           price,
 			TotalPay:        totalCost,
 			LastRenewalAt:   &now,
-			NextRenewalAt:   now.Add(time.Duration(duration) * 24 * time.Hour),
+			NextRenewalAt:   nextRenewAt,
 		}
 
 		if info == nil {
