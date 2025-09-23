@@ -53,7 +53,7 @@ type RenewResponse struct {
 	Success       bool      `json:"success"`
 	CID           string    `json:"cid"`
 	NewExpiration time.Time `json:"new_expiration"`
-	TotalCost     int64     `json:"total_cost"`
+	TotalCost     *big.Int  `json:"total_cost"`
 }
 
 // StorageRenewCmd implements the storage renew command
@@ -152,7 +152,7 @@ Examples:
 			return fmt.Errorf("failed to get shard contract, you can sync first, then try it again")
 		}
 
-		var totalCost int64
+		var totalCost *big.Int
 
 		now := time.Now()
 		nextRenewAt := now.Add(time.Duration(duration) * 24 * time.Hour)
@@ -194,7 +194,11 @@ Examples:
 				ContractID: c.Meta.ContractId,
 			})
 
-			totalCost += resp.TotalCost
+			// big int add
+			if totalCost == nil {
+				totalCost = big.NewInt(0)
+			}
+			totalCost.Add(totalCost, resp.TotalCost)
 		}
 
 		newInfo := &RenewalInfo{
@@ -254,7 +258,7 @@ func executeRenewal(ctxParams *uh.ContextParams, renewReq *RenewRequest) (*Renew
 		Success:       true,
 		CID:           renewReq.CID,
 		NewExpiration: renewReq.NewEnd,
-		TotalCost:     totalCost * rate.Int64(),
+		TotalCost:     new(big.Int).Mul(big.NewInt(totalCost), rate),
 	}, nil
 }
 
@@ -356,7 +360,7 @@ type RenewalInfo struct {
 	Token           common.Address      `json:"token"`
 	Price           int64               `json:"price"`
 	Enabled         bool                `json:"enabled"` // if auto renew is enabled
-	TotalPay        int64               `json:"total_pay"`
+	TotalPay        *big.Int            `json:"total_pay"`
 	CreatedAt       time.Time           `json:"created_at"`
 	LastRenewalAt   *time.Time          `json:"last_renewal_at,omitempty"`
 	NextRenewalAt   time.Time           `json:"next_renewal_at"`

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/bittorrent/go-btfs/core/commands/cmdenv"
@@ -38,7 +39,7 @@ type RenewStatusResponse struct {
 	AutoRenewal bool      `json:"auto_renewal"`
 	SP          []string  `json:"sp"`
 	Duration    int       `json:"duration"`
-	TotalCost   int64     `json:"total_cost"`
+	TotalCost   *big.Int  `json:"total_cost"`
 	CreatedAt   time.Time `json:"created_at"`
 	ExpiresAt   time.Time `json:"expires_at"`
 }
