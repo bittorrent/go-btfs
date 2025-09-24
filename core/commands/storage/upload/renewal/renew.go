@@ -199,30 +199,30 @@ Examples:
 				totalCost = big.NewInt(0)
 			}
 			totalCost.Add(totalCost, resp.TotalCost)
-		}
 
-		newInfo := &RenewalInfo{
-			CID:             cid,
-			ShardsInfo:      renewShardInfo,
-			RenewalDuration: duration,
-			Token:           token,
-			Price:           price,
-			TotalPay:        totalCost,
-			LastRenewalAt:   &now,
-			NextRenewalAt:   nextRenewAt,
-		}
+			newInfo := &RenewalInfo{
+				CID:             cid,
+				ShardsInfo:      renewShardInfo,
+				RenewalDuration: duration,
+				Token:           token,
+				Price:           price,
+				TotalPay:        totalCost,
+				LastRenewalAt:   &now,
+				NextRenewalAt:   nextRenewAt,
+			}
 
-		if info == nil {
-			newInfo.CreatedAt = time.Now()
-		} else {
-			newInfo.CreatedAt = info.CreatedAt
+			if info == nil {
+				newInfo.CreatedAt = time.Now()
+			} else {
+				newInfo.CreatedAt = info.CreatedAt
+			}
+			_ = StoreRenewalInfo(ctxParams, newInfo, RenewTypeManual)
 		}
-		StoreRenewalInfo(ctxParams, newInfo, RenewTypeManual)
 
 		return res.Emit(RenewResponse{
 			Success:       true,
 			CID:           cid,
-			NewExpiration: newInfo.NextRenewalAt,
+			NewExpiration: nextRenewAt,
 			TotalCost:     totalCost,
 		})
 	},
@@ -404,7 +404,7 @@ func extendShardEndTime(ctxParams *uh.ContextParams, contractId string, duration
 		return err
 	}
 
-	if c.Meta.ContractId == contractId {
+	if c.Meta != nil && c.Meta.ContractId == contractId {
 		c.Meta.StorageEnd = uint64(time.Unix(int64(c.Meta.StorageEnd), 0).Add(time.Duration(duration) * time.Hour * 24).Unix())
 		err = sessions.UpdateShardContract(ctxParams.N.Repo.Datastore(), c, k)
 		if err != nil {
