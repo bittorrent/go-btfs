@@ -152,10 +152,10 @@ the shard and replies back to client for the next challenge step.`,
 		if err != nil {
 			return err
 		}
-		t := new(big.Float).Quo(new(big.Float).SetInt(big.NewInt(totalPay)), big.NewFloat(1e6)).Text('f', 18)
+		t := new(big.Rat).Quo(new(big.Rat).SetInt(payInfo.NeedBTT), new(big.Rat).SetInt(new(big.Int).SetInt64(1e18)))
 		return res.Emit(map[string]interface{}{
 			"proxy_address":   proxyAddress,
-			"need_pay_amount": fmt.Sprintf("%s BTT", t), // convert to btt
+			"need_pay_amount": fmt.Sprintf("%s BTT", t.FloatString(18)), // convert to btt
 		})
 	},
 }

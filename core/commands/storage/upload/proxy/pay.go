@@ -54,14 +54,16 @@ var StorageUploadProxyPayCmd = &cmds.Command{
 		}
 
 		argAmount := utils.RemoveSpaceAndComma(req.Arguments[1])
-		amount, _, err := big.ParseFloat(argAmount, 10, 0, big.ToZero)
+		amount, _, err := big.ParseFloat(argAmount, 10, 64, big.ToNearestEven)
 		if err != nil {
 			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[1])
 		}
 		to := common.HexToAddress(proxyAddr)
 
 		// convert btt to wei
-		v := new(big.Float).Mul(amount, big.NewFloat(1e18))
+		x, _ := new(big.Int).SetString("1000000000000000000", 10)
+		weiMultiplier := new(big.Float).SetInt(x)
+		v := new(big.Float).Mul(amount, weiMultiplier)
 		value, ok := new(big.Int).SetString(v.Text('f', 0), 10)
 		if !ok {
 			return fmt.Errorf("amount:%s cannot be parsed", req.Arguments[1])

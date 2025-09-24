@@ -34,7 +34,7 @@ type ShardUploadContext struct {
 	ShardIndexes   []int
 	AutoRenewal    bool
 	RepairParams   *RepairParams
-	TotalPay       int64
+	TotalPay       *big.Int
 }
 
 func UploadShard(ctx *ShardUploadContext) error {
@@ -98,7 +98,7 @@ func UploadShard(ctx *ShardUploadContext) error {
 				LastRenewalAt:   nil,
 				NextRenewalAt:   time.Now().Add(time.Duration(ctx.StorageLength) * 24 * time.Hour),
 				ShardsInfo:      shardsInfo,
-				TotalPay:        big.NewInt(ctx.TotalPay),
+				TotalPay:        ctx.TotalPay,
 			}
 			err = renewal.StoreRenewalInfo(ctx.Rss.CtxParams, info, renewal.RenewTypeAuto)
 			if err != nil {

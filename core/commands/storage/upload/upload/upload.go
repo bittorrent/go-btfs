@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"strconv"
 	"strings"
 	"time"
@@ -307,7 +308,7 @@ Use status command to check for completion:
 			ShardIndexes:   shardIndexes,
 			RepairParams:   nil,
 			AutoRenewal:    autoRenew,
-			TotalPay:       totalPay * rate.Int64(),
+			TotalPay:       new(big.Int).Mul(big.NewInt(totalPay), rate),
 		})
 		if err != nil {
 			return err
