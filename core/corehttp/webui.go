@@ -1,10 +1,11 @@
 package corehttp
 
-const WebUIPath = "/btfs/QmeTtThWyPPw5UkZZhz9EWSK9qkNeiXAjn5KdC9YxrNpFk" // v4.0.0
+const WebUIPath = "/btfs/Qmb6tkfEL7H9umqNcDJjQnArUi4FXUJePuvnukpt97j1sn" // v4.1.0
 
 // this is a list of all past webUI paths.
 var WebUIPaths = []string{
 	WebUIPath,
+	"/btfs/QmeTtThWyPPw5UkZZhz9EWSK9qkNeiXAjn5KdC9YxrNpFk", // v4.0.0
 	"/btfs/Qmcbn8vGxqM5bgYe386yh23khonzA6M56bmUyeqsm8heKo", // v3.3.0
 	"/btfs/QmNytdpG1FstSmR7eo547A8o9EdF7cFe1tcExunu8uEgDc", // v3.2.0
 	"/btfs/QmXVrEfPAHqSSZp1hSMFh933WdxSzvbinSsYgV5bSWg5AE", // v3.1.0

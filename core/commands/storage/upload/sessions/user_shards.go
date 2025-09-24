@@ -303,6 +303,36 @@ func SaveShardsContract(ds datastore.Datastore, scs []*metadata.Contract,
 	return scs, staleHashes, nil
 }
 
+func UpdateShardContract(ds datastore.Datastore, sc *metadata.Contract, key string) error {
+	return Save(ds, key, sc)
+}
+
+func GetUserShardContract(ds datastore.Datastore, peerID string, role string, contractID string) (string, *metadata.Contract, error) {
+	key := ""
+	if role == nodepb.ContractStat_HOST.String() {
+		key = hostShardPrefix
+	} else {
+		key = renterShardPrefix
+	}
+	values, keys, err := ListWithKeys(ds, fmt.Sprintf(key, peerID), "contract")
+	if err != nil {
+		return "", nil, err
+	}
+	for i, v := range values {
+		sc := &metadata.Contract{}
+		err = proto.Unmarshal(v, sc)
+		if err != nil {
+			fmt.Println("get contract error", err)
+			continue
+		}
+		if sc.Meta.ContractId == contractID {
+			return keys[i], sc, nil
+		}
+	}
+
+	return "", nil, datastore.ErrNotFound
+}
+
 func RefreshLocalContracts(ctx context.Context, ds datastore.Datastore, all []*metadata.Contract, outdated []*metadata.Contract, peerID, role string) ([]string, error) {
 	newKeys := make([]string, 0)
 	newValues := make([]proto.Message, 0)
