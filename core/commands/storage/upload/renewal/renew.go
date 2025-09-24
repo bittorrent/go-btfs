@@ -199,30 +199,31 @@ Examples:
 				totalCost = big.NewInt(0)
 			}
 			totalCost.Add(totalCost, resp.TotalCost)
-
-			newInfo := &RenewalInfo{
-				CID:             cid,
-				ShardsInfo:      renewShardInfo,
-				RenewalDuration: duration,
-				Token:           token,
-				Price:           price,
-				TotalPay:        totalCost,
-				LastRenewalAt:   &now,
-				NextRenewalAt:   nextRenewAt,
-			}
-
-			if info == nil {
-				newInfo.CreatedAt = time.Now()
-			} else {
-				newInfo.CreatedAt = info.CreatedAt
-			}
-			_ = StoreRenewalInfo(ctxParams, newInfo, RenewTypeManual)
 		}
+
+		newInfo := &RenewalInfo{
+			CID:             cid,
+			ShardsInfo:      renewShardInfo,
+			RenewalDuration: duration,
+			Token:           token,
+			Price:           price,
+			TotalPay:        totalCost,
+			LastRenewalAt:   &now,
+			NextRenewalAt:   nextRenewAt,
+		}
+
+		if info == nil {
+			newInfo.CreatedAt = time.Now()
+		} else {
+			newInfo.CreatedAt = info.CreatedAt
+		}
+
+		_ = StoreRenewalInfo(ctxParams, newInfo, RenewTypeManual)
 
 		return res.Emit(RenewResponse{
 			Success:       true,
 			CID:           cid,
-			NewExpiration: nextRenewAt,
+			NewExpiration: newInfo.NextRenewalAt,
 			TotalCost:     totalCost,
 		})
 	},

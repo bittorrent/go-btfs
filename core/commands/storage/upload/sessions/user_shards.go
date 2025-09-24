@@ -325,7 +325,7 @@ func GetUserShardContract(ds datastore.Datastore, peerID string, role string, co
 			fmt.Println("get contract error", err)
 			continue
 		}
-		if sc.Meta.ContractId == contractID {
+		if sc.Meta != nil && sc.Meta.ContractId == contractID {
 			return keys[i], sc, nil
 		}
 	}
