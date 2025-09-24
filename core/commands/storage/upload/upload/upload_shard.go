@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/bittorrent/go-btfs/chain"
@@ -97,7 +98,7 @@ func UploadShard(ctx *ShardUploadContext) error {
 				LastRenewalAt:   nil,
 				NextRenewalAt:   time.Now().Add(time.Duration(ctx.StorageLength) * 24 * time.Hour),
 				ShardsInfo:      shardsInfo,
-				TotalPay:        ctx.TotalPay,
+				TotalPay:        big.NewInt(ctx.TotalPay),
 			}
 			err = renewal.StoreRenewalInfo(ctx.Rss.CtxParams, info, renewal.RenewTypeAuto)
 			if err != nil {
