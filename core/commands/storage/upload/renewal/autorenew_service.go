@@ -104,9 +104,6 @@ func (ars *AutoRenewalService) run() {
 
 	for {
 		select {
-		case <-ars.ctx.Done():
-			autoRenewLog.Info("Auto-renewal service context cancelled")
-			return
 		case <-ars.ticker.C:
 			ars.checkAndRenewFiles()
 		case <-ars.stop:
