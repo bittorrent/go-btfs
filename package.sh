@@ -26,7 +26,7 @@ for goos in ${os[@]}
 do
     for goarch in ${arch[@]}
     do
-        if [[ ( ${goos} = "windows" && ( ${goarch} = "arm64" || ${goarch} = "arm" ) ) || ( ${goos} = "darwin" && ${goarch} = "arm" ) ]]; then continue; fi
+        if [[ ( ${goos} = "windows" && ( ${goarch} = "arm64" || ${goarch} = "arm" ) ) || ( ${goos} = "darwin" && ( ${goarch} = "arm"  || ${goarch} = "386" ) )]]; then continue; fi
         echo "=============>OS: [${goos}] ARCH: [${goarch}] automatic compiler begin."
         ext=""
         if [[ ${goos} = "windows" ]]; then
@@ -40,6 +40,9 @@ do
         mv update-${goos}-${goarch}${ext} ../btfs-binary-releases/${goos}/${goarch}/update-${goos}-${goarch}${ext}
         if [[ ${goos} != "windows" ]]
         then
+            if [[ ${goos} = "darwin" ]] && [[ ${goarch} = "arm64" ]]; then
+                continue
+            fi
             URL="https://github.com/TRON-US/btfs-distributions/raw/master/fs-repo-migrations/${VERSION}/fs-repo-migrations_${VERSION}_${goos}-${goarch}.tar.gz"
             wget -q "$URL"
             tar -xzf fs-repo-migrations_${VERSION}_${goos}-${goarch}.tar.gz
