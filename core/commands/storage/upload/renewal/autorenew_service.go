@@ -43,7 +43,7 @@ func NewAutoRenewalService(ctxParams *uh.ContextParams) *AutoRenewalService {
 		ctxParams:     ctxParams,
 		ctx:           ctx,
 		cancel:        cancel,
-		checkInterval: 1 * time.Hour, // Check every hour
+		checkInterval: 24 * time.Hour, // Check every hour
 		running:       false,
 	}
 }
@@ -104,9 +104,6 @@ func (ars *AutoRenewalService) run() {
 
 	for {
 		select {
-		case <-ars.ctx.Done():
-			autoRenewLog.Info("Auto-renewal service context cancelled")
-			return
 		case <-ars.ticker.C:
 			ars.checkAndRenewFiles()
 		case <-ars.stop:
@@ -183,6 +180,10 @@ func (ars *AutoRenewalService) getAutoRenewalConfigs() ([]*RenewalInfo, error) {
 
 // processAutoRenewal processes the automatic renewal for a specific file
 func (ars *AutoRenewalService) processAutoRenewal(config *RenewalInfo) error {
+
+	shardInfos := make(map[string][]*RenewalShardInfo, 0)
+	renewInfos := make(map[string]*RenewalInfo, 0)
+
 	for _, s := range config.ShardsInfo {
 		renewReq := &RenewRequest{
 			CID:         config.CID,
@@ -199,10 +200,42 @@ func (ars *AutoRenewalService) processAutoRenewal(config *RenewalInfo) error {
 		}
 
 		// Execute renewal
-		_, err := executeRenewal(ars.ctxParams, renewReq)
+		resp, err := executeRenewal(ars.ctxParams, renewReq)
 		if err != nil {
 			return fmt.Errorf("renewal execution failed: %v", err)
 		}
+
+		renewShardInfo := &RenewalShardInfo{
+			ContractID: s.ContractID,
+			SPId:       s.SPId,
+			ShardId:    s.ShardId,
+			ShardSize:  s.ShardSize,
+		}
+
+		if shardInfos[config.CID] == nil {
+			shardInfos[config.CID] = make([]*RenewalShardInfo, 0)
+		}
+		shardInfos[config.CID] = append(shardInfos[config.CID], renewShardInfo)
+
+		renewInfos[config.CID] = &RenewalInfo{
+			CID:             config.CID,
+			ShardsInfo:      []*RenewalShardInfo{renewShardInfo},
+			RenewalDuration: config.RenewalDuration,
+			Token:           config.Token,
+			Price:           config.Price,
+			Enabled:         true,
+			TotalPay:        resp.TotalCost,
+			CreatedAt:       config.CreatedAt,
+			LastRenewalAt:   config.LastRenewalAt,
+			NextRenewalAt:   resp.NewExpiration,
+		}
+	}
+
+	for cid, info := range shardInfos {
+		newInfo := renewInfos[cid]
+		newInfo.ShardsInfo = info
+		_ = StoreRenewalInfo(ars.ctxParams, newInfo, RenewTypeAuto)
+
 	}
 
 	return nil

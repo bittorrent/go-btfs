@@ -217,7 +217,8 @@ Examples:
 		} else {
 			newInfo.CreatedAt = info.CreatedAt
 		}
-		StoreRenewalInfo(ctxParams, newInfo, RenewTypeManual)
+
+		_ = StoreRenewalInfo(ctxParams, newInfo, RenewTypeManual)
 
 		return res.Emit(RenewResponse{
 			Success:       true,
@@ -404,7 +405,7 @@ func extendShardEndTime(ctxParams *uh.ContextParams, contractId string, duration
 		return err
 	}
 
-	if c.Meta.ContractId == contractId {
+	if c.Meta != nil && c.Meta.ContractId == contractId {
 		c.Meta.StorageEnd = uint64(time.Unix(int64(c.Meta.StorageEnd), 0).Add(time.Duration(duration) * time.Hour * 24).Unix())
 		err = sessions.UpdateShardContract(ctxParams.N.Repo.Datastore(), c, k)
 		if err != nil {
