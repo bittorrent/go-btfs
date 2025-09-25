@@ -41,14 +41,15 @@ do
         if [[ ${goos} != "windows" ]]
         then
             if [[ ${goos} = "darwin" ]] && [[ ${goarch} = "arm64" ]]; then
-                continue
+                echo "Warning: Skipping fs-repo-migrations for darwin/arm64"
+            else
+                URL="https://github.com/TRON-US/btfs-distributions/raw/master/fs-repo-migrations/${VERSION}/fs-repo-migrations_${VERSION}_${goos}-${goarch}.tar.gz"
+                wget -q "$URL"
+                tar -xzf fs-repo-migrations_${VERSION}_${goos}-${goarch}.tar.gz
+                mv fs-repo-migrations/fs-repo-migrations ../btfs-binary-releases/${goos}/${goarch}/fs-repo-migrations-${goos}-${goarch}
+                rm -f fs-repo-migrations_${VERSION}_${goos}-${goarch}.tar.gz
+                rm -rf fs-repo-migrations
             fi
-            URL="https://github.com/TRON-US/btfs-distributions/raw/master/fs-repo-migrations/${VERSION}/fs-repo-migrations_${VERSION}_${goos}-${goarch}.tar.gz"
-            wget -q "$URL"
-            tar -xzf fs-repo-migrations_${VERSION}_${goos}-${goarch}.tar.gz
-            mv fs-repo-migrations/fs-repo-migrations ../btfs-binary-releases/${goos}/${goarch}/fs-repo-migrations-${goos}-${goarch}
-            rm -f fs-repo-migrations_${VERSION}_${goos}-${goarch}.tar.gz
-            rm -rf fs-repo-migrations
         else
             URL="https://github.com/TRON-US/btfs-distributions/raw/master/fs-repo-migrations/${VERSION}/fs-repo-migrations_${VERSION}_${goos}-${goarch}.zip"
             wget -q "$URL"
