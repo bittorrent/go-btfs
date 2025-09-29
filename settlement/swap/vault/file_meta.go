@@ -62,7 +62,19 @@ func (fm *fileMeta) AddFileMeta(cid string, meta *metadata.FileMetaInfo) error {
 		return fmt.Errorf("meta cannot be nil")
 	}
 
-	opts, err := bind.NewKeyedTransactorWithChainID(fm.Singer.PrivKey(), fm.chainId)
+	// Ensure we're using a proper secp256k1 private key for the transactor
+	privKey := fm.Singer.PrivKey()
+	// Convert the private key D value to bytes
+	privKeyBytes := privKey.D.Bytes()
+	// Use ethCrypto.ToECDSA to create a proper secp256k1 private key
+	var err error
+	privKey, err = ethCrypto.ToECDSA(privKeyBytes)
+	if err != nil {
+		fmt.Printf("Failed to convert private key to secp256k1: %v\n", err)
+		return err
+	}
+
+	opts, err := bind.NewKeyedTransactorWithChainID(privKey, fm.chainId)
 	if err != nil {
 		fmt.Printf("Failed to create transactor: %v\n", err)
 		return err
@@ -136,7 +148,16 @@ func getPublicAddressFromHostID(hostID string) (string, error) {
 func (fm *fileMeta) UpdateContractStatus(contractId string) error {
 	fm.lock.Lock()
 	defer fm.lock.Unlock()
-	opts, err := bind.NewKeyedTransactorWithChainID(fm.Singer.PrivKey(), fm.chainId)
+	privKey := fm.Singer.PrivKey()
+	// Convert the private key D value to bytes
+	privKeyBytes := privKey.D.Bytes()
+	// Use ethCrypto.ToECDSA to create a proper secp256k1 private key
+	var err error
+	privKey, err = ethCrypto.ToECDSA(privKeyBytes)
+	if err != nil {
+		return err
+	}
+	opts, err := bind.NewKeyedTransactorWithChainID(privKey, fm.chainId)
 	if err != nil {
 		fmt.Printf("Failed to create transactor: %v\n", err)
 		return err
